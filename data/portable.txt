@@ -1,0 +1,8 @@
+This folder makes GodlyPanel store its data next to the application.
+
+Everything the panel owns lives here: your server list, settings, logs and
+job history. To move or upgrade GodlyPanel, copy this whole `data` folder
+across to the new version's folder.
+
+Delete this file (and the folder) if you would rather GodlyPanel used
+%APPDATA%\GodlyPanel instead.

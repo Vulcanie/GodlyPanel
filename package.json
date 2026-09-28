@@ -1,0 +1,75 @@
+{
+	"name": "godlypanel",
+	"productName": "GodlyPanel",
+	"version": "0.1.0",
+	"description": "All-in-one game server control panel for Windows",
+	"type": "module",
+	"main": "electron/main/index.cjs",
+	"private": true,
+	"scripts": {
+		"build:ui": "npm --prefix ui run build",
+		"start": "node scripts/dev.mjs",
+		"dev": "npm run build:ui && node scripts/dev.mjs",
+		"dev:ui": "npm --prefix ui start",
+		"package": "npm run build:ui && electron-builder"
+	},
+	"dependencies": {
+		"adm-zip": "^0.6.1",
+		"bcryptjs": "^3.0.3",
+		"dotenv": "^16.0.3",
+		"express": "^4.18.2",
+		"gamedig": "^5.3.3",
+		"jsonwebtoken": "^9.0.3",
+		"multer": "^2.4.0",
+		"rcon-client": "^4.2.5"
+	},
+	"build": {
+		"appId": "com.godlypanel.app",
+		"productName": "GodlyPanel",
+		"asar": true,
+		"npmRebuild": false,
+		"directories": {
+			"output": "dist",
+			"buildResources": "build"
+		},
+		"files": [
+			"electron/**",
+			"src/**",
+			"ui/build/**",
+			"package.json",
+			"!resources/**",
+			"!**/node_modules/*/{test,__tests__,tests,example,examples,doc,docs}/**",
+			"!**/*.map"
+		],
+		"extraResources": [
+			{
+				"from": "resources",
+				"to": ".",
+				"filter": [
+					"**/*"
+				]
+			},
+			{
+				"from": "data",
+				"to": "../data",
+				"filter": [
+					"portable.txt"
+				]
+			}
+		],
+		"win": {
+			"target": [
+				{
+					"target": "zip",
+					"arch": [
+						"x64"
+					]
+				}
+			]
+		}
+	},
+	"devDependencies": {
+		"electron": "^44.4.5",
+		"electron-builder": "^26.15.3"
+	}
+}

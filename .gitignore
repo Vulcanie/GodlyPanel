@@ -1,0 +1,7 @@
+node_modules/
+dist/
+ui/build/
+
+# User data — never commit. Keep the portable marker itself.
+data/*
+!data/portable.txt
