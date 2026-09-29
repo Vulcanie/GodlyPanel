@@ -66,7 +66,11 @@ router.put("/launch", async (req, res) => {
 			throw new Error("The program must be a full path to an .exe file.");
 		}
 		if (!fs.existsSync(exe)) throw new Error("That program doesn't exist.");
-		assertWithinAllowedRoots(exe);
+		// The program itself is deliberately not held to the managed folders. Java
+		// for a modded Minecraft server lives under the user's own JDK folder, and
+		// which program a server runs is the admin's call — they can already run
+		// anything by editing its start script. What has to stay inside is the
+		// folder it runs in, which is where its files end up.
 
 		const folder = typeof cwd === "string" && cwd.trim() ? cwd.trim() : path.dirname(exe);
 		if (!fs.existsSync(folder) || !fs.statSync(folder).isDirectory()) throw new Error("That folder doesn't exist.");
