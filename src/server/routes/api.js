@@ -1,12 +1,13 @@
+// Admin-only surface. The read-only dashboard endpoints a guest is allowed to
+// see live in routes/dashboard.js; everything here either exposes credentials
+// and filesystem paths, or changes something.
 import express from "express";
 import multer from "multer";
 import { promises as fs } from "fs";
 import { all as allServers } from "../data/serverStore.js";
 import { extractModpackZip, cleanupUpload } from "../services/modpackService.js";
 import { SUPPORTED_MODLOADER_FAMILIES } from "../data/gameTemplates.js";
-import { serverStatus, pollServers } from "../services/pollingService.js";
-import { latestStats } from "../services/systemStats.js";
-import { latestServerStats } from "../services/serverResourceStats.js";
+import { pollServers } from "../services/pollingService.js";
 import {
 	startServer,
 	stopServer,
@@ -25,70 +26,6 @@ import {
 } from "../services/serverCreationService.js";
 
 const router = express.Router();
-const sseClients = new Set();
-
-/**
- * Broadcast an SSE event to all connected clients.
- * Called by pollingService.js when status changes.
- */
-export function broadcastSseEvent(payload) {
-	const data = `data: ${JSON.stringify(payload)}\n\n`;
-	for (const res of sseClients) {
-		res.write(data);
-	}
-}
-
-router.get("/events", (req, res) => {
-	// Required SSE headers
-	res.setHeader("Content-Type", "text/event-stream");
-	res.setHeader("Cache-Control", "no-cache");
-	res.setHeader("Connection", "keep-alive");
-	// No CORS header: the UI is served from this same origin now. (The old
-	// hosted setup hardcoded the GitHub Pages origin here.)
-	res.setHeader("X-Accel-Buffering", "no");
-	if (res.flushHeaders) res.flushHeaders();
-	// Add client to the set
-	sseClients.add(res);
-	// Initial event so frontend knows it's connected
-	res.write(
-		`data: ${JSON.stringify({
-			type: "connected",
-			timestamp: Date.now(),
-		})}\n\n`,
-	);
-	// Heartbeat every 15 seconds (Cloudflare requires this)
-	const heartbeat = setInterval(() => {
-		res.write("data: {}\n\n");
-	}, 15000);
-	// Remove client on disconnect
-	req.on("close", () => {
-		clearInterval(heartbeat);
-		sseClients.delete(res);
-		res.end();
-	});
-});
-
-// Live status of all servers
-router.get("/status", (req, res) => {
-	res.setHeader("Content-Type", "application/json");
-	res.json(serverStatus);
-});
-
-router.get("/status/latest", (req, res) => {
-	res.json(serverStatus);
-});
-
-// Latest system resource reading (RAM/CPU), for the dashboard's initial
-// load — live updates after that arrive over SSE as "system_stats" events.
-router.get("/system-stats", (req, res) => {
-	res.json(latestStats || {});
-});
-
-// Latest per-server RAM/CPU reading, for the dashboard's initial load —
-// live updates after that arrive over SSE as "server_stats" events.
-router.get("/server-stats", (req, res) => {
-	res.json(latestServerStats || []);
-});
 
 // Basic info about a single server
 router.get("/server/:serverName", async (req, res) => {

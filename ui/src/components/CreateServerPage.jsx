@@ -18,6 +18,7 @@ import {
 import { ArrowBack as ArrowBackIcon } from "@mui/icons-material";
 import { grey } from "@mui/material/colors";
 import ModpackUploadField from "./ModpackUploadField";
+import { api } from "../api/client";
 
 const FIELD_LABELS = {
 	sessionName: "Server / Session Name",
@@ -30,12 +31,7 @@ const FIELD_LABELS = {
 // Poll cadence while a creation job is running.
 const POLL_MS = 4000;
 
-function CreateServerPage({ onBack, userRole, authToken }) {
-	const API_BASE =
-		process.env.REACT_APP_API_URL?.trim().replace(/\/+$/, "") || "";
-	const joinUrl = (base, path) =>
-		`${base}/${path}`.replace(/\/+/g, "/").replace(":/", "://");
-
+function CreateServerPage({ onBack, userRole }) {
 	const [templates, setTemplates] = React.useState(null);
 	const [loadError, setLoadError] = React.useState(null);
 	const [selected, setSelected] = React.useState(null);
@@ -47,13 +43,8 @@ function CreateServerPage({ onBack, userRole, authToken }) {
 
 	React.useEffect(() => {
 		if (userRole !== "admin") return;
-		fetch(joinUrl(API_BASE, "/api/templates"), {
-			headers: {
-				Accept: "application/json",
-				"ngrok-skip-browser-warning": "true",
-			},
-		})
-			.then((r) => r.json())
+		api
+			.get("/api/templates")
 			.then(setTemplates)
 			.catch((e) => setLoadError(e.message));
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -65,16 +56,7 @@ function CreateServerPage({ onBack, userRole, authToken }) {
 		setSubmitError(null);
 		setJob(null);
 		try {
-			const res = await fetch(
-				joinUrl(API_BASE, `/api/templates/${template.id}/suggest`),
-				{
-					headers: {
-						Accept: "application/json",
-						"ngrok-skip-browser-warning": "true",
-					},
-				},
-			);
-			const data = await res.json();
+			const data = await api.get(`/api/templates/${template.id}/suggest`);
 			setSuggested(data);
 			const initial = {
 				name: "",
@@ -114,21 +96,7 @@ function CreateServerPage({ onBack, userRole, authToken }) {
 			if (form.maxPlayers) body.maxPlayers = Number(form.maxPlayers);
 			if (form.maxMemoryGB) body.maxMemoryGB = Number(form.maxMemoryGB);
 
-			const res = await fetch(joinUrl(API_BASE, "/api/servers"), {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-					Authorization: `Bearer ${authToken}`,
-					"ngrok-skip-browser-warning": "true",
-				},
-				body: JSON.stringify(body),
-			});
-			const data = await res.json();
-			if (!data.success) {
-				setSubmitError(data.error || "Failed to start creation.");
-				setSubmitting(false);
-				return;
-			}
+			const data = await api.post("/api/servers", body);
 			setJob({ jobId: data.jobId, status: "queued" });
 		} catch (e) {
 			setSubmitError(e.message);
@@ -141,16 +109,7 @@ function CreateServerPage({ onBack, userRole, authToken }) {
 		if (!job?.jobId || job.status === "done" || job.status === "error") return;
 		const timer = setTimeout(async () => {
 			try {
-				const res = await fetch(
-					joinUrl(API_BASE, `/api/servers/create/${job.jobId}`),
-					{
-						headers: {
-							Accept: "application/json",
-							"ngrok-skip-browser-warning": "true",
-						},
-					},
-				);
-				const data = await res.json();
+				const data = await api.get(`/api/servers/create/${job.jobId}`);
 				setJob(data);
 				if (data.status === "done" || data.status === "error") {
 					setSubmitting(false);
@@ -315,9 +274,6 @@ function CreateServerPage({ onBack, userRole, authToken }) {
 									<ModpackUploadField
 										key={f}
 										label={label}
-										apiBase={API_BASE}
-										joinUrl={joinUrl}
-										authToken={authToken}
 										onUploaded={(summary) => {
 											setField(f, summary?.uploadId || "");
 											if (summary) {

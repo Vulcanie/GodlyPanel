@@ -1,13 +1,14 @@
 import { GameDig } from "gamedig";
 import { Rcon } from "rcon-client";
 import { all as allServers, onChange as onServersChange } from "../data/serverStore.js";
-import { broadcastSseEvent } from "../routes/api.js";
+import { broadcastSseEvent } from "./sseHub.js";
 import { sendDiscordAlert } from "./discordService.js";
 import { checkPort } from "./portCheck.js";
 import { checkProcess } from "./processCheck.js";
 import { latestServerStats } from "./serverResourceStats.js";
 import { latestStats } from "./systemStats.js";
 import { getConfig } from "../config/configStore.js";
+import { sanitizeServerStatus } from "../data/sanitize.js";
 
 // Holds the latest known status
 export let serverStatus = {};
@@ -61,6 +62,26 @@ export function initPollingState() {
 // Snapshot for diffing
 let lastSnapshot = null;
 
+/**
+ * The status payload includes each server's join password, so admins and
+ * guests get different versions of the same event rather than one payload
+ * that would leak credentials to whoever happens to be watching.
+ */
+function broadcastServerUpdate(serverName, status) {
+	broadcastSseEvent(
+		{ type: "server_update", serverName, status },
+		(client) => client.role === "admin",
+	);
+	broadcastSseEvent(
+		{
+			type: "server_update",
+			serverName,
+			status: sanitizeServerStatus(status, "guest"),
+		},
+		(client) => client.role !== "admin",
+	);
+}
+
 async function diffAndBroadcast(current, previous) {
 	let globalChangeDetected = false;
 
@@ -73,7 +94,7 @@ async function diffAndBroadcast(current, previous) {
 		// connected clients showing the placeholder state indefinitely, since
 		// nothing would ever be detected as a "change" afterwards.
 		if (!prev) {
-			broadcastSseEvent({ type: "server_update", serverName, status: cur });
+			broadcastServerUpdate(serverName, cur);
 			globalChangeDetected = true;
 			continue;
 		}
@@ -88,11 +109,7 @@ async function diffAndBroadcast(current, previous) {
 		);
 
 		if (statusChanged || dataChanged) {
-			broadcastSseEvent({
-				type: "server_update",
-				serverName,
-				status: cur,
-			});
+			broadcastServerUpdate(serverName, cur);
 			console.log(`[SSE] Broadcasted update for ${serverName}`);
 			globalChangeDetected = true;
 		}

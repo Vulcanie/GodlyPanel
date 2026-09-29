@@ -1,12 +1,13 @@
 import React from "react";
 import { Box, Button, Typography, CircularProgress, Chip, Alert } from "@mui/material";
 import { UploadFile as UploadFileIcon } from "@mui/icons-material";
+import { api } from "../api/client";
 
 // Uploads a CurseForge modpack export zip immediately on selection and shows
 // back what was actually detected (MC version / modloader / mod count) —
 // this is the "intuitiveness" the Minecraft template is built around: the
 // admin confirms what the zip says, rather than re-typing it into a form.
-function ModpackUploadField({ label, apiBase, joinUrl, authToken, onUploaded }) {
+function ModpackUploadField({ label, onUploaded }) {
 	const inputRef = React.useRef(null);
 	const [uploading, setUploading] = React.useState(false);
 	const [error, setError] = React.useState(null);
@@ -21,20 +22,7 @@ function ModpackUploadField({ label, apiBase, joinUrl, authToken, onUploaded }) 
 			const formData = new FormData();
 			formData.append("modpackZip", file);
 
-			const res = await fetch(joinUrl(apiBase, "/api/uploads/modpack"), {
-				method: "POST",
-				headers: {
-					Authorization: `Bearer ${authToken}`,
-					"ngrok-skip-browser-warning": "true",
-				},
-				body: formData,
-			});
-			const data = await res.json();
-			if (!res.ok) {
-				setError(data.error || "Upload failed.");
-				onUploaded(null);
-				return;
-			}
+			const data = await api.upload("/api/uploads/modpack", formData);
 			setSummary(data);
 			onUploaded(data);
 		} catch (e) {

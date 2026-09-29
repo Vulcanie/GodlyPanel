@@ -70,21 +70,13 @@ export async function initSecrets() {
 		console.log("[secrets] Generated a new JWT signing key.");
 	}
 
-	// A fresh install has no admin account, which would leave the panel
-	// impossible to log into. Generate a random first-run password rather
-	// than shipping a default one — a well-known default on something that
-	// listens on the LAN is exactly the wrong trade. Stage 3 replaces this
-	// with a proper setup wizard.
-	let generatedAdminPassword = null;
-	if (!current.adminPasswordHash) {
-		const bcrypt = (await import("bcryptjs")).default;
-		generatedAdminPassword = crypto.randomBytes(9).toString("base64url");
-		current.adminPasswordHash = await bcrypt.hash(generatedAdminPassword, 12);
-	}
+	// Accounts live in users.json now; the password hashes here exist only so
+	// an install upgrading from an older version can be migrated across
+	// (see userStore.migrateFromSecrets), after which they're cleared. A
+	// fresh install has no account at all and is sent to the setup wizard.
+	if (!stored) await persist();
 
-	if (!stored || generatedAdminPassword) await persist();
-
-	return { secrets: current, generatedAdminPassword };
+	return current;
 }
 
 async function persist() {

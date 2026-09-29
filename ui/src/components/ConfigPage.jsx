@@ -20,6 +20,7 @@ import { grey } from "@mui/material/colors";
 import StatusDisplay from "./StatusDisplay";
 import ConfigForm from "./ConfigForm";
 import RconConsole from "./RconConsole";
+import { api } from "../api/client";
 import { parseIni, serializeIni } from "../configParsers/ini";
 import { parseProperties, serializeProperties } from "../configParsers/properties";
 import { parseXmlProperties, serializeXmlProperties } from "../configParsers/xmlProperties";
@@ -62,7 +63,6 @@ function ConfigPage({
 	serverStatus,
 	onBack,
 	userRole,
-	authToken,
 	onEditBatchFiles,
 }) {
 	const [serverInfo, setServerInfo] = React.useState(null);
@@ -76,48 +76,22 @@ function ConfigPage({
 	const [autoUpdateEnabled, setAutoUpdateEnabled] = React.useState(false);
 	const [autoUpdateBusy, setAutoUpdateBusy] = React.useState(false);
 
-	// ✅ Centralized and sanitized API base
-	const API_BASE =
-		process.env.REACT_APP_API_URL?.trim().replace(/\/+$/, "") || "";
-	const joinUrl = (base, path) =>
-		`${base}/${path}`.replace(/\/+/g, "/").replace(":/", "://");
-
 	React.useEffect(() => {
 		const fetchServerInfo = async () => {
 			try {
 				setLoading(true);
-				const infoRes = await fetch(
-					`${API_BASE}/api/server/${serverName}?t=${Date.now()}`,
-					{
-						headers: {
-							Accept: "application/json",
-							"ngrok-skip-browser-warning": "true",
-							"Access-Control-Allow-Origin": "*",
-						},
-					},
+				const infoData = await api.get(
+					`/api/server/${encodeURIComponent(serverName)}?t=${Date.now()}`,
 				);
-				if (!infoRes.ok) throw new Error("Failed to fetch server info");
-				const infoData = await infoRes.json();
 				setServerInfo(infoData);
 				setAutoUpdateEnabled(Boolean(infoData.autoUpdateEnabled));
 
 				if (infoData.configNames && infoData.configNames.length > 0) {
 					const newConfigs = {};
 					for (const name of infoData.configNames) {
-						const configRes = await fetch(
-							joinUrl(
-								API_BASE,
-								`/api/config/${serverName}?file=${name}&t=${Date.now()}`,
-							),
-							{
-								headers: {
-									Accept: "application/json",
-									"ngrok-skip-browser-warning": "true",
-									"Access-Control-Allow-Origin": "*",
-								},
-							},
+						const configData = await api.get(
+							`/api/config/${encodeURIComponent(serverName)}?file=${encodeURIComponent(name)}&t=${Date.now()}`,
 						);
-						const configData = await configRes.json();
 						newConfigs[name] =
 							configData.content ||
 							`Could not load content for ${name}`;
@@ -147,47 +121,25 @@ function ConfigPage({
 		const activeConfigContent = configs[activeConfigName];
 		setMessage(`Saving ${activeConfigName}...`);
 		try {
-			const res = await fetch(
-				joinUrl(API_BASE, `/api/config/${serverName}`),
-				{
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json",
-						Authorization: `Bearer ${authToken}`,
-						"ngrok-skip-browser-warning": "true",
-						"Access-Control-Allow-Origin": "*",
-					},
-					body: JSON.stringify({
-						fileName: activeConfigName,
-						content: activeConfigContent,
-					}),
-				},
-			);
-			const data = await res.json();
+			const data = await api.post(`/api/config/${encodeURIComponent(serverName)}`, {
+				fileName: activeConfigName,
+				content: activeConfigContent,
+			});
 			setMessage(data.message || data.error);
 		} catch (err) {
-			setMessage("Failed to send save request.");
+			setMessage(err.message || "Failed to send save request.");
 		}
 	};
 
 	const handleControl = async (action) => {
 		setMessage(`Sending ${action} command...`);
 		try {
-			const res = await fetch(
-				joinUrl(API_BASE, `/api/control/${serverName}/${action}`),
-				{
-					method: "POST",
-					headers: {
-						Authorization: `Bearer ${authToken}`,
-						"ngrok-skip-browser-warning": "true",
-						"Access-Control-Allow-Origin": "*",
-					},
-				},
+			const data = await api.post(
+				`/api/control/${encodeURIComponent(serverName)}/${action}`,
 			);
-			const data = await res.json();
 			setMessage(data.message || data.error);
 		} catch (err) {
-			setMessage("Failed to send control command.");
+			setMessage(err.message || "Failed to send control command.");
 		}
 	};
 
@@ -195,20 +147,10 @@ function ConfigPage({
 		const next = !autoUpdateEnabled;
 		setAutoUpdateBusy(true);
 		try {
-			const res = await fetch(
-				joinUrl(API_BASE, `/api/server/${serverName}/auto-update`),
-				{
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json",
-						Authorization: `Bearer ${authToken}`,
-						"ngrok-skip-browser-warning": "true",
-						"Access-Control-Allow-Origin": "*",
-					},
-					body: JSON.stringify({ enabled: next }),
-				},
+			const data = await api.post(
+				`/api/server/${encodeURIComponent(serverName)}/auto-update`,
+				{ enabled: next },
 			);
-			const data = await res.json();
 			if (data.success) {
 				setAutoUpdateEnabled(data.autoUpdateEnabled);
 				setMessage(
@@ -424,7 +366,7 @@ function ConfigPage({
 					)}
 				</Box>
 				{serverInfo?.hasRcon && (
-					<RconConsole apiBase={API_BASE} serverName={serverName} authToken={authToken} />
+					<RconConsole serverName={serverName} />
 				)}
 				<StatusDisplay serverStatus={serverStatus} />
 			</Box>
@@ -533,7 +475,7 @@ function ConfigPage({
 			</Box>
 
 			{serverInfo?.hasRcon && (
-				<RconConsole apiBase={API_BASE} serverName={serverName} authToken={authToken} />
+				<RconConsole serverName={serverName} />
 			)}
 
 			{loading ? (

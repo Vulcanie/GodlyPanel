@@ -1,8 +1,9 @@
 import React from "react";
 import { Box, Typography, TextField, Button } from "@mui/material";
 import { grey } from "@mui/material/colors";
+import { api } from "../api/client";
 
-function RconConsole({ apiBase, serverName, authToken }) {
+function RconConsole({ serverName }) {
 	const [command, setCommand] = React.useState("");
 	const [log, setLog] = React.useState([]);
 	const [sending, setSending] = React.useState(false);
@@ -13,19 +14,10 @@ function RconConsole({ apiBase, serverName, authToken }) {
 		setSending(true);
 		setCommand("");
 		try {
-			const res = await fetch(
-				`${apiBase}/api/control/${encodeURIComponent(serverName)}/rcon`,
-				{
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json",
-						Authorization: `Bearer ${authToken}`,
-						"ngrok-skip-browser-warning": "true",
-					},
-					body: JSON.stringify({ command: cmd }),
-				},
+			const data = await api.post(
+				`/api/control/${encodeURIComponent(serverName)}/rcon`,
+				{ command: cmd },
 			);
-			const data = await res.json();
 			setLog((prev) => [
 				...prev,
 				{

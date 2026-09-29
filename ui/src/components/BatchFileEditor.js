@@ -1,25 +1,24 @@
 import React, { useState, useEffect } from "react";
-import { Box, Typography, TextField, Button, Paper } from "@mui/material";
+import { Box, Typography, TextField, Button, Paper, Alert, Snackbar } from "@mui/material";
+import { api } from "../api/client";
 
-const API_BASE = process.env.REACT_APP_API_URL || "";
-
-export default function BatchFileEditor({ serverName, onBack, authToken }) {
+export default function BatchFileEditor({ serverName, onBack }) {
 	const [content, setContent] = useState("");
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState("");
+	const [saved, setSaved] = useState(false);
 
 	useEffect(() => {
 		if (!serverName) return;
 
 		setLoading(true);
-		fetch(`${API_BASE}/api/batch-files/by-server/${serverName}`, {
-			headers: {
-				"ngrok-skip-browser-warning": "true",
-				Accept: "application/json",
-			},
+		// This endpoint returns the script as plain text rather than JSON, so
+		// it's fetched directly instead of through the JSON helper.
+		fetch(`/api/batch-files/by-server/${encodeURIComponent(serverName)}`, {
+			credentials: "same-origin",
 		})
 			.then((res) => {
-				if (!res.ok) throw new Error("Failed to load batch file");
+				if (!res.ok) throw new Error("Failed to load the launch script.");
 				return res.text();
 			})
 			.then((text) => {
@@ -33,22 +32,17 @@ export default function BatchFileEditor({ serverName, onBack, authToken }) {
 			.finally(() => setLoading(false));
 	}, [serverName]);
 
-	const saveBatchFile = () => {
-		fetch(`${API_BASE}/api/batch-files/by-server/${serverName}`, {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				"ngrok-skip-browser-warning": "true",
-				Authorization: `Bearer ${authToken}`,
-			},
-			body: JSON.stringify({ content }),
-		})
-			.then((res) => {
-				if (!res.ok) throw new Error("Save failed");
-				return res.text();
-			})
-			.then(() => alert("Saved!"))
-			.catch((err) => alert(err.message));
+	const saveBatchFile = async () => {
+		setError("");
+		try {
+			await api.post(
+				`/api/batch-files/by-server/${encodeURIComponent(serverName)}`,
+				{ content },
+			);
+			setSaved(true);
+		} catch (err) {
+			setError(err.message);
+		}
 	};
 
 	if (!serverName) {
@@ -70,10 +64,14 @@ export default function BatchFileEditor({ serverName, onBack, authToken }) {
 				Editing Batch File for: {serverName}
 			</Typography>
 
+			{error && (
+				<Alert severity="error" sx={{ mb: 2 }}>
+					{error}
+				</Alert>
+			)}
+
 			{loading ? (
 				<Typography>Loading...</Typography>
-			) : error ? (
-				<Typography color="error">{error}</Typography>
 			) : (
 				<>
 					<TextField
@@ -94,6 +92,13 @@ export default function BatchFileEditor({ serverName, onBack, authToken }) {
 					</Box>
 				</>
 			)}
+
+			<Snackbar
+				open={saved}
+				autoHideDuration={3000}
+				onClose={() => setSaved(false)}
+				message="Launch script saved."
+			/>
 		</Paper>
 	);
 }

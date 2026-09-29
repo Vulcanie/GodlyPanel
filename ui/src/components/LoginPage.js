@@ -1,82 +1,69 @@
-import React, { useState } from "react";
-import { Button, TextField, Typography, Box, CircularProgress } from "@mui/material";
+import React from "react";
+import { Box, Paper, Typography, TextField, Button, Alert, CircularProgress } from "@mui/material";
+import { useSession } from "../SessionContext";
 
-const API_BASE =
-	process.env.REACT_APP_API_URL?.trim().replace(/\/+$/, "") || "";
+function LoginPage() {
+	const { login } = useSession();
+	const [username, setUsername] = React.useState("");
+	const [password, setPassword] = React.useState("");
+	const [error, setError] = React.useState(null);
+	const [busy, setBusy] = React.useState(false);
 
-export default function LoginPage({ onLogin }) {
-	const [username, setUsername] = useState("");
-	const [password, setPassword] = useState("");
-	const [error, setError] = useState("");
-	const [loading, setLoading] = useState(false);
-
-	const joinUrl = (base, path) =>
-		`${base}/${path}`.replace(/\/+/g, "/").replace(":/", "://");
-
-	const handleLogin = async () => {
-		setError("");
-		setLoading(true);
+	const submit = async () => {
+		if (!username || !password || busy) return;
+		setBusy(true);
+		setError(null);
 		try {
-			const res = await fetch(joinUrl(API_BASE, "/api/auth/login"), {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-					"ngrok-skip-browser-warning": "true",
-				},
-				body: JSON.stringify({ username, password }),
-			});
-			const data = await res.json();
-			if (!res.ok) {
-				setError(data.error || "Invalid username or password");
-				return;
-			}
-			onLogin(data.role, data.token);
-		} catch (err) {
-			setError("Couldn't reach the server. Try again.");
-		} finally {
-			setLoading(false);
+			// No token handling here any more: the server sets an HttpOnly
+			// session cookie, which the browser sends on its own.
+			await login(username, password);
+		} catch (e) {
+			setError(e.message);
+			setBusy(false);
 		}
 	};
 
-	const handleKeyDown = (e) => {
-		if (e.key === "Enter") handleLogin();
-	};
-
 	return (
-		<Box sx={{ mt: 8, textAlign: "center" }}>
-			<Typography variant="h4" gutterBottom>
-				Server Dashboard Login
-			</Typography>
-			<TextField
-				label="Username"
-				value={username}
-				onChange={(e) => setUsername(e.target.value)}
-				onKeyDown={handleKeyDown}
-				margin="normal"
-			/>
-			<br />
-			<TextField
-				label="Password"
-				type="password"
-				value={password}
-				onChange={(e) => setPassword(e.target.value)}
-				onKeyDown={handleKeyDown}
-				margin="normal"
-			/>
-			<br />
-			<Button
-				variant="contained"
-				onClick={handleLogin}
-				disabled={loading}
-				sx={{ mt: 2 }}
-			>
-				{loading ? <CircularProgress size={20} /> : "Login"}
-			</Button>
-			{error && (
-				<Typography color="error" sx={{ mt: 2 }}>
-					{error}
+		<Box sx={{ display: "flex", justifyContent: "center", mt: 10, px: 2 }}>
+			<Paper sx={{ p: 4, maxWidth: 400, width: "100%" }}>
+				<Typography variant="h5" align="center" gutterBottom>
+					GodlyPanel
 				</Typography>
-			)}
+				<Typography variant="body2" align="center" sx={{ color: "text.secondary", mb: 3 }}>
+					Sign in to see your servers.
+				</Typography>
+
+				{error && (
+					<Alert severity="error" sx={{ mb: 2 }}>
+						{error}
+					</Alert>
+				)}
+
+				<TextField
+					fullWidth
+					label="Username"
+					autoFocus
+					sx={{ mb: 2 }}
+					value={username}
+					onChange={(e) => setUsername(e.target.value)}
+					onKeyDown={(e) => e.key === "Enter" && submit()}
+				/>
+				<TextField
+					fullWidth
+					type="password"
+					label="Password"
+					sx={{ mb: 3 }}
+					value={password}
+					onChange={(e) => setPassword(e.target.value)}
+					onKeyDown={(e) => e.key === "Enter" && submit()}
+				/>
+
+				<Button fullWidth variant="contained" onClick={submit} disabled={busy}>
+					{busy ? <CircularProgress size={22} /> : "Sign in"}
+				</Button>
+			</Paper>
 		</Box>
 	);
 }
+
+export default LoginPage;

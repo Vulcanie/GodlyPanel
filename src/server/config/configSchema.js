@@ -17,6 +17,12 @@ export const DEFAULTS = {
 		bindAll: true,
 	},
 
+	network: {
+		allowCgnat: true,
+		allowLinkLocal: true,
+		extraAllowedCidrs: [],
+	},
+
 	paths: {
 		// "" means "derive it" — resolved against the data dir at load time, so
 		// a portable install stays relocatable instead of baking in a path.
@@ -72,6 +78,28 @@ export const FIELD_SPECS = [
 		restart: true,
 		label: "Allow access from your network",
 		help: "Off means only this computer can open the panel.",
+	},
+
+	{
+		path: "network.allowCgnat",
+		type: "bool",
+		restart: false,
+		label: "Allow mesh VPN addresses",
+		help: "Tailscale and ZeroTier use the 100.64.0.0/10 range. Turn off to allow only ordinary local addresses.",
+	},
+	{
+		path: "network.allowLinkLocal",
+		type: "bool",
+		restart: false,
+		label: "Allow link-local addresses",
+		help: "Used when two machines are connected directly with no router.",
+	},
+	{
+		path: "network.extraAllowedCidrs",
+		type: "stringArray",
+		restart: false,
+		label: "Additional allowed networks",
+		help: "Extra IP ranges to accept, e.g. 10.8.0.0/24 for a VPN.",
 	},
 
 	{
@@ -291,6 +319,18 @@ export function coerceConfig(raw) {
 					setAt(config, spec.path, fallback);
 				}
 				break;
+			case "stringArray": {
+				const arr = Array.isArray(value) ? value : [];
+				if (!Array.isArray(value)) {
+					issues.push(`${spec.path}: expected a list — using an empty one.`);
+				}
+				setAt(
+					config,
+					spec.path,
+					arr.map(String).map((s) => s.trim()).filter(Boolean),
+				);
+				break;
+			}
 			case "intArray": {
 				const arr = Array.isArray(value) ? value : [];
 				if (!Array.isArray(value)) {

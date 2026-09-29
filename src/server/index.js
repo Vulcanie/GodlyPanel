@@ -2,15 +2,21 @@ import express from "express";
 import path from "node:path";
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
-import apiRouter, { broadcastSseEvent } from "./routes/api.js";
+import apiRouter from "./routes/api.js";
+import { broadcastSseEvent } from "./services/sseHub.js";
 import authRoutes from "./routes/auth.js";
+import setupRoutes from "./routes/setup.js";
+import dashboardRoutes from "./routes/dashboard.js";
+import userRoutes from "./routes/users.js";
 import settingsRoutes from "./routes/settings.js";
+import { attachUser, requireRole } from "./middleware/auth.js";
+import { createLanOnly, localAddresses } from "./middleware/lanOnly.js";
+import { initUserStore, needsSetup } from "./data/userStore.js";
 import { pollServers, initPollingState } from "./services/pollingService.js";
 import { checkAndHandleUpdates } from "./services/autoUpdateService.js";
 import { getSystemStats } from "./services/systemStats.js";
 import { getServerResourceStats } from "./services/serverResourceStats.js";
 import { cleanupStaleUploads } from "./services/modpackService.js";
-import { verifyToken } from "./services/authService.js";
 import { killTrackedSteamCmd, hasActiveJobs } from "./services/processRegistry.js";
 import batchFileRoutes from "./routes/batchFiles.js";
 import { ensureDataDirs, paths } from "./paths.js";
@@ -43,26 +49,24 @@ ensureDataDirs();
 // Order matters: config and secrets underpin everything, and the server store
 // has to be loaded before anything iterates the server list.
 const config = await initConfig();
-const { generatedAdminPassword } = await initSecrets();
+await initSecrets();
+await initUserStore();
 await initServerStore();
 initPollingState();
 
-if (generatedAdminPassword) {
-	console.log(
-		"\n" +
-			"  ┌─────────────────────────────────────────────┐\n" +
-			"  │  First run — your admin sign-in details:    │\n" +
-			"  │                                             │\n" +
-			`  │    username: admin                          │\n` +
-			`  │    password: ${generatedAdminPassword.padEnd(31)}│\n` +
-			"  │                                             │\n" +
-			"  │  Change it from Settings after signing in.  │\n" +
-			"  └─────────────────────────────────────────────┘\n",
-	);
-	process.send?.({ type: "first-run-credentials", username: "admin", password: generatedAdminPassword });
+if (needsSetup()) {
+	console.log("[setup] No admin account yet — the panel will ask you to create one.");
 }
 
 const app = express();
+
+// Nothing legitimate proxies this, so forwarding headers are never trusted —
+// honouring them would let a caller claim to be on the LAN.
+app.set("trust proxy", false);
+
+// First, ahead of logging and body parsing: a refused request shouldn't get
+// a 10MB body read off the wire before we turn it away.
+app.use(createLanOnly(getConfig));
 
 app.use((req, res, next) => {
 	console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
@@ -76,27 +80,21 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Write protection. GET stays open in Stage 2 — unchanged from the original
-// behaviour, deliberately: real per-role enforcement (and locking down the
-// currently-public GET surface) is Stage 3's job, together with the cookie
-// sessions that let the SSE endpoint authenticate at all.
-function requireAdmin(req, res, next) {
-	if (req.method === "GET") return next();
+app.use(attachUser);
 
-	const token = (req.get("authorization") || "").split(" ")[1] || "";
-	const payload = token && verifyToken(token);
-
-	if (payload?.role === "admin") return next();
-
-	return res
-		.status(401)
-		.json({ error: "Unauthorized: admin login required." });
-}
-
+// Roles are enforced here, per route group, rather than by the old rule of
+// "any GET is public, writes need admin". That rule existed because the live
+// -update endpoint is an EventSource and can't send an Authorization header —
+// which is no longer a constraint now that sessions are cookies on the same
+// origin. Config reads in particular are admin-only: those files contain RCON
+// and server passwords.
+app.use("/api/setup", setupRoutes);
 app.use("/api/auth", authRoutes);
-app.use("/api/settings", requireAdmin, settingsRoutes);
-app.use("/api/batch-files", requireAdmin, batchFileRoutes);
-app.use("/api", requireAdmin, apiRouter);
+app.use("/api", requireRole("admin", "guest"), dashboardRoutes);
+app.use("/api/users", requireRole("admin"), userRoutes);
+app.use("/api/settings", requireRole("admin"), settingsRoutes);
+app.use("/api/batch-files", requireRole("admin"), batchFileRoutes);
+app.use("/api", requireRole("admin"), apiRouter);
 
 app.use("/api/*", (req, res) => {
 	console.warn("Unhandled API route:", req.method, req.originalUrl);
@@ -174,7 +172,12 @@ registerTimer(
 
 const server = app.listen(PORT, HOST, () => {
 	console.log(`API listening on http://${HOST}:${PORT} (data: ${paths.dataDir})`);
-	process.send?.({ type: "ready", port: PORT, host: HOST });
+
+	const shareUrls = config.http.bindAll ? localAddresses(PORT) : [];
+	if (shareUrls.length > 0) {
+		console.log(`[network] Others on your network can use: ${shareUrls.join(", ")}`);
+	}
+	process.send?.({ type: "ready", port: PORT, host: HOST, shareUrls });
 
 	pollServers();
 	if (getConfig().polling.enableServerStats) getServerResourceStats().catch(() => {});
