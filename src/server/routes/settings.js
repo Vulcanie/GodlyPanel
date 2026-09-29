@@ -10,6 +10,7 @@ import {
 	scanServersRoot,
 } from "../services/importService.js";
 import { remove as removeServer, all as allServers } from "../data/serverStore.js";
+import { rescan } from "../services/storageService.js";
 
 const router = express.Router();
 
@@ -55,6 +56,13 @@ router.put("/secrets", async (req, res) => {
 	}
 	await patchSecrets(patch);
 	res.json({ success: true, secrets: describeSecrets() });
+});
+
+router.post("/storage/rescan", async (req, res) => {
+	// Returns straight away — a full walk takes a while, and the dashboard
+	// reads the cached figure.
+	res.status(202).json({ started: true });
+	rescan().catch((e) => console.error("[storage] Rescan failed:", e.message));
 });
 
 router.post("/steamcmd/install", async (req, res) => {

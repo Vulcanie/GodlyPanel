@@ -124,8 +124,14 @@ export async function startServer(server) {
 		"-ScriptPath",
 		server.startScriptPath,
 	];
-	// Subsistence cannot be run with a forced cwd
-	if (!server.name.toLowerCase().includes("subsistence")) {
+	// Subsistence's launcher refuses to run with a forced working directory.
+	// This used to be decided by looking for "subsistence" in the server's
+	// NAME, which meant the behaviour depended on what someone happened to
+	// call their server — and any other game needing the same treatment would
+	// have required a code change. It's a property of the server now.
+	const skipWorkingDir =
+		server.skipWorkingDir ?? server.type === "subsistence";
+	if (!skipWorkingDir && server.workingDir) {
 		psArgs.push("-WorkingDir", server.workingDir);
 	}
 

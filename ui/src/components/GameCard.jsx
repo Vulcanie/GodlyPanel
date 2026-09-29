@@ -83,7 +83,11 @@ function GameCard({
 						sx={{
 							position: "absolute",
 							inset: 0,
-							backgroundImage: banner ? `url(${banner})` : gradient,
+							// Gradient sits underneath the artwork, so if the
+							// image can't be fetched (no internet on a fresh
+							// install) the card still looks deliberate rather
+							// than blank.
+							backgroundImage: banner ? `url(${banner}), ${gradient}` : gradient,
 							backgroundSize: "cover",
 							backgroundPosition: "center",
 							transition: "transform 0.3s ease",

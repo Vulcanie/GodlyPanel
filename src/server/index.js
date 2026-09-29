@@ -7,6 +7,7 @@ import { broadcastSseEvent } from "./services/sseHub.js";
 import authRoutes from "./routes/auth.js";
 import setupRoutes from "./routes/setup.js";
 import dashboardRoutes from "./routes/dashboard.js";
+import artRoutes from "./routes/art.js";
 import userRoutes from "./routes/users.js";
 import settingsRoutes from "./routes/settings.js";
 import { attachUser, requireRole } from "./middleware/auth.js";
@@ -23,6 +24,7 @@ import { ensureDataDirs, paths } from "./paths.js";
 import { initConfig, getConfig, onConfigChange } from "./config/configStore.js";
 import { initSecrets } from "./config/secretsStore.js";
 import { initServerStore } from "./data/serverStore.js";
+import { initStorage, rescan } from "./services/storageService.js";
 import { registerTimer, scheduleAll, rescheduleAll, stopAll } from "./timerManager.js";
 
 // Exit code the supervisor reads as "died on purpose, restart me" so it can
@@ -52,6 +54,7 @@ const config = await initConfig();
 await initSecrets();
 await initUserStore();
 await initServerStore();
+await initStorage();
 initPollingState();
 
 if (needsSetup()) {
@@ -90,6 +93,7 @@ app.use(attachUser);
 // and server passwords.
 app.use("/api/setup", setupRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/art", requireRole("admin", "guest"), artRoutes);
 app.use("/api", requireRole("admin", "guest"), dashboardRoutes);
 app.use("/api/users", requireRole("admin"), userRoutes);
 app.use("/api/settings", requireRole("admin"), settingsRoutes);
@@ -169,6 +173,13 @@ registerTimer(
 	() => cleanupStaleUploads(),
 	(c) => c.polling.uploadSweepMs,
 );
+registerTimer(
+	"storage-scan",
+	() => {
+		rescan().catch((err) => console.error("[storage] Scan failed:", err.message));
+	},
+	(c) => c.storage.scanIntervalMs,
+);
 
 const server = app.listen(PORT, HOST, () => {
 	console.log(`API listening on http://${HOST}:${PORT} (data: ${paths.dataDir})`);
@@ -185,6 +196,12 @@ const server = app.listen(PORT, HOST, () => {
 		.then((stats) => broadcastSseEvent({ type: "system_stats", stats }))
 		.catch(() => {});
 	cleanupStaleUploads();
+
+	// Deferred: the first poll matters more than the disk figure, and a walk
+	// of every game install is heavy enough not to want it competing.
+	setTimeout(() => {
+		rescan().catch((err) => console.error("[storage] Initial scan failed:", err.message));
+	}, 60_000);
 
 	scheduleAll(getConfig());
 });

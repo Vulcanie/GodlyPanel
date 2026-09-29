@@ -2,6 +2,14 @@ import { exec } from "child_process";
 
 export function checkProcess(processName) {
 	return new Promise((resolve) => {
+		// A server set to process-detection without a processName is simply
+		// undetectable, not a reason to bring the panel down. This used to
+		// throw inside the exec callback below — an uncaught exception, so it
+		// killed the whole process, on every poll, for one malformed entry.
+		if (typeof processName !== "string" || processName.trim() === "") {
+			return resolve(false);
+		}
+
 		const cmd = `tasklist /FI "IMAGENAME eq ${processName}"`;
 
 		// windowsHide: without it, every one of these (one per process-based

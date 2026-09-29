@@ -10,6 +10,7 @@ import { paths } from "../paths.js";
 import { getConfig } from "../config/configStore.js";
 import { getSecrets } from "../config/secretsStore.js";
 import { ensureSteamCmd } from "./steamCmdProvisioner.js";
+import { assertStorageHeadroom } from "./storageService.js";
 import { resolveResource } from "../../shared/resources.js";
 import {
 	trackSteamCmd,
@@ -423,6 +424,10 @@ export async function createServer(templateId, rawParams) {
 	}
 
 	await validateNewServer(rawParams.name, ports, suggested.sharedInstallDir);
+
+	// Checked up front so it fails the request rather than dying partway
+	// through a multi-gigabyte download.
+	assertStorageHeadroom(template.estimatedInstallBytes ?? 0);
 
 	if (template.requiresEula && rawParams.eulaAccepted !== true) {
 		throw new Error("EULA acknowledgment is required.");

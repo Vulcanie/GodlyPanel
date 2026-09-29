@@ -5,6 +5,7 @@ import express from "express";
 import multer from "multer";
 import { promises as fs } from "fs";
 import { all as allServers } from "../data/serverStore.js";
+import { assertWithinAllowedRoots } from "../util/safePath.js";
 import { extractModpackZip, cleanupUpload } from "../services/modpackService.js";
 import { SUPPORTED_MODLOADER_FAMILIES } from "../data/gameTemplates.js";
 import { pollServers } from "../services/pollingService.js";
@@ -98,9 +99,13 @@ router.get("/config/:serverName", async (req, res) => {
 	}
 
 	try {
+		assertWithinAllowedRoots(pathToRead);
 		const configContent = await fs.readFile(pathToRead, "utf-8");
 		res.json({ content: configContent });
 	} catch (error) {
+		if (error.code === "path_not_allowed") {
+			return res.status(400).json({ error: error.message });
+		}
 		console.error(
 			`Error reading config for ${req.params.serverName}:`,
 			error,
@@ -131,10 +136,17 @@ router.post("/config/:serverName", async (req, res) => {
 	}
 
 	try {
+		// Checked before the .bak copy as well as the write — the backup lands
+		// beside the target, so an out-of-bounds target means an out-of-bounds
+		// backup too.
+		assertWithinAllowedRoots(pathToWrite);
 		await fs.copyFile(pathToWrite, `${pathToWrite}.bak`);
 		await fs.writeFile(pathToWrite, content, "utf-8");
 		res.json({ success: true, message: `${fileName} saved successfully!` });
 	} catch (error) {
+		if (error.code === "path_not_allowed") {
+			return res.status(400).json({ error: error.message });
+		}
 		console.error(`Error writing config for ${server.name}:`, error);
 		res.status(500).json({
 			error: `Failed to save ${fileName}. System error: ${error.code}`,

@@ -1,18 +1,20 @@
 // Maps a server's `type` to its display title and banner artwork.
-// Steam art is hotlinked from Steam's own CDN (library_hero.jpg, 1920x620).
-const steamBanner = (appid) =>
-	`https://cdn.cloudflare.steamstatic.com/steam/apps/${appid}/library_hero.jpg`;
+//
+// Artwork is served by our own API rather than hotlinked from Steam, so it
+// works with no internet connection after the first fetch. If it can't be
+// retrieved at all, GameCard falls back to the gradient below.
+const localBanner = (type) => `/api/art/${type}`;
 
 const CATALOG = {
-	ark: { title: "ARK: Survival Ascended", banner: steamBanner(2399830) },
-	valheim: { title: "Valheim", banner: steamBanner(892970) },
-	conan: { title: "Conan Exiles", banner: steamBanner(440900) },
-	enshrouded: { title: "Enshrouded", banner: steamBanner(1203620) },
-	rune: { title: "RuneScape: Dragonwilds", banner: steamBanner(1374490) },
-	windrose: { title: "Windrose", banner: steamBanner(3041230) },
-	subsistence: { title: "Subsistence", banner: steamBanner(418030) },
-	"7days": { title: "7 Days to Die", banner: steamBanner(251570) },
-	palword: { title: "Palworld", banner: steamBanner(1623730) },
+	ark: { title: "ARK: Survival Ascended", banner: localBanner("ark") },
+	valheim: { title: "Valheim", banner: localBanner("valheim") },
+	conan: { title: "Conan Exiles", banner: localBanner("conan") },
+	enshrouded: { title: "Enshrouded", banner: localBanner("enshrouded") },
+	rune: { title: "RuneScape: Dragonwilds", banner: localBanner("rune") },
+	windrose: { title: "Windrose", banner: localBanner("windrose") },
+	subsistence: { title: "Subsistence", banner: localBanner("subsistence") },
+	"7days": { title: "7 Days to Die", banner: localBanner("7days") },
+	palword: { title: "Palworld", banner: localBanner("palword") },
 	minecraft: {
 		title: "Minecraft",
 		banner: null,
@@ -37,11 +39,17 @@ const titleCase = (str) =>
 
 export function getGameInfo(type) {
 	const key = (type || "").toLowerCase();
-	if (CATALOG[key]) return CATALOG[key];
+	if (CATALOG[key]) {
+		// Every entry gets a gradient too, so a card still looks deliberate
+		// when the artwork isn't available.
+		const hash = key.split("").reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+		return {
+			gradient: FALLBACK_GRADIENTS[hash % FALLBACK_GRADIENTS.length],
+			...CATALOG[key],
+		};
+	}
 
-	const hash = key
-		.split("")
-		.reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+	const hash = key.split("").reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
 	return {
 		title: titleCase(type || "Unknown"),
 		banner: null,

@@ -18,6 +18,7 @@ import SetupWizard from "./components/SetupWizard";
 import BatchFileEditor from "./components/BatchFileEditor";
 import CreateServerPage from "./components/CreateServerPage";
 import UsersPage from "./components/UsersPage";
+import SettingsPage from "./components/SettingsPage";
 import { SessionProvider, useSession } from "./SessionContext";
 import { api } from "./api/client";
 
@@ -122,6 +123,7 @@ function Panel() {
 	const navigateToBatchEditor = React.useCallback(() => setPage("batchEditor"), []);
 	const navigateToCreateServer = React.useCallback(() => setPage("createServer"), []);
 	const navigateToUsers = React.useCallback(() => setPage("users"), []);
+	const navigateToSettings = React.useCallback(() => setPage("settings"), []);
 
 	if (status === "loading") {
 		return <CircularProgress sx={{ display: "block", mx: "auto", mt: 10 }} />;
@@ -164,6 +166,11 @@ function Panel() {
 							People
 						</Button>
 					)}
+					{isAdmin && page !== "settings" && (
+						<Button variant="text" size="small" onClick={navigateToSettings}>
+							Settings
+						</Button>
+					)}
 					<Button variant="outlined" size="small" onClick={logout}>
 						Sign out
 					</Button>
@@ -183,6 +190,8 @@ function Panel() {
 				/>
 			) : page === "createServer" ? (
 				<CreateServerPage onBack={navigateToDashboard} userRole={role} />
+			) : page === "settings" ? (
+				<SettingsPage onBack={navigateToDashboard} />
 			) : page === "users" ? (
 				<UsersPage onBack={navigateToDashboard} currentUser={user} />
 			) : page === "config" ? (

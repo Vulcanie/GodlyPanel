@@ -47,6 +47,13 @@ export const DEFAULTS = {
 		enableBuildCheck: false,
 	},
 
+	storage: {
+		quotaBytes: 0,
+		enforce: "warn",
+		scanIntervalMs: 3600000,
+		scanConcurrency: 2,
+	},
+
 	servers: {
 		defaultRconPasswordMode: "generate",
 	},
@@ -201,6 +208,40 @@ export const FIELD_SPECS = [
 		restart: false,
 		label: "Check Steam for game updates",
 		help: "When on, servers with auto-update enabled will update and restart themselves.",
+	},
+
+	{
+		path: "storage.quotaBytes",
+		type: "int",
+		min: 0,
+		max: Number.MAX_SAFE_INTEGER,
+		restart: false,
+		label: "Storage limit (bytes)",
+		help: "0 means no limit. Applies to your servers and app data combined.",
+	},
+	{
+		path: "storage.enforce",
+		type: "enum",
+		values: ["off", "warn", "block"],
+		restart: false,
+		label: "When the limit is reached",
+		help: "Warn shows it on the dashboard. Block also refuses new installs. Starting a server is never blocked.",
+	},
+	{
+		path: "storage.scanIntervalMs",
+		type: "int",
+		min: 300000,
+		max: 86400000,
+		restart: false,
+		label: "Storage recheck interval (ms)",
+	},
+	{
+		path: "storage.scanConcurrency",
+		type: "int",
+		min: 1,
+		max: 8,
+		restart: false,
+		label: "Folders scanned at once",
 	},
 
 	{
