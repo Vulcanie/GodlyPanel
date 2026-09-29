@@ -56,8 +56,11 @@ function getSaveCommand(server) {
 			return "saveworld";
 		case "minecraft":
 			return "save-all flush";
+		// Conan's RCON has 25 commands and none of them saves on its own —
+		// there is no saveworld. Its Shutdown command saves as it exits, which is
+		// why Stop uses that and nothing here.
 		case "conan":
-			return "saveworld";
+			return null;
 		case "Palword":
 			return "Save";
 		default:
@@ -202,6 +205,20 @@ export async function startServer(server) {
 	});
 }
 
+// The command each game's RCON uses to shut the server down. Getting this
+// wrong is silent: an unknown command is simply ignored, so the server carries
+// on running and Stop appears to do nothing.
+function stopCommandFor(server) {
+	switch (server.type) {
+		case "minecraft":
+			return "stop";
+		case "conan":
+			return "Shutdown";
+		default:
+			return "DoExit";
+	}
+}
+
 // Stops a server: RCON if configured, otherwise a close request by process name.
 // Shared by the "stop" control action and the update flow (which stops
 // servers before running SteamCMD).
@@ -224,17 +241,24 @@ export async function stopServer(server) {
 							console.warn(`Save command failed for ${server.name} before stop:`, e.message);
 						}
 					}
-					await send(
-						server.type === "minecraft" || server.type === "conan" ? "stop" : "DoExit",
-					);
+					await send(stopCommandFor(server));
 				},
 				// Generous: a busy world can take a while to acknowledge a stop.
 				{ timeoutMs: 30000 },
 			);
 			forgetPid(server.name).catch(() => {});
 			return { success: true, message: `${server.name} stop command sent via RCON.` };
-		} catch {
-			throw new Error("RCON command failed. Is the server online?");
+		} catch (rconError) {
+			// RCON not answering doesn't have to mean Stop can't work: a hung server
+			// is exactly when someone reaches for Stop. Where the process can be
+			// identified, close it directly instead of giving up.
+			if (server.processName) {
+				console.warn(`RCON stop failed for ${server.name} (${rconError.message}); closing the process directly.`);
+				const result = await gracefulThenForceKill(server);
+				forgetPid(server.name).catch(() => {});
+				return { ...result, message: `RCON didn't answer, so the process was closed directly. ${result.message}` };
+			}
+			throw new Error(`RCON command failed: ${rconError.message}. Is the server online?`);
 		}
 	}
 

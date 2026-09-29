@@ -33,6 +33,8 @@ function getBroadcastCommand(server, message) {
 			return `say ${message}`;
 		case "Palword":
 			return `Broadcast ${message}`;
+		case "conan":
+			return `broadcast ${message}`;
 		default:
 			return null;
 	}
