@@ -3,14 +3,31 @@
 	"productName": "GodlyPanel",
 	"version": "0.1.0",
 	"description": "All-in-one game server control panel for Windows",
+	"author": "Vulcanie",
+	"license": "MIT",
+	"homepage": "https://github.com/Vulcanie/GodlyPanel#readme",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Vulcanie/GodlyPanel.git"
+	},
+	"bugs": {
+		"url": "https://github.com/Vulcanie/GodlyPanel/issues"
+	},
 	"type": "module",
 	"main": "electron/main/index.cjs",
 	"private": true,
+	"engines": {
+		"node": ">=22"
+	},
 	"scripts": {
+		"setup": "npm ci && npm --prefix ui ci",
 		"build:ui": "npm --prefix ui run build",
 		"start": "node scripts/dev.mjs",
 		"dev": "npm run build:ui && node scripts/dev.mjs",
 		"dev:ui": "npm --prefix ui start",
+		"test": "node --test \"tests/unit/**/*.test.js\" \"tests/api/**/*.test.js\"",
+		"test:desktop": "node --test \"tests/desktop/**/*.test.js\"",
+		"test:all": "node --test \"tests/**/*.test.js\"",
 		"package": "npm run build:ui && electron-builder"
 	},
 	"dependencies": {
@@ -27,7 +44,9 @@
 		"productName": "GodlyPanel",
 		"asar": true,
 		"compression": "maximum",
-		"electronLanguages": ["en-US"],
+		"electronLanguages": [
+			"en-US"
+		],
 		"afterPack": "scripts/afterPack.cjs",
 		"npmRebuild": false,
 		"directories": {

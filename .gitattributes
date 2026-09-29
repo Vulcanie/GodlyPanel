@@ -1,0 +1,12 @@
+# Store text as LF in the repository regardless of who checks it out.
+* text=auto eol=lf
+
+# Windows scripts that are run by cmd/PowerShell on the user's machine.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Never touch binaries.
+*.png binary
+*.ico binary
+*.jpg binary
+*.zip binary

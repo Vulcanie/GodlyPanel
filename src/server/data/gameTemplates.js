@@ -18,7 +18,6 @@ import {
 	cleanupUpload,
 } from "../services/modpackService.js";
 
-const ADMIN_RCON_PASSWORD = "adminpass";
 
 // CurseForge manifest.json modLoaders[].id families the bundled ServerPackCreator
 // scaffold (ServerData/templates/neoforge/{start.bat,start.ps1}) can actually

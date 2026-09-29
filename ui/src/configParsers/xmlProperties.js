@@ -1,5 +1,5 @@
 // Parser for 7 Days to Die's serverconfig.xml, e.g.
-//   <property name="ServerName" value="GodlyHeroes"/> <!-- description -->
+//   <property name="ServerName" value="My Server"/> <!-- description -->
 // Standalone comment lines (not attached to a <property> tag) are treated as
 // section headers for whatever properties follow, e.g. <!-- Networking -->.
 // Serializing only swaps the value="..." attribute on its original line.

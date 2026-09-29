@@ -1,0 +1,29 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    # The panel manages Windows processes and uses Windows tools (tasklist,
+    # taskkill, PowerShell), so it is tested where it runs.
+    runs-on: windows-latest
+    timeout-minutes: 15
+    env:
+      # The tests never launch the desktop shell, so skip the ~100 MB download.
+      ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Unit and API tests. The desktop tests (real windows and processes) need an
+      # interactive Windows session, so they are run locally with `npm run test:desktop`.
+      - run: npm test

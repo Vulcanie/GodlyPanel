@@ -37,6 +37,16 @@ const FIELD_LABELS = {
 // Poll cadence while a creation job is running.
 const POLL_MS = 4000;
 
+// A fresh join password for each new server. This used to default to one fixed
+// value, which would have meant every server anyone created started out with the
+// same well-known password. Letters and digits only, minus the look-alikes
+// (0/O, 1/l/I), since people read these out to friends.
+function randomJoinPassword(length = 8) {
+	const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+	const bytes = crypto.getRandomValues(new Uint8Array(length));
+	return Array.from(bytes, (b) => alphabet[b % alphabet.length]).join("");
+}
+
 function CreateServerPage({ onBack, userRole }) {
 	const [templates, setTemplates] = React.useState(null);
 	const [loadError, setLoadError] = React.useState(null);
@@ -67,12 +77,12 @@ function CreateServerPage({ onBack, userRole }) {
 			setSuggested(data);
 			const initial = {
 				name: "",
-				rconPassword: data.rconPassword || "adminpass",
-				serverPassword: "4Honor",
+				rconPassword: data.rconPassword ?? "",
+				serverPassword: randomJoinPassword(),
 				sessionName: "",
 				maxPlayers: "",
 				mapCode: template.mapChoices?.[0]?.code || "",
-				clusterId: "GodlyCluster",
+				clusterId: "MyCluster",
 				mods: "",
 				maxMemoryGB: "6",
 				eulaAccepted: false,
