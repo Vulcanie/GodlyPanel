@@ -23,6 +23,7 @@ import {
 import { ArrowBack as ArrowBackIcon } from "@mui/icons-material";
 import { grey } from "@mui/material/colors";
 import ModpackUploadField from "./ModpackUploadField";
+import FolderField from "./FolderField";
 import { api } from "../api/client";
 
 const FIELD_LABELS = {
@@ -76,6 +77,7 @@ function CreateServerPage({ onBack, userRole }) {
 				maxMemoryGB: "6",
 				eulaAccepted: false,
 				uploadId: "",
+				installParent: "",
 				...Object.fromEntries(
 					template.ports.map((p) => [p.key, String(data.ports[p.key])]),
 				),
@@ -347,6 +349,24 @@ function CreateServerPage({ onBack, userRole }) {
 							</Button>
 						</DialogActions>
 					</Dialog>
+
+					{suggested?.sharedInstallDir ? (
+						<Typography variant="body2" sx={{ color: "text.secondary", my: 1 }}>
+							Adding to your existing install at {suggested.sharedInstallDir} — no new download.
+						</Typography>
+					) : (
+						<Box sx={{ my: 2 }}>
+							<FolderField
+								label="Install to"
+								value={form.installParent ?? ""}
+								onChange={(v) => setField("installParent", v)}
+								checkUrl="/api/settings/check-folder"
+								checkBody={{ blankUsesConfigured: true }}
+								blankMeans={suggested?.defaultInstallParent ?? "your default server folder"}
+								helperText={`Blank uses ${suggested?.defaultInstallParent ?? "your default server folder"}. The server gets its own subfolder.`}
+							/>
+						</Box>
+					)}
 
 					{submitError && (
 						<Alert severity="error" sx={{ my: 1 }}>

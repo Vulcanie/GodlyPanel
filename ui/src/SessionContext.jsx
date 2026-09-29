@@ -49,8 +49,8 @@ export function SessionProvider({ children }) {
 		return data.user;
 	}, []);
 
-	const completeSetup = React.useCallback(async (username, password) => {
-		const data = await api.post("/api/setup/admin", { username, password });
+	const completeSetup = React.useCallback(async (username, password, serversRoot = "") => {
+		const data = await api.post("/api/setup/admin", { username, password, serversRoot });
 		setState({ status: "signedIn", user: data.user });
 		return data.user;
 	}, []);

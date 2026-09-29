@@ -6,6 +6,7 @@ import { paths } from "../paths.js";
 import { getConfig } from "../config/configStore.js";
 import { all as allServers } from "../data/serverStore.js";
 import { readJson, writeJsonAtomic } from "../util/atomicJson.js";
+import { freeBytesFor } from "./folderCheck.js";
 
 const CACHE_PATH = path.join(paths.dataDir, "cache", "storage-usage.json");
 const WORKER_PATH = path.join(
@@ -176,14 +177,16 @@ export async function rescan() {
  *   for a panel to do — and it fails open on stale or partial data, since a
  *   quota enforced on numbers we don't trust is worse than none.
  */
-export function assertStorageHeadroom(estimatedBytes = 0) {
+export function assertStorageHeadroom(estimatedBytes = 0, targetDir = null) {
 	const state = getStorage();
 
-    const volume = state.volumes[0];
-	if (volume && estimatedBytes > 0 && volume.freeBytes < estimatedBytes * 1.2) {
+	// The drive being installed to, not whichever one happens to be tracked
+	// first — with installs now placeable on any drive those can differ.
+	const freeBytes = targetDir ? freeBytesFor(targetDir) : state.volumes[0]?.freeBytes;
+	if (freeBytes != null && estimatedBytes > 0 && freeBytes < estimatedBytes * 1.2) {
 		const err = new Error(
 			`Not enough free disk space: about ${formatBytes(estimatedBytes)} needed, ` +
-				`${formatBytes(volume.freeBytes)} free.`,
+				`${formatBytes(freeBytes)} free.`,
 		);
 		err.code = "disk_full";
 		throw err;

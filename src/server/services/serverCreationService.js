@@ -11,6 +11,7 @@ import { getConfig } from "../config/configStore.js";
 import { getSecrets } from "../config/secretsStore.js";
 import { ensureSteamCmd, isSteamCmdInstalled } from "./steamCmdProvisioner.js";
 import { assertStorageHeadroom } from "./storageService.js";
+import { inspectFolder } from "./folderCheck.js";
 import { resolveResource } from "../../shared/resources.js";
 import {
 	trackSteamCmd,
@@ -160,7 +161,13 @@ export async function suggestParams(templateId) {
 		ports[p.key] = await nextFreePort(p.default, sharedInstallDir);
 	}
 
-	return { ports, sharedInstallDir, rconPassword: suggestRconPassword() };
+	return {
+		ports,
+		sharedInstallDir,
+		rconPassword: suggestRconPassword(),
+		// Shown as the form's default so it's clear where this will go.
+		defaultInstallParent: inspectFolder(getConfig().paths.serversRoot).resolved,
+	};
 }
 
 async function validateNewServer(name, ports, sharedInstallDir) {
@@ -431,7 +438,6 @@ export async function createServer(templateId, rawParams) {
 
 	// Checked up front so it fails the request rather than dying partway
 	// through a multi-gigabyte download.
-	assertStorageHeadroom(template.estimatedInstallBytes ?? 0);
 
 	// Downloading a program from the internet is not something to do silently
 	// as a side effect of pressing Create. The UI asks, then resends with
@@ -450,10 +456,23 @@ export async function createServer(templateId, rawParams) {
 	}
 
 	const slug = slugify(rawParams.slug || rawParams.name);
-	const installDir =
-		template.sharedInstall && suggested.sharedInstallDir
-			? suggested.sharedInstallDir
-			: path.win32.join(getConfig().paths.serversRoot, slug);
+
+	// Where this server goes: a folder chosen for it, else the panel-wide
+	// setting. Shared installs (extra ARK maps) reuse the existing folder and
+	// ignore both, since the game is already on disk.
+	const reusingShared = Boolean(template.sharedInstall && suggested.sharedInstallDir);
+	const parentDir = String(rawParams.installParent ?? "").trim() || getConfig().paths.serversRoot;
+	if (!reusingShared) {
+		const check = inspectFolder(parentDir);
+		if (!check.ok) throw new Error(check.errors[0]);
+	}
+	const installDir = reusingShared
+		? suggested.sharedInstallDir
+		: path.win32.join(parentDir, slug);
+	if (!reusingShared) {
+		// Free space on the drive it's actually going to, not the first one tracked.
+		assertStorageHeadroom(template.estimatedInstallBytes ?? 0, installDir);
+	}
 	// Always derived from this specific server's own name, never the shared
 	// folder's slug — used for per-instance filenames/save-dir names so a
 	// second ARK map added to the same shared install doesn't collide with

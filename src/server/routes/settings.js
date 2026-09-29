@@ -11,6 +11,7 @@ import {
 } from "../services/importService.js";
 import { remove as removeServer, all as allServers } from "../data/serverStore.js";
 import { rescan } from "../services/storageService.js";
+import { inspectFolder } from "../services/folderCheck.js";
 
 const router = express.Router();
 
@@ -30,8 +31,21 @@ router.get("/", (req, res) => {
 	});
 });
 
+router.post("/check-folder", (req, res) => {
+	// On the create page a blank box means "my usual server folder", which is
+	// the configured one — not the built-in default the settings box means.
+	const blankUsesConfigured = req.body?.blankUsesConfigured === true;
+	const typed = String(req.body?.path ?? "").trim();
+	res.json(inspectFolder(typed === "" && blankUsesConfigured ? getConfig().paths.serversRoot : typed));
+});
+
 router.put("/", async (req, res) => {
 	try {
+		const newRoot = req.body?.paths?.serversRoot;
+		if (typeof newRoot === "string" && newRoot.trim() !== "") {
+			const check = inspectFolder(newRoot);
+			if (!check.ok) return res.status(400).json({ error: check.errors[0] });
+		}
 		const result = await patchConfig(req.body ?? {});
 		res.json({ success: true, ...result });
 	} catch (e) {

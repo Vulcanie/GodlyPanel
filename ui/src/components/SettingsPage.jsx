@@ -17,6 +17,7 @@ import {
 import { ArrowBack as ArrowBackIcon } from "@mui/icons-material";
 import { api } from "../api/client";
 import AppearanceSettings from "./AppearanceSettings";
+import FolderField from "./FolderField";
 
 // The form is generated from the schema the server sends, so it can't drift
 // out of step with what's actually honoured — adding a setting on the server
@@ -322,6 +323,18 @@ function SettingsPage({ onBack }) {
 
 function Field({ spec, value, onChange }) {
 	const help = spec.help || (spec.restart ? "Takes effect after a restart." : undefined);
+
+	if (spec.path === "paths.serversRoot") {
+		return (
+			<FolderField
+				label={spec.label}
+				value={value ?? ""}
+				onChange={onChange}
+				checkUrl="/api/settings/check-folder"
+				helperText={`${help} Only affects servers created from now on.`}
+			/>
+		);
+	}
 
 	if (spec.type === "bool") {
 		return (

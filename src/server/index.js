@@ -129,6 +129,18 @@ if (fs.existsSync(path.join(uiBuildPath, "index.html"))) {
 	);
 }
 
+// Last stop for anything that reaches next(err). Express's default answers
+// with an HTML page containing the stack trace — file paths and all — which
+// is more than a caller on the network should learn from sending bad JSON.
+app.use((err, req, res, next) => {
+	if (res.headersSent) return next(err);
+	const status = err.status || err.statusCode || 500;
+	if (status >= 500) console.error("[http] Unhandled error:", err);
+	res.status(status).json({
+		error: err.type === "entity.parse.failed" ? "That request wasn't valid JSON." : status >= 500 ? "Something went wrong on the server." : err.message,
+	});
+});
+
 const PORT = Number(process.env.GHP_PORT) || config.http.port;
 const HOST = config.http.bindAll ? "0.0.0.0" : "127.0.0.1";
 
