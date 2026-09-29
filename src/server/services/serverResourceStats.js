@@ -103,7 +103,7 @@ function isMatchForProcessName(server, proc) {
 	return procBaseName.toLowerCase() === baseName.toLowerCase();
 }
 
-function findMatches(server, processes) {
+export function findMatches(server, processes) {
 	if (server.type === "minecraft") {
 		return processes.filter((p) => isMatchForMinecraft(server, p));
 	}

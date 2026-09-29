@@ -34,6 +34,19 @@ const MODES = {
 	},
 };
 
+// Minecraft's start chain is already fully hidden, so it has no window to
+// minimize or hide: the real choice is its script, or a direct launch.
+const MINECRAFT_MODES = {
+	hidden: {
+		label: "Standard",
+		help: "Started by its own start script, which already runs without any window. This is how it works today.",
+	},
+	windowless: {
+		label: "No window",
+		help: "GodlyPanel starts Java itself instead of going through the start script, shows the server's live console output below, and tracks the exact process. It skips what the script does on each start — installing or updating the loader, rewriting settings files from variables.txt — so keep using the script for those.",
+	},
+};
+
 const PRIORITIES = [
 	["", "Normal"],
 	["belowNormal", "Below normal"],
@@ -53,6 +66,7 @@ function ServerWindowPanel({ serverName }) {
 	const [error, setError] = React.useState(null);
 	const [notice, setNotice] = React.useState(null);
 	const [detected, setDetected] = React.useState(null);
+	const [captureNotes, setCaptureNotes] = React.useState([]);
 	const [editing, setEditing] = React.useState(false);
 	const [form, setForm] = React.useState({
 		exe: "",
@@ -81,6 +95,7 @@ function ServerWindowPanel({ serverName }) {
 	React.useEffect(() => {
 		setWin(null);
 		setDetected(null);
+		setCaptureNotes([]);
 		setEditing(false);
 		setError(null);
 		setNotice(null);
@@ -101,6 +116,14 @@ function ServerWindowPanel({ serverName }) {
 		}
 		return null;
 	};
+
+	const fillForm = (launch) =>
+		setForm({
+			exe: launch.exe,
+			args: launch.args,
+			cwd: launch.cwd,
+			priority: launch.priority ?? "",
+		});
 
 	const choose = (mode) =>
 		run(async () => {
@@ -124,17 +147,20 @@ function ServerWindowPanel({ serverName }) {
 		run(async () => {
 			const found = await api.post(`${base}/launch/detect`);
 			setDetected(found);
-			if (found.ok) {
-				setForm({
-					exe: found.launch.exe,
-					args: found.launch.args,
-					cwd: found.launch.cwd,
-					priority: found.launch.priority ?? "",
-				});
-				setEditing(true);
-			} else {
-				setError(found.reason);
-			}
+			setCaptureNotes([]);
+			if (!found.ok) throw new Error(found.reason);
+			fillForm(found.launch);
+			setEditing(true);
+		});
+
+	const capture = () =>
+		run(async () => {
+			const found = await api.post(`${base}/launch/capture`);
+			setDetected(null);
+			if (!found.ok) throw new Error(found.reason);
+			fillForm(found.launch);
+			setCaptureNotes(found.notes ?? []);
+			setEditing(true);
 		});
 
 	const saveLaunch = () =>
@@ -145,6 +171,7 @@ function ServerWindowPanel({ serverName }) {
 			});
 			await load();
 			setEditing(false);
+			setCaptureNotes([]);
 			setNotice("Launch details saved.");
 		});
 
@@ -166,15 +193,10 @@ function ServerWindowPanel({ serverName }) {
 		);
 	}
 
-	if (!win.applicable) {
-		return (
-			<Alert severity="info" sx={{ mb: 2 }}>
-				Minecraft servers already run without a window, so there's
-				nothing to configure here.
-			</Alert>
-		);
-	}
-
+	const modes = win.hasWindows ? MODES : MINECRAFT_MODES;
+	const defaultLabel = (
+		modes[win.defaultMode] ?? modes.hidden
+	).label.toLowerCase();
 	const selected = win.requested ?? "default";
 	const showsConsole = win.effective === "windowless" || win.hasLog;
 
@@ -195,9 +217,12 @@ function ServerWindowPanel({ serverName }) {
 						}}
 					>
 						<Typography variant="subtitle1">
-							Window &amp; console
+							{win.hasWindows ? "Window & console" : "Launch & console"}
 						</Typography>
-						<Chip size="small" label={MODES[win.effective].label} />
+						<Chip
+							size="small"
+							label={(modes[win.effective] ?? modes.hidden).label}
+						/>
 						{win.requested === null && (
 							<Chip
 								size="small"
@@ -216,18 +241,12 @@ function ServerWindowPanel({ serverName }) {
 						}}
 					>
 						{error && (
-							<Alert
-								severity="error"
-								onClose={() => setError(null)}
-							>
+							<Alert severity="error" onClose={() => setError(null)}>
 								{error}
 							</Alert>
 						)}
 						{notice && (
-							<Alert
-								severity="info"
-								onClose={() => setNotice(null)}
-							>
+							<Alert severity="info" onClose={() => setNotice(null)}>
 								{notice}
 							</Alert>
 						)}
@@ -242,15 +261,11 @@ function ServerWindowPanel({ serverName }) {
 								control={<Radio />}
 								label={
 									<Typography variant="body2">
-										Use the panel default (
-										{MODES[
-											win.defaultMode
-										].label.toLowerCase()}
-										)
+										Use the panel default ({defaultLabel})
 									</Typography>
 								}
 							/>
-							{Object.entries(MODES).map(([value, mode]) => (
+							{Object.entries(modes).map(([value, mode]) => (
 								<FormControlLabel
 									key={value}
 									value={value}
@@ -277,43 +292,46 @@ function ServerWindowPanel({ serverName }) {
 						{win.requested === "windowless" &&
 							win.effective !== "windowless" && (
 								<Alert severity="warning">
-									No launch details are saved yet, so this
-									runs hidden until they are. Fill them in
-									below.
+									No launch details are saved yet, so this{" "}
+									{win.hasWindows
+										? "runs hidden"
+										: "starts the normal way"}{" "}
+									until they are. Fill them in below.
 								</Alert>
 							)}
 						{win.launchProblem && (
-							<Alert severity="warning">
-								{win.launchProblem}
-							</Alert>
+							<Alert severity="warning">{win.launchProblem}</Alert>
 						)}
 
 						<Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-							<Button
-								size="small"
-								variant="outlined"
-								disabled={busy}
-								onClick={() => windowsNow("hide")}
-							>
-								Hide windows now
-							</Button>
-							<Button
-								size="small"
-								variant="outlined"
-								disabled={busy}
-								onClick={() => windowsNow("show")}
-							>
-								Show windows
-							</Button>
+							{win.hasWindows && (
+								<>
+									<Button
+										size="small"
+										variant="outlined"
+										disabled={busy}
+										onClick={() => windowsNow("hide")}
+									>
+										Hide windows now
+									</Button>
+									<Button
+										size="small"
+										variant="outlined"
+										disabled={busy}
+										onClick={() => windowsNow("show")}
+									>
+										Show windows
+									</Button>
+								</>
+							)}
 							{win.hasScript && (
-								<Button
-									size="small"
-									disabled={busy}
-									onClick={detect}
-								>
+								<Button size="small" disabled={busy} onClick={detect}>
 									Read launch details from the start script
 								</Button>
 							)}
+							<Button size="small" disabled={busy} onClick={capture}>
+								Copy from the running server
+							</Button>
 							{!editing && (
 								<Button
 									size="small"
@@ -335,6 +353,11 @@ function ServerWindowPanel({ serverName }) {
 								auto-update cover it.
 							</Alert>
 						)}
+						{captureNotes.map((note) => (
+							<Alert key={note} severity="info">
+								{note}
+							</Alert>
+						))}
 
 						{editing && (
 							<Box
@@ -349,10 +372,7 @@ function ServerWindowPanel({ serverName }) {
 									label="Program"
 									value={form.exe}
 									onChange={(e) =>
-										setForm({
-											...form,
-											exe: e.target.value,
-										})
+										setForm({ ...form, exe: e.target.value })
 									}
 									helperText="Full path to the server's .exe."
 								/>
@@ -361,10 +381,7 @@ function ServerWindowPanel({ serverName }) {
 									label="Arguments"
 									value={form.args}
 									onChange={(e) =>
-										setForm({
-											...form,
-											args: e.target.value,
-										})
+										setForm({ ...form, args: e.target.value })
 									}
 									helperText="Exactly what follows the program on the launch line."
 								/>
@@ -373,12 +390,9 @@ function ServerWindowPanel({ serverName }) {
 									label="Start in folder"
 									value={form.cwd}
 									onChange={(e) =>
-										setForm({
-											...form,
-											cwd: e.target.value,
-										})
+										setForm({ ...form, cwd: e.target.value })
 									}
-									helperText="Leave blank to use the program's own folder."
+									helperText="Leave blank to use the program's own folder. When copied from a running server this is assumed to be the server's folder, since Windows can't say where it was started."
 								/>
 								<TextField
 									select
@@ -424,10 +438,7 @@ function ServerWindowPanel({ serverName }) {
 								<Typography variant="subtitle2" sx={{ mb: 1 }}>
 									Console output
 								</Typography>
-								<ServerConsole
-									serverName={serverName}
-									active={open}
-								/>
+								<ServerConsole serverName={serverName} active={open} />
 							</Box>
 						)}
 					</Box>

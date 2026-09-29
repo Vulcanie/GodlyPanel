@@ -162,6 +162,12 @@ function parseScript(scriptPath, startCwd, state, depth) {
 			continue;
 		}
 
+		if (command === "powershell" || command === "powershell.exe") {
+			if (state.launch) throw new Unsupported("starts more than one program");
+			state.launch = parsePowerShellStart(line, cwd, state, scriptDir);
+			continue;
+		}
+
 		if (command === "start") {
 			if (state.launch) throw new Unsupported("starts more than one program");
 			state.launch = parseStart(line, tokens, cwd, state, scriptDir, scriptPath, depth);
@@ -178,6 +184,40 @@ function parseScript(scriptPath, startCwd, state, depth) {
 
 		throw new Unsupported(`uses "${tokens[0].raw}", which I can't safely reproduce`);
 	}
+}
+
+// Some scripts launch through a one-line PowerShell wrapper so that the game
+// can be started with a hidden window style:
+//   powershell -NoProfile -Command "Start-Process -FilePath 'X.exe' -ArgumentList 'a b' -WorkingDirectory 'dir' -WindowStyle Hidden"
+// That's just a program, arguments and folder in different clothes.
+const START_PROCESS_PARAMS = new Set(["filepath", "argumentlist", "workingdirectory", "windowstyle"]);
+
+function parsePowerShellStart(line, cwd, state, scriptDir) {
+	const wrapped = line.match(/-Command\s+"(.*)"\s*$/i);
+	if (!wrapped) throw new Unsupported("runs PowerShell in a form I can't read");
+	const inner = wrapped[1];
+
+	const outsideQuotes = inner.replace(/'[^']*'/g, "''");
+	if (!/^\s*Start-Process\b/i.test(inner) || /[;|&]/.test(outsideQuotes)) {
+		throw new Unsupported("runs PowerShell commands other than a single Start-Process");
+	}
+	for (const [, name] of outsideQuotes.matchAll(/\s-(\w+)/g)) {
+		if (!START_PROCESS_PARAMS.has(name.toLowerCase())) {
+			throw new Unsupported(`uses Start-Process -${name}, which I can't reproduce`);
+		}
+	}
+
+	const param = (name) => {
+		const found = inner.match(new RegExp(`-${name}\\s+'([^']*)'`, "i"));
+		return found ? expand(found[1], state.env, scriptDir) : undefined;
+	};
+	const file = param("FilePath");
+	if (!file) throw new Unsupported("has a Start-Process with no program");
+
+	const launchCwd = param("WorkingDirectory") ? path.resolve(cwd, param("WorkingDirectory")) : cwd;
+	const args = param("ArgumentList") ?? "";
+	assertPlainCommandLine(args);
+	return { exe: resolveExecutable(file, launchCwd), args, cwd: launchCwd };
 }
 
 function assertPlainCommandLine(rest) {

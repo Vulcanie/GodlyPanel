@@ -6,6 +6,7 @@ import { assertWithinAllowedRoots } from "../util/safePath.js";
 import { getConfig } from "../config/configStore.js";
 import { serverStatus } from "../services/pollingService.js";
 import { deriveLaunch } from "../services/batchLaunch.js";
+import { captureLaunch } from "../services/launchCapture.js";
 import { launchProblem, readServerLog, serverLogPath } from "../services/windowlessLauncher.js";
 import {
 	WINDOW_MODES,
@@ -26,7 +27,10 @@ const PRIORITIES = ["low", "belowNormal", "normal", "aboveNormal", "high", "real
 
 function describe(server) {
 	return {
-		applicable: usesWindows(server),
+		// Whether there's a window to hide or minimize at all. Minecraft's start
+		// chain is already fully hidden, so it only ever chooses between its script
+		// and a direct launch.
+		hasWindows: usesWindows(server),
 		requested: WINDOW_MODES.includes(server.windowMode) ? server.windowMode : null,
 		effective: effectiveWindowMode(server),
 		defaultMode: getConfig().servers.defaultWindowMode,
@@ -46,6 +50,12 @@ router.get("/window", (req, res) => {
 router.post("/launch/detect", (req, res) => {
 	const { startScriptPath, workingDir } = req.server;
 	res.json(deriveLaunch(startScriptPath, { workingDir }));
+});
+
+// Copy the launch out of the running server itself, for scripts that can't be
+// read. Doesn't save anything; the owner reviews it first.
+router.post("/launch/capture", async (req, res) => {
+	res.json(await captureLaunch(req.server));
 });
 
 // Set the launch details by hand, for a script that can't be read automatically.
@@ -95,7 +105,10 @@ router.put("/window-mode", async (req, res) => {
 			if (!server.launch) {
 				const found = deriveLaunch(server.startScriptPath, { workingDir: server.workingDir });
 				if (!found.ok) {
-					return res.status(400).json({ error: found.reason, code: "no_launch" });
+					return res.status(400).json({
+						error: `${found.reason} If the server is running, "Copy from the running server" can read how it was started instead.`,
+						code: "no_launch",
+					});
 				}
 				skipped = found.skipped;
 				server = await updateServer(server.name, { launch: found.launch });

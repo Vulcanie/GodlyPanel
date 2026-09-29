@@ -231,6 +231,7 @@ export async function stopServer(server) {
 				// Generous: a busy world can take a while to acknowledge a stop.
 				{ timeoutMs: 30000 },
 			);
+			forgetPid(server.name).catch(() => {});
 			return { success: true, message: `${server.name} stop command sent via RCON.` };
 		} catch {
 			throw new Error("RCON command failed. Is the server online?");

@@ -35,6 +35,9 @@ export function requestedWindowMode(server) {
  */
 export function effectiveWindowMode(server) {
 	const requested = requestedWindowMode(server);
+	// Minecraft has no window to hide or minimize; the only real choice is
+	// between its script and a direct launch.
+	if (!usesWindows(server)) return requested === "windowless" && server.launch ? "windowless" : "hidden";
 	if (requested === "windowless" && !server.launch) return "hidden";
 	return requested;
 }
