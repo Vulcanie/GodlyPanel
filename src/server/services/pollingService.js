@@ -26,7 +26,20 @@ export function syncServerStatusKeys() {
 	for (const s of allServers()) {
 		names.add(s.name);
 		if (!serverStatus[s.name]) {
-			serverStatus[s.name] = { online: true, playerList: [], playerCount: 0 };
+			// Seed the static, known-without-asking fields too. These come from
+			// config, not from polling, so withholding them until the first
+			// poll lands just means the dashboard groups every server under
+			// "Unknown" for the first few seconds — longer when a poll is slow
+			// or hangs, since a hung poll never writes a status entry at all.
+			serverStatus[s.name] = {
+				type: s.type,
+				sessionName: s.sessionName,
+				serverPassword: s.serverPassword,
+				joinAddress: s.joinAddress,
+				online: true,
+				playerList: [],
+				playerCount: 0,
+			};
 		}
 	}
 	for (const name of Object.keys(serverStatus)) {
