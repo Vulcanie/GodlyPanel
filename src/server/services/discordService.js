@@ -1,11 +1,22 @@
 import fs from "fs";
 import { paths } from "../paths.js";
+import { getConfig } from "../config/configStore.js";
+import { getSecrets } from "../config/secretsStore.js";
 
-// Env is populated by the Electron main process (from <dataDir>/.env in Stage
-// 1, from the real settings store in Stage 2) — no dotenv.config() here, which
-// would have looked for a .env relative to an unpredictable cwd.
-const WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
-const UPDATE_WEBHOOK_URL = process.env.DISCORD_UPDATE_WEBHOOK_URL;
+// Read per call rather than captured at import, so turning Discord on or
+// pasting a webhook in settings takes effect immediately instead of needing
+// a restart. Both the toggle and the URL have to be present — having a
+// webhook saved shouldn't start posting on its own.
+function webhooks() {
+	const { discord } = getConfig();
+	if (!discord.enabled) return { status: null, update: null };
+	const secrets = getSecrets();
+	return {
+		status: secrets.discordWebhookUrl || null,
+		update: secrets.discordUpdateWebhookUrl || null,
+	};
+}
+
 const MESSAGE_FILE = paths.discordMessageIdFile;
 
 // Load stored message ID
@@ -30,10 +41,11 @@ let lastMessageId = loadMessageId();
 let warnedNoWebhook = false;
 
 export async function sendDiscordAlert(message) {
-	if (!WEBHOOK_URL) {
+	const statusWebhook = webhooks().status;
+	if (!statusWebhook) {
 		if (!warnedNoWebhook) {
 			warnedNoWebhook = true;
-			console.log("[discord] No status webhook configured — skipping status posts.");
+			console.log("[discord] Status posting is off — enable it in settings to use it.");
 		}
 		return;
 	}
@@ -44,11 +56,11 @@ export async function sendDiscordAlert(message) {
 
 		if (!lastMessageId) {
 			// FIRST MESSAGE → MUST USE wait=true
-			url = `${WEBHOOK_URL}?wait=true`;
+			url = `${statusWebhook}?wait=true`;
 			method = "POST";
 		} else {
 			// EDIT EXISTING MESSAGE
-			url = `${WEBHOOK_URL}/messages/${lastMessageId}`;
+			url = `${statusWebhook}/messages/${lastMessageId}`;
 			method = "PATCH";
 		}
 
@@ -80,13 +92,11 @@ export async function sendDiscordAlert(message) {
 // sendDiscordAlert() above, this never edits a prior message, so each
 // detection/countdown/completion event stays in the channel history.
 export async function sendUpdateAlert(message) {
-	if (!UPDATE_WEBHOOK_URL) {
-		console.error("DISCORD_UPDATE_WEBHOOK_URL not set in .env");
-		return;
-	}
+	const updateWebhook = webhooks().update;
+	if (!updateWebhook) return;
 
 	try {
-		const res = await fetch(UPDATE_WEBHOOK_URL, {
+		const res = await fetch(updateWebhook, {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ content: message }),

@@ -1,7 +1,7 @@
 import { spawn } from "child_process";
 import { promises as fs } from "fs";
 import path from "path";
-import { SERVERS_TO_QUERY } from "../data/serverList.js";
+import { all as allServers } from "../data/serverStore.js";
 import { paths } from "../paths.js";
 import { trackSteamCmd, untrackSteamCmd } from "./processRegistry.js";
 import { serverStatus } from "./pollingService.js";
@@ -17,7 +17,7 @@ const POLL_INTERVAL_MS = 2000;
 // correct if more ARK maps are added later.
 export function getUpdateGroup(server) {
 	if (server.type === "ark") {
-		return SERVERS_TO_QUERY.filter(
+		return allServers().filter(
 			(s) => s.type === "ark" && s.installDir === server.installDir,
 		);
 	}

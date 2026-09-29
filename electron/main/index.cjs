@@ -30,31 +30,13 @@ let mainWindow = null;
 let trayRef = null;
 let quitting = false;
 
-// Stage 1 bridge: the API still reads its secrets from env, so load
-// <dataDir>/.env here and hand it to the child. Stage 2 replaces this with a
-// real settings store and an in-app settings UI.
-function loadEnvFile() {
-	const envPath = path.join(dataDir, ".env");
-	const extra = {};
-	if (!fs.existsSync(envPath)) return extra;
-	for (const rawLine of fs.readFileSync(envPath, "utf8").split(/\r?\n/)) {
-		const line = rawLine.trim();
-		if (!line || line.startsWith("#")) continue;
-		const eq = line.indexOf("=");
-		if (eq === -1) continue;
-		// Deliberately no shell-style expansion: values here are secrets that
-		// legitimately contain $ (bcrypt hashes, API keys) and must stay literal.
-		extra[line.slice(0, eq).trim()] = line.slice(eq + 1).trim();
-	}
-	return extra;
-}
-
+// No env bridge any more: the API owns its own config and secrets files in
+// the data dir, and migrates any leftover .env from Stage 1 on first boot.
 const supervisor = new ApiSupervisor({
 	serverEntry: path.join(app.getAppPath(), "src", "server", "index.js"),
 	dataDir,
 	resourceRoot,
 	port,
-	env: loadEnvFile(),
 });
 
 function showWindow() {
@@ -95,6 +77,23 @@ supervisor.on("state", (state, detail) => {
 				}
 			});
 	}
+});
+
+// A generated first-run password is useless buried in a log file, so put it
+// in front of the person who just opened the app.
+supervisor.on("first-run-credentials", ({ username, password }) => {
+	dialog.showMessageBox({
+		type: "info",
+		title: "GodlyPanel — your sign-in details",
+		message: "A password has been generated for your admin account.",
+		detail:
+			`Username: ${username}\nPassword: ${password}\n\n` +
+			"Write this down now — it isn't shown again. You can change it from Settings.",
+		buttons: ["Copy password", "OK"],
+		defaultId: 0,
+	}).then(({ response }) => {
+		if (response === 0) require("electron").clipboard.writeText(password);
+	});
 });
 
 supervisor.on("bind-error", ({ code }) => {

@@ -1,8 +1,9 @@
 import { exec } from "child_process";
 import { readFileSync } from "fs";
 import path from "path";
-import { SERVERS_TO_QUERY } from "../data/serverList.js";
+import { all as allServers } from "../data/serverStore.js";
 import { resolveResource } from "../../shared/resources.js";
+import { getConfig } from "../config/configStore.js";
 
 const SAMPLE_SCRIPT = resolveResource("scripts/process-resource-sample.ps1");
 
@@ -143,9 +144,12 @@ function parseHeapInfo(output) {
 }
 
 function getHeapInfo(pid) {
+	// jcmd ships with a JDK, which plenty of machines won't have — the path is
+	// configurable, and a failure here just means no heap bar rather than an error.
+	const jcmd = getConfig().paths.jcmdPath || "jcmd";
 	return new Promise((resolve) => {
 		exec(
-			`jcmd ${pid} GC.heap_info`,
+			`"${jcmd}" ${pid} GC.heap_info`,
 			{ windowsHide: true, timeout: 5000, maxBuffer: 1024 * 1024 },
 			(error, stdout) => {
 				if (error) return resolve(null);
@@ -159,7 +163,7 @@ export async function getServerResourceStats() {
 	const processes = await runSampleScript();
 
 	const stats = await Promise.all(
-		SERVERS_TO_QUERY.map(async (server) => {
+		allServers().map(async (server) => {
 			const matches = findMatches(server, processes);
 			if (matches.length === 0) {
 				return { name: server.name, running: false, cpuPercent: 0, ramMB: 0 };
@@ -175,7 +179,7 @@ export async function getServerResourceStats() {
 				ramMB: Math.round(ramMB),
 			};
 
-			if (server.type === "minecraft") {
+			if (server.type === "minecraft" && getConfig().polling.enableHeapStats) {
 				const heapInfo = await getHeapInfo(matches[0].ProcessId);
 				if (heapInfo) Object.assign(result, heapInfo);
 			}

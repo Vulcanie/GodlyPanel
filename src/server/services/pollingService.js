@@ -1,27 +1,43 @@
 import { GameDig } from "gamedig";
 import { Rcon } from "rcon-client";
-import { SERVERS_TO_QUERY } from "../data/serverList.js";
+import { all as allServers, onChange as onServersChange } from "../data/serverStore.js";
 import { broadcastSseEvent } from "../routes/api.js";
 import { sendDiscordAlert } from "./discordService.js";
 import { checkPort } from "./portCheck.js";
 import { checkProcess } from "./processCheck.js";
 import { latestServerStats } from "./serverResourceStats.js";
 import { latestStats } from "./systemStats.js";
+import { getConfig } from "../config/configStore.js";
 
 // Holds the latest known status
 export let serverStatus = {};
-SERVERS_TO_QUERY.forEach((s) => {
-	serverStatus[s.name] = { online: true, playerList: [], playerCount: 0 };
-});
 
-// Called right after a newly-created server is pushed into SERVERS_TO_QUERY
-// (see serverCreationService.js) — seeds a default status entry immediately
-// rather than leaving it absent from serverStatus until the next full poll
-// cycle happens to reach it.
-export function registerNewServer(entry) {
-	if (!serverStatus[entry.name]) {
-		serverStatus[entry.name] = { online: true, playerList: [], playerCount: 0 };
+/**
+ * Bring serverStatus in line with the server list: seed an entry for anything
+ * new so it appears on the dashboard immediately rather than only after the
+ * next poll reaches it, and drop entries for servers that no longer exist so
+ * a deleted server doesn't linger on the dashboard forever.
+ *
+ * This used to run once at module scope, which stopped working the moment the
+ * server list became something loaded asynchronously from disk.
+ */
+export function syncServerStatusKeys() {
+	const names = new Set();
+	for (const s of allServers()) {
+		names.add(s.name);
+		if (!serverStatus[s.name]) {
+			serverStatus[s.name] = { online: true, playerList: [], playerCount: 0 };
+		}
 	}
+	for (const name of Object.keys(serverStatus)) {
+		if (!names.has(name)) delete serverStatus[name];
+	}
+}
+
+/** Called once after the server store has loaded. */
+export function initPollingState() {
+	syncServerStatusKeys();
+	onServersChange(syncServerStatusKeys);
 }
 
 // Snapshot for diffing
@@ -91,7 +107,7 @@ function textBar(percent, length = 10) {
 }
 
 function buildServerDashboard(status) {
-	const adminRoleId = process.env.ADMIN_ROLE_ID;
+	const adminRoleId = getConfig().discord.adminRoleId;
 
 	let msg = `**Server Status Dashboard**\n\n`;
 
@@ -132,7 +148,9 @@ function buildServerDashboard(status) {
 	}
 
 	msg += "\n_Last updated: " + new Date().toLocaleTimeString() + "_";
-	msg += `\n${adminRoleId}`;
+	// The role mention is optional now that Discord is opt-in, so don't leave
+	// a dangling blank line when it isn't set.
+	if (adminRoleId) msg += `\n${adminRoleId}`;
 	return msg.trim();
 }
 
@@ -151,7 +169,7 @@ export const pollServers = async () => {
 	isPolling = true;
 
 	try {
-		const promises = SERVERS_TO_QUERY.map(async (serverConfig) => {
+		const promises = allServers().map(async (serverConfig) => {
 			const name = serverConfig.name;
 
 			return withTimeout(

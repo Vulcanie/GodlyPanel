@@ -1,4 +1,4 @@
-import { SERVERS_TO_QUERY } from "../data/serverList.js";
+import { all as allServers } from "../data/serverStore.js";
 import { checkForUpdates, markBuildIdSeen } from "./buildTracker.js";
 import { updateServer, getUpdateGroup } from "./updateService.js";
 import { sendRconCommand } from "./serverControl.js";
@@ -89,7 +89,7 @@ function groupByInstall(servers) {
 }
 
 async function runCountdownAndUpdate(appId, oldBuildId, newBuildId) {
-	const allForAppId = SERVERS_TO_QUERY.filter((s) => s.updateAppId === appId);
+	const allForAppId = allServers().filter((s) => s.updateAppId === appId);
 	const optedIn = await filterAsync(allForAppId, isAutoUpdateEnabled);
 
 	if (optedIn.length === 0) {
@@ -156,7 +156,7 @@ async function runCountdownAndUpdate(appId, oldBuildId, newBuildId) {
 export async function checkAndHandleUpdates() {
 	let changes;
 	try {
-		changes = await checkForUpdates(SERVERS_TO_QUERY);
+		changes = await checkForUpdates(allServers());
 	} catch (e) {
 		console.error("[auto-update] Build check failed:", e.message);
 		return;

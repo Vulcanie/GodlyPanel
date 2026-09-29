@@ -1,7 +1,7 @@
 import express from "express";
 import multer from "multer";
 import { promises as fs } from "fs";
-import { SERVERS_TO_QUERY } from "../data/serverList.js";
+import { all as allServers } from "../data/serverStore.js";
 import { extractModpackZip, cleanupUpload } from "../services/modpackService.js";
 import { SUPPORTED_MODLOADER_FAMILIES } from "../data/gameTemplates.js";
 import { serverStatus, pollServers } from "../services/pollingService.js";
@@ -92,7 +92,7 @@ router.get("/server-stats", (req, res) => {
 
 // Basic info about a single server
 router.get("/server/:serverName", async (req, res) => {
-	const server = SERVERS_TO_QUERY.find(
+	const server = allServers().find(
 		(s) => s.name === req.params.serverName,
 	);
 	if (!server) {
@@ -118,7 +118,7 @@ router.get("/server/:serverName", async (req, res) => {
 // Toggle whether this server participates in the Steam-build auto-update
 // checker. Takes effect on the next 15-minute check — no restart needed.
 router.post("/server/:serverName/auto-update", async (req, res) => {
-	const server = SERVERS_TO_QUERY.find(
+	const server = allServers().find(
 		(s) => s.name === req.params.serverName,
 	);
 	if (!server) {
@@ -141,7 +141,7 @@ router.post("/server/:serverName/auto-update", async (req, res) => {
 
 // Get content of a specific config file
 router.get("/config/:serverName", async (req, res) => {
-	const server = SERVERS_TO_QUERY.find(
+	const server = allServers().find(
 		(s) => s.name === req.params.serverName,
 	);
 	const { file } = req.query;
@@ -174,7 +174,7 @@ router.get("/config/:serverName", async (req, res) => {
 
 // Save a config file
 router.post("/config/:serverName", async (req, res) => {
-	const server = SERVERS_TO_QUERY.find(
+	const server = allServers().find(
 		(s) => s.name === req.params.serverName,
 	);
 	const { fileName, content } = req.body;
@@ -208,7 +208,7 @@ router.post("/config/:serverName", async (req, res) => {
 // Start, stop, or update a server
 router.post("/control/:serverName/:action", async (req, res) => {
 	const { serverName, action } = req.params;
-	const server = SERVERS_TO_QUERY.find((s) => s.name === serverName);
+	const server = allServers().find((s) => s.name === serverName);
 
 	if (!server) {
 		return res.status(404).json({ error: "Server not found" });

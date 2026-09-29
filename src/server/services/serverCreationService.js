@@ -1,11 +1,15 @@
 import { spawn } from "child_process";
+import crypto from "node:crypto";
 import { promises as fs } from "fs";
 import path from "path";
-import { SERVERS_TO_QUERY } from "../data/serverList.js";
+import { all as allServers, add as addServer } from "../data/serverStore.js";
 import { GAME_TEMPLATES, getTemplate } from "../data/gameTemplates.js";
 import { startServer, stopServer } from "./serverControl.js";
-import { pollServers, registerNewServer } from "./pollingService.js";
+import { pollServers } from "./pollingService.js";
 import { paths } from "../paths.js";
+import { getConfig } from "../config/configStore.js";
+import { getSecrets } from "../config/secretsStore.js";
+import { ensureSteamCmd } from "./steamCmdProvisioner.js";
 import { resolveResource } from "../../shared/resources.js";
 import {
 	trackSteamCmd,
@@ -13,12 +17,6 @@ import {
 	markJobActive,
 	markJobDone,
 } from "./processRegistry.js";
-
-const SERVERS_ROOT = paths.serversRoot;
-// Becomes a real configurable setting (with an auto-download offer) in Stage 2.
-const SHARED_STEAMCMD =
-	process.env.GHP_STEAMCMD_PATH || path.win32.join(paths.dataDir, "tools", "steamcmd", "steamcmd.exe");
-const SERVERS_JS_PATH = paths.serversFile;
 
 // Job tracking — creation jobs are long-running (SteamCMD installs can take
 // many minutes) so the API returns a jobId immediately and the frontend
@@ -87,7 +85,7 @@ function slugify(name) {
 
 async function usedPorts(extraScanDir) {
 	const used = new Set();
-	for (const s of SERVERS_TO_QUERY) {
+	for (const s of allServers()) {
 		for (const key of ["port", "queryPort", "rconPort"]) {
 			if (s[key]) used.add(s[key]);
 		}
@@ -117,12 +115,31 @@ async function usedPorts(extraScanDir) {
 	return used;
 }
 
-// Bumps a port up by 10s until it's not already claimed by another server.
+// Steps a port up until it's free. The stride and any explicitly reserved
+// ports are configurable, since what's free depends on the machine.
 async function nextFreePort(preferred, extraScanDir) {
+	const { portAllocation } = getConfig();
 	const used = await usedPorts(extraScanDir);
+	const reserved = new Set(portAllocation.reservedPorts);
+	const step = Math.max(1, portAllocation.step);
+
 	let port = preferred;
-	while (used.has(port)) port += 10;
+	while ((used.has(port) || reserved.has(port)) && port <= 65535) port += step;
 	return port;
+}
+
+/**
+ * A per-server RCON password by default, rather than the shared "adminpass"
+ * the original used. That password is effectively a remote console key, and
+ * reusing one across every server on a machine that's about to be reachable
+ * from the LAN is not a good default.
+ */
+function suggestRconPassword() {
+	const { servers } = getConfig();
+	if (servers.defaultRconPasswordMode === "fixed") {
+		return getSecrets().fixedRconPassword || crypto.randomBytes(12).toString("base64url");
+	}
+	return crypto.randomBytes(12).toString("base64url");
 }
 
 export async function suggestParams(templateId) {
@@ -131,7 +148,7 @@ export async function suggestParams(templateId) {
 
 	let sharedInstallDir = null;
 	if (template.sharedInstall) {
-		const sibling = SERVERS_TO_QUERY.find(
+		const sibling = allServers().find(
 			(s) => s.type === template.type && s.updateAppId === template.updateAppId,
 		);
 		sharedInstallDir = sibling?.installDir?.replace(/\\$/, "") ?? null;
@@ -142,12 +159,12 @@ export async function suggestParams(templateId) {
 		ports[p.key] = await nextFreePort(p.default, sharedInstallDir);
 	}
 
-	return { ports, sharedInstallDir, rconPassword: "adminpass" };
+	return { ports, sharedInstallDir, rconPassword: suggestRconPassword() };
 }
 
 async function validateNewServer(name, ports, sharedInstallDir) {
 	if (!name || !name.trim()) throw new Error("A server name is required.");
-	if (SERVERS_TO_QUERY.some((s) => s.name === name)) {
+	if (allServers().some((s) => s.name === name)) {
 		throw new Error(`A server named "${name}" already exists.`);
 	}
 	const used = await usedPorts(sharedInstallDir);
@@ -158,44 +175,12 @@ async function validateNewServer(name, ports, sharedInstallDir) {
 	}
 }
 
-// Turns a plain JS value into the literal source text servers.js already
-// uses (tab-indented, double-backslash-escaped strings) so the generated
-// entry reads identically to the hand-written ones around it.
-function serializeValue(value, indent) {
-	if (typeof value === "string") {
-		return `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
-	}
-	if (typeof value === "number" || typeof value === "boolean") {
-		return String(value);
-	}
-	if (value && typeof value === "object") {
-		const inner = Object.entries(value)
-			.map(([k, v]) => `${indent}\t"${k}": ${serializeValue(v, indent + "\t")},`)
-			.join("\n");
-		return `{\n${inner}\n${indent}}`;
-	}
-	return "null";
-}
+async function runSteamCmd(installDir, appId, logStream) {
+	// Resolves the configured path, or downloads SteamCMD from Valve the first
+	// time it's needed — a fresh install has none, and making the user go and
+	// find it is a poor first experience.
+	const steamCmdPath = await ensureSteamCmd((msg) => logStream.write(`${msg}\n`));
 
-function serializeEntry(entry) {
-	const lines = Object.entries(entry).map(
-		([key, value]) => `\t\t${key}: ${serializeValue(value, "\t\t")},`,
-	);
-	return `\t{\n${lines.join("\n")}\n\t},\n`;
-}
-
-async function appendServerEntry(entry) {
-	const text = await fs.readFile(SERVERS_JS_PATH, "utf8");
-	const closingIdx = text.lastIndexOf("];");
-	if (closingIdx === -1) {
-		throw new Error("Could not find the end of SERVERS_TO_QUERY in servers.js.");
-	}
-	const entryText = serializeEntry(entry);
-	const newText = text.slice(0, closingIdx) + entryText + text.slice(closingIdx);
-	await fs.writeFile(SERVERS_JS_PATH, newText, "utf8");
-}
-
-function runSteamCmd(installDir, appId, logStream) {
 	return new Promise((resolve, reject) => {
 		const args = [
 			"+force_install_dir",
@@ -207,7 +192,7 @@ function runSteamCmd(installDir, appId, logStream) {
 			"validate",
 			"+quit",
 		];
-		const child = spawn(SHARED_STEAMCMD, args, {
+		const child = spawn(steamCmdPath, args, {
 			windowsHide: true,
 			stdio: ["ignore", logStream, logStream],
 		});
@@ -278,7 +263,7 @@ async function runJob(jobId, template, params) {
 		const p = {
 			...params,
 			installDir,
-			steamCmdRoot: SERVERS_ROOT,
+			steamCmdRoot: getConfig().paths.serversRoot,
 			slug: params.slug,
 			// Template builder functions (buildStartScript, buildServerEntry,
 			// etc.) only ever see this params object, never the template
@@ -376,13 +361,8 @@ async function runJob(jobId, template, params) {
 		}
 
 		const entry = template.buildServerEntry(p);
-		log(`Adding "${entry.name}" to servers.js`);
-		await appendServerEntry(entry);
-		// Mutating in place (not reassigning) — every module that imported
-		// SERVERS_TO_QUERY holds this same array object, so they all see the
-		// new entry immediately without needing to re-import the file.
-		SERVERS_TO_QUERY.push(entry);
-		registerNewServer(entry);
+		log(`Registering "${entry.name}".`);
+		await addServer(entry);
 
 		if (template.patchAfterFirstBoot) {
 			setStatus(jobId, { status: "first-boot" });
@@ -452,7 +432,7 @@ export async function createServer(templateId, rawParams) {
 	const installDir =
 		template.sharedInstall && suggested.sharedInstallDir
 			? suggested.sharedInstallDir
-			: `${SERVERS_ROOT}\\${slug}`;
+			: path.win32.join(getConfig().paths.serversRoot, slug);
 	// Always derived from this specific server's own name, never the shared
 	// folder's slug — used for per-instance filenames/save-dir names so a
 	// second ARK map added to the same shared install doesn't collide with

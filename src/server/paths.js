@@ -13,7 +13,9 @@ export const dataDir = process.env.GHP_DATA_DIR || FALLBACK_DATA_DIR;
 
 export const paths = {
 	dataDir,
-	serversFile: path.join(dataDir, "servers.js"),
+	// Only read now, by the one-time migration in secretsStore — the server
+	// list itself moved to servers.json and credentials to secrets.json.
+	legacyServersFile: path.join(dataDir, "servers.js"),
 	envFile: path.join(dataDir, ".env"),
 	logsDir: path.join(dataDir, "logs"),
 	uploadsDir: path.join(dataDir, "uploads"),

@@ -95,6 +95,7 @@ class ApiSupervisor extends EventEmitter {
 			}
 			if (msg?.type === "bind-error") this.emit("bind-error", msg);
 			if (msg?.type === "active-jobs") this.emit("active-jobs", msg.jobs);
+			if (msg?.type === "first-run-credentials") this.emit("first-run-credentials", msg);
 		});
 
 		this.child.on("exit", (code, signal) => {

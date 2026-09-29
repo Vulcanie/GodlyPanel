@@ -4,7 +4,8 @@ import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import apiRouter, { broadcastSseEvent } from "./routes/api.js";
 import authRoutes from "./routes/auth.js";
-import { pollServers } from "./services/pollingService.js";
+import settingsRoutes from "./routes/settings.js";
+import { pollServers, initPollingState } from "./services/pollingService.js";
 import { checkAndHandleUpdates } from "./services/autoUpdateService.js";
 import { getSystemStats } from "./services/systemStats.js";
 import { getServerResourceStats } from "./services/serverResourceStats.js";
@@ -13,6 +14,10 @@ import { verifyToken } from "./services/authService.js";
 import { killTrackedSteamCmd, hasActiveJobs } from "./services/processRegistry.js";
 import batchFileRoutes from "./routes/batchFiles.js";
 import { ensureDataDirs, paths } from "./paths.js";
+import { initConfig, getConfig, onConfigChange } from "./config/configStore.js";
+import { initSecrets } from "./config/secretsStore.js";
+import { initServerStore } from "./data/serverStore.js";
+import { registerTimer, scheduleAll, rescheduleAll, stopAll } from "./timerManager.js";
 
 // Exit code the supervisor reads as "died on purpose, restart me" so it can
 // tell a deliberate bail-out from a genuine crash (segfault, OOM).
@@ -21,9 +26,9 @@ const FATAL_EXIT_CODE = 17;
 // An uncaught exception leaves us in an unknown state, so bail and let the
 // supervisor restart cleanly rather than limping on. An unhandled REJECTION is
 // different: under the old PM2 setup a flaky gamedig socket self-healed
-// invisibly on the next 7.5s poll, and killing the process for one of those
-// would turn a transient network blip into a visibly crashed panel for any
-// user who happens to have one odd server. Log it and keep running.
+// invisibly on the next poll, and killing the process for one of those would
+// turn a transient network blip into a visibly crashed panel for any user who
+// happens to have one odd server. Log it and keep running.
 process.on("uncaughtException", (err) => {
 	console.error("[FATAL] Uncaught exception:", err);
 	process.exit(FATAL_EXIT_CODE);
@@ -34,6 +39,28 @@ process.on("unhandledRejection", (reason) => {
 });
 
 ensureDataDirs();
+
+// Order matters: config and secrets underpin everything, and the server store
+// has to be loaded before anything iterates the server list.
+const config = await initConfig();
+const { generatedAdminPassword } = await initSecrets();
+await initServerStore();
+initPollingState();
+
+if (generatedAdminPassword) {
+	console.log(
+		"\n" +
+			"  ┌─────────────────────────────────────────────┐\n" +
+			"  │  First run — your admin sign-in details:    │\n" +
+			"  │                                             │\n" +
+			`  │    username: admin                          │\n` +
+			`  │    password: ${generatedAdminPassword.padEnd(31)}│\n` +
+			"  │                                             │\n" +
+			"  │  Change it from Settings after signing in.  │\n" +
+			"  └─────────────────────────────────────────────┘\n",
+	);
+	process.send?.({ type: "first-run-credentials", username: "admin", password: generatedAdminPassword });
+}
 
 const app = express();
 
@@ -49,7 +76,7 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Write protection. GET stays open in Stage 1 — unchanged from the original
+// Write protection. GET stays open in Stage 2 — unchanged from the original
 // behaviour, deliberately: real per-role enforcement (and locking down the
 // currently-public GET surface) is Stage 3's job, together with the cookie
 // sessions that let the SSE endpoint authenticate at all.
@@ -67,6 +94,7 @@ function requireAdmin(req, res, next) {
 }
 
 app.use("/api/auth", authRoutes);
+app.use("/api/settings", requireAdmin, settingsRoutes);
 app.use("/api/batch-files", requireAdmin, batchFileRoutes);
 app.use("/api", requireAdmin, apiRouter);
 
@@ -93,57 +121,73 @@ if (fs.existsSync(path.join(uiBuildPath, "index.html"))) {
 	);
 }
 
-const PORT = Number(process.env.GHP_PORT) || 8765;
-const HOST = process.env.GHP_BIND_ALL === "0" ? "127.0.0.1" : "0.0.0.0";
+const PORT = Number(process.env.GHP_PORT) || config.http.port;
+const HOST = config.http.bindAll ? "0.0.0.0" : "127.0.0.1";
 
-const timers = [];
-const addTimer = (fn, ms) => timers.push(setInterval(fn, ms));
+// Every recurring job goes through the timer manager so intervals can be
+// changed from settings without a restart.
+registerTimer(
+	"servers",
+	() => pollServers(),
+	(c) => c.polling.serversMs,
+);
+registerTimer(
+	"system-stats",
+	() => {
+		getSystemStats()
+			.then((stats) => broadcastSseEvent({ type: "system_stats", stats }))
+			.catch((err) =>
+				console.error("[system-stats] Failed to read system stats:", err.message),
+			);
+	},
+	(c) => c.polling.systemStatsMs,
+);
+registerTimer(
+	"server-stats",
+	() => {
+		getServerResourceStats()
+			.then((stats) => broadcastSseEvent({ type: "server_stats", stats }))
+			.catch((err) =>
+				console.error("[server-stats] Failed to read per-server stats:", err.message),
+			);
+	},
+	(c) => c.polling.serverStatsMs,
+	(c) => c.polling.enableServerStats,
+);
+registerTimer(
+	"build-check",
+	() => {
+		checkAndHandleUpdates().catch((err) =>
+			console.error("[auto-update] Unexpected error in update check:", err),
+		);
+	},
+	(c) => c.polling.buildCheckMs,
+	// Off by default: this can escalate to updating and restarting real
+	// servers, which is not something a panel should do until asked.
+	(c) => c.polling.enableBuildCheck,
+);
+registerTimer(
+	"upload-sweep",
+	() => cleanupStaleUploads(),
+	(c) => c.polling.uploadSweepMs,
+);
 
 const server = app.listen(PORT, HOST, () => {
 	console.log(`API listening on http://${HOST}:${PORT} (data: ${paths.dataDir})`);
 	process.send?.({ type: "ready", port: PORT, host: HOST });
 
 	pollServers();
-	addTimer(pollServers, 7500);
-
-	const runSystemStatsCheck = () => {
-		getSystemStats()
-			.then((stats) => broadcastSseEvent({ type: "system_stats", stats }))
-			.catch((err) =>
-				console.error("[system-stats] Failed to read system stats:", err.message),
-			);
-	};
-	runSystemStatsCheck();
-	addTimer(runSystemStatsCheck, 10_000);
-
-	const runServerStatsCheck = () => {
-		getServerResourceStats()
-			.then((stats) => broadcastSseEvent({ type: "server_stats", stats }))
-			.catch((err) =>
-				console.error("[server-stats] Failed to read per-server stats:", err.message),
-			);
-	};
-	runServerStatsCheck();
-	addTimer(runServerStatsCheck, 15_000);
-
-	// The Steam build check can escalate to actually updating and restarting
-	// servers, so it needs an off switch — essential when pointing a test
-	// instance at a server list that references live installs. Becomes the
-	// polling.enableBuildCheck setting in Stage 2.
-	if (process.env.GHP_DISABLE_AUTO_UPDATE === "1") {
-		console.log("[auto-update] Disabled via GHP_DISABLE_AUTO_UPDATE=1.");
-	} else {
-		const runUpdateCheck = () => {
-			checkAndHandleUpdates().catch((err) =>
-				console.error("[auto-update] Unexpected error in update check:", err),
-			);
-		};
-		setTimeout(runUpdateCheck, 30_000);
-		addTimer(runUpdateCheck, 15 * 60_000);
-	}
-
+	if (getConfig().polling.enableServerStats) getServerResourceStats().catch(() => {});
+	getSystemStats()
+		.then((stats) => broadcastSseEvent({ type: "system_stats", stats }))
+		.catch(() => {});
 	cleanupStaleUploads();
-	addTimer(cleanupStaleUploads, 60 * 60_000);
+
+	scheduleAll(getConfig());
+});
+
+onConfigChange((next, changed) => {
+	if (changed.some((p) => p.startsWith("polling."))) rescheduleAll(next);
 });
 
 server.on("error", (err) => {
@@ -159,7 +203,7 @@ function shutdown(reason) {
 	shuttingDown = true;
 	console.log(`[shutdown] ${reason}`);
 
-	for (const t of timers) clearInterval(t);
+	stopAll();
 
 	// Game servers are launched as genuinely independent processes and are
 	// meant to outlive us. In-flight SteamCMD installs are not — they're

@@ -1,6 +1,6 @@
 import express from "express";
 import { promises as fs } from "fs";
-import { SERVERS_TO_QUERY } from "../data/serverList.js";
+import { all as allServers } from "../data/serverStore.js";
 
 const router = express.Router();
 
@@ -15,7 +15,7 @@ router.use((req, res, next) => {
 // ✅ Get batch file content by server name
 router.get("/by-server/:serverName", async (req, res) => {
 	const serverName = req.params.serverName.trim();
-	const server = SERVERS_TO_QUERY.find((s) => s.name === serverName);
+	const server = allServers().find((s) => s.name === serverName);
 
 	if (!server || !server.startScriptPath) {
 		console.warn(`Batch file GET failed: server not found - ${serverName}`);
@@ -39,7 +39,7 @@ router.get("/by-server/:serverName", async (req, res) => {
 // ✅ Save batch file content by server name
 router.post("/by-server/:serverName", async (req, res) => {
 	const serverName = req.params.serverName.trim();
-	const server = SERVERS_TO_QUERY.find((s) => s.name === serverName);
+	const server = allServers().find((s) => s.name === serverName);
 
 	if (!server || !server.startScriptPath) {
 		console.warn(

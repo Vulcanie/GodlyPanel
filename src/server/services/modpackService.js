@@ -4,6 +4,7 @@ import path from "path";
 import crypto from "crypto";
 import AdmZip from "adm-zip";
 import { paths } from "../paths.js";
+import { getSecrets } from "../config/secretsStore.js";
 
 const UPLOADS_DIR = paths.uploadsDir;
 const CF_API_BASE = "https://api.curseforge.com/v1";
@@ -145,10 +146,10 @@ export async function resolveAndDownloadMods(manifest, destModsDir, { onProgress
 	// Only required once we actually have something to resolve — a pack with
 	// no CF-listed files (everything covered by overrides) shouldn't need a
 	// key it'll never use.
-	const apiKey = process.env.CURSEFORGE_API_KEY;
+	const apiKey = getSecrets().curseForgeApiKey;
 	if (!apiKey) {
 		throw new Error(
-			"CURSEFORGE_API_KEY is not set. Get a free key at console.curseforge.com and add it to .env before creating modpack servers.",
+			"No CurseForge API key set. Add one in Settings (free, from console.curseforge.com) to install modpacks.",
 		);
 	}
 
