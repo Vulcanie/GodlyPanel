@@ -14,6 +14,11 @@ import {
 	Chip,
 	Checkbox,
 	FormControlLabel,
+	Dialog,
+	DialogTitle,
+	DialogContent,
+	DialogContentText,
+	DialogActions,
 } from "@mui/material";
 import { ArrowBack as ArrowBackIcon } from "@mui/icons-material";
 import { grey } from "@mui/material/colors";
@@ -39,6 +44,7 @@ function CreateServerPage({ onBack, userRole }) {
 	const [form, setForm] = React.useState({});
 	const [submitting, setSubmitting] = React.useState(false);
 	const [submitError, setSubmitError] = React.useState(null);
+	const [askSteamCmd, setAskSteamCmd] = React.useState(false);
 	const [job, setJob] = React.useState(null);
 
 	React.useEffect(() => {
@@ -82,13 +88,15 @@ function CreateServerPage({ onBack, userRole }) {
 
 	const setField = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
 
-	const submit = async () => {
+	const submit = async (acceptSteamCmdDownload = false) => {
+		setAskSteamCmd(false);
 		setSubmitting(true);
 		setSubmitError(null);
 		try {
 			const body = {
 				templateId: selected.id,
 				...form,
+				...(acceptSteamCmdDownload ? { acceptSteamCmdDownload: true } : {}),
 			};
 			for (const p of selected.ports) {
 				body[p.key] = Number(form[p.key]);
@@ -99,8 +107,12 @@ function CreateServerPage({ onBack, userRole }) {
 			const data = await api.post("/api/servers", body);
 			setJob({ jobId: data.jobId, status: "queued" });
 		} catch (e) {
-			setSubmitError(e.message);
 			setSubmitting(false);
+			if (e.code === "steamcmd-not-installed") {
+				setAskSteamCmd(true);
+				return;
+			}
+			setSubmitError(e.message);
 		}
 	};
 
@@ -319,6 +331,23 @@ function CreateServerPage({ onBack, userRole }) {
 						/>
 					))}
 
+					<Dialog open={askSteamCmd} onClose={() => setAskSteamCmd(false)}>
+						<DialogTitle>Download SteamCMD?</DialogTitle>
+						<DialogContent>
+							<DialogContentText>
+								Games are installed with SteamCMD, Valve's official tool. It isn't included with
+								GodlyPanel, so it will be downloaded once from Valve and kept with your data. Already
+								have a copy? Cancel and point Settings at it instead.
+							</DialogContentText>
+						</DialogContent>
+						<DialogActions>
+							<Button onClick={() => setAskSteamCmd(false)}>Cancel</Button>
+							<Button variant="contained" onClick={() => submit(true)}>
+								Download and continue
+							</Button>
+						</DialogActions>
+					</Dialog>
+
 					{submitError && (
 						<Alert severity="error" sx={{ my: 1 }}>
 							{submitError}
@@ -338,7 +367,7 @@ function CreateServerPage({ onBack, userRole }) {
 						</Button>
 						<Button
 							variant="contained"
-							onClick={submit}
+							onClick={() => submit(false)}
 							disabled={
 								submitting ||
 								!form.name?.trim() ||

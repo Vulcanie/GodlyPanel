@@ -4,6 +4,7 @@ import path from "path";
 import { all as allServers } from "../data/serverStore.js";
 import { paths } from "../paths.js";
 import { trackSteamCmd, untrackSteamCmd } from "./processRegistry.js";
+import { resolveSteamCmdFor } from "./steamCmdProvisioner.js";
 import { serverStatus } from "./pollingService.js";
 import { stopServer, startServer } from "./serverControl.js";
 
@@ -92,7 +93,7 @@ export async function updateServer(
 		"+quit",
 	];
 
-	const child = spawn(server.steamCmdPath, args, {
+	const child = spawn(resolveSteamCmdFor(server.steamCmdPath), args, {
 		detached: true,
 		windowsHide: true,
 		stdio: ["ignore", logStream, logStream],

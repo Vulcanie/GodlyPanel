@@ -9,7 +9,7 @@ import { pollServers } from "./pollingService.js";
 import { paths } from "../paths.js";
 import { getConfig } from "../config/configStore.js";
 import { getSecrets } from "../config/secretsStore.js";
-import { ensureSteamCmd } from "./steamCmdProvisioner.js";
+import { ensureSteamCmd, isSteamCmdInstalled } from "./steamCmdProvisioner.js";
 import { assertStorageHeadroom } from "./storageService.js";
 import { resolveResource } from "../../shared/resources.js";
 import {
@@ -265,6 +265,10 @@ async function runJob(jobId, template, params) {
 			...params,
 			installDir,
 			steamCmdRoot: getConfig().paths.serversRoot,
+			// The copy the install above actually used. Entries used to record
+			// <installDir>steamcmd.exe, which nothing ever put there, so the first
+			// panel-driven update of a new server failed with a missing file.
+			steamCmdExe: getConfig().paths.steamCmdPath,
 			slug: params.slug,
 			// Template builder functions (buildStartScript, buildServerEntry,
 			// etc.) only ever see this params object, never the template
@@ -428,6 +432,18 @@ export async function createServer(templateId, rawParams) {
 	// Checked up front so it fails the request rather than dying partway
 	// through a multi-gigabyte download.
 	assertStorageHeadroom(template.estimatedInstallBytes ?? 0);
+
+	// Downloading a program from the internet is not something to do silently
+	// as a side effect of pressing Create. The UI asks, then resends with
+	// acceptSteamCmdDownload.
+	const willInstall = template.updateAppId && !(template.sharedInstall && suggested.sharedInstallDir);
+	if (willInstall && !isSteamCmdInstalled() && rawParams.acceptSteamCmdDownload !== true) {
+		const err = new Error(
+			"SteamCMD isn't installed yet. It's Valve's official tool for downloading game servers, and needs to be downloaded once.",
+		);
+		err.code = "steamcmd-not-installed";
+		throw err;
+	}
 
 	if (template.requiresEula && rawParams.eulaAccepted !== true) {
 		throw new Error("EULA acknowledgment is required.");

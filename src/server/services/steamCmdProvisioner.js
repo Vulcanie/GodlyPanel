@@ -73,6 +73,17 @@ export function ensureSteamCmd(log = () => {}) {
 	return inFlight;
 }
 
+/**
+ * The steamcmd.exe to run for a server. Prefers the path the entry recorded
+ * (imported servers keep their own), but falls back to the managed copy when
+ * that file isn't there — which also heals entries created before the
+ * recorded path was fixed.
+ */
+export function resolveSteamCmdFor(recordedPath) {
+	if (recordedPath && existsSync(recordedPath)) return recordedPath;
+	return getConfig().paths.steamCmdPath;
+}
+
 export function isSteamCmdInstalled() {
 	return existsSync(getConfig().paths.steamCmdPath);
 }

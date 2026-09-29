@@ -287,7 +287,7 @@ router.post("/servers", async (req, res) => {
 		const jobId = await createServer(templateId, params);
 		res.json({ success: true, jobId });
 	} catch (e) {
-		res.status(400).json({ error: e.message });
+		res.status(e.code === "steamcmd-not-installed" ? 409 : 400).json({ error: e.message, code: e.code });
 	}
 });
 

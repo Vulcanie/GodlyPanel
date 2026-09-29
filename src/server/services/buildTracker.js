@@ -2,6 +2,7 @@ import { spawn } from "child_process";
 import { promises as fs } from "fs";
 import path from "path";
 import { paths } from "../paths.js";
+import { resolveSteamCmdFor } from "./steamCmdProvisioner.js";
 
 const STORE_PATH = paths.buildVersionsFile;
 
@@ -87,7 +88,7 @@ export async function checkForUpdates(servers) {
 
 		try {
 			const output = await getRemoteBuildId(
-				server.steamCmdPath,
+				resolveSteamCmdFor(server.steamCmdPath),
 				server.updateAppId,
 			);
 			const buildId = parsePublicBuildId(output);

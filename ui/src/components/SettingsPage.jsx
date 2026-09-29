@@ -71,6 +71,7 @@ function SettingsPage({ onBack }) {
 	const [notice, setNotice] = React.useState(null);
 	const [restartNeeded, setRestartNeeded] = React.useState([]);
 	const [busy, setBusy] = React.useState(false);
+	const [installingSteam, setInstallingSteam] = React.useState(false);
 
 	const load = React.useCallback(async () => {
 		try {
@@ -128,6 +129,20 @@ function SettingsPage({ onBack }) {
 			setError(e.message);
 		} finally {
 			setBusy(false);
+		}
+	};
+
+	const installSteamCmd = async () => {
+		setInstallingSteam(true);
+		setError(null);
+		try {
+			await api.post("/api/settings/steamcmd/install");
+			setNotice("SteamCMD is installed and ready.");
+			await load();
+		} catch (e) {
+			setError(e.message);
+		} finally {
+			setInstallingSteam(false);
 		}
 	};
 
@@ -205,6 +220,29 @@ function SettingsPage({ onBack }) {
 					)}
 				</Paper>
 			)}
+
+			<Paper sx={{ p: 2, mb: 2 }}>
+				<Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+					<Typography variant="subtitle2" sx={{ flex: 1 }}>
+						SteamCMD
+					</Typography>
+					<Chip
+						size="small"
+						color={data.steamCmdInstalled ? "success" : "warning"}
+						label={data.steamCmdInstalled ? "Installed" : "Not installed"}
+					/>
+				</Box>
+				<Typography variant="body2" sx={{ color: "text.secondary", my: 1 }}>
+					{data.steamCmdInstalled
+						? `Using ${data.resolved.paths.steamCmdPath}`
+						: "Valve's tool for installing and updating game servers. It isn't bundled — it's downloaded from Valve once, on request. Or point the SteamCMD location setting below at a copy you already have."}
+				</Typography>
+				{!data.steamCmdInstalled && (
+					<Button size="small" variant="outlined" disabled={installingSteam} onClick={installSteamCmd}>
+						{installingSteam ? "Downloading — about a minute..." : "Download SteamCMD"}
+					</Button>
+				)}
+			</Paper>
 
 			{Object.entries(groups).map(([group, specs]) => (
 				<Paper key={group} sx={{ p: 2, mb: 2 }}>
