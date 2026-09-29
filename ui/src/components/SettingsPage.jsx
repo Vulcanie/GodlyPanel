@@ -18,6 +18,7 @@ import { ArrowBack as ArrowBackIcon } from "@mui/icons-material";
 import { api } from "../api/client";
 import AppearanceSettings from "./AppearanceSettings";
 import FolderField from "./FolderField";
+import { formatBytes } from "../utils/format";
 
 // The form is generated from the schema the server sends, so it can't drift
 // out of step with what's actually honoured — adding a setting on the server
@@ -54,13 +55,6 @@ function nest(dotted, value) {
 		else cur = cur[k] = {};
 	});
 	return out;
-}
-
-function formatBytes(bytes) {
-	if (!bytes) return "0 B";
-	const units = ["B", "KB", "MB", "GB", "TB"];
-	const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
-	return `${(bytes / 1024 ** i).toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
 }
 
 function SettingsPage({ onBack }) {

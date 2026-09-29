@@ -1,8 +1,8 @@
-import { GameDig } from "gamedig";
-import { Rcon } from "rcon-client";
-import { all as allServers, onChange as onServersChange } from "../data/serverStore.js";
+import { all as allServers, has as hasServer, onChange as onServersChange } from "../data/serverStore.js";
 import { broadcastSseEvent } from "./sseHub.js";
-import { sendDiscordAlert } from "./discordService.js";
+import { sendDiscordAlert, discordEnabled } from "./discordService.js";
+import { withRcon } from "./rconClient.js";
+import { withTimeout } from "../util/async.js";
 import { checkPort } from "./portCheck.js";
 import { checkProcess } from "./processCheck.js";
 import { latestServerStats } from "./serverResourceStats.js";
@@ -82,9 +82,9 @@ function broadcastServerUpdate(serverName, status) {
 	);
 }
 
-async function diffAndBroadcast(current, previous) {
-	let globalChangeDetected = false;
+const samePlayers = (a = [], b = []) => a.length === b.length && a.every((p, i) => p === b[i]);
 
+function diffAndBroadcast(current, previous) {
 	for (const [serverName, cur] of Object.entries(current)) {
 		const prev = previous?.[serverName];
 
@@ -95,48 +95,126 @@ async function diffAndBroadcast(current, previous) {
 		// nothing would ever be detected as a "change" afterwards.
 		if (!prev) {
 			broadcastServerUpdate(serverName, cur);
-			globalChangeDetected = true;
 			continue;
 		}
 
-		const statusChanged = cur.online !== prev.online;
-		const dataChanged =
+		// The player *list*, not just the count: one person leaving as another
+		// joins keeps the count the same, and that used to go unreported.
+		const changed =
+			cur.online !== prev.online ||
 			cur.playerCount !== prev.playerCount ||
-			cur.sessionName !== prev.sessionName;
+			cur.sessionName !== prev.sessionName ||
+			!samePlayers(cur.playerList, prev.playerList);
 
-		console.log(
-			`[DIFF] ${serverName} | online: ${prev.online} → ${cur.online} | players: ${prev.playerCount} → ${cur.playerCount} | statusChanged: ${statusChanged} | dataChanged: ${dataChanged}`,
-		);
-
-		if (statusChanged || dataChanged) {
+		if (changed) {
+			if (cur.online !== prev.online) {
+				console.log(`[poll] ${serverName} is now ${cur.online ? "online" : "offline"}.`);
+			}
 			broadcastServerUpdate(serverName, cur);
-			console.log(`[SSE] Broadcasted update for ${serverName}`);
-			globalChangeDetected = true;
 		}
 	}
-
-	return globalChangeDetected;
 }
 
-// timeout helper
-const withTimeout = (promise, ms) =>
-	Promise.race([
-		promise,
-		new Promise((_, reject) =>
-			setTimeout(() => reject(new Error("timeout")), ms),
-		),
-	]);
+// A failing server would otherwise log the same line every cycle, forever —
+// twenty of them turn the log into noise and rotate anything useful out. Say
+// it when the reason changes, not each time it's true.
+const lastProblem = new Map();
+function noteProblem(name, message) {
+	if (lastProblem.get(name) === message) return;
+	lastProblem.set(name, message);
+	console.warn(`[poll] ${name}: ${message}`);
+}
+function clearProblem(name) {
+	lastProblem.delete(name);
+}
 
-// Wrap any async function with logging + timeout
-const safeStep = async (label, fn, timeout = 5000) => {
+const offline = (base) => ({ ...base, online: false, playerCount: 0, playerList: [] });
+
+// ARK's ListPlayers lines look like "0. Name, 76561198000000000".
+function parseRconPlayers(text) {
+	return text
+		.split("\n")
+		.map((line) => line.trim())
+		.filter((line) => /^\d+\./.test(line))
+		.map((line) => line.substring(line.indexOf(".") + 2, line.indexOf(",")));
+}
+
+// RCON is TCP, so a quick pre-check avoids a slower failed handshake when the
+// port's trivially closed. gamedig's protocols are mostly UDP (a TCP pre-check
+// wouldn't work at all) and process polling has no port to check, so those
+// skip straight to their own method and let it be the sole source of truth.
+async function pollRcon(server, base) {
+	if (!(await checkPort(server.host, server.rconPort, 1500))) return offline(base);
+
+	const startedAt = Date.now();
+	const text = await withRcon(server, (_rcon, send) => send("ListPlayers"), { timeoutMs: 5000 });
+	const ping = Date.now() - startedAt;
+	const players = parseRconPlayers(text);
+	return { ...base, online: true, playerCount: players.length, playerList: players, ping };
+}
+
+// Loaded on first use: a setup with no gamedig-polled servers never pays for
+// the library's hundred-odd protocol modules at startup.
+let gamedig = null;
+async function pollGamedig(server, base) {
+	gamedig ??= (await import("gamedig")).GameDig;
+	const protocol = server.queryProtocol || server.type;
+	const state = await withTimeout(
+		gamedig.query({
+			type: protocol,
+			host: server.host,
+			port: server.queryPort || server.port,
+			socketTimeout: 4000,
+			...(protocol === "palworld" ? { username: "admin", password: server.rconPassword } : {}),
+		}),
+		6000,
+		"gamedig query",
+	);
+	return {
+		...base,
+		online: true,
+		sessionName: base.sessionName || state.name,
+		playerCount: state.players.length,
+		maxplayers: state.maxplayers,
+		playerList: state.players.map((p) => p.name || p),
+		ping: state.ping,
+	};
+}
+
+// No port to check — process running means the server is up. These games
+// don't expose a queryable port, which is why they use process detection.
+async function pollProcess(server, base) {
+	const running = await checkProcess(server.processName);
+	return { ...base, online: running, playerCount: 0, playerList: [] };
+}
+
+const POLLERS = { rcon: pollRcon, gamedig: pollGamedig, process: pollProcess };
+
+async function pollOne(server) {
+	const name = server.name;
+	const base = {
+		sessionName: server.sessionName,
+		serverPassword: server.serverPassword,
+		joinAddress: server.joinAddress,
+		type: server.type,
+	};
+
+	let status;
 	try {
-		const result = await withTimeout(fn(), timeout);
-		return result;
-	} catch (err) {
-		console.error(`   ✗ Step failed (${label}):`, err.message);
-		throw err;
+		const poll = POLLERS[server.method];
+		status = poll
+			? await withTimeout(poll(server, base), 8000, "poll")
+			: offline(base);
+		clearProblem(name);
+	} catch (error) {
+		noteProblem(name, error.message);
+		status = offline(base);
 	}
-};
+
+	// The server may have been deleted while this poll was in flight; writing
+	// it back would resurrect a ghost entry on the dashboard.
+	if (hasServer(name)) serverStatus[name] = status;
+}
 
 // Renders a percentage as a fixed-width block bar (Discord has no real
 // progress-bar element, so this is the text approximation of the
@@ -163,13 +241,14 @@ function buildServerDashboard(status) {
 		latestServerStats.map((s) => [s.name, s]),
 	);
 
-	const online = Object.entries(status).filter(([_, s]) => s.online);
-	const offline = Object.entries(status).filter(([_, s]) => !s.online);
+	const entries = Object.entries(status);
+	const onlineEntries = entries.filter(([, s]) => s.online);
+	const offlineNames = entries.filter(([, s]) => !s.online).map(([name]) => name);
 
-	for (const [name, s] of offline) {
+	for (const name of offlineNames) {
 		msg += `🔴 **${name}** — offline\n`;
 	}
-	for (const [name, s] of online) {
+	for (const [name, s] of onlineEntries) {
 		msg += `🟢 **${name}**\n`;
 		msg += `• Session: \`${s.sessionName || "N/A"}\`\n`;
 		msg += `• Password: \`${s.serverPassword || "None"}\`\n`;
@@ -194,247 +273,33 @@ function buildServerDashboard(status) {
 	return msg.trim();
 }
 
-// Guards against an overlapping cycle if one run is still in flight when
-// the next setInterval tick fires (each server has up to an 8s timeout
-// budget, so a slow cycle could otherwise stack on top of the next one and
-// compound things like ARK's single-RCON-session contention).
+// Guards against an overlapping cycle if one run is still in flight when the
+// next tick fires (each server has up to an 8s budget, so a slow cycle could
+// otherwise stack on top of the next one and compound things like ARK's
+// single-RCON-session contention).
 let isPolling = false;
 
 // Main polling function
 export const pollServers = async () => {
 	if (isPolling) {
-		console.warn("[POLL] Previous cycle still running — skipping this tick.");
+		console.warn("[poll] Previous cycle still running — skipping this tick.");
 		return;
 	}
 	isPolling = true;
 
 	try {
-		const promises = allServers().map(async (serverConfig) => {
-			const name = serverConfig.name;
+		await Promise.allSettled(allServers().map(pollOne));
 
-			return withTimeout(
-				(async () => {
-					const baseInfo = {
-						sessionName: serverConfig.sessionName,
-						serverPassword: serverConfig.serverPassword,
-						joinAddress: serverConfig.joinAddress,
-						type: serverConfig.type,
-					};
+		diffAndBroadcast(serverStatus, lastSnapshot);
+		lastSnapshot = structuredClone(serverStatus);
 
-					// ─── RCON POLLING ───────────────────────────────────────────
-					// RCON is TCP, so a quick pre-check avoids a slower failed
-					// handshake when the port's trivially closed. gamedig's
-					// protocols are mostly UDP-based (query wouldn't work over a
-					// TCP pre-check at all), and process polling doesn't have a
-					// port to check — both skip straight to their own method
-					// below and let it be the sole source of truth.
-					if (serverConfig.method === "rcon") {
-						let portOpen;
-						try {
-							portOpen = await safeStep(
-								`checkPort(${serverConfig.host}:${serverConfig.rconPort})`,
-								() => checkPort(serverConfig.host, serverConfig.rconPort),
-								4000,
-							);
-						} catch {
-							portOpen = false;
-						}
-
-						if (!portOpen) {
-							serverStatus[name] = {
-								...baseInfo,
-								online: false,
-								playerCount: 0,
-								playerList: [],
-							};
-							return;
-						}
-
-						let rcon;
-
-						try {
-							rcon = new Rcon({
-								host: serverConfig.host,
-								port: serverConfig.rconPort,
-								password: serverConfig.rconPassword,
-							});
-
-							rcon.on("error", (err) => {
-								console.warn(
-									`RCON error on ${name}:`,
-									err.message,
-								);
-							});
-
-							await safeStep(
-								"rcon.connect()",
-								() => rcon.connect(),
-								5000,
-							);
-
-							const startTime = Date.now();
-
-							const playerListStr = await safeStep(
-								"rcon.send(ListPlayers)",
-								() => rcon.send("ListPlayers"),
-								5000,
-							);
-
-							const ping = Date.now() - startTime;
-
-							const players = playerListStr
-								.split("\n")
-								.map((line) => line.trim())
-								.filter((line) => /^\d+\./.test(line))
-								.map((line) =>
-									line.substring(
-										line.indexOf(".") + 2,
-										line.indexOf(","),
-									),
-								);
-
-							serverStatus[name] = {
-								...baseInfo,
-								online: true,
-								playerCount: players.length,
-								playerList: players,
-								ping,
-							};
-						} catch (error) {
-							console.warn(
-								`RCON query failed for ${name}:`,
-								error.message,
-							);
-
-							serverStatus[name] = {
-								...baseInfo,
-								online: false,
-								playerCount: 0,
-								playerList: [],
-							};
-						} finally {
-							if (rcon) {
-								try {
-									rcon.socket?.destroy();
-								} catch (e) {
-									console.warn(
-										`Error closing RCON connection for ${name}:`,
-										e.message,
-									);
-								}
-							}
-						}
-					}
-
-					// ─── GAMEDIG POLLING ────────────────────────────────────────
-					else if (serverConfig.method === "gamedig") {
-						try {
-							const queryProtocol =
-								serverConfig.queryProtocol || serverConfig.type;
-							const authOptions =
-								queryProtocol === "palworld"
-									? {
-											username: "admin",
-											password: serverConfig.rconPassword,
-										}
-									: {};
-
-							const state = await safeStep(
-								"gamedig.query()",
-								() =>
-									GameDig.query({
-										type: queryProtocol,
-										host: serverConfig.host,
-										port: serverConfig.queryPort || serverConfig.port,
-										socketTimeout: 4000,
-										...authOptions,
-									}),
-								6000,
-							);
-
-							serverStatus[name] = {
-								...baseInfo,
-								online: true,
-								sessionName: baseInfo.sessionName || state.name,
-								playerCount: state.players.length,
-								maxplayers: state.maxplayers,
-								playerList: state.players.map(
-									(p) => p.name || p,
-								),
-								ping: state.ping,
-							};
-						} catch (error) {
-							console.warn(
-								`GameDig query failed for ${name}:`,
-								error.message,
-							);
-
-							serverStatus[name] = {
-								...baseInfo,
-								online: false,
-								playerCount: 0,
-								playerList: [],
-							};
-						}
-					}
-
-					// ─── PROCESS POLLING ────────────────────────────────────────
-					// No port check — process running = server online.
-					// These games don't expose a queryable port, that's why
-					// we use process detection instead of gamedig.
-					else if (serverConfig.method === "process") {
-						try {
-							console.log(
-								`[PROCESS] Checking "${name}" | processName: "${serverConfig.processName}"`,
-							);
-
-							const isRunning = await safeStep(
-								`checkProcess(${serverConfig.processName})`,
-								() => checkProcess(serverConfig.processName),
-								4000,
-							);
-
-							console.log(
-								`[PROCESS] "${name}" isRunning: ${isRunning}`,
-							);
-
-							serverStatus[name] = {
-								...baseInfo,
-								online: isRunning,
-								playerCount: 0,
-								playerList: [],
-								sessionName: baseInfo.sessionName,
-								serverPassword: baseInfo.serverPassword,
-							};
-						} catch (error) {
-							console.warn(
-								`Process check failed for ${name}:`,
-								error.message,
-							);
-
-							serverStatus[name] = {
-								...baseInfo,
-								online: false,
-								playerCount: 0,
-								playerList: [],
-							};
-						}
-					}
-				})(),
-				8000,
-			).catch((err) => {
-				console.error(`[HANG] Server ${name} hung:`, err.message);
-			});
-		});
-
-		await Promise.allSettled(promises);
-
-		await diffAndBroadcast(serverStatus, lastSnapshot);
-
-		const dashboard = buildServerDashboard(serverStatus);
-		await sendDiscordAlert(dashboard);
-
-		lastSnapshot = JSON.parse(JSON.stringify(serverStatus));
+		// Not awaited: a slow or hung Discord request must never hold up the
+		// next poll — the overlap guard above would just skip cycles until it
+		// gave up. Skipped entirely when Discord is off, rather than building
+		// a message nobody will read.
+		if (discordEnabled()) {
+			sendDiscordAlert(buildServerDashboard(serverStatus)).catch(() => {});
+		}
 	} catch (err) {
 		console.error("pollServers fatal error:", err);
 	} finally {

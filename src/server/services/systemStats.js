@@ -1,57 +1,49 @@
-import { exec } from "child_process";
+import os from "node:os";
 
-// Single WMI/perf-counter round-trip for both memory and CPU, so the
-// periodic poll only ever spawns one process instead of two.
-//
-// CPU uses the '% Processor Time' _Total performance counter (the same
-// one Task Manager reads) rather than Win32_Processor.LoadPercentage.
-// LoadPercentage is a single coarse WMI-sampled value per physical CPU
-// package — on this machine that's one package covering 24 logical
-// cores, so it doesn't track true aggregate load across all of them the
-// way the perf counter does, and was observed reading meaningfully
-// different (and less accurate) values than the real counter under
-// bursty multi-threaded load. Two samples are taken 1s apart and
-// averaged since a single Get-Counter read can be noisy.
-const STATS_COMMAND =
-	'$os = Get-CimInstance Win32_OperatingSystem; ' +
-	"$cpuSamples = (Get-Counter '\\Processor(_Total)\\% Processor Time' -SampleInterval 1 -MaxSamples 2).CounterSamples.CookedValue; " +
-	"$cpu = ($cpuSamples | Measure-Object -Average).Average; " +
-	"[PSCustomObject]@{TotalKB=$os.TotalVisibleMemorySize; FreeKB=$os.FreePhysicalMemory; CpuPercent=$cpu} | ConvertTo-Json -Compress";
+// Memory and CPU straight from Node. This used to spawn PowerShell on every
+// tick to read WMI and a perf counter — a fresh interpreter (~0.8s, tens of MB)
+// per poll for two numbers Node already has. os.freemem() matches
+// Win32_OperatingSystem's FreePhysicalMemory to within ~0.01 GB, and the CPU
+// figure comes from the same kernel tick counters the perf counter reads, so
+// the two agree to within a couple of points (measured under load).
+
+function cpuTimes() {
+	let idle = 0;
+	let total = 0;
+	for (const cpu of os.cpus()) {
+		const t = cpu.times;
+		idle += t.idle;
+		total += t.user + t.nice + t.sys + t.idle + t.irq;
+	}
+	return { idle, total };
+}
+
+let previous = cpuTimes();
 
 // Last successful reading, served to clients that connect between poll
 // ticks (mirrors serverStatus in pollingService.js).
 export let latestStats = null;
 
-export function getSystemStats() {
-	return new Promise((resolve, reject) => {
-		exec(
-			`powershell -NoProfile -Command "${STATS_COMMAND}"`,
-			{ windowsHide: true, timeout: 8000 },
-			(error, stdout) => {
-				if (error) return reject(error);
+/** CPU use since the previous call — so the first reading is since boot-ish. */
+function cpuPercentSinceLast() {
+	const now = cpuTimes();
+	const dTotal = now.total - previous.total;
+	const dIdle = now.idle - previous.idle;
+	previous = now;
+	if (dTotal <= 0) return 0;
+	return Math.min(100, Math.max(0, Math.round(100 * (1 - dIdle / dTotal))));
+}
 
-				let parsed;
-				try {
-					parsed = JSON.parse(stdout);
-				} catch (e) {
-					return reject(new Error(`Failed to parse system stats: ${e.message}`));
-				}
+export async function getSystemStats() {
+	const totalMB = Math.round(os.totalmem() / 1048576);
+	const usedMB = totalMB - Math.round(os.freemem() / 1048576);
 
-				const totalMB = Math.round(parsed.TotalKB / 1024);
-				const freeMB = Math.round(parsed.FreeKB / 1024);
-				const usedMB = totalMB - freeMB;
-
-				const stats = {
-					totalMemMB: totalMB,
-					usedMemMB: usedMB,
-					usedMemPercent: Math.round((usedMB / totalMB) * 1000) / 10,
-					cpuPercent: Math.round(parsed.CpuPercent),
-					timestamp: Date.now(),
-				};
-
-				latestStats = stats;
-				resolve(stats);
-			},
-		);
-	});
+	latestStats = {
+		totalMemMB: totalMB,
+		usedMemMB: usedMB,
+		usedMemPercent: Math.round((usedMB / totalMB) * 1000) / 10,
+		cpuPercent: cpuPercentSinceLast(),
+		timestamp: Date.now(),
+	};
+	return latestStats;
 }

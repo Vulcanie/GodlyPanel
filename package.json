@@ -16,7 +16,6 @@
 	"dependencies": {
 		"adm-zip": "^0.6.1",
 		"bcryptjs": "^3.0.3",
-		"dotenv": "^16.0.3",
 		"express": "^4.18.2",
 		"gamedig": "^5.3.3",
 		"jsonwebtoken": "^9.0.3",
@@ -27,6 +26,9 @@
 		"appId": "com.godlypanel.app",
 		"productName": "GodlyPanel",
 		"asar": true,
+		"compression": "maximum",
+		"electronLanguages": ["en-US"],
+		"afterPack": "scripts/afterPack.cjs",
 		"npmRebuild": false,
 		"directories": {
 			"output": "dist",
@@ -58,6 +60,7 @@
 			}
 		],
 		"win": {
+			"icon": "build/icon.png",
 			"target": [
 				{
 					"target": "zip",

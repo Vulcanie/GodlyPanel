@@ -3,13 +3,12 @@
 // and filesystem paths, or changes something.
 import express from "express";
 import multer from "multer";
-import { promises as fs } from "fs";
-import { all as allServers } from "../data/serverStore.js";
-import { assertWithinAllowedRoots } from "../util/safePath.js";
+import { get as getServer } from "../data/serverStore.js";
+import { readManagedFile, writeManagedFile, sendFileError } from "../util/managedFiles.js";
 import { singleFile } from "../middleware/uploadErrors.js";
 import { extractModpackZip, cleanupUpload } from "../services/modpackService.js";
 import { SUPPORTED_MODLOADER_FAMILIES } from "../data/gameTemplates.js";
-import { pollServers } from "../services/pollingService.js";
+import { pollServers, serverStatus } from "../services/pollingService.js";
 import {
 	startServer,
 	stopServer,
@@ -29,14 +28,23 @@ import {
 
 const router = express.Router();
 
+// Every route with :serverName resolves it once, here, instead of repeating
+// the lookup and the 404 in each handler.
+router.param("serverName", (req, res, next, name) => {
+	const server = getServer(name);
+	if (!server) return res.status(404).json({ error: "Server not found" });
+	req.server = server;
+	next();
+});
+
+/** Which file a config request means: a named one, or the server's single file. */
+function configPathFor(server, name) {
+	return server.configPaths ? server.configPaths[name] : server.configPath;
+}
+
 // Basic info about a single server
 router.get("/server/:serverName", async (req, res) => {
-	const server = allServers().find(
-		(s) => s.name === req.params.serverName,
-	);
-	if (!server) {
-		return res.status(404).json({ error: "Server not found" });
-	}
+	const server = req.server;
 	res.json({
 		name: server.name,
 		type: server.type,
@@ -55,18 +63,11 @@ router.get("/server/:serverName", async (req, res) => {
 });
 
 // Toggle whether this server participates in the Steam-build auto-update
-// checker. Takes effect on the next 15-minute check — no restart needed.
+// checker. Takes effect on the next check — no restart needed.
 router.post("/server/:serverName/auto-update", async (req, res) => {
-	const server = allServers().find(
-		(s) => s.name === req.params.serverName,
-	);
-	if (!server) {
-		return res.status(404).json({ error: "Server not found" });
-	}
+	const server = req.server;
 	if (!server.updateAppId) {
-		return res
-			.status(400)
-			.json({ error: "This server has no update configured." });
+		return res.status(400).json({ error: "This server has no update configured." });
 	}
 
 	const { enabled } = req.body || {};
@@ -80,146 +81,97 @@ router.post("/server/:serverName/auto-update", async (req, res) => {
 
 // Get content of a specific config file
 router.get("/config/:serverName", async (req, res) => {
-	const server = allServers().find(
-		(s) => s.name === req.params.serverName,
-	);
-	const { file } = req.query;
-
-	if (!server) {
-		return res.status(404).json({ error: "Server not found" });
+	const target = configPathFor(req.server, req.query.file);
+	if (!target) {
+		return res.status(400).json({ error: "Valid config file must be specified." });
 	}
-
-	let pathToRead = server.configPaths
-		? server.configPaths[file]
-		: server.configPath;
-
-	if (!pathToRead) {
-		return res
-			.status(400)
-			.json({ error: "Valid config file must be specified." });
-	}
-
 	try {
-		assertWithinAllowedRoots(pathToRead);
-		const configContent = await fs.readFile(pathToRead, "utf-8");
-		res.json({ content: configContent });
-	} catch (error) {
-		if (error.code === "path_not_allowed") {
-			return res.status(400).json({ error: error.message });
-		}
-		console.error(
-			`Error reading config for ${req.params.serverName}:`,
-			error,
-		);
-		res.status(500).json({ error: "Failed to read config file." });
+		res.json({ content: await readManagedFile(target) });
+	} catch (err) {
+		sendFileError(res, err, `the config for ${req.server.name}`);
 	}
 });
 
 // Save a config file
 router.post("/config/:serverName", async (req, res) => {
-	const server = allServers().find(
-		(s) => s.name === req.params.serverName,
-	);
-	const { fileName, content } = req.body;
-
-	if (!server) {
-		return res.status(404).json({ error: "Server not found" });
+	const { fileName, content } = req.body ?? {};
+	const target = configPathFor(req.server, fileName);
+	if (!target) {
+		return res.status(400).json({ error: "A valid fileName must be provided." });
 	}
-
-	let pathToWrite = server.configPaths
-		? server.configPaths[fileName]
-		: server.configPath;
-
-	if (!pathToWrite) {
-		return res
-			.status(400)
-			.json({ error: "A valid fileName must be provided." });
+	if (typeof content !== "string") {
+		return res.status(400).json({ error: "Invalid content format" });
 	}
-
 	try {
-		// Checked before the .bak copy as well as the write — the backup lands
-		// beside the target, so an out-of-bounds target means an out-of-bounds
-		// backup too.
-		assertWithinAllowedRoots(pathToWrite);
-		await fs.copyFile(pathToWrite, `${pathToWrite}.bak`);
-		await fs.writeFile(pathToWrite, content, "utf-8");
-		res.json({ success: true, message: `${fileName} saved successfully!` });
-	} catch (error) {
-		if (error.code === "path_not_allowed") {
-			return res.status(400).json({ error: error.message });
-		}
-		console.error(`Error writing config for ${server.name}:`, error);
-		res.status(500).json({
-			error: `Failed to save ${fileName}. System error: ${error.code}`,
-		});
+		await writeManagedFile(target, content);
+		res.json({ success: true, message: `${fileName ?? "Config"} saved successfully!` });
+	} catch (err) {
+		sendFileError(res, err, `the config for ${req.server.name}`);
 	}
 });
 
+// What each control action does. All but "rcon" refresh the dashboard right
+// away instead of leaving it on stale state until the next scheduled poll.
+const CONTROL_ACTIONS = {
+	async start(server) {
+		// A second launch of a running server fails on its ports at best, and at
+		// worst leaves two copies fighting over the same save files.
+		if (serverStatus[server.name]?.online) {
+			const err = new Error(`${server.name} is already running.`);
+			err.status = 409;
+			throw err;
+		}
+		return startServer(server);
+	},
+	stop: (server) => stopServer(server),
+	async update(server) {
+		return describeUpdate(server, await updateServer(server, { restart: false }), false);
+	},
+	async "update-reboot"(server) {
+		return describeUpdate(server, await updateServer(server, { restart: true }), true);
+	},
+};
+
+function describeUpdate(server, { groupNames, logPath }, restart) {
+	const who =
+		groupNames.length > 1 ? `${groupNames.join(", ")} (shared install)` : server.name;
+	const afterward = restart
+		? "they'll start back up automatically once the update finishes"
+		: "left stopped when it's done";
+	return {
+		success: true,
+		message: `Update${restart ? " + reboot" : ""} started for ${who}. This can take several minutes; ${afterward}. Log: ${logPath}`,
+	};
+}
+
 // Start, stop, or update a server
 router.post("/control/:serverName/:action", async (req, res) => {
-	const { serverName, action } = req.params;
-	const server = allServers().find((s) => s.name === serverName);
+	const { action } = req.params;
+	const server = req.server;
 
-	if (!server) {
-		return res.status(404).json({ error: "Server not found" });
-	}
-
-	if (action === "start") {
-		try {
-			const result = await startServer(server);
-			res.json(result);
-			// Refresh right away instead of leaving the dashboard on stale
-			// "offline" state until the next scheduled poll tick (≤7.5s).
-			pollServers().catch(() => {});
-		} catch (e) {
-			console.error(`Start error for ${serverName}:`, e);
-			res.status(500).json({ error: e.message });
-		}
-	} else if (action === "stop") {
-		try {
-			const result = await stopServer(server);
-			res.json(result);
-			pollServers().catch(() => {});
-		} catch (e) {
-			console.error(`Stop error for ${serverName}:`, e);
-			res.status(500).json({ error: e.message });
-		}
-	} else if (action === "update" || action === "update-reboot") {
-		const restart = action === "update-reboot";
-		try {
-			const { groupNames, logPath } = await updateServer(server, {
-				restart,
-			});
-			const who =
-				groupNames.length > 1
-					? `${groupNames.join(", ")} (shared install)`
-					: serverName;
-			const afterward = restart
-				? "they'll start back up automatically once the update finishes"
-				: "left stopped when it's done";
-			res.json({
-				success: true,
-				message: `Update${restart ? " + reboot" : ""} started for ${who}. This can take several minutes; ${afterward}. Log: ${logPath}`,
-			});
-			pollServers().catch(() => {});
-		} catch (e) {
-			console.error(`Update error for ${serverName}:`, e);
-			res.status(500).json({ error: e.message });
-		}
-	} else if (action === "rcon") {
+	if (action === "rcon") {
 		const { command } = req.body || {};
 		if (!command || typeof command !== "string") {
 			return res.status(400).json({ error: "A command is required." });
 		}
 		try {
-			const response = await sendRconCommand(server, command);
-			res.json({ success: true, response });
+			res.json({ success: true, response: await sendRconCommand(server, command) });
 		} catch (e) {
-			console.error(`RCON command error for ${serverName}:`, e);
+			console.error(`RCON command error for ${server.name}:`, e);
 			res.status(500).json({ error: e.message });
 		}
-	} else {
-		res.status(400).json({ error: "Invalid action." });
+		return;
+	}
+
+	const run = CONTROL_ACTIONS[action];
+	if (!run) return res.status(400).json({ error: "Invalid action." });
+
+	try {
+		res.json(await run(server));
+		pollServers().catch(() => {});
+	} catch (e) {
+		if (!e.status) console.error(`${action} error for ${server.name}:`, e);
+		res.status(e.status ?? 500).json({ error: e.message });
 	}
 });
 

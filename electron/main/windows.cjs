@@ -14,6 +14,7 @@ function createMainWindow({ port }) {
 		backgroundColor: "#121212",
 		show: false,
 		title: "GodlyPanel",
+		icon: path.join(here, "..", "tray.png"),
 		webPreferences: {
 			preload: path.join(here, "..", "preload.cjs"),
 			// The renderer loads over HTTP and displays text written by game

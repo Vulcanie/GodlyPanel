@@ -6,10 +6,11 @@ import {
 	getById,
 } from "../data/userStore.js";
 import { issueSession, clearSession, requireRole } from "../middleware/auth.js";
+import { loginGuard, recordLoginFailure, clearLoginFailures } from "../middleware/loginLimiter.js";
 
 const router = express.Router();
 
-router.post("/login", async (req, res) => {
+router.post("/login", loginGuard, async (req, res) => {
 	const { username, password } = req.body || {};
 	if (!username || !password) {
 		return res.status(400).json({ error: "Username and password are required." });
@@ -20,10 +21,12 @@ router.post("/login", async (req, res) => {
 
 	const user = await verifyCredentials(username, password);
 	if (!user) {
+		recordLoginFailure(req);
 		// Deliberately not saying which half was wrong.
 		return res.status(401).json({ error: "Incorrect username or password." });
 	}
 
+	clearLoginFailures(req);
 	issueSession(res, user);
 	res.json({ user: { username: user.username, role: user.role } });
 });

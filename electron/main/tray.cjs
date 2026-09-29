@@ -8,8 +8,11 @@ const { Tray, Menu, nativeImage } = electron;
  * Tray icon so the panel can keep running (and keep polling) with no window
  * open — closing the window shouldn't stop monitoring the servers.
  */
-function createTray({ appPath, onShow, onRestartApi, onQuit, getState }) {
-	const iconPath = path.join(appPath, "build", "tray.png");
+function createTray({ onShow, onRestartApi, onQuit, getState }) {
+	// Ships inside the app (electron/**). It used to point at build/tray.png,
+	// which was neither created nor packaged, so the tray icon was blank — a
+	// panel that lives in the tray and can't be seen there.
+	const iconPath = path.join(__dirname, "..", "tray.png");
 	const image = fs.existsSync(iconPath)
 		? nativeImage.createFromPath(iconPath)
 		: nativeImage.createEmpty();

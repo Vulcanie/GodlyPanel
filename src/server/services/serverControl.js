@@ -1,14 +1,11 @@
-import { exec, spawn } from "child_process";
+import { execFile, spawn } from "child_process";
 import net from "net";
-import { Rcon } from "rcon-client";
+import { withRcon } from "./rconClient.js";
+import { sleep } from "../util/async.js";
 import { checkProcess } from "./processCheck.js";
 import { resolveResource } from "../../shared/resources.js";
 
 const LAUNCH_HIDDEN_SCRIPT = resolveResource("scripts/launch-hidden.ps1");
-
-function sleep(ms) {
-	return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 // 7 Days to Die has no RCON, but its built-in Telnet interface (already
 // enabled in serverconfig.xml, loopback-only, no password) accepts the same
@@ -189,70 +186,38 @@ export async function startServer(server) {
 	});
 }
 
-// Sends the appropriate stop command for a server: RCON if it's configured,
-// otherwise taskkill by process name. Shared by the "stop" control action
-// and the update flow (which stops servers before running SteamCMD).
+// Stops a server: RCON if configured, otherwise a close request by process name.
+// Shared by the "stop" control action and the update flow (which stops
+// servers before running SteamCMD).
 export async function stopServer(server) {
 	if (server.rconPort && server.rconPassword) {
-		let rcon;
 		try {
-			rcon = new Rcon({
-				host: server.host,
-				port: server.rconPort,
-				password: server.rconPassword,
-			});
-
-			// Without a listener, an 'error' event on this EventEmitter is
-			// fatal to the whole process (same reason pollingService.js's RCON
-			// polling attaches one) — a flaky socket here would otherwise take
-			// down every server, not just this request.
-			rcon.on("error", (err) => {
-				console.warn(`RCON error on ${server.name}:`, err.message);
-			});
-
-			await rcon.connect();
-
-			const saveCommand = getSaveCommand(server);
-			if (saveCommand) {
-				try {
-					await rcon.send(saveCommand);
-					// The RCON response for saveworld/Save acknowledges the
-					// command, not that the write to disk has finished — give it
-					// a few seconds before the stop/update that follows actually
-					// tears the process down.
-					await sleep(5000);
-				} catch (e) {
-					console.warn(
-						`Save command failed for ${server.name} before stop:`,
-						e.message,
+			await withRcon(
+				server,
+				async (_rcon, send) => {
+					const saveCommand = getSaveCommand(server);
+					if (saveCommand) {
+						try {
+							await send(saveCommand);
+							// The response acknowledges the command, not that the
+							// write to disk has finished — give it a few seconds
+							// before the stop/update that follows tears the
+							// process down.
+							await sleep(5000);
+						} catch (e) {
+							console.warn(`Save command failed for ${server.name} before stop:`, e.message);
+						}
+					}
+					await send(
+						server.type === "minecraft" || server.type === "conan" ? "stop" : "DoExit",
 					);
-				}
-			}
-
-			const command =
-				server.type === "minecraft" || server.type === "conan"
-					? "stop"
-					: "DoExit";
-
-			await rcon.send(command);
-
-			return {
-				success: true,
-				message: `${server.name} stop command sent via RCON.`,
-			};
-		} catch (e) {
+				},
+				// Generous: a busy world can take a while to acknowledge a stop.
+				{ timeoutMs: 30000 },
+			);
+			return { success: true, message: `${server.name} stop command sent via RCON.` };
+		} catch {
 			throw new Error("RCON command failed. Is the server online?");
-		} finally {
-			// rcon.end() waits for the game process to actually exit and close
-			// the socket — for ARK that can take well past a typical client
-			// timeout even though the stop command was already delivered. Same
-			// fix as sendRconCommand() below: destroy the socket directly
-			// instead of waiting on it.
-			try {
-				rcon?.socket?.destroy();
-			} catch (e) {
-				// already closed/never opened — nothing to do
-			}
 		}
 	}
 
@@ -260,21 +225,23 @@ export async function stopServer(server) {
 		// 7 Days to Die is the one non-RCON game with a real remote save
 		// command available (Telnet, already enabled in serverconfig.xml) —
 		// everything else here has no such channel at all.
-		if (server.telnetPort) {
-			await sendTelnetSave(server);
-		}
-
+		if (server.telnetPort) await sendTelnetSave(server);
 		return gracefulThenForceKill(server);
 	}
 
 	throw new Error(`No stop method is configured for ${server.name}.`);
 }
 
-function execAsync(cmd) {
+// No shell involved: the image name comes from a config file, and building a
+// command string around it would let a hostile or mistyped entry inject one.
+function taskkill(imageName, { force = false } = {}) {
 	return new Promise((resolve) => {
-		exec(cmd, { windowsHide: true }, (error, stdout, stderr) => {
-			resolve({ error, stdout, stderr });
-		});
+		execFile(
+			"taskkill",
+			["/IM", imageName, ...(force ? ["/F"] : [])],
+			{ windowsHide: true },
+			(error, stdout, stderr) => resolve({ error, stdout, stderr }),
+		);
 	});
 }
 
@@ -282,13 +249,12 @@ function execAsync(cmd) {
 // Subsistence), taskkill without /F sends a close request the process's own
 // shutdown handler can react to — several engines, Unreal included, run
 // save-on-exit logic there — instead of an unconditional kill with zero
-// warning, which is all a straight `/F` ever gave them. This isn't a
-// guarantee the way an RCON/Telnet save command is (not every game honors a
-// close request, and some will simply fail to close this way at all), just
-// a real chance instead of none. Escalates to a forced kill only if the
-// process is still running after the grace window.
+// warning. This isn't a guarantee the way an RCON/Telnet save command is (not
+// every game honors a close request), just a real chance instead of none.
+// Escalates to a forced kill only if the process is still running after the
+// grace window.
 async function gracefulThenForceKill(server, graceMs = 15000, pollMs = 2000) {
-	await execAsync(`taskkill /IM "${server.processName}"`);
+	await taskkill(server.processName);
 
 	const deadline = Date.now() + graceMs;
 	while (Date.now() < deadline) {
@@ -298,9 +264,7 @@ async function gracefulThenForceKill(server, graceMs = 15000, pollMs = 2000) {
 		}
 	}
 
-	const { error, stderr } = await execAsync(
-		`taskkill /IM "${server.processName}" /F`,
-	);
+	const { error, stderr } = await taskkill(server.processName, { force: true });
 	if (error && !stderr.includes("not found")) {
 		throw new Error(`Failed to stop server: ${error.message}`);
 	}
@@ -313,55 +277,18 @@ async function gracefulThenForceKill(server, graceMs = 15000, pollMs = 2000) {
 
 // Sends an arbitrary RCON command and returns the raw response text.
 // Some games (ARK in particular) only accept one RCON session at a time, and
-// the background polling loop is also connecting every ~7.5s — so a command
-// sent at the wrong moment can sit waiting for that session to free up. A
-// timeout keeps that as a clear error instead of the request hanging.
+// the background polling loop connects periodically too — so a command sent
+// at the wrong moment can sit waiting for that session to free up. The
+// timeout keeps that a clear error instead of a hung request.
 export async function sendRconCommand(server, command, timeoutMs = 8000) {
 	if (!server.rconPort || !server.rconPassword) {
 		throw new Error(`RCON is not configured for ${server.name}.`);
 	}
-
-	let rcon;
 	try {
-		rcon = new Rcon({
-			host: server.host,
-			port: server.rconPort,
-			password: server.rconPassword,
-		});
-
-		// Same reason as stopServer() above — an unhandled 'error' event here
-		// crashes the whole process, not just this command.
-		rcon.on("error", (err) => {
-			console.warn(`RCON error on ${server.name}:`, err.message);
-		});
-
-		const withTimeout = (promise, label) =>
-			Promise.race([
-				promise,
-				new Promise((_, reject) =>
-					setTimeout(
-						() => reject(new Error(`${label} timed out`)),
-						timeoutMs,
-					),
-				),
-			]);
-
-		await withTimeout(rcon.connect(), "RCON connect");
-		return await withTimeout(rcon.send(command), "RCON send");
+		return await withRcon(server, (_rcon, send) => send(command), { timeoutMs });
 	} catch (e) {
 		throw new Error(
 			`RCON command failed: ${e.message}. The server may be busy (only one RCON session at a time) — try again in a few seconds.`,
 		);
-	} finally {
-		// rcon.end() waits for a graceful close ack that some games (ARK in
-		// particular) never send for non-terminal commands — it only resolves
-		// reliably for "stop", where the process exit forces the socket shut.
-		// Destroying the socket directly (same as pollingService.js's RCON
-		// polling) avoids hanging the whole request on that.
-		try {
-			rcon?.socket?.destroy();
-		} catch (e) {
-			// already closed/never opened — nothing to do
-		}
 	}
 }

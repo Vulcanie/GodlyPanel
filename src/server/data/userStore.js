@@ -102,11 +102,16 @@ export function getById(id) {
 	return users.find((u) => u.id === id) ?? null;
 }
 
+// A real hash of a throwaway value, so an unknown or disabled account costs the
+// same ~250ms as a wrong password. Returning instantly for those let anyone on
+// the network tell which usernames exist just by timing the login.
+const DUMMY_HASH = "$2b$12$bRaJFtoRlDkppltmf2rbWOoqcmUIn1j.qdYfTrC/9LkeASbbDhKHS";
+
 export async function verifyCredentials(username, password) {
 	const user = getByUsername(username);
-	if (!user || user.disabled) return null;
-	const ok = await bcrypt.compare(String(password ?? ""), user.passwordHash);
-	return ok ? user : null;
+	const usable = Boolean(user) && !user.disabled;
+	const ok = await bcrypt.compare(String(password ?? ""), usable ? user.passwordHash : DUMMY_HASH);
+	return usable && ok ? user : null;
 }
 
 function assertValidUsername(username) {

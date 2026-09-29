@@ -73,7 +73,13 @@ export function createLanOnly(getConfig) {
 		// and therefore influenced by headers we just removed.
 		const ip = normaliseIp(req.socket.remoteAddress);
 
-		if (isAllowed(ip, network)) return next();
+		if (isAllowed(ip, network)) {
+			if (isExpectedHost(req.headers.host, network)) return next();
+			return res.status(400).json({
+				error: "Open GodlyPanel using this computer's IP address or name.",
+				code: "bad_host",
+			});
+		}
 
 		const now = Date.now();
 		const last = loggedAt.get(ip) ?? 0;
@@ -89,6 +95,22 @@ export function createLanOnly(getConfig) {
 			clientIp: ip,
 		});
 	};
+}
+
+const OWN_NAME = os.hostname().toLowerCase();
+
+/**
+ * True for an IP literal, localhost, this machine's own name, or a name the
+ * owner has listed. Anything else is a DNS name someone else controls.
+ */
+export function isExpectedHost(hostHeader, network = {}) {
+	if (!hostHeader) return false;
+	// Strip the port, keeping the brackets on an IPv6 literal.
+	const host = String(hostHeader).toLowerCase().replace(/:\d+$/, "");
+	if (host.startsWith("[")) return true;
+	if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) return true;
+	if (host === "localhost" || host === OWN_NAME || host === `${OWN_NAME}.local`) return true;
+	return (network.extraAllowedHosts ?? []).some((h) => String(h).toLowerCase() === host);
 }
 
 export function isAllowed(ip, network = {}) {

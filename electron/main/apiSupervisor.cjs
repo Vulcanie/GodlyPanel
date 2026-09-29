@@ -21,12 +21,15 @@ const LOG_GENERATIONS = 3;
  * process, which would take the whole window down with it.
  */
 class ApiSupervisor extends EventEmitter {
-	constructor({ serverEntry, dataDir, resourceRoot, port, env = {} }) {
+	constructor({ serverEntry, dataDir, resourceRoot, getPort, env = {} }) {
 		super();
 		this.serverEntry = serverEntry;
 		this.dataDir = dataDir;
 		this.resourceRoot = resourceRoot;
-		this.port = port;
+		// Asked on every (re)start rather than fixed once, so a port changed in
+		// Settings takes effect the next time the API restarts.
+		this.getPort = getPort;
+		this.port = getPort();
 		this.extraEnv = env;
 
 		this.child = null;
@@ -121,7 +124,7 @@ class ApiSupervisor extends EventEmitter {
 				ELECTRON_RUN_AS_NODE: "1",
 				GHP_DATA_DIR: this.dataDir,
 				GHP_RESOURCE_ROOT: this.resourceRoot,
-				GHP_PORT: String(this.port),
+				GHP_PORT: String((this.port = this.getPort())),
 			},
 			stdio: ["ignore", "pipe", "pipe", "ipc"],
 		});
@@ -137,7 +140,6 @@ class ApiSupervisor extends EventEmitter {
 			}
 			if (msg?.type === "bind-error") this.emit("bind-error", msg);
 			if (msg?.type === "active-jobs") this.emit("active-jobs", msg.jobs);
-			if (msg?.type === "first-run-credentials") this.emit("first-run-credentials", msg);
 		});
 
 		this.child.on("exit", (code, signal) => {

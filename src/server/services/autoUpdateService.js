@@ -5,6 +5,7 @@ import { sendRconCommand } from "./serverControl.js";
 import { serverStatus } from "./pollingService.js";
 import { sendUpdateAlert } from "./discordService.js";
 import { isAutoUpdateEnabled } from "./autoUpdateSettings.js";
+import { sleep } from "../util/async.js";
 
 // Minutes-remaining checkpoints for the pre-update warning, plus an
 // explicit "now" broadcast right before the update actually starts.
@@ -14,10 +15,6 @@ const COUNTDOWN_STEPS = [15, 10, 5];
 // lands while one is already running doesn't start a second, overlapping
 // countdown for the same game.
 const inProgress = new Set();
-
-function sleep(ms) {
-	return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 async function filterAsync(items, predicate) {
 	const keep = await Promise.all(items.map(predicate));

@@ -1,4 +1,4 @@
-import { exec } from "child_process";
+import { execFile } from "child_process";
 import { readFileSync } from "fs";
 import path from "path";
 import { all as allServers } from "../data/serverStore.js";
@@ -10,11 +10,13 @@ const SAMPLE_SCRIPT = resolveResource("scripts/process-resource-sample.ps1");
 // Last successful reading, served to clients that connect between poll
 // ticks (mirrors latestStats in systemStats.js).
 export let latestServerStats = [];
+let latestServerStatsAt = 0;
 
 function runSampleScript() {
 	return new Promise((resolve, reject) => {
-		exec(
-			`powershell -NoProfile -ExecutionPolicy Bypass -File "${SAMPLE_SCRIPT}"`,
+		execFile(
+			"powershell",
+			["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", SAMPLE_SCRIPT],
 			{ windowsHide: true, timeout: 8000, maxBuffer: 10 * 1024 * 1024 },
 			(error, stdout) => {
 				if (error) return reject(error);
@@ -148,8 +150,9 @@ function getHeapInfo(pid) {
 	// configurable, and a failure here just means no heap bar rather than an error.
 	const jcmd = getConfig().paths.jcmdPath || "jcmd";
 	return new Promise((resolve) => {
-		exec(
-			`"${jcmd}" ${pid} GC.heap_info`,
+		execFile(
+			jcmd,
+			[String(pid), "GC.heap_info"],
 			{ windowsHide: true, timeout: 5000, maxBuffer: 1024 * 1024 },
 			(error, stdout) => {
 				if (error) return resolve(null);
@@ -189,5 +192,18 @@ export async function getServerResourceStats() {
 	);
 
 	latestServerStats = stats;
+	latestServerStatsAt = Date.now();
 	return stats;
+}
+
+// Sampling means a PowerShell round trip of a second or more, so it isn't done
+// while nobody is looking. A viewer who does show up gets the last reading if
+// it's recent, or a fresh one if it isn't.
+let inFlight = null;
+export function getServerStatsIfStale(maxAgeMs) {
+	if (Date.now() - latestServerStatsAt <= maxAgeMs) return Promise.resolve(latestServerStats);
+	inFlight ??= getServerResourceStats().finally(() => {
+		inFlight = null;
+	});
+	return inFlight;
 }

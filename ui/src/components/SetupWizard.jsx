@@ -10,7 +10,8 @@ import {
 	Radio,
 	FormControlLabel,
 } from "@mui/material";
-import FolderField, { formatBytes } from "./FolderField";
+import FolderField from "./FolderField";
+import { formatBytes } from "../utils/format";
 import { api } from "../api/client";
 import { useSession } from "../SessionContext";
 

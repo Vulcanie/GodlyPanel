@@ -4,7 +4,9 @@ import path from "path";
 import { all as allServers } from "../data/serverStore.js";
 import { paths } from "../paths.js";
 import { trackSteamCmd, untrackSteamCmd } from "./processRegistry.js";
+import { existsSync } from "fs";
 import { resolveSteamCmdFor } from "./steamCmdProvisioner.js";
+import { sleep } from "../util/async.js";
 import { serverStatus } from "./pollingService.js";
 import { stopServer, startServer } from "./serverControl.js";
 
@@ -23,10 +25,6 @@ export function getUpdateGroup(server) {
 		);
 	}
 	return [server];
-}
-
-function sleep(ms) {
-	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function waitUntilStopped(names) {
@@ -49,6 +47,16 @@ export async function updateServer(
 ) {
 	if (!server.updateAppId) {
 		throw new Error(`No update is configured for ${server.name}.`);
+	}
+
+	// Checked before anything is stopped. This used to find out only when spawn()
+	// failed — after the servers were already down, and as an 'error' event with
+	// no listener, which is fatal to the whole process.
+	const steamCmd = resolveSteamCmdFor(server.steamCmdPath);
+	if (!existsSync(steamCmd)) {
+		throw new Error(
+			"SteamCMD isn't installed yet, so nothing was stopped. Download it from Settings first.",
+		);
 	}
 
 	const group = getUpdateGroup(server);
@@ -93,12 +101,19 @@ export async function updateServer(
 		"+quit",
 	];
 
-	const child = spawn(resolveSteamCmdFor(server.steamCmdPath), args, {
+	const child = spawn(steamCmd, args, {
 		detached: true,
 		windowsHide: true,
 		stdio: ["ignore", logStream, logStream],
 	});
 	trackSteamCmd(child.pid);
+	child.on("error", (err) => {
+		untrackSteamCmd(child.pid);
+		logStream.end(`
+Could not run SteamCMD: ${err.message}
+`);
+		console.error(`[update] SteamCMD failed to start for ${server.name}:`, err.message);
+	});
 	child.on("exit", () => untrackSteamCmd(child.pid));
 
 	if (restart) {
@@ -109,12 +124,15 @@ export async function updateServer(
 		child.on("exit", async (code) => {
 			logStream.write(`\n[update-and-reboot] steamcmd exited with code ${code}\n`);
 
+			// SteamCMD reports a non-zero exit after a self-update relaunch even
+			// when the install itself succeeded (the creation flow documents the
+			// same quirk). Skipping the restart on that left servers stopped after
+			// a perfectly good update, which is the worse failure — so bring them
+			// back regardless, and say what the code was.
 			if (code !== 0) {
-				console.error(
-					`[update-and-reboot] steamcmd failed for ${server.name} (exit ${code}) — not restarting.`,
-				);
-				logStream.end();
-				return;
+				logStream.write(`[update-and-reboot] non-zero exit (${code}); restarting anyway.
+`);
+				console.warn(`[update-and-reboot] steamcmd exited ${code} for ${server.name}; restarting anyway.`);
 			}
 
 			for (const s of restartTargets) {
@@ -134,6 +152,7 @@ export async function updateServer(
 			logStream.end();
 		});
 	} else {
+		child.on("exit", () => logStream.end());
 		child.unref();
 	}
 

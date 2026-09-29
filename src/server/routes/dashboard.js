@@ -2,11 +2,13 @@
 // routes/api.js behind an admin check.
 import express from "express";
 import { serverStatus } from "../services/pollingService.js";
-import { latestStats } from "../services/systemStats.js";
-import { latestServerStats } from "../services/serverResourceStats.js";
+import { getSystemStats } from "../services/systemStats.js";
+import { getServerStatsIfStale } from "../services/serverResourceStats.js";
+import { getConfig } from "../config/configStore.js";
 import { addSseClient } from "../services/sseHub.js";
 import { sanitizeStatusMap } from "../data/sanitize.js";
 import { getStorage } from "../services/storageService.js";
+import { requireRole } from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -22,17 +24,25 @@ router.get("/status/latest", (req, res) => {
 	res.json(sanitizeStatusMap(serverStatus, req.user?.role));
 });
 
-router.get("/system-stats", (req, res) => {
-	res.json(latestStats || {});
+// Cheap now (Node's own counters), so always current rather than last-polled.
+router.get("/system-stats", async (req, res) => {
+	res.json(await getSystemStats());
 });
 
-router.get("/server-stats", (req, res) => {
-	res.json(latestServerStats || []);
+router.get("/server-stats", async (req, res) => {
+	if (!getConfig().polling.enableServerStats) return res.json([]);
+	try {
+		res.json(await getServerStatsIfStale(getConfig().polling.serverStatsMs));
+	} catch {
+		res.json([]);
+	}
 });
 
 // Served from cache — reading this never kicks off a scan, since walking a
 // few hundred thousand files on request would make the dashboard hang.
-router.get("/storage", (req, res) => {
+// Admin only: it lists the install path of every server, which a guest has no
+// business seeing.
+router.get("/storage", requireRole("admin"), (req, res) => {
 	res.json(getStorage());
 });
 

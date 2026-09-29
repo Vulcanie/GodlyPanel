@@ -1,12 +1,6 @@
 import React from "react";
-import { Box, LinearProgress, Typography } from "@mui/material";
-import { amber, green, red } from "@mui/material/colors";
-
-function levelColor(percent) {
-	if (percent >= 90) return red[500];
-	if (percent >= 75) return amber[600];
-	return green[500];
-}
+import { Box, Typography } from "@mui/material";
+import LevelBar from "./LevelBar";
 
 function Meter({ label, percent, detail }) {
 	return (
@@ -17,16 +11,7 @@ function Meter({ label, percent, detail }) {
 					{detail}
 				</Typography>
 			</Box>
-			<LinearProgress
-				variant="determinate"
-				value={Math.min(percent, 100)}
-				sx={{
-					height: 8,
-					borderRadius: 4,
-					backgroundColor: "rgba(255,255,255,0.1)",
-					"& .MuiLinearProgress-bar": { backgroundColor: levelColor(percent) },
-				}}
-			/>
+			<LevelBar percent={percent} />
 		</Box>
 	);
 }

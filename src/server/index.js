@@ -3,7 +3,7 @@ import path from "node:path";
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import apiRouter from "./routes/api.js";
-import { broadcastSseEvent } from "./services/sseHub.js";
+import { broadcastSseEvent, clientCount } from "./services/sseHub.js";
 import authRoutes from "./routes/auth.js";
 import setupRoutes from "./routes/setup.js";
 import dashboardRoutes from "./routes/dashboard.js";
@@ -18,6 +18,7 @@ import { pollServers, initPollingState } from "./services/pollingService.js";
 import { checkAndHandleUpdates } from "./services/autoUpdateService.js";
 import { getSystemStats } from "./services/systemStats.js";
 import { getServerResourceStats } from "./services/serverResourceStats.js";
+import { discordEnabled } from "./services/discordService.js";
 import { cleanupStaleUploads } from "./services/modpackService.js";
 import { killTrackedSteamCmd, hasActiveJobs } from "./services/processRegistry.js";
 import batchFileRoutes from "./routes/batchFiles.js";
@@ -151,25 +152,26 @@ registerTimer(
 	() => pollServers(),
 	(c) => c.polling.serversMs,
 );
+// Run a reader and push its result to every connected dashboard.
+const publish = (label, read, type, key) => () =>
+	read()
+		.then((value) => broadcastSseEvent({ type, [key]: value }))
+		.catch((err) => console.error(`[${label}] Failed to read: ${err.message}`));
+
 registerTimer(
 	"system-stats",
-	() => {
-		getSystemStats()
-			.then((stats) => broadcastSseEvent({ type: "system_stats", stats }))
-			.catch((err) =>
-				console.error("[system-stats] Failed to read system stats:", err.message),
-			);
-	},
+	publish("system-stats", getSystemStats, "system_stats", "stats"),
 	(c) => c.polling.systemStatsMs,
 );
 registerTimer(
 	"server-stats",
+	// Skipped while nobody is watching and Discord isn't showing it: this is a
+	// PowerShell round trip of a second or more, for a number no one would see.
+	// A viewer who arrives later gets a fresh reading on demand.
 	() => {
-		getServerResourceStats()
-			.then((stats) => broadcastSseEvent({ type: "server_stats", stats }))
-			.catch((err) =>
-				console.error("[server-stats] Failed to read per-server stats:", err.message),
-			);
+		if (clientCount() > 0 || discordEnabled()) {
+			publish("server-stats", getServerResourceStats, "server_stats", "stats")();
+		}
 	},
 	(c) => c.polling.serverStatsMs,
 	(c) => c.polling.enableServerStats,

@@ -30,7 +30,14 @@ function readSessionCookie(req) {
 		const eq = part.indexOf("=");
 		if (eq === -1) continue;
 		if (part.slice(0, eq).trim() === COOKIE_NAME) {
-			return decodeURIComponent(part.slice(eq + 1).trim());
+			// A malformed escape throws, and this runs on every request — one bad
+			// cookie would otherwise turn every page, the login screen included,
+			// into a 500 until the browser dropped it.
+			try {
+				return decodeURIComponent(part.slice(eq + 1).trim());
+			} catch {
+				return null;
+			}
 		}
 	}
 	return null;
@@ -40,7 +47,7 @@ export function issueSession(res, user) {
 	const token = jwt.sign(
 		{ sub: user.id, u: user.username, role: user.role, sv: user.sessionVersion },
 		getSecrets().jwtSecret,
-		{ expiresIn: TOKEN_TTL_SECONDS },
+		{ expiresIn: TOKEN_TTL_SECONDS, algorithm: "HS256" },
 	);
 	res.cookie(COOKIE_NAME, token, cookieOptions());
 	return token;
@@ -66,7 +73,7 @@ export function attachUser(req, res, next) {
 
 	let payload;
 	try {
-		payload = jwt.verify(token, getSecrets().jwtSecret);
+		payload = jwt.verify(token, getSecrets().jwtSecret, { algorithms: ["HS256"] });
 	} catch {
 		return next();
 	}

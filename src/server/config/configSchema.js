@@ -21,6 +21,7 @@ export const DEFAULTS = {
 		allowCgnat: true,
 		allowLinkLocal: true,
 		extraAllowedCidrs: [],
+		extraAllowedHosts: [],
 	},
 
 	paths: {
@@ -107,6 +108,13 @@ export const FIELD_SPECS = [
 		restart: false,
 		label: "Additional allowed networks",
 		help: "Extra IP ranges to accept, e.g. 10.8.0.0/24 for a VPN.",
+	},
+	{
+		path: "network.extraAllowedHosts",
+		type: "stringArray",
+		restart: false,
+		label: "Additional allowed names",
+		help: "Names you type in the address bar to reach the panel, besides its IP address and the computer's own name — e.g. a name your router gives it.",
 	},
 
 	{

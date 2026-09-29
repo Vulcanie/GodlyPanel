@@ -8,6 +8,19 @@ const { createTray } = require("./tray.cjs");
 
 const DEFAULT_PORT = 8765;
 
+// The port is a setting (Settings -> Access), but the window has to know it
+// before the API is up, so read it from the config file directly. It used to be
+// a hardcoded constant here, which made changing the setting quietly do nothing.
+function readConfiguredPort(dir) {
+	try {
+		const config = JSON.parse(fs.readFileSync(path.join(dir, "config.json"), "utf8"));
+		const port = Number(config?.http?.port);
+		return Number.isInteger(port) && port >= 1024 && port <= 65535 ? port : DEFAULT_PORT;
+	} catch {
+		return DEFAULT_PORT;
+	}
+}
+
 const { dataDir, portable, fellBack } = resolveDataDir();
 const resourceRoot = resolveResourceRoot();
 
@@ -25,7 +38,7 @@ if (!gotLock) {
 	process.exit(0);
 }
 
-const port = DEFAULT_PORT;
+let port = readConfiguredPort(dataDir);
 let mainWindow = null;
 let trayRef = null;
 let quitting = false;
@@ -36,7 +49,7 @@ const supervisor = new ApiSupervisor({
 	serverEntry: path.join(app.getAppPath(), "src", "server", "index.js"),
 	dataDir,
 	resourceRoot,
-	port,
+	getPort: () => readConfiguredPort(dataDir),
 });
 
 function showWindow() {
@@ -79,23 +92,6 @@ supervisor.on("state", (state, detail) => {
 	}
 });
 
-// A generated first-run password is useless buried in a log file, so put it
-// in front of the person who just opened the app.
-supervisor.on("first-run-credentials", ({ username, password }) => {
-	dialog.showMessageBox({
-		type: "info",
-		title: "GodlyPanel — your sign-in details",
-		message: "A password has been generated for your admin account.",
-		detail:
-			`Username: ${username}\nPassword: ${password}\n\n` +
-			"Write this down now — it isn't shown again. You can change it from Settings.",
-		buttons: ["Copy password", "OK"],
-		defaultId: 0,
-	}).then(({ response }) => {
-		if (response === 0) require("electron").clipboard.writeText(password);
-	});
-});
-
 supervisor.on("bind-error", ({ code }) => {
 	const message =
 		code === "EADDRINUSE"
@@ -114,17 +110,22 @@ app.whenReady().then(() => {
 	supervisor.start();
 
 	// Wait for the API to report ready before pointing the window at it, so the
-	// first paint isn't a connection-refused error page.
-	const openWhenReady = (state) => {
-		if (state === "ready") {
-			supervisor.off("state", openWhenReady);
+	// first paint isn't a connection-refused error page. Also runs after a
+	// restart: if the port changed, an open window follows it.
+	let firstReady = true;
+	supervisor.on("state", (state, detail) => {
+		if (state !== "ready") return;
+		const previous = port;
+		port = detail?.port ?? port;
+		if (firstReady) {
+			firstReady = false;
 			showWindow();
+		} else if (port !== previous && mainWindow && !mainWindow.isDestroyed()) {
+			mainWindow.loadURL(`http://127.0.0.1:${port}/`);
 		}
-	};
-	supervisor.on("state", openWhenReady);
+	});
 
 	trayRef = createTray({
-		appPath: app.getAppPath(),
 		onShow: showWindow,
 		onRestartApi: () => supervisor.restart(),
 		onQuit: () => {
