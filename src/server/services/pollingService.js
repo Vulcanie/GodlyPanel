@@ -3,6 +3,8 @@ import { broadcastSseEvent } from "./sseHub.js";
 import { sendDiscordAlert, discordEnabled } from "./discordService.js";
 import { withRcon } from "./rconClient.js";
 import { withTimeout } from "../util/async.js";
+import { get as getServerEntry } from "../data/serverStore.js";
+import { noteServerCameOnline } from "./serverWindows.js";
 import { checkPort } from "./portCheck.js";
 import { checkProcess } from "./processCheck.js";
 import { latestServerStats } from "./serverResourceStats.js";
@@ -107,6 +109,9 @@ function diffAndBroadcast(current, previous) {
 			!samePlayers(cur.playerList, prev.playerList);
 
 		if (changed) {
+			// A server that came up by itself (a crash-restart, or started by hand)
+			// opens a fresh window, which hidden/windowless servers shouldn't keep.
+			if (cur.online && !prev.online) noteServerCameOnline(getServerEntry(serverName));
 			if (cur.online !== prev.online) {
 				console.log(`[poll] ${serverName} is now ${cur.online ? "online" : "offline"}.`);
 			}

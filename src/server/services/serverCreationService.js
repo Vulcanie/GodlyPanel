@@ -13,6 +13,7 @@ import { ensureSteamCmd, isSteamCmdInstalled } from "./steamCmdProvisioner.js";
 import { assertStorageHeadroom } from "./storageService.js";
 import { inspectFolder } from "./folderCheck.js";
 import { resolveResource } from "../../shared/resources.js";
+import { deriveLaunch } from "./batchLaunch.js";
 import {
 	trackSteamCmd,
 	untrackSteamCmd,
@@ -373,6 +374,20 @@ async function runJob(jobId, template, params) {
 		}
 
 		const entry = template.buildServerEntry(p);
+
+		// Read the direct launch out of the script just written, so "no window"
+		// is available for this server from the start. Not every game's script
+		// can be read (Minecraft's is already hidden and doesn't need it), and
+		// that's fine: those servers simply use the hidden mode.
+		if (entry.type !== "minecraft" && entry.startScriptPath) {
+			const found = deriveLaunch(entry.startScriptPath, { workingDir: entry.workingDir });
+			if (found.ok) {
+				entry.launch = found.launch;
+				log("Direct launch details recorded (\"no window\" mode is available).");
+			} else {
+				log(`Direct launch not recorded: ${found.reason}`);
+			}
+		}
 		log(`Registering "${entry.name}".`);
 		await addServer(entry);
 

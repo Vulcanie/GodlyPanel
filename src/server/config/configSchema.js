@@ -57,6 +57,7 @@ export const DEFAULTS = {
 
 	servers: {
 		defaultRconPasswordMode: "generate",
+		defaultWindowMode: "hidden",
 	},
 
 	discord: {
@@ -259,6 +260,14 @@ export const FIELD_SPECS = [
 		restart: false,
 		label: "RCON password for new servers",
 		help: "Generate a unique random password per server, or reuse one you set.",
+	},
+	{
+		path: "servers.defaultWindowMode",
+		type: "enum",
+		values: ["minimized", "hidden", "windowless"],
+		restart: false,
+		label: "Server windows",
+		help: "minimized: a taskbar entry per server. hidden: hidden as soon as it opens. windowless: launched directly with no window. Each server can override this.",
 	},
 
 	{

@@ -18,6 +18,8 @@ export const paths = {
 	legacyServersFile: path.join(dataDir, "servers.js"),
 	envFile: path.join(dataDir, ".env"),
 	logsDir: path.join(dataDir, "logs"),
+	// Output of servers the panel launched itself (windowless mode).
+	serverLogsDir: path.join(dataDir, "logs", "servers"),
 	uploadsDir: path.join(dataDir, "uploads"),
 	creationLogsDir: path.join(dataDir, "jobs", "creation"),
 	updateLogsDir: path.join(dataDir, "jobs", "update"),
@@ -40,6 +42,7 @@ export function ensureDataDirs() {
 	for (const dir of [
 		paths.dataDir,
 		paths.logsDir,
+		paths.serverLogsDir,
 		paths.uploadsDir,
 		paths.creationLogsDir,
 		paths.updateLogsDir,

@@ -4,6 +4,8 @@ import { withRcon } from "./rconClient.js";
 import { sleep } from "../util/async.js";
 import { checkProcess } from "./processCheck.js";
 import { resolveResource } from "../../shared/resources.js";
+import { effectiveWindowMode, hideWindows, markHidingStarted } from "./serverWindows.js";
+import { launchWindowless, getRecordedPid, forgetPid } from "./windowlessLauncher.js";
 
 const LAUNCH_HIDDEN_SCRIPT = resolveResource("scripts/launch-hidden.ps1");
 
@@ -67,6 +69,14 @@ function getSaveCommand(server) {
 // the update-and-reboot flow (which starts servers back up once SteamCMD
 // finishes).
 export async function startServer(server) {
+	// "No window" mode skips the start script entirely and runs the program
+	// itself; every other mode goes through the script below.
+	const windowMode = effectiveWindowMode(server);
+	if (windowMode === "windowless") {
+		await launchWindowless(server);
+		return { success: true, message: `${server.name} is starting (no window)...` };
+	}
+
 	if (!server.startScriptPath) {
 		throw new Error("Start script path is not configured.");
 	}
@@ -157,6 +167,12 @@ export async function startServer(server) {
 		const succeed = () => {
 			if (settled) return;
 			settled = true;
+			// Hidden mode: the script's own window is hidden as it appears, and kept
+			// hidden for a while since some games open a log window late.
+			if (windowMode === "hidden") {
+				markHidingStarted(server);
+				hideWindows([server], 90);
+			}
 			resolve({ success: true, message: `${server.name} is starting...` });
 		};
 		const fail = (message) => {
@@ -226,7 +242,18 @@ export async function stopServer(server) {
 		// command available (Telnet, already enabled in serverconfig.xml) —
 		// everything else here has no such channel at all.
 		if (server.telnetPort) await sendTelnetSave(server);
-		return gracefulThenForceKill(server);
+		const result = await gracefulThenForceKill(server);
+		forgetPid(server.name).catch(() => {});
+		return result;
+	}
+
+	// A server the panel launched itself has a known process id, which is
+	// enough to stop it when nothing else identifies it.
+	const pid = await getRecordedPid(server);
+	if (pid) {
+		const result = await stopByPid(server, pid);
+		forgetPid(server.name).catch(() => {});
+		return result;
 	}
 
 	throw new Error(`No stop method is configured for ${server.name}.`);
@@ -269,6 +296,30 @@ async function gracefulThenForceKill(server, graceMs = 15000, pollMs = 2000) {
 		throw new Error(`Failed to stop server: ${error.message}`);
 	}
 
+	return {
+		success: true,
+		message: `${server.name} didn't close on its own within ${Math.round(graceMs / 1000)}s — force-stopped.`,
+	};
+}
+
+// Close request first, then a forced kill of the whole tree if it's still
+// running after the grace window. By process id, so it can only ever affect the
+// program the panel started.
+async function stopByPid(server, pid, graceMs = 15000, pollMs = 2000) {
+	const kill = (force) =>
+		new Promise((resolve) => {
+			execFile("taskkill", ["/PID", String(pid), ...(force ? ["/T", "/F"] : [])], { windowsHide: true }, () => resolve());
+		});
+
+	await kill(false);
+	const deadline = Date.now() + graceMs;
+	while (Date.now() < deadline) {
+		await sleep(pollMs);
+		if (!(await getRecordedPid(server))) {
+			return { success: true, message: `${server.name} closed gracefully.` };
+		}
+	}
+	await kill(true);
 	return {
 		success: true,
 		message: `${server.name} didn't close on its own within ${Math.round(graceMs / 1000)}s — force-stopped.`,

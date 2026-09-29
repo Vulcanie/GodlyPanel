@@ -19,6 +19,7 @@ import { checkAndHandleUpdates } from "./services/autoUpdateService.js";
 import { getSystemStats } from "./services/systemStats.js";
 import { getServerResourceStats } from "./services/serverResourceStats.js";
 import { discordEnabled } from "./services/discordService.js";
+import { sweepWindowsOnBoot } from "./services/serverWindows.js";
 import { cleanupStaleUploads } from "./services/modpackService.js";
 import { killTrackedSteamCmd, hasActiveJobs } from "./services/processRegistry.js";
 import batchFileRoutes from "./routes/batchFiles.js";
@@ -216,6 +217,9 @@ const server = app.listen(PORT, HOST, () => {
 		.then((stats) => broadcastSseEvent({ type: "system_stats", stats }))
 		.catch(() => {});
 	cleanupStaleUploads();
+
+	// Servers already running when the panel starts still have their windows.
+	setTimeout(() => sweepWindowsOnBoot(), 15_000);
 
 	// Deferred: the first poll matters more than the disk figure, and a walk
 	// of every game install is heavy enough not to want it competing.

@@ -6,6 +6,8 @@ import multer from "multer";
 import { get as getServer } from "../data/serverStore.js";
 import { readManagedFile, writeManagedFile, sendFileError } from "../util/managedFiles.js";
 import { singleFile } from "../middleware/uploadErrors.js";
+import serverWindowRoutes from "./serverWindowRoutes.js";
+import { checkProcess } from "../services/processCheck.js";
 import { extractModpackZip, cleanupUpload } from "../services/modpackService.js";
 import { SUPPORTED_MODLOADER_FAMILIES } from "../data/gameTemplates.js";
 import { pollServers, serverStatus } from "../services/pollingService.js";
@@ -36,6 +38,9 @@ router.param("serverName", (req, res, next, name) => {
 	req.server = server;
 	next();
 });
+
+// Window mode, launch details and console output for one server.
+router.use("/server/:serverName", serverWindowRoutes);
 
 /** Which file a config request means: a named one, or the server's single file. */
 function configPathFor(server, name) {
@@ -115,8 +120,15 @@ router.post("/config/:serverName", async (req, res) => {
 const CONTROL_ACTIONS = {
 	async start(server) {
 		// A second launch of a running server fails on its ports at best, and at
-		// worst leaves two copies fighting over the same save files.
-		if (serverStatus[server.name]?.online) {
+		// worst leaves two copies fighting over the same save files. The status
+		// can be a few seconds old — right after a stop it still says online — so
+		// where the process can be checked directly, it is, rather than refusing
+		// a start that would be fine.
+		let running = Boolean(serverStatus[server.name]?.online);
+		if (running && server.method === "process") {
+			running = await checkProcess(server.processName, { fresh: true });
+		}
+		if (running) {
 			const err = new Error(`${server.name} is already running.`);
 			err.status = 409;
 			throw err;

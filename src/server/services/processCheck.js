@@ -32,21 +32,25 @@ function takeSnapshot() {
 	});
 }
 
-function snapshot() {
+function snapshot(fresh = false) {
 	const now = Date.now();
-	if (!cached || now - cached.at > SNAPSHOT_TTL_MS) {
+	if (fresh || !cached || now - cached.at > SNAPSHOT_TTL_MS) {
 		cached = { at: now, names: takeSnapshot() };
 	}
 	return cached.names;
 }
 
-/** True if a process with this image name is running. Never throws. */
-export async function checkProcess(processName) {
+/**
+ * True if a process with this image name is running. Never throws.
+ * `fresh` skips the shared snapshot, for a decision that mustn't act on
+ * a reading up to a couple of seconds old.
+ */
+export async function checkProcess(processName, { fresh = false } = {}) {
 	// A server set to process-detection without a processName is simply
 	// undetectable, not a reason to bring the panel down.
 	if (typeof processName !== "string" || processName.trim() === "") return false;
 
-	const names = await snapshot();
+	const names = await snapshot(fresh);
 	if (!names) return false;
 
 	// tasklist truncates image names to 25 characters.

@@ -20,6 +20,7 @@ import { grey } from "@mui/material/colors";
 import StatusDisplay from "./StatusDisplay";
 import ConfigForm from "./ConfigForm";
 import RconConsole from "./RconConsole";
+import ServerWindowPanel from "./ServerWindowPanel";
 import { api } from "../api/client";
 import { parseIni, serializeIni } from "../configParsers/ini";
 import { parseProperties, serializeProperties } from "../configParsers/properties";
@@ -368,6 +369,7 @@ function ConfigPage({
 				{serverInfo?.hasRcon && (
 					<RconConsole serverName={serverName} />
 				)}
+				<ServerWindowPanel serverName={serverName} />
 				<StatusDisplay serverStatus={serverStatus} />
 			</Box>
 		);
@@ -477,6 +479,8 @@ function ConfigPage({
 			{serverInfo?.hasRcon && (
 				<RconConsole serverName={serverName} />
 			)}
+
+			<ServerWindowPanel serverName={serverName} />
 
 			{loading ? (
 				<CircularProgress />
