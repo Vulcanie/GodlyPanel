@@ -9,6 +9,8 @@ const MAX_CRASHES_IN_WINDOW = 5;
 const STABLE_UPTIME_MS = 60_000;
 const FATAL_EXIT_CODE = 17;
 const LOG_TAIL_LINES = 200;
+const MAX_LOG_BYTES = 10 * 1024 * 1024;
+const LOG_GENERATIONS = 3;
 
 /**
  * Owns the lifecycle of the API child process — the job PM2 used to do.
@@ -38,7 +40,38 @@ class ApiSupervisor extends EventEmitter {
 
 		this.logPath = path.join(dataDir, "logs", "api.log");
 		fs.mkdirSync(path.dirname(this.logPath), { recursive: true });
+		this.#rotateIfLarge();
 		this.logStream = fs.createWriteStream(this.logPath, { flags: "a" });
+		this.bytesWritten = this.#currentSize();
+	}
+
+	#currentSize() {
+		try {
+			return fs.statSync(this.logPath).size;
+		} catch {
+			return 0;
+		}
+	}
+
+	/**
+	 * PM2 used to handle this. Without it the request log — a line per HTTP
+	 * request, several per poll cycle — grows by tens of MB a day and never
+	 * stops. Keep the current file plus a couple of generations.
+	 */
+	#rotateIfLarge() {
+		if (this.#currentSize() < MAX_LOG_BYTES) return;
+		try {
+			const oldest = `${this.logPath}.${LOG_GENERATIONS}`;
+			if (fs.existsSync(oldest)) fs.rmSync(oldest);
+			for (let i = LOG_GENERATIONS - 1; i >= 1; i--) {
+				const from = `${this.logPath}.${i}`;
+				if (fs.existsSync(from)) fs.renameSync(from, `${this.logPath}.${i + 1}`);
+			}
+			fs.renameSync(this.logPath, `${this.logPath}.1`);
+		} catch {
+			// A locked file just means we try again next time; never let log
+			// housekeeping stop the API from starting.
+		}
 	}
 
 	getState() {
@@ -57,6 +90,15 @@ class ApiSupervisor extends EventEmitter {
 	#log(chunk) {
 		const text = chunk.toString();
 		this.logStream.write(text);
+		this.bytesWritten += Buffer.byteLength(text);
+
+		if (this.bytesWritten >= MAX_LOG_BYTES) {
+			this.logStream.end();
+			this.#rotateIfLarge();
+			this.logStream = fs.createWriteStream(this.logPath, { flags: "a" });
+			this.bytesWritten = 0;
+		}
+
 		this.logTail.push(text);
 		if (this.logTail.length > LOG_TAIL_LINES) {
 			this.logTail.splice(0, this.logTail.length - LOG_TAIL_LINES);
