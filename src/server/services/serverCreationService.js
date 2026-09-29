@@ -222,6 +222,60 @@ async function runSteamCmd(installDir, appId, logStream) {
 	});
 }
 
+/** The end of a file, as text — enough to read SteamCMD's verdict. */
+async function tailOfFile(file, bytes = 64 * 1024) {
+	const handle = await fs.open(file, "r");
+	try {
+		const { size } = await handle.stat();
+		const length = Math.min(bytes, size);
+		const buf = Buffer.alloc(length);
+		await handle.read(buf, 0, length, size - length);
+		return buf.toString("utf8");
+	} finally {
+		await handle.close();
+	}
+}
+
+/**
+ * Install a game with SteamCMD and only return once SteamCMD itself says it
+ * worked.
+ *
+ * The exit code can't be used (a self-update relaunch reports non-zero after a
+ * real success), and neither can "did some files appear": a failed install
+ * still leaves an empty steamapps folder behind, which is how a Conan server
+ * with no game in it once got registered as successfully created. SteamCMD's
+ * own closing line is the reliable signal.
+ *
+ * A freshly downloaded SteamCMD very often fails its first real install with
+ * "Missing configuration" and succeeds on the next run, so that one failure is
+ * retried. Anything else (disk full, no such app) fails straight away with
+ * SteamCMD's actual error rather than looping.
+ */
+async function installWithRetries(installDir, appId, logStream, logPath, log, maxAttempts = 3) {
+	const success = new RegExp(`Success! App '${appId}' (fully installed|already up to date)`, "i");
+
+	for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+		const code = await runSteamCmd(installDir, appId, logStream);
+		log(`SteamCMD exited with code ${code}.`);
+
+		// Let the log stream flush what SteamCMD wrote before reading it back.
+		await new Promise((resolve) => setImmediate(resolve));
+		const tail = await tailOfFile(logPath).catch(() => "");
+		if (success.test(tail)) return;
+
+		const errorLine = [...tail.matchAll(/^ERROR!.*$/gim)].map((m) => m[0].trim()).pop();
+		if (/Missing configuration/i.test(tail) && attempt < maxAttempts) {
+			log("SteamCMD needs a second run after its first-time setup — trying again.");
+			continue;
+		}
+		throw new Error(
+			errorLine
+				? `SteamCMD couldn't install the game: ${errorLine.replace(/^ERROR!\s*/i, "")}`
+				: "SteamCMD finished without confirming the install — check the log for the real error.",
+		);
+	}
+}
+
 async function writeFileEnsuringDir(fullPath, content) {
 	await fs.mkdir(path.dirname(fullPath), { recursive: true });
 	await fs.writeFile(fullPath, content, "utf8");
@@ -255,17 +309,7 @@ async function runJob(jobId, template, params) {
 		if (!skipInstall && template.updateAppId) {
 			setStatus(jobId, { status: "installing" });
 			log(`Installing appid ${template.updateAppId} to ${installDir} ...`);
-			const code = await runSteamCmd(installDir, template.updateAppId, logStream);
-			log(`SteamCMD exited with code ${code}.`);
-
-			// Verify something actually landed, since SteamCMD's exit code
-			// alone isn't trustworthy (see runSteamCmd above).
-			const entries = await fs.readdir(installDir).catch(() => []);
-			if (entries.length === 0) {
-				throw new Error(
-					"SteamCMD did not install any files — check the log for the real error.",
-				);
-			}
+			await installWithRetries(installDir, template.updateAppId, logStream, logPath, log);
 		}
 
 		setStatus(jobId, { status: "configuring" });
