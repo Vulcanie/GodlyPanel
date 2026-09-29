@@ -124,6 +124,12 @@ export const GAME_TEMPLATES = [
 		type: "ark",
 		method: "rcon",
 		updateAppId: "2430930",
+		// The game's own store appid, as opposed to the dedicated-server tool
+		// above. Only used to find dashboard artwork — server tools mostly have
+		// none (2 of the 10 here do). It's a fallback: artService reads
+		// steam_appid.txt out of the install first, which is both dynamic and
+		// correct for games nobody has written a template for.
+		storeAppId: "2399830",
 		sharedInstall: true,
 		// Known official map codes -> display names. "custom" lets the admin
 		// type any other WP map code (mods, unofficial maps, etc.).
@@ -204,6 +210,7 @@ export const GAME_TEMPLATES = [
 		type: "ark",
 		method: "rcon",
 		updateAppId: "376030",
+		storeAppId: "346110",
 		sharedInstall: false,
 		installLayoutRoot:
 			"steamapps\\common\\ARK Survival Evolved Dedicated Server\\ShooterGame\\Binaries\\Win64",
@@ -269,6 +276,7 @@ export const GAME_TEMPLATES = [
 		method: "gamedig",
 		queryProtocol: "conanexiles",
 		updateAppId: "443030",
+		storeAppId: "440900",
 		sharedInstall: false,
 		// A genuinely fresh `+force_install_dir` install places
 		// ConanSandboxServer.exe (and the ConanSandbox/ project folder) at
@@ -341,6 +349,7 @@ export const GAME_TEMPLATES = [
 		type: "valheim",
 		method: "gamedig",
 		updateAppId: "896660",
+		storeAppId: "892970",
 		sharedInstall: false,
 		installLayoutRoot: "steamapps\\common\\Valheim dedicated server",
 		fields: ["sessionName", "serverPassword"],
@@ -379,6 +388,7 @@ export const GAME_TEMPLATES = [
 		type: "enshrouded",
 		method: "gamedig",
 		updateAppId: "2278520",
+		storeAppId: "1203620",
 		sharedInstall: false,
 		// A genuinely fresh `+force_install_dir` install places every file —
 		// exe, config, everything — directly at the install root, confirmed
@@ -469,6 +479,7 @@ export const GAME_TEMPLATES = [
 		type: "rune",
 		method: "process",
 		updateAppId: "4019830",
+		storeAppId: "1374490",
 		sharedInstall: false,
 		installLayoutRoot: "",
 		fields: ["sessionName", "serverPassword"],
@@ -522,6 +533,7 @@ export const GAME_TEMPLATES = [
 		type: "windrose",
 		method: "process",
 		updateAppId: "4129620",
+		storeAppId: "3041230",
 		sharedInstall: false,
 		installLayoutRoot: "steamapps\\common\\Windrose Dedicated Server",
 		fields: ["sessionName", "serverPassword"],
@@ -582,6 +594,7 @@ export const GAME_TEMPLATES = [
 		type: "subsistence",
 		method: "process",
 		updateAppId: "1362640",
+		storeAppId: "418030",
 		sharedInstall: false,
 		installLayoutRoot:
 			"steamapps\\common\\Subsistence Dedicated Server\\Binaries\\Win64",
@@ -626,6 +639,7 @@ export const GAME_TEMPLATES = [
 		method: "gamedig",
 		queryProtocol: "sdtd",
 		updateAppId: "294420",
+		storeAppId: "251570",
 		sharedInstall: false,
 		installLayoutRoot: "",
 		fields: ["sessionName", "serverPassword"],
@@ -694,6 +708,7 @@ export const GAME_TEMPLATES = [
 		method: "gamedig",
 		queryProtocol: "palworld",
 		updateAppId: "2394010",
+		storeAppId: "1623730",
 		sharedInstall: false,
 		installLayoutRoot: "steamapps\\common\\PalServer",
 		// The launcher lives at the install root (matching the real, working

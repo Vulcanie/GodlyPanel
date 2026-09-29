@@ -30,6 +30,7 @@ function Panel() {
 	const [servers, setServers] = React.useState({});
 	const [systemStats, setSystemStats] = React.useState(null);
 	const [serverStats, setServerStats] = React.useState([]);
+	const [appearance, setAppearance] = React.useState(null);
 	const [apiError, setApiError] = React.useState(null);
 	const [loading, setLoading] = React.useState(true);
 
@@ -63,6 +64,13 @@ function Panel() {
 				if (Array.isArray(stats)) setServerStats(stats);
 			} catch {
 				// Non-fatal.
+			}
+
+			try {
+				const { types } = await api.get("/api/appearance");
+				setAppearance(types);
+			} catch {
+				// Non-fatal: cards fall back to their built-in colours.
 			}
 		};
 
@@ -98,6 +106,21 @@ function Panel() {
 					break;
 				case "server_stats":
 					setServerStats(data.stats);
+					break;
+				case "appearance_updated":
+					// An admin changed a card's look; everyone watching sees it
+					// without reloading.
+					setAppearance((prev) => ({
+						...prev,
+						[data.gameType]: {
+							mode: data.appearance.mode ?? "auto",
+							color: data.appearance.color ?? null,
+							color2: data.appearance.color2 ?? null,
+							appId: data.appearance.appId ?? null,
+							image: data.appearance.image ?? null,
+							version: data.appearance.updatedAt ?? 0,
+						},
+					}));
 					break;
 				default:
 					break;
@@ -187,6 +210,7 @@ function Panel() {
 					onCreateServer={navigateToCreateServer}
 					apiError={apiError}
 					userRole={role}
+					appearance={appearance}
 				/>
 			) : page === "createServer" ? (
 				<CreateServerPage onBack={navigateToDashboard} userRole={role} />

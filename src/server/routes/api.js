@@ -6,6 +6,7 @@ import multer from "multer";
 import { promises as fs } from "fs";
 import { all as allServers } from "../data/serverStore.js";
 import { assertWithinAllowedRoots } from "../util/safePath.js";
+import { singleFile } from "../middleware/uploadErrors.js";
 import { extractModpackZip, cleanupUpload } from "../services/modpackService.js";
 import { SUPPORTED_MODLOADER_FAMILIES } from "../data/gameTemplates.js";
 import { pollServers } from "../services/pollingService.js";
@@ -233,7 +234,7 @@ const modpackUpload = multer({
 // parse, no network calls) — responds synchronously with what was detected
 // so the admin can confirm before the real creation job (which does the
 // heavy mod-downloading) kicks off via the usual POST /servers below.
-router.post("/uploads/modpack", modpackUpload.single("modpackZip"), async (req, res) => {
+router.post("/uploads/modpack", singleFile(modpackUpload, "modpackZip", "500 MB"), async (req, res) => {
 	if (!req.file) {
 		return res.status(400).json({ error: "A modpackZip file is required." });
 	}

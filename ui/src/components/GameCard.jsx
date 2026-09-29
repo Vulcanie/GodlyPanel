@@ -20,8 +20,9 @@ function GameCard({
 	serverStats,
 	isOpen,
 	onToggle,
+	appearance,
 }) {
-	const { title, banner, gradient } = getGameInfo(gameType);
+	const { title, banner, gradient } = getGameInfo(gameType, appearance);
 
 	const rows = React.useMemo(
 		() => (showOffline ? instances : instances.filter((i) => i.online)),

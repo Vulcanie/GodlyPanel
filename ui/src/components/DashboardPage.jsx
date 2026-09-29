@@ -34,6 +34,7 @@ function DashboardPage({
 	onCreateServer,
 	apiError,
 	userRole,
+	appearance,
 }) {
 	const [showOffline, setShowOffline] = React.useState(true);
 	// Only ever set by an explicit user click — see isGroupOpen below for how
@@ -135,6 +136,7 @@ function DashboardPage({
 							serverStats={serverStats}
 							isOpen={isGroupOpen(type)}
 							onToggle={() => toggleGroup(type)}
+							appearance={appearance?.[type.toLowerCase()]}
 						/>
 					))}
 				</Box>

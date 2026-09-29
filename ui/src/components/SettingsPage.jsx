@@ -16,6 +16,7 @@ import {
 } from "@mui/material";
 import { ArrowBack as ArrowBackIcon } from "@mui/icons-material";
 import { api } from "../api/client";
+import AppearanceSettings from "./AppearanceSettings";
 
 // The form is generated from the schema the server sends, so it can't drift
 // out of step with what's actually honoured — adding a setting on the server
@@ -222,6 +223,8 @@ function SettingsPage({ onBack }) {
 					</Box>
 				</Paper>
 			))}
+
+			<AppearanceSettings />
 
 			<Paper sx={{ p: 2, mb: 2 }}>
 				<Typography variant="subtitle2" sx={{ mb: 0.5 }}>

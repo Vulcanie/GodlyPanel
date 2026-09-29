@@ -1,80 +1,55 @@
 import express from "express";
 import path from "node:path";
 import { existsSync } from "node:fs";
-import { promises as fs } from "node:fs";
 import { paths } from "../paths.js";
+import { get as getAppearance, safeTypeKey } from "../data/appearanceStore.js";
+import { ensureSteamArt } from "../services/artService.js";
 
-// Game artwork used to be hotlinked straight from Steam's CDN by the browser,
-// which meant the panel's own chrome broke without an internet connection —
-// on an app whose whole point is running on your own machine.
+// Serves one game type's banner. What that resolves to is the user's choice:
+// artwork the panel found on Steam by itself, an image they uploaded, or
+// nothing at all when they've picked a plain colour instead.
 //
-// It's fetched once, through here, and cached in the data dir. Not bundled
-// into the download: the art is Valve's, and shipping it in a release is a
-// different thing from each install fetching it for itself. If the fetch
-// fails the UI falls back to a gradient, so no-internet is merely plainer
-// rather than broken.
-
-const ART_DIR = path.join(paths.dataDir, "cache", "art");
-const STEAM_HERO = (appId) =>
-	`https://cdn.cloudflare.steamstatic.com/steam/apps/${appId}/library_hero.jpg`;
-
-// Server type -> Steam appid. Types with no entry (Minecraft) use a gradient.
-const APP_IDS = {
-	ark: 2399830,
-	valheim: 892970,
-	conan: 440900,
-	enshrouded: 1203620,
-	rune: 1374490,
-	windrose: 3041230,
-	subsistence: 418030,
-	"7days": 251570,
-	palword: 1623730,
-};
+// A 404 here is a normal answer, not a failure — the dashboard draws its
+// gradient underneath the image, so "no artwork" degrades to a plainer card
+// rather than a broken one. That's also what makes a first run with no
+// internet connection look intentional.
 
 const router = express.Router();
-const inFlight = new Map();
 
-async function fetchAndCache(type, appId, file) {
-	const res = await fetch(STEAM_HERO(appId));
-	if (!res.ok) throw new Error(`HTTP ${res.status}`);
-	const buf = Buffer.from(await res.arrayBuffer());
-	// Guard against caching an error page as if it were artwork.
-	if (buf.length < 1024 || buf[0] !== 0xff || buf[1] !== 0xd8) {
-		throw new Error("Response was not a JPEG.");
-	}
-	await fs.mkdir(ART_DIR, { recursive: true });
-	await fs.writeFile(file, buf);
-	return file;
+function customArtPath(appearance) {
+	const file = appearance?.image?.file;
+	if (typeof file !== "string" || file === "") return null;
+	// The stored name is generated here, never taken from the upload, but it
+	// ends up in a join either way — so confirm it's still a bare filename.
+	if (path.basename(file) !== file) return null;
+	const full = path.join(paths.customArtDir, file);
+	return existsSync(full) ? full : null;
 }
 
 router.get("/:type", async (req, res) => {
-	const type = String(req.params.type || "").toLowerCase();
-	const appId = APP_IDS[type];
-	if (!appId) return res.status(404).end();
+	const key = safeTypeKey(req.params.type);
+	if (!key) return res.status(404).end();
 
-	const file = path.join(ART_DIR, `${type}.jpg`);
-	if (existsSync(file)) {
+	const appearance = getAppearance(key);
+	const mode = appearance?.mode ?? "auto";
+
+	if (mode === "image") {
+		const file = customArtPath(appearance);
+		if (!file) return res.status(404).end();
+		res.setHeader("Content-Type", appearance.image.contentType ?? "image/png");
 		res.setHeader("Cache-Control", "public, max-age=604800");
 		return res.sendFile(file);
 	}
 
-	try {
-		// Collapse concurrent requests for the same image — the dashboard asks
-		// for several at once on first load.
-		if (!inFlight.has(type)) {
-			inFlight.set(
-				type,
-				fetchAndCache(type, appId, file).finally(() => inFlight.delete(type)),
-			);
-		}
-		await inFlight.get(type);
-		res.setHeader("Cache-Control", "public, max-age=604800");
-		res.sendFile(file);
-	} catch {
-		// No internet, or Valve changed something. The UI handles this by
-		// showing its gradient instead.
-		res.status(404).end();
-	}
+	// A solid colour needs no image, and asking Steam for one would mean
+	// walking installs and hitting the network for something nobody will see.
+	if (mode === "color") return res.status(404).end();
+
+	const file = await ensureSteamArt(key);
+	if (!file) return res.status(404).end();
+	res.setHeader("Content-Type", "image/jpeg");
+	res.setHeader("Cache-Control", "public, max-age=604800");
+	return res.sendFile(file);
 });
 
 export default router;

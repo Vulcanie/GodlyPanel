@@ -24,6 +24,11 @@ export const paths = {
 	buildVersionsFile: path.join(dataDir, "state", "build-versions.json"),
 	autoUpdateFile: path.join(dataDir, "state", "auto-update-settings.json"),
 	discordMessageIdFile: path.join(dataDir, "state", "discord-message-id.json"),
+	appearanceFile: path.join(dataDir, "appearance.json"),
+	// Artwork fetched from Steam is disposable — delete it and it comes back.
+	// Artwork the user uploaded is not, so it lives outside cache/.
+	artCacheDir: path.join(dataDir, "cache", "art"),
+	customArtDir: path.join(dataDir, "art"),
 	// Default parent dir for newly created game servers. Becomes a real
 	// configurable setting in Stage 2; until then it mirrors the layout the
 	// existing servers already use so an imported setup stays coherent.
@@ -38,6 +43,7 @@ export function ensureDataDirs() {
 		paths.uploadsDir,
 		paths.creationLogsDir,
 		paths.updateLogsDir,
+		paths.customArtDir,
 		path.join(paths.dataDir, "state"),
 	]) {
 		fs.mkdirSync(dir, { recursive: true });

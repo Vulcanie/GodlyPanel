@@ -8,6 +8,7 @@ import authRoutes from "./routes/auth.js";
 import setupRoutes from "./routes/setup.js";
 import dashboardRoutes from "./routes/dashboard.js";
 import artRoutes from "./routes/art.js";
+import appearanceRoutes from "./routes/appearance.js";
 import userRoutes from "./routes/users.js";
 import settingsRoutes from "./routes/settings.js";
 import { attachUser, requireRole } from "./middleware/auth.js";
@@ -24,6 +25,7 @@ import { ensureDataDirs, paths } from "./paths.js";
 import { initConfig, getConfig, onConfigChange } from "./config/configStore.js";
 import { initSecrets } from "./config/secretsStore.js";
 import { initServerStore } from "./data/serverStore.js";
+import { initAppearanceStore } from "./data/appearanceStore.js";
 import { initStorage, rescan } from "./services/storageService.js";
 import { registerTimer, scheduleAll, rescheduleAll, stopAll } from "./timerManager.js";
 
@@ -54,6 +56,7 @@ const config = await initConfig();
 await initSecrets();
 await initUserStore();
 await initServerStore();
+await initAppearanceStore();
 await initStorage();
 initPollingState();
 
@@ -94,6 +97,9 @@ app.use(attachUser);
 app.use("/api/setup", setupRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/art", requireRole("admin", "guest"), artRoutes);
+// Guests can read how a card should look — the dashboard can't draw one
+// otherwise; the routes that change it enforce admin individually.
+app.use("/api/appearance", requireRole("admin", "guest"), appearanceRoutes);
 app.use("/api", requireRole("admin", "guest"), dashboardRoutes);
 app.use("/api/users", requireRole("admin"), userRoutes);
 app.use("/api/settings", requireRole("admin"), settingsRoutes);
