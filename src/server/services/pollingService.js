@@ -36,7 +36,12 @@ export function syncServerStatusKeys() {
 				sessionName: s.sessionName,
 				serverPassword: s.serverPassword,
 				joinAddress: s.joinAddress,
-				online: true,
+				// Not yet checked. This used to default to `true`, which meant
+				// anything the panel hadn't successfully polled — a server
+				// that's simply down, or one whose poll hangs — was reported
+				// as up. Claiming a server is running when nothing has
+				// confirmed it is the worse failure of the two.
+				online: false,
 				playerList: [],
 				playerCount: 0,
 			};
@@ -57,16 +62,21 @@ export function initPollingState() {
 let lastSnapshot = null;
 
 async function diffAndBroadcast(current, previous) {
-	if (!previous) {
-		console.log("[DIFF] No previous snapshot yet — skipping broadcast.");
-		return false;
-	}
-
 	let globalChangeDetected = false;
 
 	for (const [serverName, cur] of Object.entries(current)) {
-		const prev = previous[serverName];
-		if (!prev) continue;
+		const prev = previous?.[serverName];
+
+		// No previous reading means this is the first real result for this
+		// server — always push it. Skipping it (which is what this used to do
+		// for the entire first cycle, and for every newly-added server) left
+		// connected clients showing the placeholder state indefinitely, since
+		// nothing would ever be detected as a "change" afterwards.
+		if (!prev) {
+			broadcastSseEvent({ type: "server_update", serverName, status: cur });
+			globalChangeDetected = true;
+			continue;
+		}
 
 		const statusChanged = cur.online !== prev.online;
 		const dataChanged =
