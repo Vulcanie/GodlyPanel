@@ -144,8 +144,13 @@ router.delete("/server/:serverName", async (req, res) => {
 // the copy carries on in the background (progress on the live stream and at clone-jobs).
 router.post("/server/:serverName/clone", async (req, res) => {
 	try {
-		const { name, sessionName } = req.body ?? {};
-		res.status(202).json(await startClone(req.server, name, { sessionName: typeof sessionName === "string" && sessionName.trim() ? sessionName.trim() : undefined }));
+		const { name, sessionName, ports } = req.body ?? {};
+		res.status(202).json(
+			await startClone(req.server, name, {
+				sessionName: typeof sessionName === "string" && sessionName.trim() ? sessionName.trim() : undefined,
+				ports: ports && typeof ports === "object" ? ports : undefined,
+			}),
+		);
 	} catch (err) {
 		if (err instanceof CloneError || err.code) return res.status(err.status ?? 400).json({ error: err.message, code: err.code });
 		console.error(`Cloning ${req.server.name} failed:`, err);

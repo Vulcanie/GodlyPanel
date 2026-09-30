@@ -1,5 +1,6 @@
 import dgram from "node:dgram";
 import fs from "node:fs";
+import path from "node:path";
 import net from "node:net";
 import { update as updateServer } from "../data/serverStore.js";
 import { getConfig } from "../config/configStore.js";
@@ -50,7 +51,10 @@ const CONFIG_BINDINGS = {
 		{ key: "port", pattern: /^(query\.port\s*=\s*)(\d+)/m },
 		{ key: "rconPort", pattern: /^(rcon\.port\s*=\s*)(\d+)/m },
 	],
-	conan: [{ key: "rconPort", pattern: /^(RconPort\s*=\s*)(\d+)/im }],
+	// Conan's RCON settings are in Game.ini, next to the ServerSettings.ini the panel
+	// records as its settings file (found on a real install: ServerSettings.ini has no
+	// RconPort, so changing it there did nothing and the game kept the old one).
+	conan: [{ key: "rconPort", file: "Game.ini", pattern: /^(RconPort\s*=\s*)(\d+)/im }],
 	"7days": [{ key: "port", pattern: /(<property\s+name="ServerPort"\s+value=")(\d+)/i }],
 	enshrouded: [{ key: "port", pattern: /("queryPort"\s*:\s*)(\d+)/ }],
 	Palword: [
@@ -234,28 +238,33 @@ export async function applyPorts(server, proposed) {
 		if (typeof launchArgs === "string" && launchArgs !== server.launch.args) patch.launch = { ...server.launch, args: launchArgs };
 
 		// The game's own config file.
+		// A binding may name a sibling file (same folder as the recorded settings file).
 		const configFile = server.configPath;
-		const bindings = CONFIG_BINDINGS[server.type] ?? [];
-		if (configFile && bindings.some((b) => changes[b.key])) {
+		const bindings = (CONFIG_BINDINGS[server.type] ?? []).filter((b) => changes[b.key]);
+		const byFile = new Map();
+		for (const binding of bindings) {
+			if (!configFile) break;
+			const target = binding.file ? path.join(path.dirname(configFile), binding.file) : configFile;
+			byFile.set(target, [...(byFile.get(target) ?? []), binding]);
+		}
+		for (const [target, list] of byFile) {
 			let text = null;
 			try {
-				text = await readManagedFile(configFile);
+				text = await readManagedFile(target);
 			} catch {
-				warnings.push("The game's settings file doesn't exist yet (it may be created the first time the server runs), so its ports were not changed.");
+				warnings.push(`${path.basename(target)} doesn't exist yet (the game may create it the first time the server runs), so the ports in it were not changed.`);
 			}
-			if (text !== null) {
-				let next = text;
-				for (const { key, pattern } of bindings) {
-					const change = changes[key];
-					if (!change) continue;
-					next = next.replace(pattern, (whole, prefix, digits) => {
-						if (Number(digits) !== change.from) return whole;
-						applied.add(key);
-						return `${prefix}${change.to}`;
-					});
-				}
-				if (next !== text) writes.push({ file: configFile, content: next });
+			if (text === null) continue;
+			let next = text;
+			for (const { key, pattern } of list) {
+				const change = changes[key];
+				next = next.replace(pattern, (whole, prefix, digits) => {
+					if (Number(digits) !== change.from) return whole;
+					applied.add(key);
+					return `${prefix}${change.to}`;
+				});
 			}
+			if (next !== text) writes.push({ file: target, content: next });
 		}
 
 		for (const { file, content } of writes) {

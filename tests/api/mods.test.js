@@ -245,18 +245,18 @@ describe("mods", () => {
 		it("adds a pak and keeps modlist.txt for you", async () => {
 			assert.equal((await upload("Conan Mods", "Cool.pak", Buffer.from("pak"))).status, 200);
 			assert.equal((await upload("Conan Mods", "Other.pak", Buffer.from("pak2"))).status, 200);
-			assert.deepEqual(modlist(), ["Cool.pak", "Other.pak"]);
+			assert.deepEqual(modlist(), ["*Cool.pak", "*Other.pak"]);
 			const l = await list("Conan Mods");
 			assert.deepEqual(l.mods.map((m) => [m.name, m.enabled]), [["Cool.pak", true], ["Other.pak", true]]);
 		});
 
 		it("turns one off by taking it out of the list, and keeps the file", async () => {
 			await api.put("/api/server/Conan%20Mods/mods/enabled", { id: "Cool.pak", enabled: false });
-			assert.deepEqual(modlist(), ["Other.pak"]);
+			assert.deepEqual(modlist(), ["*Other.pak"]);
 			assert.ok(fs.existsSync(path.join(mods(), "Cool.pak")));
 			assert.equal((await list("Conan Mods")).mods.find((m) => m.name === "Cool.pak").enabled, false);
 			await api.put("/api/server/Conan%20Mods/mods/enabled", { id: "Cool.pak", enabled: true });
-			assert.deepEqual(modlist().sort(), ["Cool.pak", "Other.pak"]);
+			assert.deepEqual(modlist().sort(), ["*Cool.pak", "*Other.pak"]);
 		});
 
 		it("shows a listed mod whose file is missing, and removes cleanly", async () => {
@@ -265,7 +265,7 @@ describe("mods", () => {
 			assert.equal(l.mods.find((m) => m.name === "Ghost.pak").missing, true);
 			await post("Conan Mods", "remove", { id: "Ghost.pak" });
 			await post("Conan Mods", "remove", { id: "Cool.pak" });
-			assert.deepEqual(modlist(), ["Other.pak"]);
+			assert.deepEqual(modlist(), ["*Other.pak"]);
 			assert.equal(fs.existsSync(path.join(mods(), "Cool.pak")), false);
 		});
 

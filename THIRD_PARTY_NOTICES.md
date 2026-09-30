@@ -45,6 +45,7 @@ in each package's folder under `node_modules` and are bundled into the release.
 | rcon-client | RCON for most games | MIT |
 | gamedig | querying servers | MIT |
 | adm-zip | reading modpack zips | MIT |
+| nodemailer | sending email notifications (only if you set them up) | MIT |
 | react, react-dom | interface | MIT |
 | @mui/material, @mui/icons-material | interface | MIT |
 | @emotion/react, @emotion/styled | interface styling | MIT |
@@ -61,6 +62,13 @@ The exact set and versions are in `package-lock.json` and `ui/package-lock.json`
   first time it is needed and cached on your own computer. It is not part of this
   repository or the release zip. You can replace any of it with your own image or
   a plain colour in Settings.
+- **Windows' own `tar.exe`** writes and reads backup zips. It is part of Windows 10 and 11.
+- **Thunderstore packages** (Valheim mods) are downloaded from
+  [thunderstore.io](https://thunderstore.io) when you ask for them, including
+  BepInEx. They are other people's software under their own licences.
+- **Steam Workshop items** (Conan Exiles mods) are downloaded by SteamCMD when you ask.
+- **Release information** is read from GitHub's public releases list to tell you when a
+  new version exists (no account or identifying information is sent).
 - **Minecraft mods** are downloaded from CurseForge using an API key that you
   supply, under CurseForge's terms.
 

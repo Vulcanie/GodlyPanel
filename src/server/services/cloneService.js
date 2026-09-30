@@ -11,7 +11,6 @@ import { applyPorts, describePorts } from "./serverPorts.js";
 import { isFullyStopped } from "./serverState.js";
 import { logActivity } from "./activityLog.js";
 import { broadcastSseEvent } from "./sseHub.js";
-import { readManagedFile, writeManagedFile } from "../util/managedFiles.js";
 
 // Cloning a server: a second copy of a server the panel made, with its own name,
 // folder, ports and RCON password, ready to start. The whole install folder is
@@ -79,10 +78,25 @@ function rewriteStrings(value, pairs) {
 	return value;
 }
 
+const TEXT_FILE = /\.(ini|json|xml|properties|cfg|conf|txt|bat|cmd|ya?ml)$/i;
+
+/** The given files and the small text files in the same folders (not subfolders). */
+async function withNeighbours(files) {
+	const found = new Set(files);
+	for (const dir of new Set(files.map((f) => path.dirname(f)))) {
+		for (const entry of await fs.readdir(dir, { withFileTypes: true }).catch(() => [])) {
+			if (!entry.isFile() || !TEXT_FILE.test(entry.name)) continue;
+			const full = path.join(dir, entry.name);
+			if ((await fs.stat(full).catch(() => ({ size: Infinity }))).size < 1024 * 1024) found.add(full);
+		}
+	}
+	return [...found];
+}
+
 const randomPassword = () => crypto.randomBytes(12).toString("base64url");
 
 /** Everything that can be checked before any copying starts. */
-export async function planClone(source, newName) {
+export async function planClone(source, newName, wantedPorts = null) {
 	const name = String(newName ?? "").trim();
 	if (!name) throw new CloneError("Give the new server a name.", "no_name");
 	if (allServers().some((s) => s.name.toLowerCase() === name.toLowerCase())) throw new CloneError(`A server named "${name}" already exists.`, "name_taken");
@@ -99,7 +113,7 @@ export async function planClone(source, newName) {
 	// Ports for the copy: the next free ones, for every port the game has.
 	const suggested = await suggestParams(template.id);
 	const ports = {};
-	for (const def of template.ports) ports[def.key] = suggested.ports[def.key];
+	for (const def of template.ports) ports[def.key] = Number.isInteger(wantedPorts?.[def.key]) ? wantedPorts[def.key] : suggested.ports[def.key];
 	await validateNewServer(template, name, ports, null);
 
 	const dest = path.win32.join(getConfig().paths.serversRoot, slugify(name));
@@ -115,8 +129,8 @@ export async function planClone(source, newName) {
 }
 
 /** Start cloning. Returns the job straight away; it finishes in the background. */
-export async function startClone(source, newName, { sessionName } = {}) {
-	const plan = await planClone(source, newName);
+export async function startClone(source, newName, { sessionName, ports } = {}) {
+	const plan = await planClone(source, newName, ports);
 	const job = { id: crypto.randomUUID(), status: "copying", name: plan.name, from: source.name, bytes: plan.bytes, ports: plan.ports, error: null, finishedAt: null };
 	jobs.set(job.id, job);
 	progress(job, {});
@@ -145,13 +159,17 @@ async function run(job, source, plan, { sessionName }) {
 		const entry = { ...rewriteStrings(rest, pairs), name, source: "created", autoUpdate: false, ...(sessionName ? { sessionName } : {}) };
 		await writeMarker(dest, entry);
 
-		// Text files that carry the old name, password or path: the start script and the game's settings.
-		const texts = [entry.startScriptPath, ...(entry.configPaths ? Object.values(entry.configPaths) : []), entry.configPath].filter(Boolean);
-		for (const file of new Set(texts)) {
+		// Text files that carry the old name, password or path: the start script and the
+		// game's settings, including their neighbours (Conan keeps its RCON password in
+		// Game.ini, beside the ServerSettings.ini the panel records).
+		const named = [entry.startScriptPath, ...(entry.configPaths ? Object.values(entry.configPaths) : []), entry.configPath].filter(Boolean);
+		const texts = await withNeighbours(named);
+		for (const file of texts) {
 			try {
-				const text = await readManagedFile(file);
+				const text = await fs.readFile(file, "utf8");
 				const next = rewriteStrings(text, pairs);
-				if (next !== text) await writeManagedFile(file, next);
+				// Written directly, with no .bak: a backup copy would carry the original's RCON password.
+				if (next !== text) await fs.writeFile(file, next, "utf8");
 			} catch {
 				// A file that isn't there yet (created on first run) has nothing to fix.
 			}

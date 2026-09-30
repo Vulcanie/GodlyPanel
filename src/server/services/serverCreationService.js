@@ -16,6 +16,7 @@ import { resolveResource } from "../../shared/resources.js";
 import { deriveLaunch } from "./batchLaunch.js";
 import { writeMarker } from "./serverRemoval.js";
 import { implicitPortsOf, usageOf, firstSafePort } from "../data/portRules.js";
+import { portBusy } from "../util/portProbe.js";
 import {
 	trackSteamCmd,
 	untrackSteamCmd,
@@ -166,7 +167,9 @@ async function nextFreePort(preferred, extraScanDir) {
 	const step = Math.max(1, portAllocation.step);
 
 	let port = preferred;
-	while ((used.has(port) || reserved.has(port)) && port <= 65535) port += step;
+	// Also skipped: a port something on this PC is holding right now (a server the
+	// panel doesn't manage, or another program), so a new server isn't placed on top of it.
+	while ((used.has(port) || reserved.has(port) || (await portBusy(port))) && port <= 65535) port += step;
 	return port;
 }
 

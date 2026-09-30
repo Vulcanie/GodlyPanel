@@ -47,6 +47,8 @@ describe("presets and cloning", () => {
 	const NAMES = { a: "Preset Source", b: "Preset Target", c: "Clone Source" };
 	const enc = encodeURIComponent;
 	const ini = (folder) => path.join(folder, "ConanSandbox", "Saved", "Config", "WindowsServer", "ServerSettings.ini");
+	// Conan keeps its RCON settings in Game.ini, beside ServerSettings.ini.
+	const gameIni = (folder) => path.join(path.dirname(ini(folder)), "Game.ini");
 
 	before(async () => {
 		const free = [await freePort(), await freePort(), await freePort()];
@@ -97,9 +99,9 @@ describe("presets and cloning", () => {
 			const after = fs.readFileSync(ini(dirs.b), "utf8");
 			assert.match(after, /Difficulty=5/);
 			assert.match(after, /PvP=true/);
-			const rcon = /RconPort=(\d+)/.exec(after)[1];
-			assert.equal(rcon, /RconPort=(\d+)/.exec(before)[1], "its own RCON port");
-			assert.notEqual(rcon, /RconPort=(\d+)/.exec(fs.readFileSync(ini(dirs.a), "utf8"))[1]);
+			const name = /ServerName=(.+)/.exec(after)[1].trim();
+			assert.equal(name, /ServerName=(.+)/.exec(before)[1].trim(), "its own name");
+			assert.notEqual(name, /ServerName=(.+)/.exec(fs.readFileSync(ini(dirs.a), "utf8"))[1].trim());
 			assert.ok(fs.existsSync(`${ini(dirs.b)}.bak`), "with a backup of what it replaced");
 		});
 
@@ -120,7 +122,7 @@ describe("presets and cloning", () => {
 
 		it("can take the preset exactly as saved, identity and all", async () => {
 			await api.post(`/api/server/${enc(NAMES.b)}/presets/${presetId}/apply`, { keepIdentity: false });
-			assert.equal(/RconPort=(\d+)/.exec(fs.readFileSync(ini(dirs.b), "utf8"))[1], /RconPort=(\d+)/.exec(fs.readFileSync(ini(dirs.a), "utf8"))[1]);
+			assert.equal(/ServerName=(.+)/.exec(fs.readFileSync(ini(dirs.b), "utf8"))[1].trim(), /ServerName=(.+)/.exec(fs.readFileSync(ini(dirs.a), "utf8"))[1].trim());
 		});
 
 		it("deletes a preset, and is for admins only", async () => {
@@ -175,8 +177,12 @@ describe("presets and cloning", () => {
 			assert.match(script, /-Port=\d+ -QueryPort=\d+/);
 			assert.ok(!script.includes(dirs.c), "and nothing points back at the original folder");
 
-			const sourceIni = fs.readFileSync(ini(dirs.c), "utf8");
-			const copyIni = fs.readFileSync(ini(copy), "utf8");
+			const sourceIni = fs.readFileSync(gameIni(dirs.c), "utf8");
+			const copyIni = fs.readFileSync(gameIni(copy), "utf8");
+			const sourcePassword = /RconPassword=(.+)/.exec(sourceIni)[1].trim();
+			for (const file of fs.readdirSync(path.dirname(gameIni(copy)))) {
+				assert.ok(!fs.readFileSync(path.join(path.dirname(gameIni(copy)), file), "utf8").includes(sourcePassword), `${file} still carries the original's RCON password`);
+			}
 			assert.notEqual(/RconPort=(\d+)/.exec(copyIni)[1], /RconPort=(\d+)/.exec(sourceIni)[1], "its own RCON port");
 			assert.notEqual(/RconPassword=(.+)/.exec(copyIni)[1], /RconPassword=(.+)/.exec(sourceIni)[1], "and its own RCON password");
 

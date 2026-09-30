@@ -32,6 +32,7 @@ describe("changing a server's ports", () => {
 				fs.mkdirSync(dir, { recursive: true });
 				fs.writeFileSync(path.join(dir, "conan.bat"), '@echo off\r\nstart /MIN "T" ConanSandboxServer.exe -log -ServerName=X -Port=9000 -QueryPort=9002\r\n');
 				fs.writeFileSync(path.join(dir, "Game.ini"), "[RconPlugin]\r\nRconEnabled=1\r\nRconPort=9003\r\nRconMaxKarma=60\r\n");
+				fs.writeFileSync(path.join(dir, "ServerSettings.ini"), "[ServerSettings]\r\nMaxPlayers=40\r\n");
 				fs.writeFileSync(path.join(dir, "other.bat"), "@echo off\r\n");
 				fs.writeFileSync(path.join(dir, "Start_A.bat"), '@echo off\r\nstart /MIN "A" ArkServer.exe Map?x=1 -RCONPort=9200 -Port=9201 -QueryPort=9202 -log\r\n');
 				fs.writeFileSync(path.join(dir, "Start_B.bat"), '@echo off\r\nstart /MIN "B" ArkServer.exe Map?x=1 -RCONPort=9210 -Port=9211 -QueryPort=9212 -log\r\n');
@@ -43,7 +44,7 @@ describe("changing a server's ports", () => {
 				const d = path.join(folder, "srv");
 				const made = { source: "created", installDir: d, workingDir: d };
 				return [
-					serverEntry(d, { ...made, name: "Conan", type: "conan", port: 9000, queryPort: 9002, rconPort: 9003, processName: "nope-c.exe", startScriptPath: path.join(d, "conan.bat"), configPath: path.join(d, "Game.ini"), launch: { exe: process.execPath, args: "-log -ServerName=X -Port=9000 -QueryPort=9002", cwd: d } }),
+					serverEntry(d, { ...made, name: "Conan", type: "conan", port: 9000, queryPort: 9002, rconPort: 9003, processName: "nope-c.exe", startScriptPath: path.join(d, "conan.bat"), configPath: path.join(d, "ServerSettings.ini"), launch: { exe: process.execPath, args: "-log -ServerName=X -Port=9000 -QueryPort=9002", cwd: d } }),
 					serverEntry(d, { ...made, name: "Other Conan", type: "conan", port: 9100, queryPort: 9102, rconPort: 9103, processName: "nope-o.exe", startScriptPath: path.join(d, "other.bat") }),
 					serverEntry(d, { ...made, name: "ArkA", type: "ark", rconPort: 9200, method: "rcon", processName: undefined, startScriptPath: path.join(d, "Start_A.bat") }),
 					serverEntry(d, { ...made, name: "ArkB", type: "ark", rconPort: 9210, method: "rcon", processName: undefined, startScriptPath: path.join(d, "Start_B.bat") }),

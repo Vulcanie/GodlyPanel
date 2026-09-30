@@ -175,6 +175,46 @@ try {
 		const udp = ps("(Get-NetUDPEndpoint -ErrorAction SilentlyContinue | Where-Object { $_.LocalPort -in 8892,8893,8894 } | Select-Object -ExpandProperty LocalPort | Sort-Object) -join ','");
 		step("the game binds its game, raw and query ports", udp === "8892,8893,8894", `bound: ${udp}`);
 
+		// ---- logs, players, a backup that stops and restarts the real game, crash recovery
+		const base = "/api/server/Conan%20Clean";
+		const idle = async () => !(await call("GET", "/api/operations")).json["Conan Clean"];
+		const logs = (await call("GET", base + "/logs")).json;
+		step("its real log file is found", Array.isArray(logs) && logs.some((l) => /ConanSandbox.*\.log/i.test(l.name)), (logs ?? []).map?.((l) => l.name).join(", "));
+		const mainLog = logs.find((l) => /^ConanSandbox\.log$/i.test(l.name)) ?? logs[0];
+		const tail = mainLog ? (await call("GET", `${base}/logs/${mainLog.id}?lines=100`)).json : { lines: [] };
+		step("and has real content", tail.lines.length > 10, `${tail.lines.length} lines`);
+		step("the players view answers", Array.isArray((await call("GET", base + "/players")).json.online));
+
+		await until(idle, { timeoutMs: 60_000, everyMs: 2000, label: "the start to finish" });
+		fs.writeFileSync(path.join(APP, "data", "servers", "conan-clean", "ConanSandbox", "Saved", "gp-marker.txt"), "v1\n");
+		const backup = await call("POST", base + "/backups", {});
+		step("a backup is accepted", backup.status === 202, JSON.stringify(backup.json));
+		await until(async () => ps("(Get-Process ConanSandboxServer-Win64-Shipping -ErrorAction SilentlyContinue | Measure-Object).Count") === "0", { timeoutMs: 3 * 60_000, everyMs: 1000, label: "the game to be stopped for the copy" });
+		await until(idle, { timeoutMs: 15 * 60_000, everyMs: 3000, label: "the backup to finish" });
+		const backups = (await call("GET", base + "/backups")).json;
+		step("the backup exists and is consistent", backups.backups.length === 1 && backups.backups[0].consistent === true, `${((backups.backups[0]?.sizeBytes ?? 0) / 1048576).toFixed(0)} MB`);
+		step("and the real game was started again after it", Boolean(await until(async () => (await call("GET", "/api/status")).json["Conan Clean"]?.online === true, { timeoutMs: 12 * 60_000, everyMs: 5000, label: "Conan back online" })));
+		await until(idle, { timeoutMs: 60_000, everyMs: 2000, label: "idle" });
+
+		await call("PUT", base + "/options", { autoRestart: true });
+		await sleep(8000);
+		ps("Stop-Process -Name ConanSandboxServer-Win64-Shipping -Force");
+		step("the panel restarts the game after it is killed", Boolean(await until(async () => (await call("GET", `/api/activity?server=Conan%20Clean&types=server.restarted.auto`)).json.length > 0, { timeoutMs: 6 * 60_000, everyMs: 3000, label: "an automatic restart" })));
+		step("and it comes back online", Boolean(await until(async () => (await call("GET", "/api/status")).json["Conan Clean"]?.online === true, { timeoutMs: 12 * 60_000, everyMs: 5000, label: "Conan back online" })));
+		await call("PUT", base + "/options", { autoRestart: false });
+		await until(idle, { timeoutMs: 60_000, everyMs: 2000, label: "idle" });
+
+		// ---- start with Windows: the real login entry, written by the real app
+		const runKey = "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run";
+		await call("PUT", "/api/settings", { startup: { openAtLogin: true, startHidden: true } });
+		await sleep(3000);
+		const loginEntry = ps(`(Get-ItemProperty '${runKey}' -ErrorAction SilentlyContinue).PSObject.Properties | Where-Object { $_.Value -like '*GodlyPanel*' } | ForEach-Object { $_.Value }`);
+		step("turning on start-with-Windows writes the login entry, hidden", /GodlyPanel\.exe/i.test(loginEntry) && /--hidden/.test(loginEntry), loginEntry);
+		await call("PUT", "/api/settings", { startup: { openAtLogin: false } });
+		await sleep(3000);
+		const gone2 = ps(`(Get-ItemProperty '${runKey}' -ErrorAction SilentlyContinue).PSObject.Properties | Where-Object { $_.Value -like '*GodlyPanel*' } | Measure-Object | ForEach-Object { $_.Count }`);
+		step("and turning it off removes it", gone2 === "0", gone2);
+
 		// ---- ports cannot be changed while it runs; once stopped they can
 		const whileRunning = await call("PUT", "/api/server/Conan%20Clean/ports", { ports: { port: 8902 } });
 		step("ports can't be changed while it is running", whileRunning.status === 409);
@@ -186,6 +226,13 @@ try {
 		const settled = await until(async () => (await call("GET", "/api/server/Conan%20Clean/ports")).json.running === false, { timeoutMs: 120_000, everyMs: 5000, label: "the panel to see it stopped" }).catch(() => false);
 		diagnostics("after-stop");
 		step("the panel sees it stopped", Boolean(settled));
+
+		// ---- restore: put the marker back
+		fs.writeFileSync(path.join(APP, "data", "servers", "conan-clean", "ConanSandbox", "Saved", "gp-marker.txt"), "v2\n");
+		const restore = await call("POST", base + "/backups/" + backups.backups[0].id + "/restore", { confirmName: "Conan Clean" });
+		step("a restore is accepted", restore.status === 202, JSON.stringify(restore.json));
+		await until(idle, { timeoutMs: 10 * 60_000, everyMs: 3000, label: "the restore" });
+		step("and puts the saved files back", fs.readFileSync(path.join(APP, "data", "servers", "conan-clean", "ConanSandbox", "Saved", "gp-marker.txt"), "utf8") === "v1\n");
 
 		const changed = await call("PUT", "/api/server/Conan%20Clean/ports", { ports: { port: 8902, queryPort: 8904, rconPort: 8905 } });
 		step("its ports can be changed once stopped", changed.status === 200, changed.json.error);

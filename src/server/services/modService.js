@@ -211,9 +211,12 @@ async function listWorkshop(dir) {
 	return mods;
 }
 
+// Conan wants each line as *Name.pak; the asterisk is part of the format.
+const modlistLine = (pakName) => `*${pakName}`;
+
 const addToModlist = async (dir, pakName) => {
 	const lines = await readModlist(dir);
-	if (!lines.some((l) => listedName(l) === pakName.toLowerCase())) await writeModlist(dir, [...lines, pakName]);
+	if (!lines.some((l) => listedName(l) === pakName.toLowerCase())) await writeModlist(dir, [...lines, modlistLine(pakName)]);
 };
 
 async function findFiles(root, pattern, depth = 6) {
@@ -474,7 +477,7 @@ export async function setModEnabled(server, id, enabled) {
 		const lines = await readModlist(dir);
 		const name = cleanName(id).toLowerCase();
 		const others = lines.filter((l) => listedName(l) !== name);
-		await writeModlist(dir, enabled ? [...others, cleanName(id)] : others);
+		await writeModlist(dir, enabled ? [...others, modlistLine(cleanName(id))] : others);
 		return;
 	}
 	await toggleFolderEntry(dir, id, enabled);

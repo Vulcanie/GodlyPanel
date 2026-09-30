@@ -70,6 +70,37 @@ commit messages describe the problem each change solved.
 - **Deletes servers completely,** or just removes them from the panel. Deleting files is
   only offered for servers the panel created, never for a shared install other servers
   use, never for a protected location, and only after you type the server's name.
+- **Backs up your worlds.** One click, or on a schedule: the game's save folders (or ones
+  you choose) are zipped, checked by reading the zip back, and kept under rules you set
+  (how many, how old). A game that can't be saved on command is stopped for the copy and
+  started again. Restoring takes a safety backup of what it replaces first, refuses
+  while the server is running, and puts things back if any step fails.
+- **Looks after servers.** Restart one if it crashes (with a limit, so a server that
+  crashes on every start is given up on loudly instead of looped), start chosen servers
+  when the panel starts, and start the panel itself when you sign in to Windows. A
+  server shows "Starting…", "Stopping…" or "Backing up…" while it is, and won't accept
+  a second action until it's done.
+- **Runs schedules.** Backups, restarts (with "restarting in 10, 5, 1 minutes" messages
+  in the game), game updates and console commands, daily, on chosen days, every few
+  hours, or once.
+- **Shows what's going on.** Per-server logs you can follow live and search, who is on
+  and who has been (joins, leaves, time played), and an activity log of everything the
+  panel did and everything that happened. Passwords in logs are masked for anyone but an
+  administrator.
+- **Tells you when something needs attention:** a Windows notification, a webhook
+  (Discord, Slack and similar) and email, for crashes, failed backups or restarts, low
+  disk space and new versions. You choose which events.
+- **Has three kinds of people.** Viewers look; **moderators** run servers (start, stop,
+  restart, update, back up, logs, console) but can't see passwords or settings, delete,
+  or restore, and can be limited to particular servers; administrators do everything.
+- **Manages mods** for the games that have them: folders of mods (Minecraft, 7 Days to
+  Die, Palworld), Steam Workshop items for Conan Exiles (the panel keeps `modlist.txt`),
+  Thunderstore packages for Valheim (installing BepInEx if needed), and mod numbers in
+  ARK's start script.
+- **Clones servers** (a full copy with its own name, ports and RCON password) and saves
+  **setting presets** ("PvE", "hardcore") to apply to any server of the same game.
+- **Tells you about new versions** of itself and can download and verify the zip, without
+  a browser. It never installs anything by itself.
 - **Shares a read-only view** with your community through a real guest account. Guests
   see what's running and how to join; they can't see passwords or change anything.
 - **Runs servers without cluttering your taskbar.** Each server can be minimized, hidden,
@@ -243,8 +274,14 @@ Honest list, roughly by how likely you are to hit them:
   install with no internet shows plain colour banners.
 - **Minecraft mods need a CurseForge API key,** and modpacks must be the *server*
   export.
-- **There are no built-in backups yet,** and no automatic restart-after-crash or
-  start-with-Windows. These are next on the list.
+- **The newest features have had less real-world use.** Backups, crash recovery,
+  schedules, logs and cloning have been run against a real Conan Exiles server and a
+  stand-in game in automated tests, but the save locations for most other games are the
+  documented ones, not yet checked against each game. Every server's backup folders can
+  be changed. Mod support for Valheim and ARK is tested against stand-ins, not the games.
+- **Backups of a running game can be inconsistent** when the game can't be saved on
+  command and you choose "keep it running". The default for those games is to stop
+  the server for the copy.
 - **v0.x means things will change.** Settings and data formats are versioned and
   migrated, but back up your `data` folder before upgrading.
 
@@ -296,19 +333,32 @@ npm run package      # produces dist\GodlyPanel-<version>-win.zip
 ### Tests
 
 ```powershell
-npm test               # unit + API tests: about 10 seconds
+npm test               # unit + API tests: several minutes (they start real stand-in game processes)
 npm run test:desktop   # real processes and windows: about 2 minutes
 npm run test:all       # both
+node tests/ui/navigation.mjs   # drives the interface in a real browser (needs a Chromium)
+node tests/ui/workspace.mjs    # every server tab, as an administrator and as a moderator
 ```
 
-- **Unit and API tests** (over 160) boot the real API against a throwaway folder and a
+- **Unit and API tests** (over 300) boot the real API against a throwaway folder and a
   random port, so they check what a user actually gets, not mocks. They cover accounts
-  and sessions, the network filter, polling, file access, uploads, first-run setup, the
-  launch-script reader, and a fake Conan Exiles server that reproduces its RCON quirk.
-  They run on Windows in CI on every push.
+  and sessions, roles, the network filter, polling, file access, uploads, first-run setup,
+  the launch-script reader, and port rules. Many use **a stand-in game**: a renamed copy
+  of node.exe that answers RCON (with Conan Exiles' quirk), keeps a world file and a log,
+  and can be told to crash. That lets the tests start it, stop it, back it up, restore it,
+  kill it and watch it restart, run schedules against it, clone it, and read its logs and
+  players, all for real. They run on Windows in CI on every push.
 - **Desktop tests** (19) exercise the window modes against stand-in programs and real
   windows, so they need an interactive Windows session and run locally. They only ever
   start and stop programs they created themselves.
+- **Real-game tests** (`tests/real/`) install an actual Conan Exiles server into a
+  separate test folder and run the operations features against it: backup (stopping and
+  restarting the real game), restore, crash recovery after killing the game, a scheduled
+  restart, a clone running on its own ports, and a Steam Workshop mod. They are run by
+  hand and never touch anything outside their test folder.
+- **A clean-machine test** runs on a fresh Windows machine in GitHub Actions: unzip, first
+  run, a real Conan install, start, backup, restore, crash recovery, the start-with-Windows
+  login entry, a port change, stop and delete.
 
 Where a bug can be reproduced without a real game server, it gets a test. Some fixes (the ones that only show up against a real game install) don't have one yet, and turning more of them into tests is ongoing work. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
@@ -318,12 +368,11 @@ Where a bug can be reproduced without a real game server, it gets a test. Some f
 
 Roughly in this order:
 
-1. A clean-machine test and a first release.
-2. **Backups** of worlds and configs, with restore.
-3. **Auto-restart after a crash** and **starting with Windows.**
-4. Verifying "No window" mode game by game, and a clearer "stopping…" state.
-5. Rotating RCON passwords for imported servers.
-6. More games, and whichever needs come up from people actually using it.
+1. Checking the new features game by game (backup locations, mods, logs) against real installs.
+2. Verifying "No window" mode game by game.
+3. Rotating RCON passwords for imported servers.
+4. Backups to a second place (another drive, or cloud storage).
+5. More games, and whichever needs come up from people actually using it.
 
 ---
 

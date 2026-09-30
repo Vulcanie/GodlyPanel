@@ -24,7 +24,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const arg = (name, fallback) => { const i = process.argv.indexOf("--" + name); return i > 0 ? process.argv[i + 1] : fallback; };
 let rconPort = Number(arg("rcon")); let password = arg("password", "pw"); const home = arg("home", process.cwd());
-const ini = path.join(home, "ConanSandbox", "Saved", "Config", "WindowsServer", "ServerSettings.ini");
+const ini = path.join(home, "ConanSandbox", "Saved", "Config", "WindowsServer", "Game.ini");
 if (!rconPort && fs.existsSync(ini)) {
   const text = fs.readFileSync(ini, "utf8");
   rconPort = Number(/^RconPort\s*=\s*(\d+)/im.exec(text)?.[1]);
@@ -85,7 +85,7 @@ export function makeFakeGame(folder, { name, rconPort, exe = "fakegame.exe", pas
 	fs.writeFileSync(path.join(saved, "Config", "settings.ini"), "[Server]\nName=fake\n");
 	const script = path.join(folder, "Start_Fake.bat");
 	// With `ports`, the game is set up like a real Conan server: its ports are flags on
-	// the launch line, and its RCON port and password live in ServerSettings.ini, so the
+	// the launch line, and its RCON port and password live in Game.ini ([RconPlugin], as in a real Conan install), so the
 	// panel's port and clone code have real places to read and change them.
 	let launch = `--rcon ${rconPort} --password ${password}`;
 	let configPath;
@@ -93,7 +93,8 @@ export function makeFakeGame(folder, { name, rconPort, exe = "fakegame.exe", pas
 		const dir = path.join(saved, "Config", "WindowsServer");
 		fs.mkdirSync(dir, { recursive: true });
 		configPath = path.join(dir, "ServerSettings.ini");
-		fs.writeFileSync(configPath, `[ServerSettings]\r\nAdminPassword=${password}\r\nRconPort=${rconPort}\r\nRconPassword=${password}\r\n`);
+		fs.writeFileSync(configPath, `[ServerSettings]\r\nAdminPassword=${password}\r\nServerName=${name}\r\n`);
+		fs.writeFileSync(path.join(dir, "Game.ini"), `[RconPlugin]\r\nRconEnabled=1\r\nRconPassword=${password}\r\nRconPort=${rconPort}\r\n`);
 		launch = `-Port=${ports.port} -QueryPort=${ports.queryPort}`;
 	}
 	fs.writeFileSync(
