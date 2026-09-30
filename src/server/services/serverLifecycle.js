@@ -23,11 +23,11 @@ export async function waitUntilStopped(server, { timeoutMs = STOP_TIMEOUT_MS, ev
 // A program that has been gone for this long after starting isn't loading, it died.
 const DEAD_AFTER_MS = 20_000;
 
-export async function waitUntilOnline(server, { timeoutMs = START_TIMEOUT_MS, everyMs = 2000 } = {}) {
+export async function waitUntilOnline(server, { timeoutMs = START_TIMEOUT_MS, everyMs = 2000, cancelled = () => false } = {}) {
 	const startedAt = Date.now();
 	const deadline = startedAt + timeoutMs;
 	let goneInARow = 0;
-	while (Date.now() < deadline) {
+	while (Date.now() < deadline && !cancelled()) {
 		const status = await pollServerNow(server.name);
 		if (status?.online) return true;
 		// Don't hold everything up for minutes waiting on something that has already died.

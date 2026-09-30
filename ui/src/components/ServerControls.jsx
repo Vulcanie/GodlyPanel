@@ -67,7 +67,7 @@ function ServerControls({ serverName, serverStatus }) {
 					<Button variant="contained" color="success" disabled={busy || online} onClick={() => send("start")}>
 						Start
 					</Button>
-					<Button variant="contained" color="error" disabled={busy || !online} onClick={() => setConfirm("stop")}>
+					<Button variant="contained" color="error" disabled={operation === "starting" ? false : busy || !online} onClick={() => setConfirm("stop")}>
 						Stop
 					</Button>
 					<Button variant="contained" disabled={busy || !online} onClick={() => setConfirm("restart")}>

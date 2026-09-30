@@ -124,3 +124,40 @@ describe("restarting a server", () => {
 		assert.equal((gameLog(folder).match(/server starting/g) ?? []).length, before + 1, "started exactly once more");
 	});
 });
+
+describe("stopping a server that is still starting", () => {
+	let panel;
+	let api;
+	let folder;
+
+	before(async () => {
+		const rconPort = await freePort();
+		panel = await startInstance({
+			servers: (dir) => {
+				folder = path.join(dir, "fake-never-online");
+				// The panel looks for RCON on a port the game isn't using, so it never sees
+				// the server come online, the way a game with a wrong query setup would.
+				return [{ ...makeFakeGame(folder, { name: "Fake Silent", rconPort, exe: "gp-fake-silent.exe" }), rconPort: await0(rconPort) }];
+			},
+		});
+		api = panel.api;
+	});
+	after(async () => {
+		killFakeGames(folder);
+		await panel.stop();
+	});
+
+	const await0 = (port) => (port % 50000) + 1000;
+
+	it("is allowed, instead of being refused for the minutes the wait for it lasts", async () => {
+		assert.equal((await api.post("/api/control/Fake%20Silent/start")).status, 200);
+		await sleep(3000);
+		assert.equal((await api.get("/api/operations")).json["Fake Silent"].op, "starting");
+		const t0 = Date.now();
+		const r = await api.post("/api/control/Fake%20Silent/stop");
+		assert.equal(r.status, 200, JSON.stringify(r.json));
+		assert.ok(Date.now() - t0 < 20_000, "the wait was cancelled, not sat out");
+		assert.equal(await until(async () => !(await api.get("/api/operations")).json["Fake Silent"], { timeoutMs: 90_000 }), true);
+		assert.equal(await until(async () => !(await import("node:child_process")).execFileSync("tasklist", ["/FI", "IMAGENAME eq gp-fake-silent.exe"]).toString().includes("gp-fake-silent"), { timeoutMs: 60_000 }), true, "and the game really stopped");
+	});
+});

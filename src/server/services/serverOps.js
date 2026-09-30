@@ -58,6 +58,27 @@ export async function runOperation(name, op, fn, { wait = false } = {}) {
 	}
 }
 
+/**
+ * Ask whatever holds the lock to stop waiting. Only waiting can be cancelled (for a
+ * server to come online), never a copy or a restore half-done. Returns whether
+ * there was something to cancel.
+ */
+export function cancelOperation(name) {
+	const entry = active.get(name);
+	if (!entry) return false;
+	entry.cancelled = true;
+	return true;
+}
+
+export const isCancelled = (name) => Boolean(active.get(name)?.cancelled);
+
+/** Resolve once the server's lock is free, or after `ms`. */
+export async function waitUntilIdle(name, ms = 15_000) {
+	const deadline = Date.now() + ms;
+	while (active.has(name) && Date.now() < deadline) await new Promise((r) => setTimeout(r, 100));
+	return !active.has(name);
+}
+
 /** Change what the lock holder is described as (e.g. "stopping" -> "backup"), without releasing it. */
 export function setOperationLabel(name, op) {
 	const entry = active.get(name);

@@ -333,7 +333,7 @@ function ConfigPage({
 					<Button
 						variant="contained"
 						color="error"
-						disabled={Boolean(operation)}
+						disabled={Boolean(operation) && operation !== "starting"}
 						onClick={() => handleControl("stop")}
 					>
 						Stop Server
@@ -450,7 +450,7 @@ function ConfigPage({
 						<Button
 							variant="contained"
 							color="error"
-							disabled={Boolean(operation)}
+							disabled={Boolean(operation) && operation !== "starting"}
 							onClick={() => handleControl("stop")}
 						>
 							Stop Server

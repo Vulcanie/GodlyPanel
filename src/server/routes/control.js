@@ -5,7 +5,7 @@ import { checkProcess } from "../services/processCheck.js";
 import { pollServers, serverStatus } from "../services/pollingService.js";
 import { startServer, stopServer, sendRconCommand } from "../services/serverControl.js";
 import { updateServer } from "../services/updateService.js";
-import { runDetached } from "../services/serverOps.js";
+import { runDetached, currentOperation, cancelOperation, isCancelled, waitUntilIdle } from "../services/serverOps.js";
 import { waitUntilStopped, waitUntilOnline, stopAndWait, startAndWait } from "../services/serverLifecycle.js";
 import { requirePermission } from "../middleware/permissions.js";
 import { resetRecovery } from "../services/crashWatcher.js";
@@ -27,7 +27,16 @@ router.param("serverName", (req, res, next, name) => {
 // command has gone out. That is what lets the dashboard say "Stopping..." and
 // refuse a second action while one is under way.
 const CONTROL_ACTIONS = {
-	start: (server) =>
+	// Starting again while a start is still being waited on (the server never reported
+	// online, or was closed from outside) cancels that wait first, like Stop does.
+	start: async (server) => {
+		if (currentOperation(server.name) === "starting") {
+			cancelOperation(server.name);
+			await waitUntilIdle(server.name);
+		}
+		return CONTROL_ACTIONS.startNow(server);
+	},
+	startNow: (server) =>
 		runDetached(server.name, "starting", async (report) => {
 			// A second launch of a running server fails on its ports at best, and at
 			// worst leaves two copies fighting over the same save files. The status
@@ -46,7 +55,7 @@ const CONTROL_ACTIONS = {
 			// A server the panel gave up on gets a fresh set of tries once someone starts it.
 			resetRecovery(server.name);
 			report(await startServer(server));
-			await waitUntilOnline(server);
+			await waitUntilOnline(server, { cancelled: () => isCancelled(server.name) });
 		}),
 	// Stop, wait until it has really gone, start it again. Answers once the stop has
 	// been asked for; the rest carries on under the server's lock.
@@ -62,7 +71,17 @@ const CONTROL_ACTIONS = {
 			await stopAndWait(server);
 			await startAndWait(server);
 		}),
-	stop: (server) =>
+	// Stop is the one action allowed while a server is still "starting": a server that
+	// never reports online (or was started by mistake) must not be unstoppable for the
+	// minutes the wait for it lasts. The wait is cancelled, then the stop goes ahead.
+	stop: async (server) => {
+		if (currentOperation(server.name) === "starting") {
+			cancelOperation(server.name);
+			await waitUntilIdle(server.name);
+		}
+		return CONTROL_ACTIONS.stopNow(server);
+	},
+	stopNow: (server) =>
 		runDetached(server.name, "stopping", async (report) => {
 			report(await stopServer(server));
 			await waitUntilStopped(server).catch(() => {});
@@ -116,7 +135,7 @@ router.post("/control/:serverName/:action", (req, res, next) => {
 		return;
 	}
 
-	const run = CONTROL_ACTIONS[action];
+	const run = action === "stopNow" || action === "startNow" ? null : CONTROL_ACTIONS[action];
 	if (!run) return res.status(400).json({ error: "Invalid action." });
 
 	try {
