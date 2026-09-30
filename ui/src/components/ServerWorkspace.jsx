@@ -13,6 +13,7 @@ import AutomationPanel from "./AutomationPanel";
 import ConfigHistoryPanel from "./ConfigHistoryPanel";
 import StatsPanel from "./StatsPanel";
 import TagsEditor from "./TagsEditor";
+import NetworkPanel from "./NetworkPanel";
 import { useOperation, operationLabel } from "../OperationsContext";
 
 /**
@@ -33,6 +34,7 @@ function ServerWorkspace({ serverName, serverStatus, servers, userRole, onBack, 
 				{ key: "logs", label: "Logs" },
 				{ key: "players", label: "Players" },
 				{ key: "stats", label: "Stats" },
+				{ key: "network", label: "Network" },
 				isAdmin && { key: "mods", label: "Mods" },
 				{ key: "activity", label: "Activity" },
 				isAdmin && { key: "history", label: "History" },
@@ -93,6 +95,7 @@ function ServerWorkspace({ serverName, serverStatus, servers, userRole, onBack, 
 			{active === "logs" && <LogsPanel serverName={serverName} />}
 			{active === "players" && <PlayersPanel serverName={serverName} />}
 			{active === "stats" && <StatsPanel serverName={serverName} />}
+			{active === "network" && <NetworkPanel serverName={serverName} canChangeFirewall={isAdmin} />}
 			{active === "mods" && <ModsPanel serverName={serverName} serverStatus={serverStatus} />}
 			{active === "activity" && <ActivityPanel serverName={serverName} />}
 			{active === "history" && <ConfigHistoryPanel serverName={serverName} serverStatus={serverStatus} />}

@@ -14,6 +14,7 @@ import {
 } from "@mui/material";
 import { ThemeModeProvider } from "./ThemeMode";
 import ThemeToggle from "./components/ThemeToggle";
+import SetupChecklist from "./components/SetupChecklist";
 import DashboardPage from "./components/DashboardPage";
 import ServerWorkspace from "./components/ServerWorkspace";
 import ActivityPanel from "./components/ActivityPanel";
@@ -292,6 +293,7 @@ function Panel() {
 			</Box>
 
 			{isAdmin && page === "dashboard" && <UpdateBanner onOpenSettings={navigateToSettings} />}
+			{isAdmin && page === "dashboard" && <SetupChecklist onOpenSettings={navigateToSettings} onCreateServer={navigateToCreateServer} />}
 
 			{page === "dashboard" ? (
 				<DashboardPage
