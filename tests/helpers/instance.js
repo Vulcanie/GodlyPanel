@@ -200,3 +200,28 @@ export function serverEntry(dir, overrides = {}) {
 		...overrides,
 	};
 }
+
+const standIns = [];
+
+/**
+ * Run a long-lived stand-in "game" from inside `dir`: a copy of node.exe under its own
+ * image name. A server only owns a process that runs from its own folder, so tests that
+ * need a server to look online can't just point at the node.exe running the test.
+ * Returns the image name to use as the server's processName. Stopped by stopStandIns().
+ */
+export function runStandIn(dir, image) {
+	fs.mkdirSync(dir, { recursive: true });
+	const exe = path.join(dir, image);
+	fs.copyFileSync(process.execPath, exe);
+	const child = spawn(exe, ["-e", "setInterval(() => {}, 1000)"], { stdio: "ignore", windowsHide: true });
+	standIns.push(child);
+	return image;
+}
+
+export function stopStandIns() {
+	for (const child of standIns.splice(0)) {
+		try {
+			child.kill();
+		} catch {}
+	}
+}

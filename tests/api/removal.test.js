@@ -2,13 +2,13 @@ import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import { startInstance, serverEntry, GUEST, sleep } from "../helpers/instance.js";
+import { runStandIn, stopStandIns, startInstance, serverEntry, GUEST, sleep } from "../helpers/instance.js";
 
 // Removing a server: out of the panel only, or with its files. The files are
 // never touched unless the panel created the server and the folder is
 // unambiguously its own.
 
-const runningImage = path.basename(process.execPath);
+const runningImage = "gp-running-removal.exe";
 
 describe("removing servers", () => {
 	let panel;
@@ -43,6 +43,7 @@ describe("removing servers", () => {
 				fs.writeFileSync(path.join(dirs.shared, "Start_B.bat"), "@echo off\r\n");
 				fs.writeFileSync(path.join(dirs.shared, "game.bin"), "the shared install");
 				fs.writeFileSync(path.join(dirs.running, "Start.bat"), "@echo off\r\n");
+				runStandIn(dirs.running, runningImage);
 				// State the panel keeps about "Made", which deletion should clear too.
 				fs.mkdirSync(path.join(folder, "logs", "servers"), { recursive: true });
 				fs.writeFileSync(path.join(folder, "logs", "servers", "Made.log"), "old output");
@@ -63,7 +64,10 @@ describe("removing servers", () => {
 		guestCookie = await api.cookieFor(GUEST);
 		await sleep(4500); // let a poll see "Running" online
 	});
-	after(() => panel.stop());
+	after(() => {
+		stopStandIns();
+		return panel.stop();
+	});
 
 	it("tells the interface what deleting would do", async () => {
 		const made = (await api.get("/api/server/Made/removal")).json;

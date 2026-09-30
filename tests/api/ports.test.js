@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import net from "node:net";
 import path from "node:path";
-import { startInstance, serverEntry, freePort, GUEST, sleep } from "../helpers/instance.js";
+import { runStandIn, stopStandIns, startInstance, serverEntry, freePort, GUEST, sleep } from "../helpers/instance.js";
 
 // Changing a server's ports: checked against this server's own other ports, the
 // ports the game takes for itself, every other server, the panel's own port and
@@ -11,7 +11,7 @@ import { startInstance, serverEntry, freePort, GUEST, sleep } from "../helpers/i
 // and the panel's record together. Ports here are in a private range (9000s) so
 // nothing real can collide.
 
-const runningImage = path.basename(process.execPath);
+const runningImage = "gp-running-ports.exe";
 
 describe("changing a server's ports", () => {
 	let panel;
@@ -39,6 +39,7 @@ describe("changing a server's ports", () => {
 				fs.writeFileSync(path.join(dir, "imported.bat"), "@echo off\r\nstart /MIN x.exe -Port=9300 -QueryPort=9302\r\n");
 				fs.writeFileSync(path.join(dir, "server.properties"), "motd=Hi\r\nserver-port=9400\r\nrcon.port=9401\r\nquery.port=9400\r\n");
 				fs.writeFileSync(path.join(dir, "run.bat"), "@echo off\r\n");
+				runStandIn(dir, runningImage);
 			},
 			servers: (folder) => {
 				const d = path.join(folder, "srv");
@@ -58,7 +59,10 @@ describe("changing a server's ports", () => {
 		guestCookie = await api.cookieFor(GUEST);
 		await sleep(4500);
 	});
-	after(() => panel.stop());
+	after(() => {
+		stopStandIns();
+		return panel.stop();
+	});
 
 	describe("what the panel knows", () => {
 		it("lists a server's ports, the ones the game takes for itself, and the panel's own", async () => {

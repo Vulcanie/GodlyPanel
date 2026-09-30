@@ -2,13 +2,13 @@ import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import { startInstance, serverEntry, freePort, sleep } from "../helpers/instance.js";
+import { runStandIn, stopStandIns, startInstance, serverEntry, freePort, sleep } from "../helpers/instance.js";
 
 // Status polling, start/stop guards, and reading/writing server files. The
 // servers here are stand-ins written into the test's own folder: one "runs" as
 // this test's own node.exe, the rest are absent or broken on purpose.
 
-const runningImage = path.basename(process.execPath); // e.g. node.exe: certainly running
+const runningImage = "gp-running-servers.exe"; // a stand-in run from the server's own folder
 
 describe("servers", () => {
 	let panel;
@@ -21,6 +21,7 @@ describe("servers", () => {
 		panel = await startInstance({
 			prepare: (folder) => {
 				fs.mkdirSync(path.join(folder, "srv"), { recursive: true });
+				runStandIn(path.join(folder, "srv"), runningImage);
 				fs.writeFileSync(path.join(folder, "srv", "settings.ini"), "a=1\n");
 				fs.writeFileSync(path.join(folder, "srv", "start.bat"), "@echo off\r\n");
 			},
@@ -40,7 +41,10 @@ describe("servers", () => {
 		api = panel.api;
 		await sleep(6500); // let a couple of poll cycles land
 	});
-	after(() => panel.stop());
+	after(() => {
+		stopStandIns();
+		return panel.stop();
+	});
 
 	describe("polling", () => {
 		it("detects a running process, an absent one, and a closed RCON port", async () => {
