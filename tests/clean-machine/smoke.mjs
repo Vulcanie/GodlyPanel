@@ -76,6 +76,8 @@ function diagnostics(label) {
 	run("UDP endpoints on the game's ports", "Get-NetUDPEndpoint -ErrorAction SilentlyContinue | Where-Object { $_.LocalPort -in 8892,8893,8894,8902,8903,8904 } | Select-Object LocalPort, OwningProcess | Format-Table -AutoSize | Out-String");
 	run("TCP listeners on the RCON port", "Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue | Where-Object { $_.LocalPort -in 8895,8905 } | Select-Object LocalPort, OwningProcess | Format-Table -AutoSize | Out-String");
 	const data = path.join(APP, "data");
+	try { lines.push("--- recorded process ids", fs.readFileSync(path.join(data, "state", "server-pids.json"), "utf8")); } catch (e) { lines.push("--- recorded process ids: " + e.message); }
+	try { lines.push("--- servers.json", fs.readFileSync(path.join(data, "servers.json"), "utf8")); } catch {}
 	for (const [name, file] of [["api.log (tail)", path.join(data, "logs", "api.log")]]) {
 		try { lines.push(`--- ${name}`, fs.readFileSync(file, "utf8").split("\n").slice(-60).join("\n")); } catch {}
 	}
@@ -180,7 +182,10 @@ try {
 		step("Stop is accepted", stop.status === 200, JSON.stringify(stop.json));
 		const gone = await until(() => ps("(Get-Process ConanSandboxServer-Win64-Shipping -ErrorAction SilentlyContinue | Measure-Object).Count") === "0", { timeoutMs: 5 * 60_000, everyMs: 5000, label: "the server to exit" });
 		step("Conan exits after Stop", Boolean(gone));
-		await sleep(8000);
+		// The panel's own view of "stopped" lags the process by a poll or two.
+		const settled = await until(async () => (await call("GET", "/api/server/Conan%20Clean/ports")).json.running === false, { timeoutMs: 120_000, everyMs: 5000, label: "the panel to see it stopped" }).catch(() => false);
+		diagnostics("after-stop");
+		step("the panel sees it stopped", Boolean(settled));
 
 		const changed = await call("PUT", "/api/server/Conan%20Clean/ports", { ports: { port: 8902, queryPort: 8904, rconPort: 8905 } });
 		step("its ports can be changed once stopped", changed.status === 200, changed.json.error);
