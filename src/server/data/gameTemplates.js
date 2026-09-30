@@ -216,8 +216,10 @@ export const GAME_TEMPLATES = [
 		// ARK: Survival Evolved opens a raw UDP socket on the game port + 1. (Ascended
 		// no longer does, so its template doesn't list one.)
 		implicitPorts: [{ offset: 1, label: "its raw UDP socket" }],
-		installLayoutRoot:
-			"steamapps\\common\\ARK Survival Evolved Dedicated Server\\ShooterGame\\Binaries\\Win64",
+		// SteamCMD installs straight into the server folder, so the game is at its root
+		// (the steamapps\common\... nesting is SteamCMD's default location, which the panel
+		// doesn't use).
+		installLayoutRoot: "ShooterGame\\Binaries\\Win64",
 		fields: ["sessionName", "serverPassword", "rconPassword", "mapCode", "mods"],
 		ports: [
 			{ key: "port", label: "Game Port", default: 26000 },
@@ -560,7 +562,9 @@ export const GAME_TEMPLATES = [
 		updateAppId: "4129620",
 		storeAppId: "3041230",
 		sharedInstall: false,
-		installLayoutRoot: "steamapps\\common\\Windrose Dedicated Server",
+		// SteamCMD installs straight into the server folder: the game is at its root, not under
+		// steamapps\common (SteamCMD's default location, which the panel doesn't use).
+		installLayoutRoot: "",
 		fields: ["sessionName", "serverPassword"],
 		ports: [{ key: "port", label: "Port", default: 8890 }],
 		buildStartScriptFilename: () => "StartServerForeground.bat",
@@ -621,8 +625,9 @@ export const GAME_TEMPLATES = [
 		updateAppId: "1362640",
 		storeAppId: "418030",
 		sharedInstall: false,
-		installLayoutRoot:
-			"steamapps\\common\\Subsistence Dedicated Server\\Binaries\\Win64",
+		// The game is at the server folder's root (SteamCMD installs straight into it); the
+		// launcher sits in Binaries\Win64.
+		installLayoutRoot: "Binaries\\Win64",
 		fields: ["serverPassword"],
 		ports: [{ key: "port", label: "Port", default: 8900 }],
 		buildStartScriptFilename: () => "UpdateandRun.bat",
@@ -645,9 +650,9 @@ export const GAME_TEMPLATES = [
 			host: "127.0.0.1",
 			port: p.port,
 			sessionName: p.name,
-			configPath: `${p.installDir}\\steamapps\\common\\Subsistence Dedicated Server\\UDKGame\\Config\\UDKDedServerSettings.ini`,
+			configPath: `${p.installDir}\\UDKGame\\Config\\UDKDedServerSettings.ini`,
 			startScriptPath: `${p.installDir}\\${p.installLayoutRoot}\\${p.startScriptFilename}`,
-			workingDir: `${p.installDir}\\steamapps\\common\\Subsistence Dedicated Server`,
+			workingDir: `${p.installDir}`,
 			processName: "Subsistence.exe",
 			steamCmdPath: p.steamCmdExe,
 			installDir: `${p.installDir}\\`,
