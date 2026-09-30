@@ -17,9 +17,12 @@ function runSampleScript() {
 		execFile(
 			"powershell",
 			["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", SAMPLE_SCRIPT],
-			{ windowsHide: true, timeout: 8000, maxBuffer: 10 * 1024 * 1024 },
+			// Two CIM queries and a one-second pause; a busy or freshly started
+			// machine (a game server booting) can take well over 8s, so the limit
+			// sits just under the 15s poll interval instead.
+			{ windowsHide: true, timeout: 14000, maxBuffer: 10 * 1024 * 1024 },
 			(error, stdout) => {
-				if (error) return reject(error);
+				if (error) return reject(error.killed ? new Error("the process sampler took longer than 14s") : error);
 				try {
 					resolve(JSON.parse(stdout));
 				} catch (e) {

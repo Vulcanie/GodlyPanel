@@ -165,7 +165,8 @@ try {
 		const online = await until(async () => (await call("GET", "/api/status")).json["Conan Clean"]?.online === true, { timeoutMs: 8 * 60_000, everyMs: 10_000, label: "the server to show online" });
 		diagnostics("after-start");
 		step("the panel sees the server online (its query answers)", Boolean(online));
-		await page.reload({ waitUntil: "networkidle" });
+		await page.reload({ waitUntil: "domcontentloaded" });
+		await page.getByRole("button", { name: "Expand All" }).waitFor({ timeout: 60_000 });
 		await page.waitForTimeout(1500);
 		await page.screenshot({ path: path.join(OUT, "3-dashboard-conan.png"), fullPage: true });
 

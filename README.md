@@ -121,14 +121,21 @@ else, and it uses the PowerShell that ships with Windows.
 
 1. Download the latest `GodlyPanel-…-win.zip` from the
    [Releases](../../releases) page.
-2. **Unzip it somewhere with plenty of free space,** for example `D:\GodlyPanel`. By
+2. **Before unzipping, unblock the zip** (this avoids the SmartScreen warning): right-click
+   the downloaded zip → **Properties** → tick **Unblock** at the bottom → **OK**. Or in
+   PowerShell: `Unblock-File .\GodlyPanel-*-win.zip`. Windows marks everything you
+   download from the internet, and unzipping copies that mark onto every file inside;
+   unblocking first removes it. You can compare the file with the SHA-256 checksum
+   in the release notes if you like.
+3. **Unzip it somewhere with plenty of free space,** for example `D:\GodlyPanel`. By
    default, servers you create are stored inside this folder (you can choose another
    drive on first run). Avoid `C:\Program Files`, which is write-protected.
-3. Run **`GodlyPanel.exe`**.
-4. Windows may say *"Windows protected your PC"*, because the app isn't code-signed
-   (that costs money I don't have). Choose **More info → Run anyway**. If you'd rather
-   not, [build it from source](#development) yourself.
-5. Follow the first-run screen: pick where servers will be stored, then create the
+4. Run **`GodlyPanel.exe`**.
+5. If you skipped the unblock step, Windows may say *"Windows protected your PC"*,
+   because the app isn't code-signed (that costs money I don't have). Choose
+   **More info → Run anyway**. If you'd rather not, [build it from source](#development)
+   yourself.
+6. Follow the first-run screen: pick where servers will be stored, then create the
    admin account.
 
 The window is just a viewer. Closing it leaves the panel running in the system tray, so
