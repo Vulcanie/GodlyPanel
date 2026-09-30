@@ -263,7 +263,7 @@ function Panel() {
 				<Typography variant="h4" sx={{ mb: 0 }}>
 					GodlyPanel
 				</Typography>
-				<Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+				<Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", flexWrap: "wrap", gap: 1, "& .MuiButton-root": { whiteSpace: "nowrap" } }}>
 					<Chip
 						size="small"
 						label={`${user.username}${isAdmin ? "" : ` · ${ROLE_LABELS[role] ?? role}`}`}

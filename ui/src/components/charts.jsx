@@ -76,7 +76,7 @@ export function LineChart({ series, height = 150, unit = "", max = null, title, 
 	const span = tMax - tMin;
 
 	return (
-		<Box ref={ref} sx={{ width: "100%", position: "relative" }}>
+		<Box ref={ref} sx={{ width: "100%", minWidth: 0, overflow: "hidden", position: "relative" }}>
 			{title && (
 				<Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 0.25 }}>
 					{title}
@@ -89,7 +89,7 @@ export function LineChart({ series, height = 150, unit = "", max = null, title, 
 					</Typography>
 				</Box>
 			) : (
-				<svg width={width} height={height} onMouseMove={(e) => setHover(nearest(e.clientX))} onMouseLeave={() => setHover(null)} role="img" aria-label={title}>
+				<svg width={width} height={height} style={{ display: "block", maxWidth: "100%" }} onMouseMove={(e) => setHover(nearest(e.clientX))} onMouseLeave={() => setHover(null)} role="img" aria-label={title}>
 					{ticks.map((v) => (
 						<g key={v}>
 							<line x1={pad.left} x2={width - pad.right} y1={y(v)} y2={y(v)} stroke={theme.palette.divider} />

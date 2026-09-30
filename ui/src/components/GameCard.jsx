@@ -78,7 +78,13 @@ function GameCard({
 						}}
 					/>
 				}
-				sx={{ minHeight: 120, "&.Mui-expanded": { minHeight: 120 } }}
+				sx={{
+					minHeight: 120,
+					"&.Mui-expanded": { minHeight: 120 },
+					position: "relative",
+					// The banner runs the full width; the arrow sits on top of it.
+					"& .MuiAccordionSummary-expandIconWrapper": { position: "absolute", right: 12, bottom: 12 },
+				}}
 			>
 				<Box
 					sx={{
