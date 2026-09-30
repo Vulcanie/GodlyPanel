@@ -24,7 +24,7 @@ import { ArrowBack as ArrowBackIcon } from "@mui/icons-material";
 import { grey } from "@mui/material/colors";
 import ModpackUploadField from "./ModpackUploadField";
 import FolderField from "./FolderField";
-import PortsToOpen from "./PortsToOpen";
+import PortsToOpen, { findPortClash } from "./PortsToOpen";
 import { api } from "../api/client";
 
 const FIELD_LABELS = {
@@ -409,6 +409,7 @@ function CreateServerPage({ onBack, userRole }) {
 							onClick={() => submit(false)}
 							disabled={
 								submitting ||
+								Boolean(findPortClash(selected.implicitPorts, form)) ||
 								!form.name?.trim() ||
 								(selected.requiresEula && !form.eulaAccepted)
 							}

@@ -9,6 +9,16 @@ import { Alert } from "@mui/material";
  *
  * @param implicit  [{ offset, label }] ports taken relative to the game port
  */
+/**
+ * The port the game keeps for itself that the query or RCON port was set to, if
+ * any. The create button stays disabled while there is one.
+ */
+export function findPortClash(implicit = [], { port, queryPort, rconPort } = {}) {
+	const gamePort = Number(port);
+	if (!Number.isInteger(gamePort) || gamePort <= 0) return null;
+	return implicit.find((i) => Number(queryPort) === gamePort + i.offset || Number(rconPort) === gamePort + i.offset) ?? null;
+}
+
 // `hideClash`: the editor already lists clashes from its own live check.
 function PortsToOpen({ game, query, rcon, implicit = [], gameName, hideClash = false }) {
 	const gamePort = Number(game);
@@ -18,7 +28,7 @@ function PortsToOpen({ game, query, rcon, implicit = [], gameName, hideClash = f
 	const udp = [gamePort, ...implicit.map((i) => gamePort + i.offset)];
 	if (Number.isInteger(queryPort) && queryPort > 0 && !udp.includes(queryPort)) udp.push(queryPort);
 
-	const clash = hideClash ? null : implicit.find((i) => queryPort === gamePort + i.offset || Number(rcon) === gamePort + i.offset);
+	const clash = hideClash ? null : findPortClash(implicit, { port: gamePort, queryPort, rconPort: rcon });
 
 	return (
 		<Alert severity={clash ? "error" : "info"} sx={{ my: 1 }}>

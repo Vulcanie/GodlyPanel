@@ -62,7 +62,8 @@ commit messages describe the problem each change solved.
   keeping a `.bak` of whatever it replaces.
 - **Changes a server's ports safely.** Every change is checked as you type against the
   server's own other ports, the ports its game quietly takes for itself (Conan Exiles
-  uses the game port + 1, Valheim uses three in a row), every other server, and the
+  uses the game port + 1, as does ARK: Survival Evolved; Valheim uses three in a row and
+  7 Days to Die four), every other server, and the
   panel's own port. It then updates the start script, the game's config and the panel's
   record together, with a `.bak` of each file.
 - **Deletes servers completely,** or just removes them from the panel. Deleting files is

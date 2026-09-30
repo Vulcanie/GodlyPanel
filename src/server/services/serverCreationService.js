@@ -88,10 +88,28 @@ function slugify(name) {
 		.slice(0, 40);
 }
 
+/**
+ * The template a stored server came from. Two templates can share a `type`
+ * (both ARK games), so the game's app id settles which.
+ */
+export function templateOfServer(server) {
+	const sameType = GAME_TEMPLATES.filter((t) => t.type === server.type);
+	return sameType.find((t) => t.updateAppId && t.updateAppId === String(server.updateAppId)) ?? sameType[0] ?? null;
+}
+
 /** The ports a game takes for itself, given the game port chosen for it. */
 export function impliedPortsFor(template, ports) {
 	if (!ports?.port) return [];
 	return (template?.implicitPorts ?? []).map(({ offset, label }) => ({ port: ports.port + offset, offset, label }));
+}
+
+// Every -Port=/-QueryPort=/-RCONPort= in a start script. ARK: Survival Evolved
+// (ShooterGameServer.exe) also holds the game port + 1 for its raw socket.
+function addScriptPorts(used, content) {
+	for (const m of content.matchAll(/-(Port|QueryPort|RCONPort)=(\d+)/gi)) {
+		used.add(Number(m[2]));
+		if (m[1].toLowerCase() === "port" && /ShooterGameServer\.exe/i.test(content)) used.add(Number(m[2]) + 1);
+	}
 }
 
 // `exclude` leaves one server's own ports out, for checking a change to them.
@@ -103,8 +121,16 @@ export async function usedPorts(extraScanDir, { excludeName, excludeScript } = {
 			if (s[key]) used.add(s[key]);
 		}
 		// A server's implied ports are as taken as the ones written in its entry.
-		const template = GAME_TEMPLATES.find((t) => t.type === s.type && t.implicitPorts);
-		for (const { port } of impliedPortsFor(template, s)) used.add(port);
+		for (const { port } of impliedPortsFor(templateOfServer(s), s)) used.add(port);
+		// ARK entries don't record their game or query port, only the start script
+		// does; read it so a sibling's ports (and its raw socket) are counted too.
+		if (s.type === "ark" && s.startScriptPath && s.startScriptPath !== excludeScript) {
+			try {
+				addScriptPorts(used, await fs.readFile(s.startScriptPath, "utf8"));
+			} catch {
+				// No script to read.
+			}
+		}
 	}
 
 	// ARK's shared-install maps don't store their actual game/query port in
@@ -120,9 +146,7 @@ export async function usedPorts(extraScanDir, { excludeName, excludeScript } = {
 				if (!/^Start_.*\.bat$/i.test(file)) continue;
 				if (excludeScript && path.win32.join(extraScanDir, file).toLowerCase() === String(excludeScript).toLowerCase()) continue;
 				const content = await fs.readFile(path.win32.join(extraScanDir, file), "utf8");
-				for (const m of content.matchAll(/-(?:Port|QueryPort|RCONPort)=(\d+)/g)) {
-					used.add(Number(m[1]));
-				}
+				addScriptPorts(used, content);
 			}
 		} catch {
 			// Directory doesn't exist yet (no shared install) — nothing to scan.
@@ -211,7 +235,7 @@ async function validateNewServer(template, name, ports, sharedInstallDir) {
 		if (clash) {
 			throw new Error(
 				`${labelOf(clash[0])} ${port} is the game port + ${offset}, which ${template.displayName} uses for ${label}. ` +
-					`Pick a different ${labelOf(clash[0]).toLowerCase()} — ${port + 1} or higher is safe.`,
+					`Pick a different ${labelOf(clash[0]).toLowerCase()} — ${ports.port + Math.max(...template.implicitPorts.map((i) => i.offset)) + 1} or higher is safe.`,
 			);
 		}
 		if (used.has(port)) {

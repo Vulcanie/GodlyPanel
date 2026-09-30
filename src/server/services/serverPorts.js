@@ -1,11 +1,10 @@
 import dgram from "node:dgram";
 import fs from "node:fs";
 import net from "node:net";
-import { GAME_TEMPLATES } from "../data/gameTemplates.js";
 import { update as updateServer } from "../data/serverStore.js";
 import { getConfig } from "../config/configStore.js";
 import { readManagedFile, writeManagedFile } from "../util/managedFiles.js";
-import { usedPorts, impliedPortsFor } from "./serverCreationService.js";
+import { usedPorts, impliedPortsFor, templateOfServer } from "./serverCreationService.js";
 
 // Changing a server's ports means changing them everywhere the server has them,
 // together, or it ends up half-moved: the panel's record (which it polls), the
@@ -59,7 +58,7 @@ const CONFIG_BINDINGS = {
 	],
 };
 
-const templateFor = (server) => GAME_TEMPLATES.find((t) => t.type === server.type && (t.implicitPorts || t.sharedInstall)) ?? null;
+const templateFor = (server) => templateOfServer(server);
 
 async function scriptText(server) {
 	if (!server.startScriptPath) return null;

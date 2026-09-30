@@ -211,6 +211,9 @@ export const GAME_TEMPLATES = [
 		updateAppId: "376030",
 		storeAppId: "346110",
 		sharedInstall: false,
+		// ARK: Survival Evolved opens a raw UDP socket on the game port + 1. (Ascended
+		// no longer does, so its template doesn't list one.)
+		implicitPorts: [{ offset: 1, label: "its raw UDP socket" }],
 		installLayoutRoot:
 			"steamapps\\common\\ARK Survival Evolved Dedicated Server\\ShooterGame\\Binaries\\Win64",
 		fields: ["sessionName", "serverPassword", "rconPassword", "mapCode", "mods"],
@@ -653,6 +656,13 @@ export const GAME_TEMPLATES = [
 		installLayoutRoot: "",
 		fields: ["sessionName", "serverPassword"],
 		ports: [{ key: "port", label: "Port", default: 8910 }],
+		// 7 Days to Die listens on the ports after the server port too: Steam
+		// traffic, LiteNetLib, and the extra crossplay one.
+		implicitPorts: [
+			{ offset: 1, label: "Steam traffic" },
+			{ offset: 2, label: "its LiteNetLib (crossplay) port" },
+			{ offset: 3, label: "its extra networking port" },
+		],
 		buildStartScriptFilename: () => "startdedicated.bat",
 		buildStartScript: (p) =>
 			[
