@@ -13,7 +13,7 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { TESTBED, startPanel, get, post, put, del, upload, check, summary, sleep, until, freeGB, dirGB } from "./lib.mjs";
+import { TESTBED, DATA, startPanel, get, post, put, del, upload, check, summary, sleep, until, freeGB, dirGB } from "./lib.mjs";
 import { GAMES } from "./games.mjs";
 import { portBusy } from "../../src/server/util/portProbe.js";
 import { listZip } from "../../src/server/util/tarZip.js";
@@ -115,6 +115,9 @@ if (dirGB(TESTBED) > 45 || freeGB() < 20) {
 	process.exit(3);
 }
 
+// Each run starts without what an earlier run of this game left in its own data folder
+// (backups, state), so counts like "one backup" mean this run's.
+for (const leftover of ["backups", "state", "servers.json"]) fs.rmSync(path.join(DATA, leftover), { recursive: true, force: true });
 const userBefore = snapshotUserData();
 const panel = await startPanel();
 let entry;
