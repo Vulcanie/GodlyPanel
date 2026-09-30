@@ -75,6 +75,19 @@ const GAMES = {
 		lists: {},
 		nothing: /^failed to/i,
 	},
+	// 7 Days to Die's own console, over Telnet. Who: a player's name or entity id.
+	"7days": {
+		who: { label: "player name or id", pattern: NAME, hint: "name or entity id" },
+		run: "telnet",
+		kick: (p, r) => `kick ${p}${r ? ` "${r}"` : ""}`,
+		ban: (p, r) => `ban add ${p} 1 year${r ? ` "${r}"` : ""}`,
+		unban: (p) => `ban remove ${p}`,
+		lists: {
+			whitelist: { label: "Whitelist", add: (p) => `whitelist add ${p}`, remove: (p) => `whitelist remove ${p}` },
+			admins: { label: "Admins", add: (p) => `admin add ${p} 0`, remove: (p) => `admin remove ${p}` },
+		},
+		nothing: /not found|unknown|no such|invalid|could not|couldn't/i,
+	},
 	valheim: {
 		who: { label: "Steam ID", pattern: STEAM64, hint: "17-digit SteamID64" },
 		run: null,

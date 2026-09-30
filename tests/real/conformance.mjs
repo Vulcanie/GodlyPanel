@@ -195,6 +195,23 @@ try {
 	const players = (await get(`/api/server/${enc(NAME)}/players`)).json;
 	check("the players view answers", Array.isArray(players.online));
 
+	// Kick and ban a player who isn't there, to see what the game really answers.
+	const pa = (await get(`/api/server/${enc(NAME)}/player-admin`)).json;
+	note(`player admin: supported ${pa.supported}, kick ${pa.kick}, ban ${pa.ban}, lists ${pa.lists?.map((l) => l.id).join(",") || "none"}`);
+	if (pa.supported) {
+		const who = game.fakePlayer ?? "76561198000000000";
+		const show = async (label, res) => note(`${label}: ${res.status} ${JSON.stringify(res.json).slice(0, 220)}`);
+		if (pa.kick) await show("kick of nobody", await post(`/api/server/${enc(NAME)}/players/kick`, { player: who }));
+		if (pa.ban) {
+			await show("ban", await post(`/api/server/${enc(NAME)}/players/ban`, { player: who, reason: "test" }));
+			await show("unban", await post(`/api/server/${enc(NAME)}/players/unban`, { player: who }));
+		}
+		for (const list of (pa.lists ?? []).filter((l) => !l.readOnly)) {
+			await show(`add to ${list.id}`, await post(`/api/server/${enc(NAME)}/player-lists/${list.id}`, { player: who }));
+			await show(`remove from ${list.id}`, await del(`/api/server/${enc(NAME)}/player-lists/${list.id}/${enc(who)}`));
+		}
+	}
+
 	// ---- backup ----------------------------------------------------------------
 	step("Backup");
 	const overview = (await get(`/api/server/${enc(NAME)}/backups`)).json;

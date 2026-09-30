@@ -677,9 +677,11 @@ export const GAME_TEMPLATES = [
 		// 7 Days to Die listens on the ports after the server port too: Steam
 		// traffic, LiteNetLib, and the extra crossplay one.
 		implicitPorts: [
-			{ offset: 1, label: "Steam traffic" },
+			// Seen on a real server: it binds the game port (UDP and TCP) and the port two above
+			// it (UDP). The ones between and after are kept free in case a version uses them.
+			{ offset: 1, label: "Steam traffic", precaution: true },
 			{ offset: 2, label: "its LiteNetLib (crossplay) port" },
-			{ offset: 3, label: "its extra networking port" },
+			{ offset: 3, label: "its extra networking port", precaution: true },
 		],
 		buildStartScriptFilename: () => "startdedicated.bat",
 		buildStartScript: (p) =>
