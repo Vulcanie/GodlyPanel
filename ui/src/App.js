@@ -132,21 +132,85 @@ function Panel() {
 		return () => events.close();
 	}, [signedIn]);
 
-	// useCallback (not plain function expressions) since these thread all the
-	// way down into every ServerTile's onClick — a fresh reference every
-	// render would defeat React.memo on GameCard/ServerTile further down.
-	const navigateToConfig = React.useCallback((serverName) => {
-		setSelectedServer(serverName);
-		setPage("config");
+	// One place changes page, and it also records the change in the browser's
+	// history, so the browser's Back button steps through the panel instead of
+	// leaving it. useCallback keeps these stable: they thread down into every
+	// ServerTile's onClick, and a fresh reference each render would defeat
+	// React.memo on GameCard/ServerTile.
+	const selectedRef = React.useRef(null);
+	// What each history entry showed, by position, so an in-app Back button can
+	// step back through history when the entry before is where it's headed
+	// (rather than piling up a new entry every time you go back).
+	const trail = React.useRef([{ page: "dashboard", server: null }]);
+	const position = () => window.history.state?.idx ?? 0;
+
+	const show = React.useCallback((nextPage, serverName) => {
+		// undefined keeps the current server (batch editor and its back button).
+		if (serverName !== undefined) selectedRef.current = serverName;
+		setPage(nextPage);
+		setSelectedServer(selectedRef.current);
+		try {
+			const idx = position() + 1;
+			trail.current.length = idx;
+			trail.current[idx] = { page: nextPage, server: selectedRef.current };
+			window.history.pushState({ page: nextPage, server: selectedRef.current, idx }, "");
+		} catch {
+			// History is a convenience; the panel works without it.
+		}
 	}, []);
-	const navigateToDashboard = React.useCallback(() => {
-		setSelectedServer(null);
-		setPage("dashboard");
+	const goBackTo = React.useCallback(
+		(nextPage) => {
+			const previous = trail.current[position() - 1];
+			if (previous && previous.page === nextPage) window.history.back();
+			else show(nextPage, nextPage === "dashboard" ? null : undefined);
+		},
+		[show],
+	);
+	const navigateToConfig = React.useCallback((serverName) => show("config", serverName), [show]);
+	const navigateToDashboard = React.useCallback(() => goBackTo("dashboard"), [goBackTo]);
+	const navigateToBatchEditor = React.useCallback(() => show("batchEditor"), [show]);
+	// The editor's back button carries no server name; the selected one stays.
+	const backToSelectedConfig = React.useCallback(() => goBackTo("config"), [goBackTo]);
+	const navigateToCreateServer = React.useCallback(() => show("createServer"), [show]);
+	const navigateToUsers = React.useCallback(() => show("users"), [show]);
+	const navigateToSettings = React.useCallback(() => show("settings"), [show]);
+
+	// Browser Back/Forward.
+	React.useEffect(() => {
+		try {
+			window.history.replaceState({ page: "dashboard", server: null, idx: 0 }, "");
+		} catch {
+			// Ignore.
+		}
+		const onPop = (event) => {
+			const state = event.state || { page: "dashboard", server: null, idx: 0 };
+			selectedRef.current = state.server ?? null;
+			setPage(state.page || "dashboard");
+			setSelectedServer(selectedRef.current);
+		};
+		window.addEventListener("popstate", onPop);
+		return () => window.removeEventListener("popstate", onPop);
 	}, []);
-	const navigateToBatchEditor = React.useCallback(() => setPage("batchEditor"), []);
-	const navigateToCreateServer = React.useCallback(() => setPage("createServer"), []);
-	const navigateToUsers = React.useCallback(() => setPage("users"), []);
-	const navigateToSettings = React.useCallback(() => setPage("settings"), []);
+
+	// Signing out and back in as someone else must not land on the previous
+	// person's page (a view-only user arriving on Settings, say).
+	React.useEffect(() => {
+		if (!signedIn) {
+			selectedRef.current = null;
+			setPage("dashboard");
+			setSelectedServer(null);
+		}
+	}, [signedIn]);
+
+	// A server deleted from another window while its page is open.
+	React.useEffect(() => {
+		if (!loading && signedIn && (page === "config" || page === "batchEditor") && selectedServer && !servers[selectedServer]) {
+			selectedRef.current = null;
+			setPage("dashboard");
+			setSelectedServer(null);
+		}
+	}, [loading, signedIn, page, selectedServer, servers]);
+
 
 	if (status === "loading") {
 		return <CircularProgress sx={{ display: "block", mx: "auto", mt: 10 }} />;
@@ -227,7 +291,7 @@ function Panel() {
 					onEditBatchFiles={navigateToBatchEditor}
 				/>
 			) : page === "batchEditor" ? (
-				<BatchFileEditor serverName={selectedServer} onBack={navigateToConfig} />
+				<BatchFileEditor serverName={selectedServer} onBack={backToSelectedConfig} />
 			) : null}
 		</Container>
 	);
