@@ -745,10 +745,10 @@ export const GAME_TEMPLATES = [
 		updateAppId: "2394010",
 		storeAppId: "1623730",
 		sharedInstall: false,
-		installLayoutRoot: "steamapps\\common\\PalServer",
-		// The launcher lives at the install root (matching the real, working
-		// Start_Palworld.bat) and cd's into installLayoutRoot itself.
-		scriptAtRoot: true,
+		// A fresh SteamCMD install puts PalServer.exe and everything else directly in the
+		// install folder (checked on a real install); the steamapps\common\PalServer nesting
+		// is how an older, hand-made server happened to be laid out.
+		installLayoutRoot: "",
 		fields: ["sessionName", "serverPassword", "rconPassword"],
 		ports: [
 			{ key: "port", label: "Game Port", default: 8920 },
@@ -761,7 +761,7 @@ export const GAME_TEMPLATES = [
 				"@echo off",
 				`title ${p.name} Launcher`,
 				"",
-				`cd /d "${p.installDir}\\${p.installLayoutRoot}"`,
+				`cd /d "${p.installDir}"`,
 				"",
 				`start /MIN "${p.name}" PalServer.exe ^`,
 				`    -ServerName="${p.sessionName}" ^`,
@@ -777,6 +777,28 @@ export const GAME_TEMPLATES = [
 				"exit /b",
 				"",
 			].join("\r\n"),
+		// The status check (gamedig's "palworld" protocol) asks the server's REST API on the
+		// query port, signing in as admin with the admin password, and the RCON console needs
+		// its own switch. A fresh install has none of these on, so a server made without this
+		// file never showed as online. Everything else the game fills in with its defaults.
+		buildConfigFile: (p) => {
+			const q = (v) => `"${String(v ?? "").replace(/"/g, "")}"`;
+			const options = [
+				`ServerName=${q(p.sessionName)}`,
+				`ServerPassword=${q(p.serverPassword)}`,
+				`AdminPassword=${q(p.rconPassword)}`,
+				`PublicPort=${p.port}`,
+				`ServerPlayerMaxNum=${p.maxPlayers || 32}`,
+				"RCONEnabled=True",
+				`RCONPort=${p.rconPort}`,
+				"RESTAPIEnabled=True",
+				`RESTAPIPort=${p.queryPort}`,
+			];
+			return {
+				relPath: "Pal\\Saved\\Config\\WindowsServer\\PalWorldSettings.ini",
+				content: `[/Script/Pal.PalGameWorldSettings]\r\nOptionSettings=(${options.join(",")})\r\n`,
+			};
+		},
 		buildServerEntry: (p) => ({
 			name: p.name,
 			type: "Palword",

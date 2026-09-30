@@ -42,10 +42,10 @@ const events = async (types) => (await get(`/api/activity?server=${enc(NAME)}&ty
 
 /** Processes running from inside the test area (never anything else). */
 const ours = () =>
-	ps(`Get-Process -ErrorAction SilentlyContinue | Where-Object { $_.Path -like '${TB}*' -and $_.ProcessName -notmatch 'node|powershell|cmd|conhost|steamcmd' } | ForEach-Object { $_.ProcessName + ':' + $_.Id }`)
+	ps(`Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -like '${TB}*' -and $_.Name -notmatch '^(node|powershell|cmd|conhost|steamcmd)' } | ForEach-Object { ($_.Name -replace '\\.exe$', '') + ':' + $_.ProcessId }`)
 		.split(/\r?\n/)
 		.filter(Boolean);
-const killOurs = () => ps(`Get-Process -ErrorAction SilentlyContinue | Where-Object { $_.Path -like '${TB}*' -and $_.ProcessName -notmatch 'node|powershell|cmd|conhost' } | Stop-Process -Force`);
+const killOurs = () => ps(`Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -like '${TB}*' -and $_.Name -notmatch '^(node|powershell|cmd|conhost)' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }; exit 0`);
 
 async function portsFree(list) {
 	const busy = [];
