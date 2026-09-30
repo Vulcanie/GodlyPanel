@@ -22,8 +22,13 @@ function GameCard({
 	isOpen,
 	onToggle,
 	appearance,
+	// For groups that aren't a game (tags): the group's own name and no game artwork.
+	plainTitle = null,
 }) {
-	const { title, banner, gradient } = getGameInfo(gameType, appearance);
+	const info = getGameInfo(gameType, appearance);
+	const title = plainTitle ?? info.title;
+	const banner = plainTitle ? null : info.banner;
+	const gradient = info.gradient;
 
 	const rows = React.useMemo(
 		() => (showOffline ? instances : instances.filter((i) => i.online)),

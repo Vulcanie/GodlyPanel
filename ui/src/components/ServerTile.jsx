@@ -71,6 +71,9 @@ function ServerTile({ srv, stats, clickable, onClick }) {
 					{srv.name}
 				</Typography>
 				{operation && <Chip size="small" color="info" variant="outlined" label={operationLabel(operation)} sx={{ ml: 1, height: 20 }} />}
+				{(srv.tags ?? []).map((tag) => (
+					<Chip key={tag} size="small" variant="outlined" label={tag} sx={{ ml: 0.75, height: 20 }} />
+				))}
 			</Box>
 
 			<Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, flex: 1 }}>

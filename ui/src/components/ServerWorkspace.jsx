@@ -12,6 +12,7 @@ import ActivityPanel from "./ActivityPanel";
 import AutomationPanel from "./AutomationPanel";
 import ConfigHistoryPanel from "./ConfigHistoryPanel";
 import StatsPanel from "./StatsPanel";
+import TagsEditor from "./TagsEditor";
 import { useOperation, operationLabel } from "../OperationsContext";
 
 /**
@@ -76,6 +77,8 @@ function ServerWorkspace({ serverName, serverStatus, servers, userRole, onBack, 
 					</Button>
 				)}
 			</Box>
+
+			{isAdmin && <TagsEditor serverName={serverName} tags={serverStatus?.tags ?? []} />}
 
 			<Tabs value={active} onChange={(_, v) => choose(v)} variant="scrollable" scrollButtons="auto" sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}>
 				{tabs.map((t) => (
