@@ -147,7 +147,7 @@ export async function applyPreset(server, id, { keepIdentity: keep = true } = {}
 				// Nothing there to keep from.
 			}
 		}
-		await writeManagedFile(file, next);
+		await writeManagedFile(file, next, `preset "${preset.name}"`);
 		written.push(key);
 	}
 	if (written.length === 0) throw new PresetError("None of the preset's files belong to this server.", "no_matching_files");

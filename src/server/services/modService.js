@@ -426,7 +426,7 @@ async function changeScriptIds(server, spec, change) {
 	if (!server.startScriptPath) throw new ModError("This server has no start script recorded.", "no_script");
 	const text = await readManagedFile(server.startScriptPath);
 	const ids = change(scriptIds(text, spec.flag));
-	await writeManagedFile(server.startScriptPath, withScriptIds(text, spec.flag, ids));
+	await writeManagedFile(server.startScriptPath, withScriptIds(text, spec.flag, ids), "mod list");
 	return ids;
 }
 

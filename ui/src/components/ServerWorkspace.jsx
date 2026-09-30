@@ -10,6 +10,7 @@ import PlayersPanel from "./PlayersPanel";
 import ModsPanel from "./ModsPanel";
 import ActivityPanel from "./ActivityPanel";
 import AutomationPanel from "./AutomationPanel";
+import ConfigHistoryPanel from "./ConfigHistoryPanel";
 import { useOperation, operationLabel } from "../OperationsContext";
 
 /**
@@ -31,6 +32,7 @@ function ServerWorkspace({ serverName, serverStatus, servers, userRole, onBack, 
 				{ key: "players", label: "Players" },
 				isAdmin && { key: "mods", label: "Mods" },
 				{ key: "activity", label: "Activity" },
+				isAdmin && { key: "history", label: "History" },
 				isAdmin && { key: "automation", label: "Automation" },
 			].filter(Boolean),
 		[isAdmin],
@@ -87,6 +89,7 @@ function ServerWorkspace({ serverName, serverStatus, servers, userRole, onBack, 
 			{active === "players" && <PlayersPanel serverName={serverName} />}
 			{active === "mods" && <ModsPanel serverName={serverName} serverStatus={serverStatus} />}
 			{active === "activity" && <ActivityPanel serverName={serverName} />}
+			{active === "history" && <ConfigHistoryPanel serverName={serverName} serverStatus={serverStatus} />}
 			{active === "automation" && <AutomationPanel serverName={serverName} serverStatus={serverStatus} onCloned={onOpenServer} />}
 		</Box>
 	);

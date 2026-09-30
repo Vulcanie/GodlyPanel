@@ -11,6 +11,7 @@ import { recoveryState } from "../services/crashWatcher.js";
 import { recentActivity } from "../services/activityLog.js";
 import { listLogs, readLog, searchLog } from "../services/logService.js";
 import { playersFor } from "../services/playerTracker.js";
+import { readSeries, RANGES } from "../services/metrics.js";
 import { runDetached } from "../services/serverOps.js";
 import {
 	BackupError,
@@ -218,6 +219,18 @@ router.get("/server/:serverName/logs/:id", requirePermission("server.logs"), asy
 
 router.get("/server/:serverName/players", requirePermission("server.players"), (req, res) => {
 	res.json(playersFor(req.server.name));
+});
+
+// ---- how busy things have been --------------------------------------------------
+
+const rangeOf = (req) => (RANGES[req.query.range] ? req.query.range : "24h");
+
+router.get("/metrics/system", requirePermission("metrics.view"), async (req, res) => {
+	res.json(await readSeries("system", rangeOf(req)));
+});
+
+router.get("/server/:serverName/metrics", requirePermission("metrics.view"), async (req, res) => {
+	res.json(await readSeries(`server:${req.server.name}`, rangeOf(req)));
 });
 
 // ---- what has happened -----------------------------------------------------------

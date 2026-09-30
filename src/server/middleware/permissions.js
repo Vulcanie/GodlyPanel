@@ -14,6 +14,7 @@ export const PERMISSIONS = [
 	"server.players",
 	"activity.view",
 	"schedules.view",
+	"metrics.view",
 ];
 
 export const ROLE_PERMISSIONS = {

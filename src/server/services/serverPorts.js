@@ -268,7 +268,7 @@ export async function applyPorts(server, proposed) {
 		}
 
 		for (const { file, content } of writes) {
-			await writeManagedFile(file, content);
+			await writeManagedFile(file, content, "ports change");
 			filesChanged.push(file);
 		}
 		for (const [key, { from }] of Object.entries(changes)) {

@@ -11,6 +11,7 @@ const MODERATOR = new Set([
 	"server.players",
 	"activity.view",
 	"schedules.view",
+	"metrics.view",
 ]);
 
 export function can(role, permission) {

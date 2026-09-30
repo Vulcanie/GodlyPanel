@@ -29,7 +29,7 @@ router.post("/by-server/:serverName", async (req, res) => {
 		return res.status(400).json({ error: "Invalid content format" });
 	}
 	try {
-		await writeManagedFile(req.server.startScriptPath, content);
+		await writeManagedFile(req.server.startScriptPath, content, "start script editor");
 		res.json({ success: true, message: "Launch script saved." });
 	} catch (err) {
 		sendFileError(res, err, "the launch script");

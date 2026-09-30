@@ -81,6 +81,12 @@ export const DEFAULTS = {
 		autoStartDelaySec: 20,
 	},
 
+	metrics: {
+		// A reading of CPU, memory and players per server, kept as history for the charts.
+		enabled: true,
+		sampleSec: 30,
+	},
+
 	updates: {
 		// Ask GitHub's public releases list whether there is a newer GodlyPanel.
 		check: true,
@@ -400,6 +406,21 @@ export const FIELD_SPECS = [
 		help: "For servers set to start with the panel.",
 	},
 
+	{
+		path: "metrics.enabled",
+		type: "bool",
+		restart: false,
+		label: "Keep a history of CPU, memory and players",
+		help: "One reading every few seconds, stored as one point a minute for a week and one an hour for three months. It is a few megabytes at most.",
+	},
+	{
+		path: "metrics.sampleSec",
+		type: "int",
+		min: 5,
+		max: 600,
+		restart: false,
+		label: "Seconds between readings",
+	},
 	{
 		path: "updates.check",
 		type: "bool",

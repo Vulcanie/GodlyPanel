@@ -40,6 +40,7 @@ import { initScheduler, tickScheduler } from "./services/scheduler.js";
 import { checkServersOnce, startAutoStartServers } from "./services/crashWatcher.js";
 import { sweepPartialBackups } from "./services/backupService.js";
 import { startNotifier, checkDisks } from "./services/notifier.js";
+import { sampleOnce } from "./services/metricsSampler.js";
 import { initStorage, rescan } from "./services/storageService.js";
 import { registerTimer, scheduleAll, rescheduleAll, stopAll } from "./timerManager.js";
 
@@ -229,6 +230,7 @@ registerTimer(
 	() => 6 * 3600_000,
 	(c) => c.updates.check,
 );
+registerTimer("metrics", () => sampleOnce().catch((err) => console.error("[metrics]", err)), (c) => c.metrics.sampleSec * 1000, (c) => c.metrics.enabled);
 registerTimer("disk-watch", () => checkDisks().catch((err) => console.error("[disk]", err)), () => 10 * 60_000);
 registerTimer(
 	"storage-scan",

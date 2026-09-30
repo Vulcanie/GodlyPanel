@@ -12,6 +12,8 @@ import { describePorts, checkPorts, applyPorts } from "../services/serverPorts.j
 import { planRemoval, removeServerCompletely } from "../services/serverRemoval.js";
 import { forgetServerInSchedules } from "../services/scheduler.js";
 import { forgetPlayers } from "../services/playerTracker.js";
+import { forgetMetrics } from "../services/metrics.js";
+import { listVersions, readVersion } from "../services/configHistory.js";
 import { CloneError, startClone, getCloneJob } from "../services/cloneService.js";
 import { PresetError, listPresets, savePreset, deletePreset, applyPreset } from "../services/presetService.js";
 import { extractModpackZip, cleanupUpload } from "../services/modpackService.js";
@@ -130,11 +132,62 @@ router.delete("/server/:serverName", async (req, res) => {
 		const removed = await removeServerCompletely(req.server, { deleteFiles: deleteFiles === true });
 		await forgetServerInSchedules(req.server.name);
 		forgetPlayers(req.server.name);
+		await forgetMetrics(`server:${req.server.name}`);
 		res.json({ success: true, ...removed });
 	} catch (err) {
 		const status = err.code === "files_protected" ? 400 : 500;
 		if (status === 500) console.error(`Removing ${req.server.name} failed:`, err);
 		res.status(status).json({ error: err.message, code: err.code });
+	}
+});
+
+// --- Settings history: every version of a settings or start-script file the panel wrote ---
+
+/** The files a server's history covers: its settings files and its start script. */
+function historyFiles(server) {
+	const files = server.configPaths
+		? Object.entries(server.configPaths).map(([key, file]) => ({ key, file }))
+		: server.configPath
+			? [{ key: "config", file: server.configPath }]
+			: [];
+	if (server.startScriptPath) files.push({ key: "start script", file: server.startScriptPath });
+	return files;
+}
+
+router.get("/server/:serverName/history", async (req, res) => {
+	const out = [];
+	for (const { key, file } of historyFiles(req.server)) out.push({ key, versions: (await listVersions(file)).length });
+	res.json(out);
+});
+
+router.get("/server/:serverName/history/:key", async (req, res) => {
+	const target = historyFiles(req.server).find((f) => f.key === req.params.key);
+	if (!target) return res.status(404).json({ error: "No such file." });
+	res.json(await listVersions(target.file));
+});
+
+router.get("/server/:serverName/history/:key/:id", async (req, res) => {
+	const target = historyFiles(req.server).find((f) => f.key === req.params.key);
+	if (!target) return res.status(404).json({ error: "No such file." });
+	const content = await readVersion(target.file, req.params.id);
+	if (content === null) return res.status(404).json({ error: "No such version." });
+	res.json({ content });
+});
+
+// Put an earlier version back. The restore is itself a new version, so it can be undone too.
+router.post("/server/:serverName/history/:key/:id/restore", async (req, res) => {
+	const target = historyFiles(req.server).find((f) => f.key === req.params.key);
+	if (!target) return res.status(404).json({ error: "No such file." });
+	const content = await readVersion(target.file, req.params.id);
+	if (content === null) return res.status(404).json({ error: "No such version." });
+	if (await isServerRunning(req.server)) {
+		return res.status(409).json({ error: "Stop the server first: a running game writes its settings back when it stops.", code: "server_running" });
+	}
+	try {
+		await writeManagedFile(target.file, content, "restored an earlier version");
+		res.json({ success: true });
+	} catch (err) {
+		sendFileError(res, err, `the ${req.params.key} file`);
 	}
 });
 

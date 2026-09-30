@@ -358,7 +358,11 @@ export const GAME_TEMPLATES = [
 		updateAppId: "896660",
 		storeAppId: "892970",
 		sharedInstall: false,
-		installLayoutRoot: "steamapps\\common\\Valheim dedicated server",
+		// SteamCMD is told to install straight into the server folder (+force_install_dir),
+		// so the game files are in its root. The steamapps\common\... nesting belongs to
+		// SteamCMD's default install location, which the panel doesn't use. (Found on a
+		// real install: the server was registered at a folder that held only its script.)
+		installLayoutRoot: "",
 		fields: ["sessionName", "serverPassword"],
 		ports: [{ key: "port", label: "Game Port", default: 7777 }],
 		// Valheim uses three consecutive UDP ports: the game port and the two above it.

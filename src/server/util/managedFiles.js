@@ -1,5 +1,6 @@
 import { promises as fs } from "node:fs";
 import { assertWithinAllowedRoots } from "./safePath.js";
+import { recordVersion } from "../services/configHistory.js";
 
 // Config files and launch scripts are read and written from two routes that
 // each used to carry their own copy of the same sequence: check the path is
@@ -13,15 +14,21 @@ export function readManagedFile(filePath) {
 	return fs.readFile(filePath, "utf8");
 }
 
-export async function writeManagedFile(filePath, content) {
+/**
+ * @param {string} source  what is making the change, shown in the file's history
+ */
+export async function writeManagedFile(filePath, content, source = "settings editor") {
 	assertWithinAllowedRoots(filePath);
+	let before = null;
 	try {
 		await fs.copyFile(filePath, `${filePath}.bak`);
+		before = await fs.readFile(filePath, "utf8");
 	} catch (err) {
 		// Saving a file that doesn't exist yet is fine; there's nothing to keep.
 		if (err.code !== "ENOENT") throw err;
 	}
 	await fs.writeFile(filePath, content, "utf8");
+	await recordVersion(filePath, before, content, source);
 }
 
 /** Answer a failed read/write in the same way everywhere. */
