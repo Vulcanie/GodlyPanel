@@ -93,8 +93,8 @@ export const GAMES = {
 		// Programs this game runs. If any is already running on this PC (a real server), the game is skipped.
 		programs: ["7DaysToDieServer","7DaysToDie"],
 		name: "Real 7 Days",
-		params: { sessionName: "GodlyTest", serverPassword: "TestJoin1", port: 8892 },
-		ports: { udp: [8892, 8893, 8894, 8895], tcp: [8892] },
+		params: { sessionName: "GodlyTest", serverPassword: "TestJoin1", port: 8892, telnetPort: 7101 },
+		ports: { udp: [8892, 8893, 8894, 8895], tcp: [8892, 7101] },
 		extraFree: [8080, 8081, 26900],
 		onlineMin: 15,
 		logName: /./,

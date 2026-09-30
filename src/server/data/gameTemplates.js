@@ -668,7 +668,12 @@ export const GAME_TEMPLATES = [
 		sharedInstall: false,
 		installLayoutRoot: "",
 		fields: ["sessionName", "serverPassword"],
-		ports: [{ key: "port", label: "Port", default: 8910 }],
+		ports: [
+			{ key: "port", label: "Port", default: 8910 },
+			// The panel saves the world over this before a stop or a backup. It is for the
+			// panel only (no password, answers on this PC alone), so it never needs opening.
+			{ key: "telnetPort", label: "Telnet Port (panel commands)", default: 8915 },
+		],
 		// 7 Days to Die listens on the ports after the server port too: Steam
 		// traffic, LiteNetLib, and the extra crossplay one.
 		implicitPorts: [
@@ -711,6 +716,9 @@ export const GAME_TEMPLATES = [
 				`\t<property name="WorldGenSeed" value="${p.worldName || "World"}"/>`,
 				'\t<property name="WorldGenSize" value="6144"/>',
 				`\t<property name="GameName" value="${p.worldName || "World"}"/>`,
+				'\t<property name="TelnetEnabled" value="true"/>',
+				`\t<property name="TelnetPort" value="${p.telnetPort}"/>`,
+				'\t<property name="TelnetPassword" value=""/>',
 				"</ServerSettings>",
 				"",
 			].join("\r\n"),
@@ -728,6 +736,7 @@ export const GAME_TEMPLATES = [
 			startScriptPath: `${p.installDir}\\${p.startScriptFilename}`,
 			workingDir: `${p.installDir}`,
 			processName: "7DaysToDieServer.exe",
+			telnetPort: p.telnetPort,
 			steamCmdPath: p.steamCmdExe,
 			installDir: `${p.installDir}`,
 			updateAppId: "294420",

@@ -55,11 +55,15 @@ const CONFIG_BINDINGS = {
 	// records as its settings file (found on a real install: ServerSettings.ini has no
 	// RconPort, so changing it there did nothing and the game kept the old one).
 	conan: [{ key: "rconPort", file: "Game.ini", pattern: /^(RconPort\s*=\s*)(\d+)/im }],
-	"7days": [{ key: "port", pattern: /(<property\s+name="ServerPort"\s+value=")(\d+)/i }],
+	"7days": [
+		{ key: "port", pattern: /(<property\s+name="ServerPort"\s+value=")(\d+)/i },
+		{ key: "telnetPort", pattern: /(<property\s+name="TelnetPort"\s+value=")(\d+)/i },
+	],
 	enshrouded: [{ key: "port", pattern: /("queryPort"\s*:\s*)(\d+)/ }],
 	Palword: [
 		{ key: "rconPort", pattern: /(RCONPort\s*=\s*)(\d+)/ },
 		{ key: "port", pattern: /(PublicPort\s*=\s*)(\d+)/ },
+		{ key: "queryPort", pattern: /(RESTAPIPort\s*=\s*)(\d+)/ },
 	],
 };
 
