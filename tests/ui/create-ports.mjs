@@ -61,6 +61,27 @@ try {
 	check("the RCON port is guarded the same way", (await createBtn.isDisabled()) && (await page.getByText(/is used by Conan Exiles itself/).isVisible()));
 	await back();
 
+	// ---- every game gets the rule, not only the ones known to use the port
+	await choose("Palworld");
+	const palGame = Number(await page.getByLabel("Game Port").inputValue());
+	check("Palworld's suggested ports don't trip the rule", await createBtn.isEnabled());
+	await page.getByLabel("Query Port").fill(String(palGame + 1));
+	await settle();
+	check("Palworld: query port = game port + 1 warns as a precaution", await page.getByText(/may use it for itself, so it's\s+kept free/).isVisible());
+	check("and disables Create Server", await createBtn.isDisabled());
+	await page.getByLabel("Query Port").fill(String(palGame + 2));
+	await settle();
+	check("moving it off re-enables it", await createBtn.isEnabled());
+	await back();
+
+	await choose("ARK: Survival Ascended");
+	const asaGame = Number(await page.getByLabel("Game Port").inputValue());
+	check("Ascended's suggested ports don't trip the rule (they used to)", await createBtn.isEnabled());
+	await page.getByLabel("RCON Port").fill(String(asaGame + 1));
+	await settle();
+	check("Ascended: RCON port = game port + 1 disables Create", await createBtn.isDisabled());
+	await back();
+
 	// ---- a game with only a game port never warns
 	await choose("Valheim");
 	check("Valheim's form has no clash to make (one port, chosen for you)", await createBtn.isEnabled());

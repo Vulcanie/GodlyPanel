@@ -200,12 +200,12 @@ describe("changing a server's ports", () => {
 		});
 
 		it("updates Minecraft's server.properties, including the query port that mirrors the game port", async () => {
-			const r = await save("Mc", { port: 9410, rconPort: 9411 });
+			const r = await save("Mc", { port: 9410, rconPort: 9412 });
 			assert.equal(r.status, 200, JSON.stringify(r.json));
 			const props = read("server.properties");
 			assert.match(props, /server-port=9410/);
 			assert.match(props, /query\.port=9410/);
-			assert.match(props, /rcon\.port=9411/);
+			assert.match(props, /rcon\.port=9412/);
 			assert.match(props, /motd=Hi/, "nothing else was touched");
 		});
 

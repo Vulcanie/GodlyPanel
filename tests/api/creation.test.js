@@ -37,9 +37,12 @@ describe("creating a server", () => {
 		const templates = (await api.get("/api/templates")).json;
 		assert.deepEqual(templates.find((t) => t.id === "conan").implicitPorts, [{ offset: 1, label: "its raw UDP socket" }]);
 		assert.equal(templates.find((t) => t.id === "valheim").implicitPorts.length, 2);
-		assert.deepEqual(templates.find((t) => t.id === "palworld").implicitPorts, []);
+		const palworld = templates.find((t) => t.id === "palworld").implicitPorts;
+		assert.equal(palworld.length, 1, "a game with nothing declared still keeps the next port free");
+		assert.equal(palworld[0].precaution, true);
+		assert.equal(templates.find((t) => t.id === "enshrouded").implicitPorts[0].offset, 1);
 		assert.deepEqual(templates.find((t) => t.id === "ark-ase").implicitPorts, [{ offset: 1, label: "its raw UDP socket" }]);
-		assert.deepEqual(templates.find((t) => t.id === "ark-asa").implicitPorts, [], "Ascended dropped the raw socket");
+		assert.equal(templates.find((t) => t.id === "ark-asa").implicitPorts[0].precaution, true, "Ascended dropped the raw socket, so it is only a precaution");
 		assert.deepEqual(templates.find((t) => t.id === "7days").implicitPorts.map((i) => i.offset), [1, 2, 3]);
 	});
 
@@ -82,6 +85,34 @@ describe("creating a server", () => {
 			const registered = JSON.parse(fs.readFileSync(path.join(panel.dir, "servers.json"), "utf8")).servers.map((s) => s.name);
 			assert.equal(registered.includes("Fine"), false, "nothing was created");
 			assert.equal(fs.existsSync(path.join(panel.dir, "tools", "steamcmd")), false, "and nothing was downloaded");
+		});
+	});
+
+	describe("every other game gets the same rule", () => {
+		it("refuses a query or RCON port right after the game port", async () => {
+			const palworld = await create("palworld", { name: "P1", port: 9700, queryPort: 9701, rconPort: 9703 });
+			assert.equal(palworld.status, 400);
+			assert.match(palworld.json.error, /Query Port 9701 is the game port \+ 1, which Palworld may use for a companion port/);
+			const minecraft = await create("minecraft-modpack", { name: "M1", port: 9800, rconPort: 9801 });
+			assert.equal(minecraft.status, 400);
+			assert.match(minecraft.json.error, /RCON Port 9801 is the game port \+ 1/);
+			const ascended = await create("ark-asa", { name: "S1", port: 9900, queryPort: 9901, rconPort: 9903, rconPassword: "abcdef" });
+			assert.equal(ascended.status, 400);
+			assert.match(ascended.json.error, /Query Port 9901 is the game port \+ 1/);
+		});
+
+		it("accepts the spacing the templates suggest", async () => {
+			const r = await create("palworld", { name: "P2", port: 9710, queryPort: 9712, rconPort: 9713 });
+			assert.equal(r.status, 409, JSON.stringify(r.json));
+		});
+
+		it("keeps another server's next port taken too, wherever its game port is", async () => {
+			const first = await api.get("/api/status");
+			assert.ok(first.status === 200);
+			// Existing Valheim is on 9200; a single-port game at 9199 would have its companion at 9200.
+			const r = await create("dragonwilds", { name: "D1", port: 9199 });
+			assert.equal(r.status, 400);
+			assert.match(r.json.error, /keeps port 9200 free/);
 		});
 	});
 

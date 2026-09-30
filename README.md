@@ -61,10 +61,11 @@ commit messages describe the problem each change solved.
 - **Edits config files** through a form when it knows the format, or as raw text,
   keeping a `.bak` of whatever it replaces.
 - **Changes a server's ports safely.** Every change is checked as you type against the
-  server's own other ports, the ports its game quietly takes for itself (Conan Exiles
-  uses the game port + 1, as does ARK: Survival Evolved; Valheim uses three in a row and
-  7 Days to Die four), every other server, and the
-  panel's own port. It then updates the start script, the game's config and the panel's
+  server's own other ports, the ports its game quietly takes for itself, every other
+  server, and the panel's own port. For every game, the port right after the game port is
+  kept free: Conan Exiles and ARK: Survival Evolved use it for a raw socket, Valheim uses
+  the next two and 7 Days to Die the next three, and for the rest it's reserved in case.
+  The Create Server button stays disabled while a query or RCON port sits on one. It then updates the start script, the game's config and the panel's
   record together, with a `.bak` of each file.
 - **Deletes servers completely,** or just removes them from the panel. Deleting files is
   only offered for servers the panel created, never for a shared install other servers

@@ -151,7 +151,7 @@ export const GAME_TEMPLATES = [
 		fields: ["sessionName", "serverPassword", "rconPassword", "mapCode", "clusterId", "mods"],
 		ports: [
 			{ key: "port", label: "Game Port", default: 7015 },
-			{ key: "queryPort", label: "Query Port", default: 7016 },
+			{ key: "queryPort", label: "Query Port", default: 7017 },
 			{ key: "rconPort", label: "RCON Port", default: 27025 },
 		],
 		// installDir/steamCmdPath/workingDir all point at the shared root — the
@@ -219,8 +219,8 @@ export const GAME_TEMPLATES = [
 		fields: ["sessionName", "serverPassword", "rconPassword", "mapCode", "mods"],
 		ports: [
 			{ key: "port", label: "Game Port", default: 26000 },
-			{ key: "queryPort", label: "Query Port", default: 26001 },
-			{ key: "rconPort", label: "RCON Port", default: 26002 },
+			{ key: "queryPort", label: "Query Port", default: 26002 },
+			{ key: "rconPort", label: "RCON Port", default: 26003 },
 		],
 		mapChoices: [
 			{ code: "TheIsland", label: "The Island" },
@@ -737,7 +737,7 @@ export const GAME_TEMPLATES = [
 		ports: [
 			{ key: "port", label: "Game Port", default: 8920 },
 			{ key: "queryPort", label: "Query Port", default: 8922 },
-			{ key: "rconPort", label: "RCON Port", default: 8921 },
+			{ key: "rconPort", label: "RCON Port", default: 8923 },
 		],
 		buildStartScriptFilename: () => "Start_Palworld.bat",
 		buildStartScript: (p) =>
@@ -824,7 +824,7 @@ export const GAME_TEMPLATES = [
 		},
 		ports: [
 			{ key: "port", label: "Server Port", default: 25565 },
-			{ key: "rconPort", label: "RCON Port", default: 25566 },
+			{ key: "rconPort", label: "RCON Port", default: 25575 },
 		],
 		// Re-derives the modloader/MC version straight from the saved
 		// upload's manifest.json — never trusts whatever the client echoed

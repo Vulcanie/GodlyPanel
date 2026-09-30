@@ -5,6 +5,7 @@ import { update as updateServer } from "../data/serverStore.js";
 import { getConfig } from "../config/configStore.js";
 import { readManagedFile, writeManagedFile } from "../util/managedFiles.js";
 import { usedPorts, impliedPortsFor, templateOfServer } from "./serverCreationService.js";
+import { implicitPortsOf, usageOf } from "../data/portRules.js";
 
 // Changing a server's ports means changing them everywhere the server has them,
 // together, or it ends up half-moved: the panel's record (which it polls), the
@@ -82,7 +83,7 @@ export async function describePorts(server) {
 	return {
 		current,
 		gameName: template?.displayName ?? null,
-		implicit: (template?.implicitPorts ?? []).map(({ offset, label }) => ({ offset, label })),
+		implicit: implicitPortsOf(template).map(({ offset, label, precaution }) => ({ offset, label, precaution })),
 		panelPort: Number(process.env.GHP_PORT) || getConfig().http.port,
 		// Only a server the panel created has files it is allowed to rewrite.
 		canEditFiles: server.source === "created",
@@ -156,10 +157,11 @@ export async function checkPorts(server, proposed) {
 
 	// Ports the game takes for itself, next to the game port.
 	const implied = impliedPortsFor(template, final);
-	for (const { port, offset, label } of implied) {
-		const clash = Object.entries(final).find(([, v]) => v === port);
+	const gameName = template?.displayName ?? "This game";
+	for (const item of implied) {
+		const clash = Object.entries(final).find(([key, v]) => key !== "port" && v === item.port);
 		if (clash) {
-			errors.push(`${PORT_LABELS[clash[0]]} ${port} is the game port + ${offset}, which ${template.displayName} uses for ${label}. Choose another.`);
+			errors.push(`${PORT_LABELS[clash[0]]} ${item.port} is the game port + ${item.offset}, which ${usageOf(gameName, item)}. Choose another.`);
 		}
 	}
 
@@ -168,7 +170,7 @@ export async function checkPorts(server, proposed) {
 		excludeName: server.name,
 		excludeScript: server.startScriptPath,
 	});
-	const claimed = [...Object.entries(changes).map(([k, c]) => [PORT_LABELS[k], c.to]), ...(changes.port ? implied.map((i) => [`${template.displayName}'s ${i.label}`, i.port]) : [])];
+	const claimed = [...Object.entries(changes).map(([k, c]) => [PORT_LABELS[k], c.to]), ...(changes.port ? implied.map((i) => [`${gameName}'s ${i.precaution ? "companion port" : i.label}`, i.port]) : [])];
 	for (const [what, value] of claimed) {
 		if (used.has(value)) errors.push(`${what} ${value} is already used by another server.`);
 	}

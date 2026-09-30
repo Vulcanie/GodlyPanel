@@ -15,6 +15,7 @@ import { inspectFolder } from "./folderCheck.js";
 import { resolveResource } from "../../shared/resources.js";
 import { deriveLaunch } from "./batchLaunch.js";
 import { writeMarker } from "./serverRemoval.js";
+import { implicitPortsOf, usageOf, firstSafePort } from "../data/portRules.js";
 import {
 	trackSteamCmd,
 	untrackSteamCmd,
@@ -62,7 +63,7 @@ export function listTemplates() {
 		sharedInstall: Boolean(t.sharedInstall),
 		fields: t.fields,
 		ports: t.ports,
-		implicitPorts: t.implicitPorts ?? [],
+		implicitPorts: t.ports.some((p) => p.key === "port") ? implicitPortsOf(t) : [],
 		mapChoices: t.mapChoices ?? null,
 		fieldMeta: t.fieldMeta ?? null,
 		requiresEula: Boolean(t.requiresEula),
@@ -100,15 +101,15 @@ export function templateOfServer(server) {
 /** The ports a game takes for itself, given the game port chosen for it. */
 export function impliedPortsFor(template, ports) {
 	if (!ports?.port) return [];
-	return (template?.implicitPorts ?? []).map(({ offset, label }) => ({ port: ports.port + offset, offset, label }));
+	return implicitPortsOf(template).map(({ offset, label, precaution }) => ({ port: ports.port + offset, offset, label, precaution }));
 }
 
 // Every -Port=/-QueryPort=/-RCONPort= in a start script. ARK: Survival Evolved
-// (ShooterGameServer.exe) also holds the game port + 1 for its raw socket.
+// Every game port also keeps the port after it free (see portRules.js).
 function addScriptPorts(used, content) {
 	for (const m of content.matchAll(/-(Port|QueryPort|RCONPort)=(\d+)/gi)) {
 		used.add(Number(m[2]));
-		if (m[1].toLowerCase() === "port" && /ShooterGameServer\.exe/i.test(content)) used.add(Number(m[2]) + 1);
+		if (m[1].toLowerCase() === "port") used.add(Number(m[2]) + 1);
 	}
 }
 
@@ -230,17 +231,21 @@ async function validateNewServer(template, name, ports, sharedInstallDir) {
 
 	// Ports the game takes for itself next to the game port. Choosing one of them
 	// for something else is what makes a server that starts but can't be reached.
-	for (const { port, offset, label } of impliedPortsFor(template, ports)) {
-		const clash = entries.find(([, value]) => value === port);
+	const implied = impliedPortsFor(template, ports);
+	for (const item of implied) {
+		const { port, offset, label } = item;
+		const clash = entries.find(([key, value]) => key !== "port" && value === port);
 		if (clash) {
 			throw new Error(
-				`${labelOf(clash[0])} ${port} is the game port + ${offset}, which ${template.displayName} uses for ${label}. ` +
-					`Pick a different ${labelOf(clash[0]).toLowerCase()} — ${ports.port + Math.max(...template.implicitPorts.map((i) => i.offset)) + 1} or higher is safe.`,
+				`${labelOf(clash[0])} ${port} is the game port + ${offset}, which ${usageOf(template.displayName, item)}. ` +
+					`Pick a different ${labelOf(clash[0]).toLowerCase()} — ${firstSafePort(ports.port, implied)} or higher is safe.`,
 			);
 		}
 		if (used.has(port)) {
 			throw new Error(
-				`${template.displayName} also needs port ${port} (game port + ${offset}, for ${label}), and another server is already using it. Choose a different game port.`,
+				item.precaution
+					? `${template.displayName} keeps port ${port} free next to the game port (game port + ${offset}), and another server is already using it. Choose a different game port.`
+					: `${template.displayName} also needs port ${port} (game port + ${offset}, for ${label}), and another server is already using it. Choose a different game port.`,
 			);
 		}
 	}
