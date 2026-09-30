@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, useTheme } from "@mui/material";
 
 // Small charts drawn as SVG: no chart library, so nothing to download and nothing to
 // keep up to date. They take plain arrays and size themselves to their box.
@@ -24,6 +24,7 @@ function timeLabel(t, spanMs) {
  * @param {{ height?: number, unit?: string, max?: number, title?: string, format?: (v:number)=>string }} options
  */
 export function LineChart({ series, height = 150, unit = "", max = null, title, format = (v) => String(Math.round(v * 10) / 10) }) {
+	const theme = useTheme();
 	const ref = React.useRef(null);
 	const [width, setWidth] = React.useState(600);
 	const [hover, setHover] = React.useState(null);
@@ -91,15 +92,15 @@ export function LineChart({ series, height = 150, unit = "", max = null, title, 
 				<svg width={width} height={height} onMouseMove={(e) => setHover(nearest(e.clientX))} onMouseLeave={() => setHover(null)} role="img" aria-label={title}>
 					{ticks.map((v) => (
 						<g key={v}>
-							<line x1={pad.left} x2={width - pad.right} y1={y(v)} y2={y(v)} stroke="rgba(255,255,255,0.08)" />
-							<text x={pad.left - 6} y={y(v) + 3} textAnchor="end" fontSize="10" fill="#9e9e9e">
+							<line x1={pad.left} x2={width - pad.right} y1={y(v)} y2={y(v)} stroke={theme.palette.divider} />
+							<text x={pad.left - 6} y={y(v) + 3} textAnchor="end" fontSize="10" fill={theme.palette.text.secondary}>
 								{format(v)}
 								{unit}
 							</text>
 						</g>
 					))}
 					{[0, 0.5, 1].map((f) => (
-						<text key={f} x={pad.left + f * w} y={height - 6} textAnchor={f === 0 ? "start" : f === 1 ? "end" : "middle"} fontSize="10" fill="#9e9e9e">
+						<text key={f} x={pad.left + f * w} y={height - 6} textAnchor={f === 0 ? "start" : f === 1 ? "end" : "middle"} fontSize="10" fill={theme.palette.text.secondary}>
 							{timeLabel(tMin + f * span, span)}
 						</text>
 					))}
@@ -108,7 +109,7 @@ export function LineChart({ series, height = 150, unit = "", max = null, title, 
 					))}
 					{hover && (
 						<g>
-							<line x1={x(hover.t)} x2={x(hover.t)} y1={pad.top} y2={pad.top + h} stroke="rgba(255,255,255,0.3)" />
+							<line x1={x(hover.t)} x2={x(hover.t)} y1={pad.top} y2={pad.top + h} stroke={theme.palette.text.disabled} />
 							{series.map((s) => {
 								const p = s.points.find((q) => q.t === hover.t && q.v !== null);
 								return p ? <circle key={s.label} cx={x(p.t)} cy={y(p.v)} r="3" fill={s.color} /> : null;
@@ -169,7 +170,7 @@ export function HourGrid({ grid }) {
 							<Box
 								key={h}
 								title={v === null ? `${DAYS[d]} ${h}:00 — no data` : `${DAYS[d]} ${h}:00 — ${v} players on average`}
-								sx={{ height: 18, borderRadius: "2px", bgcolor: v === null ? "rgba(255,255,255,0.03)" : `rgba(38, 198, 218, ${0.12 + 0.88 * (v / max)})` }}
+								sx={{ height: 18, borderRadius: "2px", bgcolor: v === null ? "action.hover" : `rgba(38, 198, 218, ${0.12 + 0.88 * (v / max)})` }}
 							/>
 						))}
 					</React.Fragment>

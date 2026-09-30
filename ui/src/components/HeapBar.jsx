@@ -16,8 +16,8 @@ function HeapBar({ usedMB, maxMB, percent }) {
 				px: 1,
 				py: 0.5,
 				borderRadius: 999,
-				bgcolor: "rgba(255,255,255,0.06)",
-				border: "1px solid rgba(255,255,255,0.08)",
+				bgcolor: "action.hover",
+				border: (t) => `1px solid ${t.palette.divider}`,
 			}}
 		>
 			<Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0 }}>

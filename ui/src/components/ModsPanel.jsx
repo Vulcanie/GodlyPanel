@@ -151,7 +151,7 @@ function ModsPanel({ serverName, serverStatus }) {
 					</Typography>
 				) : (
 					data.mods.map((m) => (
-						<Box key={m.id} sx={{ display: "flex", alignItems: "center", gap: 1.5, px: 2, py: 1, borderTop: "1px solid rgba(255,255,255,0.06)", opacity: m.enabled ? 1 : 0.55 }}>
+						<Box key={m.id} sx={{ display: "flex", alignItems: "center", gap: 1.5, px: 2, py: 1, borderTop: (t) => `1px solid ${t.palette.divider}`, opacity: m.enabled ? 1 : 0.55 }}>
 							<Box sx={{ flex: 1 }}>
 								<Typography variant="body2">{m.name}</Typography>
 								<Typography variant="caption" sx={{ color: "text.secondary" }}>

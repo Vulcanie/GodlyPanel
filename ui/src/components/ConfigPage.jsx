@@ -16,7 +16,6 @@ import {
 	DialogActions,
 } from "@mui/material";
 import { ArrowBack as ArrowBackIcon } from "@mui/icons-material";
-import { grey } from "@mui/material/colors";
 import StatusDisplay from "./StatusDisplay";
 import ConfigForm from "./ConfigForm";
 import RconConsole from "./RconConsole";
@@ -375,7 +374,7 @@ function ConfigPage({
 						<Typography
 							variant="body2"
 							sx={{
-								color: grey[400],
+								color: "text.secondary",
 								fontStyle: "italic",
 							}}
 						>
@@ -492,7 +491,7 @@ function ConfigPage({
 							<Typography
 								variant="body2"
 								sx={{
-									color: grey[400],
+									color: "text.secondary",
 									ml: 2,
 									fontStyle: "italic",
 								}}
@@ -589,7 +588,7 @@ function ConfigPage({
 							}}
 						/>
 					) : groups.length === 0 ? (
-						<Typography variant="body2" sx={{ color: grey[500], mt: 2 }}>
+						<Typography variant="body2" sx={{ color: "text.secondary", mt: 2 }}>
 							No editable settings found in this file.
 						</Typography>
 					) : (

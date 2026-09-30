@@ -55,12 +55,12 @@ function ServerTile({ srv, stats, clickable, onClick }) {
 				gap: 1.25,
 				px: 2,
 				py: 1.25,
-				borderBottom: "1px solid rgba(255,255,255,0.06)",
+				borderBottom: (t) => `1px solid ${t.palette.divider}`,
 				opacity: srv.online ? 1 : 0.6,
 				cursor: clickable ? "pointer" : "default",
 				transition: "background-color 0.15s ease, transform 0.15s ease",
 				"&:hover": clickable
-					? { bgcolor: "rgba(255,255,255,0.04)", transform: "translateX(2px)" }
+					? { bgcolor: "action.hover", transform: "translateX(2px)" }
 					: undefined,
 				"&:last-of-type": { borderBottom: 0 },
 			}}

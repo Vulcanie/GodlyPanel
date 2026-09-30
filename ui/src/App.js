@@ -2,7 +2,6 @@ import React from "react";
 import {
 	Container,
 	Typography,
-	ThemeProvider,
 	CssBaseline,
 	Box,
 	Button,
@@ -13,7 +12,8 @@ import {
 	DialogTitle,
 	alpha,
 } from "@mui/material";
-import { darkTheme } from "./theme";
+import { ThemeModeProvider } from "./ThemeMode";
+import ThemeToggle from "./components/ThemeToggle";
 import DashboardPage from "./components/DashboardPage";
 import ServerWorkspace from "./components/ServerWorkspace";
 import ActivityPanel from "./components/ActivityPanel";
@@ -257,7 +257,7 @@ function Panel() {
 					py: 1.5,
 					backdropFilter: "blur(8px)",
 					backgroundColor: (t) => alpha(t.palette.background.default, 0.85),
-					borderBottom: "1px solid rgba(255,255,255,0.08)",
+					borderBottom: (t) => `1px solid ${t.palette.divider}`,
 				}}
 			>
 				<Typography variant="h4" sx={{ mb: 0 }}>
@@ -284,6 +284,7 @@ function Panel() {
 							Settings
 						</Button>
 					)}
+					<ThemeToggle />
 					<Button variant="outlined" size="small" onClick={logout}>
 						Sign out
 					</Button>
@@ -337,14 +338,14 @@ function Panel() {
 
 function App() {
 	return (
-		<ThemeProvider theme={darkTheme}>
+		<ThemeModeProvider>
 			<CssBaseline />
 			<SessionProvider>
 				<OperationsProvider>
 					<Panel />
 				</OperationsProvider>
 			</SessionProvider>
-		</ThemeProvider>
+		</ThemeModeProvider>
 	);
 }
 

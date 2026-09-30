@@ -31,8 +31,8 @@ function SystemStatsBar({ stats }) {
 				p: 2,
 				mb: 3,
 				borderRadius: 2,
-				backgroundColor: "rgba(255,255,255,0.03)",
-				border: "1px solid rgba(255,255,255,0.08)",
+				backgroundColor: "action.hover",
+				border: (t) => `1px solid ${t.palette.divider}`,
 			}}
 		>
 			<Meter

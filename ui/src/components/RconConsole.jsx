@@ -40,7 +40,7 @@ function RconConsole({ serverName }) {
 			sx={{
 				mt: 3,
 				border: "1px solid",
-				borderColor: "grey.800",
+				borderColor: "divider",
 				borderRadius: 1,
 				p: 2,
 			}}

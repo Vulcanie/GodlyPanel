@@ -224,7 +224,7 @@ function BackupsPanel({ serverName, serverStatus, canManage }) {
 					</Typography>
 				) : (
 					data.backups.map((b) => (
-						<Box key={b.id} sx={{ display: "flex", alignItems: "center", gap: 1.5, px: 2, py: 1.25, borderTop: "1px solid rgba(255,255,255,0.06)", flexWrap: "wrap" }}>
+						<Box key={b.id} sx={{ display: "flex", alignItems: "center", gap: 1.5, px: 2, py: 1.25, borderTop: (t) => `1px solid ${t.palette.divider}`, flexWrap: "wrap" }}>
 							<Box sx={{ flex: 1, minWidth: 200 }}>
 								<Typography variant="body2">{when(b.createdAt)}</Typography>
 								<Typography variant="caption" sx={{ color: "text.secondary" }}>

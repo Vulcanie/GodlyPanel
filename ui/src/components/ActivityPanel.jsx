@@ -65,7 +65,7 @@ function ActivityPanel({ serverName = null, limit = 100 }) {
 	return (
 		<Paper>
 			{events.map((e, i) => (
-				<Box key={`${e.t}-${i}`} sx={{ display: "flex", gap: 1.5, alignItems: "flex-start", px: 2, py: 1.1, borderTop: i === 0 ? 0 : "1px solid rgba(255,255,255,0.06)" }}>
+				<Box key={`${e.t}-${i}`} sx={{ display: "flex", gap: 1.5, alignItems: "flex-start", px: 2, py: 1.1, borderTop: i === 0 ? 0 : (t) => `1px solid ${t.palette.divider}` }}>
 					<Typography variant="caption" sx={{ color: "text.secondary", minWidth: 130, pt: 0.3 }}>
 						{new Date(e.t).toLocaleString()}
 					</Typography>

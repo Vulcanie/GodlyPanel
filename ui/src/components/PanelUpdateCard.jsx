@@ -93,7 +93,7 @@ function PanelUpdateCard() {
 						{showNotes ? "Hide what's new" : "What's new"}
 					</Button>
 					{showNotes && (
-						<Box component="pre" sx={{ whiteSpace: "pre-wrap", fontFamily: "inherit", fontSize: 13, maxHeight: 320, overflow: "auto", bgcolor: "rgba(255,255,255,0.04)", p: 1.5, borderRadius: 1, mt: 1 }}>
+						<Box component="pre" sx={{ whiteSpace: "pre-wrap", fontFamily: "inherit", fontSize: 13, maxHeight: 320, overflow: "auto", bgcolor: "action.hover", p: 1.5, borderRadius: 1, mt: 1 }}>
 							{latest.notes}
 						</Box>
 					)}

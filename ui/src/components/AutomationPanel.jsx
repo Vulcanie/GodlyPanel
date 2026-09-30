@@ -243,7 +243,7 @@ function PresetsCard({ serverName, base, running, onNotice, onError }) {
 						label="Keep this server's own name, passwords and ports when applying"
 					/>
 					{presets.map((p) => (
-						<Box key={p.id} sx={{ display: "flex", alignItems: "center", gap: 1.5, py: 0.75, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+						<Box key={p.id} sx={{ display: "flex", alignItems: "center", gap: 1.5, py: 0.75, borderTop: (t) => `1px solid ${t.palette.divider}` }}>
 							<Box sx={{ flex: 1 }}>
 								<Typography variant="body2">{p.name}</Typography>
 								<Typography variant="caption" sx={{ color: "text.secondary" }}>

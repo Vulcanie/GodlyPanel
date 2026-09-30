@@ -11,7 +11,6 @@ import {
 	Tooltip,
 } from "@mui/material";
 import { ExpandMore as ExpandMoreIcon, ContentCopy as ContentCopyIcon } from "@mui/icons-material";
-import { grey } from "@mui/material/colors";
 import { copyToClipboard } from "../utils/clipboard";
 import { prettifyKey } from "../utils/prettifyKey";
 import { detectSettingType, toBoolString } from "../utils/settingType";
@@ -84,7 +83,7 @@ function StructuredListEditor({ entry, onChange }) {
 					key={index}
 					sx={{
 						border: "1px solid",
-						borderColor: "grey.800",
+						borderColor: "divider",
 						borderRadius: 1,
 						p: 2,
 					}}
@@ -103,7 +102,7 @@ function StructuredListEditor({ entry, onChange }) {
 							<Box key={key}>
 								<Typography
 									variant="caption"
-									sx={{ color: grey[500], display: "block", mb: 0.5 }}
+									sx={{ color: "text.secondary", display: "block", mb: 0.5 }}
 								>
 									{prettifyKey(key)}
 								</Typography>
@@ -164,7 +163,7 @@ function ConfigForm({ groups, onChange }) {
 											{entry.description && (
 												<Typography
 													variant="caption"
-													sx={{ color: grey[500] }}
+													sx={{ color: "text.secondary" }}
 												>
 													{entry.description}
 												</Typography>

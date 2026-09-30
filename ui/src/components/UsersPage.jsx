@@ -153,7 +153,7 @@ function UsersPage({ onBack, currentUser }) {
 									gap: 1.5,
 									px: 2,
 									py: 1.5,
-									borderBottom: "1px solid rgba(255,255,255,0.06)",
+									borderBottom: (t) => `1px solid ${t.palette.divider}`,
 									opacity: u.disabled ? 0.5 : 1,
 									"&:last-of-type": { borderBottom: 0 },
 								}}

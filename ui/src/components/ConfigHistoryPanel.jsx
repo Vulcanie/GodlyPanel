@@ -127,7 +127,7 @@ function ConfigHistoryPanel({ serverName, serverStatus }) {
 							<Box
 								key={v.id}
 								onClick={() => setPicked(v)}
-								sx={{ px: 2, py: 1, cursor: "pointer", borderTop: i === 0 ? 0 : "1px solid rgba(255,255,255,0.06)", bgcolor: picked?.id === v.id ? "rgba(255,255,255,0.08)" : undefined, "&:hover": { bgcolor: "rgba(255,255,255,0.05)" } }}
+								sx={{ px: 2, py: 1, cursor: "pointer", borderTop: i === 0 ? 0 : (t) => `1px solid ${t.palette.divider}`, bgcolor: picked?.id === v.id ? "rgba(255,255,255,0.08)" : undefined, "&:hover": { bgcolor: "rgba(255,255,255,0.05)" } }}
 							>
 								<Typography variant="body2">{when(v.at)}{i === 0 ? " (current)" : ""}</Typography>
 								<Typography variant="caption" sx={{ color: "text.secondary" }}>

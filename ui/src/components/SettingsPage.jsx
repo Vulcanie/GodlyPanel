@@ -309,7 +309,7 @@ function SettingsPage({ onBack }) {
 					gap: 2,
 					py: 2,
 					backgroundColor: (t) => t.palette.background.default,
-					borderTop: "1px solid rgba(255,255,255,0.08)",
+					borderTop: (t) => `1px solid ${t.palette.divider}`,
 				}}
 			>
 				<Button variant="contained" disabled={!dirty || busy} onClick={save}>

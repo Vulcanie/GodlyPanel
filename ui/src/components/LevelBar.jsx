@@ -20,7 +20,7 @@ function LevelBar({ percent, height = 8, width }) {
 				width,
 				height,
 				borderRadius: height / 2,
-				backgroundColor: "rgba(255,255,255,0.1)",
+				backgroundColor: "action.selected",
 				"& .MuiLinearProgress-bar": { backgroundColor: levelColor(percent) },
 			}}
 		/>

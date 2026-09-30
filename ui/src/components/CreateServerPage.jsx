@@ -21,7 +21,6 @@ import {
 	DialogActions,
 } from "@mui/material";
 import { ArrowBack as ArrowBackIcon } from "@mui/icons-material";
-import { grey } from "@mui/material/colors";
 import ModpackUploadField from "./ModpackUploadField";
 import FolderField from "./FolderField";
 import PortsToOpen, { findPortClash } from "./PortsToOpen";
@@ -202,7 +201,7 @@ function CreateServerPage({ onBack, userRole }) {
 			) : job ? (
 				<Box sx={{ mt: 2 }}>
 					<Typography variant="h6">{selected.displayName}</Typography>
-					<Typography sx={{ color: grey[400], mb: 2 }}>
+					<Typography sx={{ color: "text.secondary", mb: 2 }}>
 						Status: {job.status}
 						{job.status === "installing" && " — installing via SteamCMD, this can take a while for a large game..."}
 						{job.status === "configuring" && " — writing scripts and config..."}

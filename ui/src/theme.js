@@ -5,26 +5,29 @@ import { green, grey } from "@mui/material/colors";
 // responsiveFontSizes() scales every Typography variant (h1-h6, body, etc.)
 // down on narrow screens automatically, from this one place, instead of
 // hand-tuning fontSize on every heading across the app.
-export const darkTheme = responsiveFontSizes(
+//
+// One definition, two palettes: the light one keeps the same accents, darkened where
+// the dark one's brighter tones wouldn't read against white.
+export function buildTheme(mode) {
+	const dark = mode === "dark";
+	return responsiveFontSizes(
 	createTheme({
 		palette: {
-			mode: "dark",
-			background: {
-				default: "#121212",
-				paper: "#1e1e1e",
-			},
+			mode,
+			background: dark ? { default: "#121212", paper: "#1e1e1e" } : { default: "#f3f5f7", paper: "#ffffff" },
 			primary: {
-				main: "#22d3ee",
+				main: dark ? "#22d3ee" : "#0e7490",
 			},
 			secondary: {
-				main: "#f97316",
+				main: dark ? "#f97316" : "#c2410c",
 			},
+			divider: dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.12)",
 			// Not a standard MUI palette bucket — plain JS, so no augmentation
 			// needed. Centralizes the online/offline color instead of every
 			// component importing green/grey from @mui/material/colors itself.
 			status: {
-				online: green[500],
-				offline: grey[600],
+				online: dark ? green[500] : green[700],
+				offline: dark ? grey[600] : grey[500],
 			},
 		},
 		shape: {
@@ -35,7 +38,7 @@ export const darkTheme = responsiveFontSizes(
 				styleOverrides: {
 					root: {
 						backgroundImage: "none",
-						border: "1px solid rgba(255,255,255,0.08)",
+						border: dark ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.12)",
 						borderRadius: 16,
 					},
 				},
@@ -88,4 +91,8 @@ export const darkTheme = responsiveFontSizes(
 			},
 		},
 	}),
-);
+	);
+}
+
+export const darkTheme = buildTheme("dark");
+export const lightTheme = buildTheme("light");

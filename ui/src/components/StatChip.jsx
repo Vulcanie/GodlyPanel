@@ -25,11 +25,11 @@ function StatChip({ icon, label, value, copyable }) {
 				px: 1,
 				py: 0.5,
 				borderRadius: 999,
-				bgcolor: "rgba(255,255,255,0.06)",
-				border: "1px solid rgba(255,255,255,0.08)",
+				bgcolor: "action.hover",
+				border: (t) => `1px solid ${t.palette.divider}`,
 				transition: "background-color 0.15s ease",
 				"&:hover": {
-					bgcolor: "rgba(255,255,255,0.1)",
+					bgcolor: "action.selected",
 				},
 			}}
 		>

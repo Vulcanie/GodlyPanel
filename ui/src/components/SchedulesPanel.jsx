@@ -100,7 +100,7 @@ function SchedulesPanel({ serverName, serverNames, canManage }) {
 			) : (
 				<Paper>
 					{tasks.map((t, i) => (
-						<Box key={t.id} sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1.5, px: 2, py: 1.5, borderTop: i === 0 ? 0 : "1px solid rgba(255,255,255,0.06)", opacity: t.enabled ? 1 : 0.55 }}>
+						<Box key={t.id} sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1.5, px: 2, py: 1.5, borderTop: i === 0 ? 0 : (t) => `1px solid ${t.palette.divider}`, opacity: t.enabled ? 1 : 0.55 }}>
 							<Box sx={{ flex: 1, minWidth: 240 }}>
 								<Typography variant="body1">
 									{t.name || KIND_LABELS[t.kind]} <Chip size="small" label={KIND_LABELS[t.kind]} sx={{ ml: 1 }} />

@@ -12,7 +12,6 @@ import {
 	TextField,
 } from "@mui/material";
 import { Add as AddIcon, Search as SearchIcon } from "@mui/icons-material";
-import { grey } from "@mui/material/colors";
 import GameCard from "./GameCard";
 import SystemStatsBar from "./SystemStatsBar";
 
@@ -148,7 +147,7 @@ function DashboardPage({
 				</Typography>
 			) : null}
 
-			<Typography align="center" sx={{ color: grey[500], mb: 2 }}>
+			<Typography align="center" sx={{ color: "text.secondary", mb: 2 }}>
 				Live updates enabled (SSE)
 			</Typography>
 
