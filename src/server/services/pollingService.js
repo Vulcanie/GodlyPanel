@@ -11,6 +11,7 @@ import { latestServerStats } from "./serverResourceStats.js";
 import { latestStats } from "./systemStats.js";
 import { getConfig } from "../config/configStore.js";
 import { sanitizeServerStatus } from "../data/sanitize.js";
+import { noteServerPlayers } from "./playerTracker.js";
 
 // Holds the latest known status
 export let serverStatus = {};
@@ -306,6 +307,7 @@ export const pollServers = async () => {
 
 	try {
 		await Promise.allSettled(allServers().map(pollOne));
+		for (const [name, status] of Object.entries(serverStatus)) noteServerPlayers(name, status);
 
 		diffAndBroadcast(serverStatus, lastSnapshot);
 		lastSnapshot = structuredClone(serverStatus);

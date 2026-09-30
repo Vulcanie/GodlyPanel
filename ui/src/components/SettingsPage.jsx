@@ -33,6 +33,7 @@ const GROUP_LABELS = {
 	storage: "Storage",
 	servers: "New servers",
 	discord: "Discord",
+	notifications: "Notifications",
 	backups: "Backups",
 	startup: "Starting with Windows",
 	recovery: "Crash recovery",
@@ -43,6 +44,8 @@ const SECRET_FIELDS = [
 	{ key: "discordUpdateWebhookUrl", label: "Discord update webhook" },
 	{ key: "curseForgeApiKey", label: "CurseForge API key" },
 	{ key: "fixedRconPassword", label: "Fixed RCON password" },
+	{ key: "alertWebhookUrl", label: "Alert webhook (Discord, Slack, ...)" },
+	{ key: "smtpPassword", label: "Mail account password" },
 ];
 
 function valueAt(obj, dotted) {

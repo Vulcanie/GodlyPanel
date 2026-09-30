@@ -18,6 +18,9 @@ const EMPTY = {
 	discordUpdateWebhookUrl: "",
 	curseForgeApiKey: "",
 	fixedRconPassword: "",
+	// Where alerts are posted (Discord, Slack and similar), and the mail account's password.
+	alertWebhookUrl: "",
+	smtpPassword: "",
 };
 
 let current = null;

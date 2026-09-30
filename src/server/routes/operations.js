@@ -9,6 +9,8 @@ import { requirePermission, canAccessServer } from "../middleware/permissions.js
 import { listTasks, addTask, updateTask, removeTask, runTask } from "../services/scheduler.js";
 import { recoveryState } from "../services/crashWatcher.js";
 import { recentActivity } from "../services/activityLog.js";
+import { listLogs, readLog, searchLog } from "../services/logService.js";
+import { playersFor } from "../services/playerTracker.js";
 import { runDetached } from "../services/serverOps.js";
 import {
 	BackupError,
@@ -172,6 +174,40 @@ router.post("/schedules/:id/run", requirePermission("schedules.manage"), (req, r
 	if (!listTasks().some((t) => t.id === req.params.id)) return res.status(404).json({ error: "No such schedule." });
 	runTask(req.params.id, { manual: true }).catch((err) => console.error("[schedule] manual run failed:", err));
 	res.status(202).json({ started: true });
+});
+
+// ---- logs and players -------------------------------------------------------------
+
+router.get("/server/:serverName/logs", requirePermission("server.logs"), async (req, res) => {
+	const logs = await listLogs(req.server);
+	// The folder paths are the owner's business; callers get names and ids.
+	res.json(logs.map(({ path: _path, ...rest }) => rest));
+});
+
+// Anything that looks like a password is masked unless the caller is an admin.
+router.get("/server/:serverName/logs/:id", requirePermission("server.logs"), async (req, res) => {
+	const redact = req.user.role !== "admin";
+	try {
+		const search = typeof req.query.search === "string" ? req.query.search.trim() : "";
+		if (search) {
+			const found = await searchLog(req.server, req.params.id, search, { redact });
+			return found ? res.json(found) : res.status(404).json({ error: "No such log." });
+		}
+		const since = req.query.since !== undefined ? Number(req.query.since) : null;
+		const result = await readLog(req.server, req.params.id, {
+			lines: Number(req.query.lines) || 300,
+			since: Number.isFinite(since) ? since : null,
+			redact,
+		});
+		result ? res.json(result) : res.status(404).json({ error: "No such log." });
+	} catch (err) {
+		console.error("Reading a log failed:", err);
+		res.status(500).json({ error: "Couldn't read that log." });
+	}
+});
+
+router.get("/server/:serverName/players", requirePermission("server.players"), (req, res) => {
+	res.json(playersFor(req.server.name));
 });
 
 // ---- what has happened -----------------------------------------------------------

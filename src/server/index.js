@@ -35,6 +35,7 @@ import { initServerOptions } from "./data/serverOptions.js";
 import { initScheduler, tickScheduler } from "./services/scheduler.js";
 import { checkServersOnce, startAutoStartServers } from "./services/crashWatcher.js";
 import { sweepPartialBackups } from "./services/backupService.js";
+import { startNotifier, checkDisks } from "./services/notifier.js";
 import { initStorage, rescan } from "./services/storageService.js";
 import { registerTimer, scheduleAll, rescheduleAll, stopAll } from "./timerManager.js";
 
@@ -214,6 +215,7 @@ registerTimer(
 // reacting promptly, not about how often to poll, so they aren't settings.
 registerTimer("scheduler", () => tickScheduler().catch((err) => console.error("[schedule]", err)), () => 15_000);
 registerTimer("crash-watch", () => checkServersOnce().catch((err) => console.error("[recovery]", err)), () => 5_000);
+registerTimer("disk-watch", () => checkDisks().catch((err) => console.error("[disk]", err)), () => 10 * 60_000);
 registerTimer(
 	"storage-scan",
 	() => {
@@ -230,6 +232,7 @@ const server = app.listen(PORT, HOST, () => {
 		console.log(`[network] Others on your network can use: ${shareUrls.join(", ")}`);
 	}
 	process.send?.({ type: "ready", port: PORT, host: HOST, shareUrls });
+	sendStartupSettings(getConfig());
 
 	pollServers();
 	if (getConfig().polling.enableServerStats) getServerResourceStats().catch(() => {});
@@ -245,6 +248,8 @@ const server = app.listen(PORT, HOST, () => {
 	// to start with the panel.
 	setTimeout(() => startAutoStartServers().catch((err) => console.error("[autostart]", err)), 12_000);
 	sweepPartialBackups().catch(() => {});
+	startNotifier();
+	setTimeout(() => checkDisks().catch(() => {}), 30_000);
 
 	// Deferred: the first poll matters more than the disk figure, and a walk
 	// of every game install is heavy enough not to want it competing.
@@ -255,8 +260,14 @@ const server = app.listen(PORT, HOST, () => {
 	scheduleAll(getConfig());
 });
 
+// The desktop shell owns the Windows login entry; tell it what the settings say.
+function sendStartupSettings(config) {
+	process.send?.({ type: "startup-settings", openAtLogin: config.startup.openAtLogin, startHidden: config.startup.startHidden });
+}
+
 onConfigChange((next, changed) => {
 	if (changed.some((p) => p.startsWith("polling."))) rescheduleAll(next);
+	if (changed.some((p) => p.startsWith("startup."))) sendStartupSettings(next);
 });
 
 server.on("error", (err) => {

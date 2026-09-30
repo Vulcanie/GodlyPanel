@@ -12,6 +12,7 @@ import {
 import { remove as removeServer, all as allServers } from "../data/serverStore.js";
 import { rescan } from "../services/storageService.js";
 import { inspectFolder } from "../services/folderCheck.js";
+import { EVENT_LABELS, sendTest, checkDisks } from "../services/notifier.js";
 
 const router = express.Router();
 
@@ -28,7 +29,18 @@ router.get("/", (req, res) => {
 			configFile: configPath,
 		},
 		steamCmdInstalled: isSteamCmdInstalled(),
+		notificationEvents: EVENT_LABELS,
 	});
+});
+
+// Sends a real test through every channel that is set up, and says how each went.
+router.post("/notifications/test", async (req, res) => {
+	res.json(await sendTest());
+});
+
+// Looks at the drives now rather than waiting for the next check; returns any that are low.
+router.post("/notifications/check-disks", async (req, res) => {
+	res.json({ low: await checkDisks() });
 });
 
 router.post("/check-folder", (req, res) => {
@@ -60,6 +72,8 @@ router.put("/secrets", async (req, res) => {
 		"discordUpdateWebhookUrl",
 		"curseForgeApiKey",
 		"fixedRconPassword",
+		"alertWebhookUrl",
+		"smtpPassword",
 	];
 	const patch = {};
 	for (const key of allowed) {

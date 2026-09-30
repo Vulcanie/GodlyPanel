@@ -81,6 +81,34 @@ export const DEFAULTS = {
 		autoStartDelaySec: 20,
 	},
 
+	notifications: {
+		// A native Windows notification. Webhook and email are set up with their own
+		// secrets (Settings -> Notifications).
+		desktop: true,
+		events: [
+			"server.crashed",
+			"server.gave_up",
+			"server.unresponsive",
+			"server.restart_failed",
+			"server.start_failed",
+			"backup.failed",
+			"backup.restore_failed",
+			"schedule.failed",
+			"disk.low",
+			"panel.update_available",
+		],
+		diskLowGB: 10,
+		email: {
+			enabled: false,
+			host: "",
+			port: 587,
+			secure: false,
+			from: "",
+			to: "",
+			user: "",
+		},
+	},
+
 	recovery: {
 		// How long a server has to be down before it counts as crashed, and how
 		// many times in a window the panel will restart it before giving up.
@@ -364,6 +392,36 @@ export const FIELD_SPECS = [
 		label: "Delay between starting servers at launch (seconds)",
 		help: "For servers set to start with the panel.",
 	},
+
+	{
+		path: "notifications.desktop",
+		type: "bool",
+		restart: false,
+		label: "Show Windows notifications",
+	},
+	{
+		path: "notifications.events",
+		type: "stringArray",
+		restart: false,
+		label: "Events to tell you about",
+		help: "Event names, one per line. See the list on this page for what is available.",
+	},
+	{
+		path: "notifications.diskLowGB",
+		type: "int",
+		min: 0,
+		max: 100000,
+		restart: false,
+		label: "Warn when a drive has less free space than (GB)",
+		help: "0 turns the low-space warning off.",
+	},
+	{ path: "notifications.email.enabled", type: "bool", restart: false, label: "Send email" },
+	{ path: "notifications.email.host", type: "string", restart: false, label: "Mail server" },
+	{ path: "notifications.email.port", type: "int", min: 1, max: 65535, restart: false, label: "Mail server port" },
+	{ path: "notifications.email.secure", type: "bool", restart: false, label: "Use TLS from the start (port 465)" },
+	{ path: "notifications.email.user", type: "string", restart: false, label: "Mail account name" },
+	{ path: "notifications.email.from", type: "string", restart: false, label: "Send from" },
+	{ path: "notifications.email.to", type: "string", restart: false, label: "Send to" },
 
 	{
 		path: "recovery.graceSec",

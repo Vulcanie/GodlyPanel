@@ -6,6 +6,9 @@ contextBridge.exposeInMainWorld("godlyPanel", {
 	isDesktopApp: true,
 	getInfo: () => ipcRenderer.invoke("app:info"),
 	openDataFolder: () => ipcRenderer.invoke("app:openDataFolder"),
+	pickFolder: (options) => ipcRenderer.invoke("app:pickFolder", options ?? {}),
+	pickFile: (options) => ipcRenderer.invoke("app:pickFile", options ?? {}),
+	openFolder: (folder) => ipcRenderer.invoke("app:openFolder", folder),
 	restartApi: () => ipcRenderer.invoke("api:restart"),
 	getApiState: () => ipcRenderer.invoke("api:state"),
 	onApiState: (cb) => {

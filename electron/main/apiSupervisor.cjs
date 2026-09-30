@@ -140,6 +140,9 @@ class ApiSupervisor extends EventEmitter {
 			}
 			if (msg?.type === "bind-error") this.emit("bind-error", msg);
 			if (msg?.type === "active-jobs") this.emit("active-jobs", msg.jobs);
+			// Anything else the API asks the desktop shell to do (a notification,
+			// the start-with-Windows setting) is passed on for the main process.
+			this.emit("ipc", msg);
 		});
 
 		this.child.on("exit", (code, signal) => {

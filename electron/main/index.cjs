@@ -1,4 +1,4 @@
-const { app, dialog, ipcMain, shell, BrowserWindow, Menu } = require("electron");
+const { app, dialog, ipcMain, shell, BrowserWindow, Menu, Notification } = require("electron");
 const path = require("node:path");
 const fs = require("node:fs");
 const { ApiSupervisor } = require("./apiSupervisor.cjs");
@@ -37,6 +37,9 @@ if (!gotLock) {
 	app.quit();
 	process.exit(0);
 }
+
+// Launched by Windows at sign-in with --hidden: live in the tray, no window.
+const startHidden = process.argv.includes("--hidden");
 
 let port = readConfiguredPort(dataDir);
 let mainWindow = null;
@@ -92,6 +95,36 @@ supervisor.on("state", (state, detail) => {
 	}
 });
 
+// "Start when I sign in to Windows". The setting lives in the panel's config; the
+// API tells us when it changes. Only a packaged build registers itself, so running
+// from source never leaves a login entry pointing at a dev checkout.
+function applyLoginItem({ openAtLogin, startHidden: hidden }) {
+	if (!app.isPackaged) return;
+	try {
+		const passThrough = process.argv.filter((a) => a.startsWith("--data-dir="));
+		app.setLoginItemSettings({
+			openAtLogin: Boolean(openAtLogin),
+			path: process.execPath,
+			args: [...passThrough, ...(hidden ? ["--hidden"] : [])],
+		});
+	} catch (err) {
+		console.warn("Could not change the start-with-Windows setting:", err.message);
+	}
+}
+
+// A native toast for events that need attention. Clicking it opens the panel.
+function showNotification({ title, body }) {
+	if (!Notification.isSupported()) return;
+	const toast = new Notification({ title: String(title ?? "GodlyPanel").slice(0, 100), body: String(body ?? "").slice(0, 400), silent: false });
+	toast.on("click", showWindow);
+	toast.show();
+}
+
+supervisor.on("ipc", (msg) => {
+	if (msg?.type === "startup-settings") applyLoginItem(msg);
+	if (msg?.type === "notify") showNotification(msg);
+});
+
 supervisor.on("bind-error", ({ code }) => {
 	const message =
 		code === "EADDRINUSE"
@@ -119,7 +152,7 @@ app.whenReady().then(() => {
 		port = detail?.port ?? port;
 		if (firstReady) {
 			firstReady = false;
-			showWindow();
+			if (!startHidden) showWindow();
 		} else if (port !== previous && mainWindow && !mainWindow.isDestroyed()) {
 			mainWindow.loadURL(`http://127.0.0.1:${port}/`);
 		}
@@ -184,5 +217,34 @@ ipcMain.handle("app:info", () => ({
 	apiState: supervisor.getState(),
 }));
 ipcMain.handle("app:openDataFolder", () => shell.openPath(dataDir));
+
+// Native pickers, so choosing a folder or file never needs a browser or typing a path.
+ipcMain.handle("app:pickFolder", async (event, { title, defaultPath } = {}) => {
+	const win = BrowserWindow.fromWebContents(event.sender);
+	const result = await dialog.showOpenDialog(win, {
+		title: typeof title === "string" ? title : "Choose a folder",
+		defaultPath: typeof defaultPath === "string" && defaultPath ? defaultPath : undefined,
+		properties: ["openDirectory", "createDirectory"],
+	});
+	return result.canceled ? null : result.filePaths[0];
+});
+ipcMain.handle("app:pickFile", async (event, { title, filters } = {}) => {
+	const win = BrowserWindow.fromWebContents(event.sender);
+	const result = await dialog.showOpenDialog(win, {
+		title: typeof title === "string" ? title : "Choose a file",
+		filters: Array.isArray(filters) ? filters : undefined,
+		properties: ["openFile"],
+	});
+	return result.canceled ? null : result.filePaths[0];
+});
+// Opens a folder in Explorer. Only folders: asking to open a file would run it.
+ipcMain.handle("app:openFolder", async (_event, target) => {
+	try {
+		if (typeof target !== "string" || !fs.statSync(target).isDirectory()) return "Not a folder.";
+		return await shell.openPath(target);
+	} catch {
+		return "That folder doesn't exist.";
+	}
+});
 ipcMain.handle("api:restart", () => supervisor.restart());
 ipcMain.handle("api:state", () => supervisor.getState());
