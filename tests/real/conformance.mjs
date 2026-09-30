@@ -186,7 +186,8 @@ try {
 	const logs = (await get(`/api/server/${enc(NAME)}/logs`)).json;
 	note(`logs offered: ${logs.map((l) => `${l.name} (${l.size} B)`).join(", ") || "none"}`);
 	const main = logs.find((l) => game.logName.test(l.name));
-	check("a log file is found", Boolean(main));
+	if (game.noLogFile) note("this game writes no log file (expected)");
+	else check("a log file is found", Boolean(main));
 	if (main) {
 		const tail = (await get(`/api/server/${enc(NAME)}/logs/${main.id}?lines=100`)).json;
 		check("it has content", tail.lines.length > 3, `${tail.lines.length} lines`);

@@ -57,7 +57,7 @@ export async function withRcon(server, fn, { timeoutMs = 5000 } = {}) {
 // to it, which is all Conan's behaviour allows and all these callers need.
 // ---------------------------------------------------------------------------
 
-const repliesOutOfStep = (server) => server.type === "conan";
+const repliesOutOfStep = (server) => server.type === "conan" || server.type === "Palword";
 
 const AUTH = 3;
 const EXEC = 2;

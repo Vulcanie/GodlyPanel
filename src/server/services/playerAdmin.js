@@ -33,6 +33,7 @@ export class PlayerAdminError extends Error {
 const NAME = /^[^\r\n\t"\\;]{1,64}$/;
 const STEAM64 = /^\d{17}$/;
 const MC_NAME = /^[.A-Za-z0-9_]{1,17}$/;
+const PALWORLD_ID = /^(?:steam_)?\d{17}$/;
 
 function requireName(value, pattern, what) {
 	const v = String(value ?? "").trim();
@@ -62,6 +63,17 @@ const GAMES = {
 		},
 		// What the game answers when nothing happened.
 		nothing: /no player was found|nothing changed|already|that player does not exist|is not whitelisted|not an operator|isn't banned/i,
+	},
+	// Checked against a real Palworld server's RCON: these commands exist, and an id nobody
+	// has answers "Failed to Kick: <id>" (likewise Ban and UnBan).
+	Palword: {
+		who: { label: "Steam ID", pattern: PALWORLD_ID, hint: "17-digit SteamID64 (see ShowPlayers)" },
+		run: "rcon",
+		kick: (p) => `KickPlayer ${p}`,
+		ban: (p) => `BanPlayer ${p}`,
+		unban: (p) => `UnBanPlayer ${p}`,
+		lists: {},
+		nothing: /^failed to/i,
 	},
 	valheim: {
 		who: { label: "Steam ID", pattern: STEAM64, hint: "17-digit SteamID64" },

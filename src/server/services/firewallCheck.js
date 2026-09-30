@@ -125,6 +125,8 @@ export async function portsPlayersNeed(server) {
 		return needs;
 	}
 	add(current.port, "UDP", "Game port");
+	// Palworld's "query" port is its REST API, which only the panel uses (TCP, on this PC).
+	if (server.type === "Palword") return needs;
 	for (const i of implicitPortsOf(template)) if (!i.precaution && current.port) add(current.port + i.offset, "UDP", i.label);
 	// The query port is what server browsers and most clients ask first.
 	if (current.queryPort && current.queryPort !== current.port) add(current.queryPort, "UDP", "Query port");

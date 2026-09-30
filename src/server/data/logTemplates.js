@@ -16,7 +16,9 @@ export const LOG_TEMPLATES = {
 	dragonwilds: [{ kind: "dir", base: "working", rel: "RSDragonwilds/Saved/Logs", label: "Game log" }],
 	windrose: [{ kind: "dir", base: "working", rel: "R5/Saved/Logs", label: "Game log" }],
 	"7days": [{ kind: "file", base: "working", rel: "output_log.txt", label: "Server log" }],
-	palworld: [{ kind: "dir", base: "working", rel: "Pal/Saved/Logs", label: "Game log" }],
+	// Palworld's server writes no log file at all (its Shipping build logs to the console only:
+	// checked on a real install), so there is nothing to list; a server started with no window
+	// keeps what it printed.
 	"minecraft-modpack": [
 		{ kind: "file", base: "working", rel: "logs/latest.log", label: "Server log" },
 		{ kind: "dir", base: "working", rel: "crash-reports", label: "Crash reports" },
