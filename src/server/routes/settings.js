@@ -16,6 +16,7 @@ import { EVENT_LABELS, sendTest, checkDisks } from "../services/notifier.js";
 import { BackupError } from "../services/backupService.js";
 import { panelChecklist, summarise } from "../services/setupChecklist.js";
 import { applyBotSettings, botState } from "../services/discordBot.js";
+import { lanAddresses } from "../services/firewallCheck.js";
 import { listDestinations, saveDestination, removeDestination, testDestination, retryReplication } from "../services/backupDestinations.js";
 
 const router = express.Router();
@@ -91,6 +92,18 @@ router.put("/secrets", async (req, res) => {
 	await patchSecrets(patch);
 	applyBotSettings();
 	res.json({ success: true, secrets: describeSecrets() });
+});
+
+// Where the panel itself can be opened from: this PC, the local network, and a mesh VPN (Tailscale, ZeroTier).
+const inMesh = (address) => {
+	const [a, b] = address.split(".").map(Number);
+	return a === 100 && b >= 64 && b <= 127;
+};
+router.get("/access", (req, res) => {
+	const port = Number(process.env.GHP_PORT) || getConfig().http.port;
+	const { bindAll } = getConfig().http;
+	const addresses = lanAddresses().map((a) => ({ ...a, url: `http://${a.address}:${port}/`, mesh: inMesh(a.address) }));
+	res.json({ port, bindAll, local: `http://127.0.0.1:${port}/`, addresses: bindAll ? addresses : [], allowCgnat: getConfig().network.allowCgnat !== false });
 });
 
 router.get("/discord-bot", (req, res) => res.json(botState()));
