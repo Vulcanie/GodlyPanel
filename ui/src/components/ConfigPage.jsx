@@ -22,6 +22,7 @@ import ConfigForm from "./ConfigForm";
 import RconConsole from "./RconConsole";
 import ServerWindowPanel from "./ServerWindowPanel";
 import PortsEditor from "./PortsEditor";
+import { useOperation } from "../OperationsContext";
 import DeleteServer from "./DeleteServer";
 import { api } from "../api/client";
 import { parseIni, serializeIni } from "../configParsers/ini";
@@ -67,7 +68,10 @@ function ConfigPage({
 	onBack,
 	userRole,
 	onEditBatchFiles,
+	// Shown inside ServerWorkspace, which has its own heading and back button.
+	embedded = false,
 }) {
+	const operation = useOperation(serverName);
 	const [serverInfo, setServerInfo] = React.useState(null);
 	const [configs, setConfigs] = React.useState({});
 	const [activeTab, setActiveTab] = React.useState(0);
@@ -288,21 +292,23 @@ function ConfigPage({
 		return (
 			<Box sx={{ mt: 4 }}>
 				{updateDialog}
-				<Box sx={{ display: "flex", gap: 2, mb: 2 }}>
-					<Button startIcon={<ArrowBackIcon />} onClick={onBack}>
-						Back to Dashboard
-					</Button>
-
-					{userRole === "admin" && (
-						<Button
-							variant="outlined"
-							color="warning"
-							onClick={onEditBatchFiles}
-						>
-							Edit Batch Files
+				{!embedded && (
+					<Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+						<Button startIcon={<ArrowBackIcon />} onClick={onBack}>
+							Back to Dashboard
 						</Button>
-					)}
-				</Box>
+	
+						{userRole === "admin" && (
+							<Button
+								variant="outlined"
+								color="warning"
+								onClick={onEditBatchFiles}
+							>
+								Edit Batch Files
+							</Button>
+						)}
+					</Box>
+				)}
 
 				<Typography variant="h5" color="info.main">
 					This server does not have any editable config files.
@@ -319,6 +325,7 @@ function ConfigPage({
 					<Button
 						variant="contained"
 						color="success"
+						disabled={Boolean(operation)}
 						onClick={() => handleControl("start")}
 					>
 						Start Server
@@ -326,9 +333,17 @@ function ConfigPage({
 					<Button
 						variant="contained"
 						color="error"
+						disabled={Boolean(operation)}
 						onClick={() => handleControl("stop")}
 					>
 						Stop Server
+					</Button>
+					<Button
+						variant="contained"
+						disabled={Boolean(operation) || !serverStatus?.online}
+						onClick={() => handleControl("restart")}
+					>
+						Restart Server
 					</Button>
 					{serverInfo?.hasUpdate && (
 						<>
@@ -382,21 +397,23 @@ function ConfigPage({
 	return (
 		<Box sx={{ pb: "120px" }}>
 			{updateDialog}
-			<Box sx={{ display: "flex", gap: 2, mb: 2 }}>
-				<Button startIcon={<ArrowBackIcon />} onClick={onBack}>
-					Back to Dashboard
-				</Button>
-
-				{userRole === "admin" && (
-					<Button
-						variant="outlined"
-						color="warning"
-						onClick={onEditBatchFiles}
-					>
-						Edit Batch Files
+			{!embedded && (
+				<Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+					<Button startIcon={<ArrowBackIcon />} onClick={onBack}>
+						Back to Dashboard
 					</Button>
-				)}
-			</Box>
+	
+					{userRole === "admin" && (
+						<Button
+							variant="outlined"
+							color="warning"
+							onClick={onEditBatchFiles}
+						>
+							Edit Batch Files
+						</Button>
+					)}
+				</Box>
+			)}
 
 			<Box
 				sx={{
@@ -425,6 +442,7 @@ function ConfigPage({
 						<Button
 							variant="contained"
 							color="success"
+							disabled={Boolean(operation)}
 							onClick={() => handleControl("start")}
 						>
 							Start Server
@@ -432,9 +450,17 @@ function ConfigPage({
 						<Button
 							variant="contained"
 							color="error"
+							disabled={Boolean(operation)}
 							onClick={() => handleControl("stop")}
 						>
 							Stop Server
+						</Button>
+						<Button
+							variant="contained"
+							disabled={Boolean(operation) || !serverStatus?.online}
+							onClick={() => handleControl("restart")}
+						>
+							Restart Server
 						</Button>
 						{serverInfo?.hasUpdate && (
 							<>

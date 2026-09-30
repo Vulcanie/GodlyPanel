@@ -79,3 +79,48 @@ describe("start and stop a server", () => {
 		assert.equal(intent["Fake One"].desired, "stopped");
 	});
 });
+
+describe("restarting a server", () => {
+	let panel;
+	let api;
+	let folder;
+
+	before(async () => {
+		const rconPort = await freePort();
+		panel = await startInstance({
+			servers: (dir) => {
+				folder = path.join(dir, "fake-restart");
+				return [makeFakeGame(folder, { name: "Fake Restart", rconPort, exe: "gp-fake-restart.exe" })];
+			},
+		});
+		api = panel.api;
+	});
+	after(async () => {
+		killFakeGames(folder);
+		await panel.stop();
+	});
+
+	const online = async () => (await api.get("/api/status")).json["Fake Restart"]?.online === true;
+	const idle = async () => !(await api.get("/api/operations")).json["Fake Restart"];
+
+	it("refuses when it isn't running", async () => {
+		const r = await api.post("/api/control/Fake%20Restart/restart");
+		assert.equal(r.status, 409);
+		assert.match(r.json.error, /isn't running/);
+	});
+
+	it("stops it, waits until it has really gone, starts it again, and holds the lock meanwhile", async () => {
+		await api.post("/api/control/Fake%20Restart/start");
+		assert.equal(await until(online), true);
+		await until(idle);
+		const before = (gameLog(folder).match(/server starting/g) ?? []).length;
+
+		const r = await api.post("/api/control/Fake%20Restart/restart");
+		assert.equal(r.status, 200, JSON.stringify(r.json));
+		assert.equal((await api.get("/api/operations")).json["Fake Restart"].op, "restarting");
+		assert.equal((await api.post("/api/control/Fake%20Restart/stop")).status, 409, "busy while restarting");
+		assert.equal(await until(async () => (await idle()) && (await online()), { timeoutMs: 90_000 }), true);
+		assert.match(gameLog(folder), /rcon: Shutdown/);
+		assert.equal((gameLog(folder).match(/server starting/g) ?? []).length, before + 1, "started exactly once more");
+	});
+});

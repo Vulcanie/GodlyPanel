@@ -1,5 +1,6 @@
 import React from "react";
-import { Box, Typography, useTheme } from "@mui/material";
+import { Box, Chip, Typography, useTheme } from "@mui/material";
+import { useOperation, operationLabel } from "../OperationsContext";
 import {
 	PeopleAlt as PeopleAltIcon,
 	NetworkPing as NetworkPingIcon,
@@ -36,6 +37,7 @@ export function StatusDot({ online }) {
 // column width, so a row with a lot of data wraps to multiple lines on a
 // narrow viewport instead of clipping or needing horizontal scroll.
 function ServerTile({ srv, stats, clickable, onClick }) {
+	const operation = useOperation(srv.name);
 	// Data-driven, not a per-game special case: for Minecraft, sessionName
 	// and joinAddress are literally the same "ip:port" string, so showing
 	// both is just duplicated data. Other game types (e.g. ARK's human
@@ -68,6 +70,7 @@ function ServerTile({ srv, stats, clickable, onClick }) {
 				<Typography variant="subtitle2" fontWeight={600}>
 					{srv.name}
 				</Typography>
+				{operation && <Chip size="small" color="info" variant="outlined" label={operationLabel(operation)} sx={{ ml: 1, height: 20 }} />}
 			</Box>
 
 			<Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, flex: 1 }}>

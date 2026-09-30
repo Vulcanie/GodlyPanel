@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, TextField, Typography, Chip } from "@mui/material";
+import { Box, Button, TextField, Typography, Chip } from "@mui/material";
 import { api } from "../api/client";
 import { formatBytes } from "../utils/format";
 
@@ -41,8 +41,15 @@ function FolderField({
 
 	const blocked = result && !result.ok;
 
+	const pick = window.godlyPanel?.pickFolder;
+	const browse = async () => {
+		const chosen = await pick({ title: `Choose: ${label}`, defaultPath: value || undefined });
+		if (chosen) onChange(chosen);
+	};
+
 	return (
 		<Box>
+			<Box sx={{ display: "flex", gap: 1 }}>
 			<TextField
 				fullWidth
 				size="small"
@@ -57,6 +64,12 @@ function FolderField({
 						: (helperText ?? `Blank uses ${blankMeans}.`)
 				}
 			/>
+			{pick && (
+				<Button size="small" variant="outlined" onClick={browse} sx={{ alignSelf: "flex-start", mt: 0.25, whiteSpace: "nowrap" }}>
+					Browse…
+				</Button>
+			)}
+			</Box>
 			{result && (
 				<Box sx={{ mt: 1, display: "flex", flexDirection: "column", gap: 0.5 }}>
 					<Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap" }}>

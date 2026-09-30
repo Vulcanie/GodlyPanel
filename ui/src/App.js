@@ -8,11 +8,19 @@ import {
 	Button,
 	Chip,
 	CircularProgress,
+	Dialog,
+	DialogContent,
+	DialogTitle,
 	alpha,
 } from "@mui/material";
 import { darkTheme } from "./theme";
 import DashboardPage from "./components/DashboardPage";
-import ConfigPage from "./components/ConfigPage";
+import ServerWorkspace from "./components/ServerWorkspace";
+import ActivityPanel from "./components/ActivityPanel";
+import UpdateBanner from "./components/UpdateBanner";
+import { OperationsProvider } from "./OperationsContext";
+import { emitLive } from "./liveEvents";
+import { isOperator, ROLE_LABELS } from "./permissions";
 import LoginPage from "./components/LoginPage";
 import SetupWizard from "./components/SetupWizard";
 import BatchFileEditor from "./components/BatchFileEditor";
@@ -33,6 +41,8 @@ function Panel() {
 	const [appearance, setAppearance] = React.useState(null);
 	const [apiError, setApiError] = React.useState(null);
 	const [loading, setLoading] = React.useState(true);
+	const [showActivity, setShowActivity] = React.useState(false);
+	const [allowedServers, setAllowedServers] = React.useState(null);
 
 	const signedIn = status === "signedIn";
 
@@ -72,6 +82,14 @@ function Panel() {
 			} catch {
 				// Non-fatal: cards fall back to their built-in colours.
 			}
+
+			// A moderator may be limited to some servers; everyone else can open any
+			// they are allowed to see.
+			try {
+				setAllowedServers(role === "moderator" ? await api.get("/api/my-servers") : null);
+			} catch {
+				setAllowedServers(null);
+			}
 		};
 
 		loadInitial();
@@ -87,6 +105,9 @@ function Panel() {
 			if (!event.data) return;
 
 			const data = JSON.parse(event.data);
+			// Anything that only one component cares about (a backup's progress, an
+			// activity line) is handed to whoever is listening for it.
+			emitLive(data.type, data);
 			switch (data.type) {
 				case "connected":
 					break;
@@ -130,7 +151,7 @@ function Panel() {
 		events.onerror = () => setApiError("Lost connection to live updates");
 
 		return () => events.close();
-	}, [signedIn]);
+	}, [signedIn, role]);
 
 	// One place changes page, and it also records the change in the browser's
 	// history, so the browser's Back button steps through the panel instead of
@@ -245,9 +266,14 @@ function Panel() {
 				<Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
 					<Chip
 						size="small"
-						label={`${user.username}${isAdmin ? "" : " · view only"}`}
-						color={isAdmin ? "primary" : "default"}
+						label={`${user.username}${isAdmin ? "" : ` · ${ROLE_LABELS[role] ?? role}`}`}
+						color={isAdmin ? "primary" : role === "moderator" ? "secondary" : "default"}
 					/>
+					{isOperator(role) && (
+						<Button variant="text" size="small" onClick={() => setShowActivity(true)}>
+							Activity
+						</Button>
+					)}
 					{isAdmin && page !== "users" && (
 						<Button variant="text" size="small" onClick={navigateToUsers}>
 							People
@@ -264,8 +290,11 @@ function Panel() {
 				</Box>
 			</Box>
 
+			{isAdmin && page === "dashboard" && <UpdateBanner onOpenSettings={navigateToSettings} />}
+
 			{page === "dashboard" ? (
 				<DashboardPage
+					allowedServers={allowedServers}
 					servers={servers}
 					systemStats={systemStats}
 					serverStats={serverStats}
@@ -283,16 +312,25 @@ function Panel() {
 			) : page === "users" ? (
 				<UsersPage onBack={navigateToDashboard} currentUser={user} />
 			) : page === "config" ? (
-				<ConfigPage
+				<ServerWorkspace
 					serverName={selectedServer}
 					serverStatus={selectedServerData}
+					servers={servers}
 					onBack={navigateToDashboard}
 					userRole={role}
 					onEditBatchFiles={navigateToBatchEditor}
+					onOpenServer={navigateToConfig}
 				/>
 			) : page === "batchEditor" ? (
 				<BatchFileEditor serverName={selectedServer} onBack={backToSelectedConfig} />
 			) : null}
+
+			<Dialog open={showActivity} onClose={() => setShowActivity(false)} fullWidth maxWidth="md">
+				<DialogTitle>Activity</DialogTitle>
+				<DialogContent>
+					<ActivityPanel limit={150} />
+				</DialogContent>
+			</Dialog>
 		</Container>
 	);
 }
@@ -302,7 +340,9 @@ function App() {
 		<ThemeProvider theme={darkTheme}>
 			<CssBaseline />
 			<SessionProvider>
-				<Panel />
+				<OperationsProvider>
+					<Panel />
+				</OperationsProvider>
 			</SessionProvider>
 		</ThemeProvider>
 	);

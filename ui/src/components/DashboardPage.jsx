@@ -35,6 +35,7 @@ function DashboardPage({
 	apiError,
 	userRole,
 	appearance,
+	allowedServers = null,
 }) {
 	const [showOffline, setShowOffline] = React.useState(true);
 	// Only ever set by an explicit user click — see isGroupOpen below for how
@@ -132,6 +133,7 @@ function DashboardPage({
 							instances={groups[type]}
 							onNavigate={onNavigate}
 							userRole={userRole}
+							allowedServers={allowedServers}
 							showOffline={showOffline}
 							serverStats={serverStats}
 							isOpen={isGroupOpen(type)}

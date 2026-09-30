@@ -6,9 +6,10 @@ import { pollServers, serverStatus } from "../services/pollingService.js";
 import { startServer, stopServer, sendRconCommand } from "../services/serverControl.js";
 import { updateServer } from "../services/updateService.js";
 import { runDetached } from "../services/serverOps.js";
-import { waitUntilStopped, waitUntilOnline } from "../services/serverLifecycle.js";
+import { waitUntilStopped, waitUntilOnline, stopAndWait, startAndWait } from "../services/serverLifecycle.js";
 import { requirePermission } from "../middleware/permissions.js";
 import { resetRecovery } from "../services/crashWatcher.js";
+import { isServerRunning } from "../services/serverState.js";
 
 const router = express.Router();
 
@@ -46,6 +47,20 @@ const CONTROL_ACTIONS = {
 			resetRecovery(server.name);
 			report(await startServer(server));
 			await waitUntilOnline(server);
+		}),
+	// Stop, wait until it has really gone, start it again. Answers once the stop has
+	// been asked for; the rest carries on under the server's lock.
+	restart: (server) =>
+		runDetached(server.name, "restarting", async (report) => {
+			if (!(await isServerRunning(server))) {
+				const err = new Error(`${server.name} isn't running, so there is nothing to restart. Use Start.`);
+				err.status = 409;
+				throw err;
+			}
+			resetRecovery(server.name);
+			report({ success: true, message: `${server.name} is restarting...` });
+			await stopAndWait(server);
+			await startAndWait(server);
 		}),
 	stop: (server) =>
 		runDetached(server.name, "stopping", async (report) => {

@@ -16,6 +16,7 @@ function GameCard({
 	instances,
 	onNavigate,
 	userRole,
+	allowedServers = null,
 	showOffline,
 	serverStats,
 	isOpen,
@@ -47,7 +48,9 @@ function GameCard({
 
 	if (rows.length === 0) return null;
 
-	const clickable = userRole === "admin";
+	// Administrators and moderators open a server; a moderator limited to some
+	// servers opens only those.
+	const operator = userRole === "admin" || userRole === "moderator";
 
 	return (
 		<Accordion
@@ -144,8 +147,8 @@ function GameCard({
 						key={srv.name}
 						srv={srv}
 						stats={statsByName[srv.name]}
-						clickable={clickable}
-						onClick={clickable ? () => onNavigate(srv.name) : undefined}
+						clickable={operator && (!allowedServers || allowedServers.includes(srv.name))}
+						onClick={operator && (!allowedServers || allowedServers.includes(srv.name)) ? () => onNavigate(srv.name) : undefined}
 					/>
 				))}
 			</AccordionDetails>

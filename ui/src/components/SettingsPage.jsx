@@ -18,6 +18,8 @@ import { ArrowBack as ArrowBackIcon } from "@mui/icons-material";
 import { api } from "../api/client";
 import AppearanceSettings from "./AppearanceSettings";
 import FolderField from "./FolderField";
+import PanelUpdateCard from "./PanelUpdateCard";
+import NotificationEvents from "./NotificationEvents";
 import { formatBytes } from "../utils/format";
 
 // The form is generated from the schema the server sends, so it can't drift
@@ -33,6 +35,7 @@ const GROUP_LABELS = {
 	storage: "Storage",
 	servers: "New servers",
 	discord: "Discord",
+	updates: "Panel updates",
 	notifications: "Notifications",
 	backups: "Backups",
 	startup: "Starting with Windows",
@@ -245,6 +248,8 @@ function SettingsPage({ onBack }) {
 				)}
 			</Paper>
 
+			<PanelUpdateCard />
+
 			{Object.entries(groups).map(([group, specs]) => (
 				<Paper key={group} sx={{ p: 2, mb: 2 }}>
 					<Typography variant="subtitle2" sx={{ mb: 2 }}>
@@ -257,6 +262,7 @@ function SettingsPage({ onBack }) {
 								spec={spec}
 								value={current(spec)}
 								onChange={(v) => setField(spec, v)}
+								events={data.notificationEvents}
 							/>
 						))}
 					</Box>
@@ -321,8 +327,16 @@ function SettingsPage({ onBack }) {
 	);
 }
 
-function Field({ spec, value, onChange }) {
+function Field({ spec, value, onChange, events }) {
 	const help = spec.help || (spec.restart ? "Takes effect after a restart." : undefined);
+
+	if (spec.path === "notifications.events") {
+		return <NotificationEvents labels={events} value={value} onChange={onChange} />;
+	}
+
+	if (spec.path === "backups.dir") {
+		return <FolderField label={spec.label} value={value ?? ""} onChange={onChange} checkUrl="/api/settings/check-folder" helperText={help} blankMeans="a folder inside your data directory" />;
+	}
 
 	if (spec.path === "paths.serversRoot") {
 		return (

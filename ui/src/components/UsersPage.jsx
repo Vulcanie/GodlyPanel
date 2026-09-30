@@ -7,7 +7,13 @@ import {
 	TextField,
 	MenuItem,
 	Alert,
+	Checkbox,
 	Chip,
+	Dialog,
+	DialogActions,
+	DialogContent,
+	DialogTitle,
+	FormControlLabel,
 	IconButton,
 	Tooltip,
 	CircularProgress,
@@ -17,8 +23,10 @@ import {
 	Delete as DeleteIcon,
 	Block as BlockIcon,
 	CheckCircle as CheckCircleIcon,
+	Edit as EditIcon,
 } from "@mui/icons-material";
 import { api } from "../api/client";
+import { ROLE_LABELS } from "../permissions";
 
 // Lets an admin invite people from the community to view server status
 // without handing them control of anything.
@@ -30,6 +38,9 @@ function UsersPage({ onBack, currentUser }) {
 	const [username, setUsername] = React.useState("");
 	const [password, setPassword] = React.useState("");
 	const [role, setRole] = React.useState("guest");
+	const [servers, setServers] = React.useState(null); // null = every server (moderators only)
+	const [serverNames, setServerNames] = React.useState([]);
+	const [editing, setEditing] = React.useState(null);
 
 	const load = React.useCallback(async () => {
 		try {
@@ -41,6 +52,7 @@ function UsersPage({ onBack, currentUser }) {
 
 	React.useEffect(() => {
 		load();
+		api.get("/api/status").then((s) => setServerNames(Object.keys(s).sort())).catch(() => {});
 	}, [load]);
 
 	const run = async (fn) => {
@@ -58,10 +70,11 @@ function UsersPage({ onBack, currentUser }) {
 
 	const create = () =>
 		run(async () => {
-			await api.post("/api/users", { username: username.trim(), password, role });
+			await api.post("/api/users", { username: username.trim(), password, role, ...(role === "moderator" ? { servers } : {}) });
 			setUsername("");
 			setPassword("");
 			setRole("guest");
+			setServers(null);
 		});
 
 	const canCreate = username.trim().length >= 3 && password.length >= 8 && !busy;
@@ -76,8 +89,9 @@ function UsersPage({ onBack, currentUser }) {
 				People
 			</Typography>
 			<Typography variant="body2" sx={{ color: "text.secondary", mb: 3 }}>
-				Viewers can see which servers are up, who's playing, and how to join.
-				They can't change anything or see passwords and configuration.
+				Viewers can see which servers are up, who's playing, and how to join, but can't change anything.
+				Moderators can also start, stop, restart and update servers, take backups, read logs and see who is on, but can't see passwords or settings, delete anything, restore a backup, or manage people.
+				Administrators can do everything.
 			</Typography>
 
 			{error && (
@@ -114,8 +128,10 @@ function UsersPage({ onBack, currentUser }) {
 						onChange={(e) => setRole(e.target.value)}
 					>
 						<MenuItem value="guest">Viewer</MenuItem>
+						<MenuItem value="moderator">Moderator</MenuItem>
 						<MenuItem value="admin">Administrator</MenuItem>
 					</TextField>
+					{role === "moderator" && <ServerPicker names={serverNames} value={servers} onChange={setServers} />}
 					<Button variant="contained" disabled={!canCreate} onClick={create}>
 						Add
 					</Button>
@@ -152,9 +168,19 @@ function UsersPage({ onBack, currentUser }) {
 								</Typography>
 								<Chip
 									size="small"
-									label={u.role === "admin" ? "Administrator" : "Viewer"}
-									color={u.role === "admin" ? "primary" : "default"}
+									label={ROLE_LABELS[u.role] ?? u.role}
+									color={u.role === "admin" ? "primary" : u.role === "moderator" ? "secondary" : "default"}
 								/>
+								{u.role === "moderator" && (
+									<Chip size="small" variant="outlined" label={Array.isArray(u.servers) ? `${u.servers.length} server${u.servers.length === 1 ? "" : "s"}` : "All servers"} />
+								)}
+								<Tooltip title="Change access">
+									<span>
+										<IconButton size="small" disabled={busy || isSelf} onClick={() => setEditing(u)}>
+											<EditIcon fontSize="small" />
+										</IconButton>
+									</span>
+								</Tooltip>
 								{u.disabled && <Chip size="small" label="Suspended" color="warning" />}
 
 								<Tooltip title={u.disabled ? "Restore access" : "Suspend access"}>
@@ -192,7 +218,66 @@ function UsersPage({ onBack, currentUser }) {
 					})}
 				</Paper>
 			)}
+
+			{editing && (
+				<AccessDialog
+					user={editing}
+					serverNames={serverNames}
+					onClose={() => setEditing(null)}
+					onSave={(next) =>
+						run(async () => {
+							if (next.role !== editing.role) await api.put(`/api/users/${editing.id}/role`, { role: next.role });
+							if (next.role === "moderator") await api.put(`/api/users/${editing.id}/servers`, { servers: next.servers });
+							setEditing(null);
+						})
+					}
+				/>
+			)}
 		</Box>
+	);
+}
+
+/** "Every server", or a chosen few. */
+function ServerPicker({ names, value, onChange }) {
+	const all = value === null;
+	return (
+		<Box sx={{ minWidth: 220 }}>
+			<FormControlLabel control={<Checkbox size="small" checked={all} onChange={(e) => onChange(e.target.checked ? null : [])} />} label="Every server" />
+			{!all && (
+				<Box sx={{ display: "flex", flexDirection: "column", maxHeight: 160, overflow: "auto" }}>
+					{names.map((n) => (
+						<FormControlLabel key={n} control={<Checkbox size="small" checked={value.includes(n)} onChange={(e) => onChange(e.target.checked ? [...value, n] : value.filter((x) => x !== n))} />} label={n} />
+					))}
+				</Box>
+			)}
+		</Box>
+	);
+}
+
+function AccessDialog({ user, serverNames, onClose, onSave }) {
+	const [role, setRole] = React.useState(user.role);
+	const [servers, setServers] = React.useState(Array.isArray(user.servers) ? user.servers : null);
+	return (
+		<Dialog open onClose={onClose} fullWidth maxWidth="xs">
+			<DialogTitle>Access for {user.username}</DialogTitle>
+			<DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: "16px !important" }}>
+				<TextField select size="small" label="Access" value={role} onChange={(e) => setRole(e.target.value)}>
+					<MenuItem value="guest">Viewer</MenuItem>
+					<MenuItem value="moderator">Moderator</MenuItem>
+					<MenuItem value="admin">Administrator</MenuItem>
+				</TextField>
+				{role === "moderator" && <ServerPicker names={serverNames} value={servers} onChange={setServers} />}
+				<Typography variant="caption" sx={{ color: "text.secondary" }}>
+					They are signed out and have to sign in again for this to apply.
+				</Typography>
+			</DialogContent>
+			<DialogActions>
+				<Button onClick={onClose}>Cancel</Button>
+				<Button variant="contained" onClick={() => onSave({ role, servers })}>
+					Save
+				</Button>
+			</DialogActions>
+		</Dialog>
 	);
 }
 
