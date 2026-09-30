@@ -30,3 +30,23 @@ describe("what each game can do about players", () => {
 		}
 	});
 });
+
+describe("ARK's player lists", () => {
+	it("are read from the files the game keeps beside its program, and offer kick and ban", async () => {
+		const { readLists } = await import("../../src/server/services/playerAdmin.js");
+		const fs = await import("node:fs");
+		const os = await import("node:os");
+		const path = await import("node:path");
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gp-ark-"));
+		fs.writeFileSync(path.join(dir, "BanList.txt"), "76561198000000001\r\n76561198000000002\r\n");
+		fs.writeFileSync(path.join(dir, "PlayersJoinNoCheckList.txt"), "");
+		const server = { name: "A", type: "ark", workingDir: dir, rconPort: 1, rconPassword: "x" };
+		const caps = capabilities(server);
+		assert.deepEqual([caps.kick, caps.ban, caps.unban], [true, true, true]);
+		assert.deepEqual(caps.lists.map((l) => l.id), ["whitelist", "bans"]);
+		const lists = await readLists(server);
+		assert.deepEqual(lists.find((l) => l.id === "bans").entries.map((e) => e.id), ["76561198000000001", "76561198000000002"]);
+		assert.deepEqual(lists.find((l) => l.id === "whitelist").entries, []);
+		fs.rmSync(dir, { recursive: true, force: true });
+	});
+});

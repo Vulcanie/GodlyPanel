@@ -75,6 +75,22 @@ const GAMES = {
 		lists: {},
 		nothing: /^failed to/i,
 	},
+	// ARK (both): checked on a real Evolved server. Every command answers "<id> Kicked" and so
+	// on whether or not anyone by that id exists, so there is no "nothing happened" reply to
+	// read. The game keeps its ban list and its join-without-checks list (its whitelist) in
+	// BanList.txt and PlayersJoinNoCheckList.txt beside its program.
+	ark: {
+		who: { label: "Steam ID", pattern: STEAM64, hint: "17-digit SteamID64 (see ListPlayers)" },
+		run: "rcon",
+		listsIn: "working",
+		kick: (p) => `KickPlayer ${p}`,
+		ban: (p) => `BanPlayer ${p}`,
+		unban: (p) => `UnbanPlayer ${p}`,
+		lists: {
+			whitelist: { label: "Allowed to join (whitelist)", file: "PlayersJoinNoCheckList.txt", kind: "lines", add: (p) => `AllowPlayerToJoinNoCheck ${p}`, remove: (p) => `DisallowPlayerToJoinNoCheck ${p}` },
+			bans: { label: "Banned", file: "BanList.txt", kind: "lines", readOnly: true, add: (p) => `BanPlayer ${p}`, remove: (p) => `UnbanPlayer ${p}` },
+		},
+	},
 	// 7 Days to Die's own console, over Telnet. Who: a player's name or entity id.
 	"7days": {
 		who: { label: "player name or id", pattern: NAME, hint: "name if online, else Steam_<id>" },
@@ -172,7 +188,7 @@ export async function unbanPlayer(server, who, actor = null) {
 
 async function listFolder(server, game) {
 	const kind = Object.values(game.lists)[0]?.kind;
-	if (kind === "mcjson") return server.workingDir || server.installDir;
+	if (kind === "mcjson" || game.listsIn === "working") return server.workingDir || server.installDir;
 	// Valheim keeps these beside its saves: the -savedir folder, or the shared default.
 	const { specs } = await backupSpecsFor(server);
 	const spec = specs[0];
@@ -234,7 +250,7 @@ export async function addToList(server, listId, who, actor = null) {
 	if (!list) throw new PlayerAdminError("That list doesn't exist for this game.", "bad_list", 404);
 	const target = requireName(who, game.who.pattern, game.who.label);
 
-	if (list.kind === "lines") {
+	if (list.kind === "lines" && !list.add) {
 		const { file, text, entries } = await readList(await listFolder(server, game), list);
 		if (entries.some((e) => e.id === target)) return { ok: true, changed: false, message: `${target} is already on the list.` };
 		const eol = text.includes("\r\n") ? "\r\n" : "\n";
@@ -256,7 +272,7 @@ export async function removeFromList(server, listId, who, actor = null) {
 	if (!list) throw new PlayerAdminError("That list doesn't exist for this game.", "bad_list", 404);
 	const target = requireName(who, game.who.pattern, game.who.label);
 
-	if (list.kind === "lines") {
+	if (list.kind === "lines" && !list.add) {
 		const { file, text, entries } = await readList(await listFolder(server, game), list);
 		if (!entries.some((e) => e.id === target)) return { ok: true, changed: false, message: `${target} isn't on the list.` };
 		const eol = text.includes("\r\n") ? "\r\n" : "\n";

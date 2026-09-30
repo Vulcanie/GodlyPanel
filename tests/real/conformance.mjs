@@ -26,6 +26,8 @@ if (!game) {
 	process.exit(2);
 }
 const NAME = game.name;
+// How long to wait for a server to come online (GP_ONLINE_MIN overrides the game's own figure).
+const ONLINE_MIN = Number(process.env.GP_ONLINE_MIN) || game.onlineMin;
 const enc = encodeURIComponent;
 const ps = (cmd) => execFileSync("powershell", ["-NoProfile", "-Command", cmd], { encoding: "utf8" }).trim();
 const TB = TESTBED.replaceAll("/", "\\");
@@ -167,10 +169,10 @@ try {
 		}
 		return false;
 	};
-	const cameUp = await until(() => onlineOrDead(), { timeoutMs: game.onlineMin * 60_000, everyMs: 5000, label: `${NAME} to come online` }).catch(() => null);
+	const cameUp = await until(() => onlineOrDead(), { timeoutMs: ONLINE_MIN * 60_000, everyMs: 5000, label: `${NAME} to come online` }).catch(() => null);
 	check("the panel sees it online", Boolean(cameUp));
 	if (!cameUp) {
-		note(`never seen online in ${game.onlineMin} min. process(es): ${ours().join(", ") || "none"}`);
+		note(`never seen online in ${ONLINE_MIN} min. process(es): ${ours().join(", ") || "none"}`);
 		const w = (await get(`/api/server/${enc(NAME)}/logs`)).json;
 		note(`logs found: ${Array.isArray(w) ? w.map((l) => l.name).join(", ") : JSON.stringify(w)}`);
 		throw new Error("did not come online");
@@ -267,7 +269,7 @@ try {
 	step("Stop");
 	if (!(await online())) {
 		await post(`/api/control/${enc(NAME)}/start`);
-		await until(() => online(), { timeoutMs: game.onlineMin * 60_000, everyMs: 5000, label: "a restart after the backup" });
+		await until(() => online(), { timeoutMs: ONLINE_MIN * 60_000, everyMs: 5000, label: "a restart after the backup" });
 	}
 	await until(() => idle(), { timeoutMs: 120_000 }).catch(() => {});
 	const t0 = Date.now();
@@ -300,7 +302,7 @@ try {
 	step("Crash recovery");
 	await put(`/api/server/${enc(NAME)}/options`, { autoRestart: true });
 	await post(`/api/control/${enc(NAME)}/start`);
-	await until(() => online(), { timeoutMs: game.onlineMin * 60_000, everyMs: 5000, label: "the game to come online" });
+	await until(() => online(), { timeoutMs: ONLINE_MIN * 60_000, everyMs: 5000, label: "the game to come online" });
 	await until(() => idle(), { timeoutMs: 120_000 }).catch(() => {});
 	await sleep(10_000);
 	killOurs();
@@ -308,7 +310,7 @@ try {
 	check("the panel notices it died", true);
 	const restarted = await until(async () => (await events("server.restarted.auto")).length > 0, { timeoutMs: 6 * 60_000, everyMs: 4000, label: "an automatic restart" }).catch(() => null);
 	check("and restarts it", Boolean(restarted));
-	const back = await until(() => online(), { timeoutMs: game.onlineMin * 60_000, everyMs: 5000, label: "it to come back" }).catch(() => null);
+	const back = await until(() => online(), { timeoutMs: ONLINE_MIN * 60_000, everyMs: 5000, label: "it to come back" }).catch(() => null);
 	check("it comes back online", Boolean(back));
 	await put(`/api/server/${enc(NAME)}/options`, { autoRestart: false });
 	await until(() => idle(), { timeoutMs: 120_000 }).catch(() => {});
