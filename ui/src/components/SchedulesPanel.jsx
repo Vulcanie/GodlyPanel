@@ -25,7 +25,7 @@ import { Add as AddIcon, Delete as DeleteIcon, Edit as EditIcon, PlayArrow as Ru
 import { api } from "../api/client";
 import { onLive } from "../liveEvents";
 
-const KIND_LABELS = { backup: "Back up", restart: "Restart", update: "Update game", command: "Console command" };
+const KIND_LABELS = { backup: "Back up", restart: "Restart", update: "Update game", command: "Console command", announce: "Announce in game" };
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export function describeWhen(when) {
@@ -109,6 +109,7 @@ function SchedulesPanel({ serverName, serverNames, canManage }) {
 								<Typography variant="body2" sx={{ color: "text.secondary" }}>
 									{describeWhen(t.when)}
 									{t.kind === "command" ? ` · ${t.options.command}` : ""}
+									{t.kind === "announce" ? ` · ${t.options.messages.length} message${t.options.messages.length === 1 ? "" : "s"}, one each time` : ""}
 									{(t.kind === "restart" || t.kind === "update") && t.options.warnMinutes?.length ? ` · warns ${t.options.warnMinutes.join(", ")} min before` : ""}
 								</Typography>
 								<Typography variant="caption" sx={{ color: "text.secondary" }}>
@@ -160,6 +161,7 @@ function ScheduleDialog({ task, serverName, serverNames, onClose, onSaved }) {
 	const [at, setAt] = React.useState(when.type === "once" ? new Date(when.at).toISOString().slice(0, 16) : "");
 	const [warn, setWarn] = React.useState((task.options?.warnMinutes ?? [10, 5, 1]).join(", "));
 	const [command, setCommand] = React.useState(task.options?.command ?? "");
+	const [messages, setMessages] = React.useState((task.options?.messages ?? []).join("\n"));
 	const [mode, setMode] = React.useState(task.options?.mode ?? "");
 	const [servers, setServers] = React.useState(task.servers ?? [serverName]);
 	const [error, setError] = React.useState(null);
@@ -178,6 +180,7 @@ function ScheduleDialog({ task, serverName, serverNames, onClose, onSaved }) {
 			const options = {};
 			if (kind === "restart" || kind === "update") options.warnMinutes = warn.split(/[,\s]+/).filter(Boolean).map(Number);
 			if (kind === "command") options.command = command;
+			if (kind === "announce") options.messages = messages.split(/\r?\n/).map((m) => m.trim()).filter(Boolean);
 			if (kind === "backup" && mode) options.mode = mode;
 			const body = { kind, name, servers, when: whenBody, options };
 			if (isNew) await api.post("/api/schedules", body);
@@ -227,6 +230,17 @@ function ScheduleDialog({ task, serverName, serverNames, onClose, onSaved }) {
 
 				{(kind === "restart" || kind === "update") && (
 					<TextField size="small" label="Warn players this many minutes before" value={warn} onChange={(e) => setWarn(e.target.value)} helperText="Comma-separated, e.g. 10, 5, 1. Blank for no warning. Only games that can broadcast show it." />
+				)}
+				{kind === "announce" && (
+					<TextField
+						size="small"
+						multiline
+						minRows={3}
+						label="Messages (one per line)"
+						value={messages}
+						onChange={(e) => setMessages(e.target.value)}
+						helperText="Each time it runs it says the next message, then starts over. Only games with a chat command can show them."
+					/>
 				)}
 				{kind === "command" && <TextField size="small" label="Console command" value={command} onChange={(e) => setCommand(e.target.value)} helperText="Sent over RCON when the server is running." />}
 				{kind === "backup" && (

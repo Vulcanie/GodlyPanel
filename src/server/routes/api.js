@@ -14,6 +14,7 @@ import { forgetServerInSchedules } from "../services/scheduler.js";
 import { forgetPlayers } from "../services/playerTracker.js";
 import { forgetMetrics } from "../services/metrics.js";
 import { listVersions, readVersion } from "../services/configHistory.js";
+import { MotdError, readMotd, writeMotd } from "../services/motdService.js";
 import { CloneError, startClone, getCloneJob } from "../services/cloneService.js";
 import { PresetError, listPresets, savePreset, deletePreset, applyPreset } from "../services/presetService.js";
 import { extractModpackZip, cleanupUpload } from "../services/modpackService.js";
@@ -188,6 +189,21 @@ router.post("/server/:serverName/history/:key/:id/restore", async (req, res) => 
 		res.json({ success: true });
 	} catch (err) {
 		sendFileError(res, err, `the ${req.params.key} file`);
+	}
+});
+
+// --- Message of the day ---
+
+router.get("/server/:serverName/motd", async (req, res) => {
+	res.json({ ...(await readMotd(req.server)), running: await isServerRunning(req.server) });
+});
+
+router.put("/server/:serverName/motd", async (req, res) => {
+	try {
+		res.json(await writeMotd(req.server, req.body?.value));
+	} catch (err) {
+		if (err instanceof MotdError) return res.status(err.status).json({ error: err.message, code: err.code });
+		sendFileError(res, err, "the settings file");
 	}
 });
 

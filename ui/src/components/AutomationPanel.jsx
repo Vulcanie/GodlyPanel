@@ -116,9 +116,80 @@ function AutomationPanel({ serverName, serverStatus, onCloned }) {
 				</Typography>
 			</Paper>
 
+			<MotdCard base={base} running={serverStatus?.online} />
 			<PresetsCard serverName={serverName} base={base} running={serverStatus?.online} onNotice={setNotice} onError={setError} />
 			<CloneCard serverName={serverName} base={base} running={serverStatus?.online} onCloned={onCloned} onError={setError} />
 		</Box>
+	);
+}
+
+/** The message players see in the server list or when they join, for the games that have one. */
+function MotdCard({ base, running }) {
+	const [info, setInfo] = React.useState(null);
+	const [value, setValue] = React.useState("");
+	const [busy, setBusy] = React.useState(false);
+	const [error, setError] = React.useState(null);
+	const [saved, setSaved] = React.useState(false);
+
+	React.useEffect(() => {
+		api
+			.get(`${base}/motd`)
+			.then((r) => {
+				setInfo(r);
+				setValue(r.value ?? "");
+			})
+			.catch((e) => setError(e.message));
+	}, [base]);
+
+	if (!info?.supported) return null;
+
+	const save = async () => {
+		setBusy(true);
+		setError(null);
+		setSaved(false);
+		try {
+			const r = await api.put(`${base}/motd`, { value });
+			setInfo(r);
+			setValue(r.value);
+			setSaved(true);
+		} catch (e) {
+			setError(e.message);
+		} finally {
+			setBusy(false);
+		}
+	};
+
+	return (
+		<Paper sx={{ p: 2, mb: 2 }}>
+			<Typography variant="subtitle1">{info.label}</Typography>
+			{error && (
+				<Alert severity="error" sx={{ my: 1 }} onClose={() => setError(null)}>
+					{error}
+				</Alert>
+			)}
+			{!info.available ? (
+				<Typography variant="body2" sx={{ color: "text.secondary", mt: 1 }}>
+					{info.reason}
+				</Typography>
+			) : (
+				<Box sx={{ display: "flex", gap: 1.5, mt: 1, alignItems: "flex-start", flexWrap: "wrap" }}>
+					<TextField size="small" fullWidth multiline minRows={2} value={value} onChange={(e) => setValue(e.target.value)} disabled={running || busy} sx={{ flex: "1 1 360px" }} />
+					<Button variant="outlined" disabled={running || busy || value === info.value} onClick={save}>
+						Save
+					</Button>
+				</Box>
+			)}
+			{running && (
+				<Typography variant="caption" sx={{ color: "warning.main" }}>
+					Stop the server to change it: a running game writes its settings back when it stops.
+				</Typography>
+			)}
+			{saved && (
+				<Typography variant="caption" sx={{ color: "success.main", display: "block" }}>
+					Saved. It is in the settings history, so it can be undone.
+				</Typography>
+			)}
+		</Paper>
 	);
 }
 
