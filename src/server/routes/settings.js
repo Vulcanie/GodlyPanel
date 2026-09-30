@@ -15,6 +15,7 @@ import { inspectFolder } from "../services/folderCheck.js";
 import { EVENT_LABELS, sendTest, checkDisks } from "../services/notifier.js";
 import { BackupError } from "../services/backupService.js";
 import { panelChecklist, summarise } from "../services/setupChecklist.js";
+import { applyBotSettings, botState } from "../services/discordBot.js";
 import { listDestinations, saveDestination, removeDestination, testDestination, retryReplication } from "../services/backupDestinations.js";
 
 const router = express.Router();
@@ -62,6 +63,7 @@ router.put("/", async (req, res) => {
 			if (!check.ok) return res.status(400).json({ error: check.errors[0] });
 		}
 		const result = await patchConfig(req.body ?? {});
+		applyBotSettings();
 		res.json({ success: true, ...result });
 	} catch (e) {
 		res.status(400).json({ error: e.message });
@@ -77,6 +79,7 @@ router.put("/secrets", async (req, res) => {
 		"fixedRconPassword",
 		"alertWebhookUrl",
 		"smtpPassword",
+		"discordBotToken",
 	];
 	const patch = {};
 	for (const key of allowed) {
@@ -86,8 +89,11 @@ router.put("/secrets", async (req, res) => {
 		return res.status(400).json({ error: "No recognised secret fields supplied." });
 	}
 	await patchSecrets(patch);
+	applyBotSettings();
 	res.json({ success: true, secrets: describeSecrets() });
 });
+
+router.get("/discord-bot", (req, res) => res.json(botState()));
 
 router.get("/checklist", async (req, res) => {
 	const items = await panelChecklist();

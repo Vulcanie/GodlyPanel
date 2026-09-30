@@ -149,3 +149,4 @@ router.post("/control/:serverName/:action", (req, res, next) => {
 });
 
 export default router;
+export { CONTROL_ACTIONS };

@@ -39,6 +39,7 @@ import { initServerOptions } from "./data/serverOptions.js";
 import { initScheduler, tickScheduler } from "./services/scheduler.js";
 import { checkServersOnce, startAutoStartServers } from "./services/crashWatcher.js";
 import { sweepPartialBackups, onBackupFinished } from "./services/backupService.js";
+import { applyBotSettings, stopBot } from "./services/discordBot.js";
 import { replicateBackup, retryReplication } from "./services/backupDestinations.js";
 import { startNotifier, checkDisks } from "./services/notifier.js";
 import { sampleOnce } from "./services/metricsSampler.js";
@@ -267,6 +268,7 @@ const server = app.listen(PORT, HOST, () => {
 	// to start with the panel.
 	setTimeout(() => startAutoStartServers().catch((err) => console.error("[autostart]", err)), 12_000);
 	sweepPartialBackups().catch(() => {});
+	applyBotSettings();
 	startNotifier();
 	if (getConfig().updates.check) setTimeout(() => checkForPanelUpdate().catch(() => {}), 60_000);
 	setTimeout(() => checkDisks().catch(() => {}), 30_000);
@@ -304,6 +306,7 @@ function shutdown(reason) {
 	console.log(`[shutdown] ${reason}`);
 
 	stopAll();
+	stopBot();
 
 	// Game servers are launched as genuinely independent processes and are
 	// meant to outlive us. In-flight SteamCMD installs are not — they're

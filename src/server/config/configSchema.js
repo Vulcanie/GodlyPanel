@@ -63,6 +63,10 @@ export const DEFAULTS = {
 	discord: {
 		enabled: false,
 		adminRoleId: "",
+		// The slash-command bot. Its token is a secret (Settings -> Discord).
+		botEnabled: false,
+		botApplicationId: "",
+		botGuildId: "",
 	},
 
 	backups: {
@@ -347,6 +351,27 @@ export const FIELD_SPECS = [
 		type: "string",
 		restart: false,
 		label: "Discord admin role mention",
+	},
+	{
+		path: "discord.botEnabled",
+		type: "bool",
+		restart: false,
+		label: "Discord bot (slash commands)",
+		help: "Lets people in your Discord server see servers with /servers, /status and /players, and lets the admin role start, stop, restart and back them up.",
+	},
+	{
+		path: "discord.botApplicationId",
+		type: "string",
+		restart: false,
+		label: "Discord bot application ID",
+		help: "From the Discord developer portal: your application's General Information page.",
+	},
+	{
+		path: "discord.botGuildId",
+		type: "string",
+		restart: false,
+		label: "Discord server (guild) ID",
+		help: "Turn on Developer Mode in Discord, then right-click your server and choose Copy Server ID. The bot only answers there.",
 	},
 
 	{

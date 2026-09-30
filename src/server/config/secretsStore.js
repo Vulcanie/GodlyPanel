@@ -21,6 +21,7 @@ const EMPTY = {
 	// Where alerts are posted (Discord, Slack and similar), and the mail account's password.
 	alertWebhookUrl: "",
 	smtpPassword: "",
+	discordBotToken: "",
 	// Secret access keys of off-machine backup destinations, by destination id.
 	destinationKeys: {},
 };

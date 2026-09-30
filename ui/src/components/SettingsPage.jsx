@@ -21,6 +21,7 @@ import FolderField from "./FolderField";
 import PanelUpdateCard from "./PanelUpdateCard";
 import NotificationEvents from "./NotificationEvents";
 import BackupDestinations from "./BackupDestinations";
+import DiscordBotCard from "./DiscordBotCard";
 import { formatBytes } from "../utils/format";
 
 // The form is generated from the schema the server sends, so it can't drift
@@ -45,6 +46,7 @@ const GROUP_LABELS = {
 
 const SECRET_FIELDS = [
 	{ key: "discordWebhookUrl", label: "Discord status webhook" },
+	{ key: "discordBotToken", label: "Discord bot token" },
 	{ key: "discordUpdateWebhookUrl", label: "Discord update webhook" },
 	{ key: "curseForgeApiKey", label: "CurseForge API key" },
 	{ key: "fixedRconPassword", label: "Fixed RCON password" },
@@ -269,6 +271,8 @@ function SettingsPage({ onBack }) {
 					</Box>
 				</Paper>
 			))}
+
+			<DiscordBotCard applicationId={data.resolved.discord.botApplicationId} refreshKey={data} />
 
 			<BackupDestinations />
 
