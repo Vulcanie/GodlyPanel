@@ -1,7 +1,7 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { sendRconCommand } from "./serverControl.js";
-import { sendTelnetCommand } from "./telnetClient.js";
+import { sendTelnetCommand, cleanTelnetOutput } from "./telnetClient.js";
 import { backupSpecsFor } from "./backupService.js";
 import { isServerRunning } from "./serverState.js";
 import { logActivity } from "./activityLog.js";
@@ -77,7 +77,7 @@ const GAMES = {
 	},
 	// 7 Days to Die's own console, over Telnet. Who: a player's name or entity id.
 	"7days": {
-		who: { label: "player name or id", pattern: NAME, hint: "name or entity id" },
+		who: { label: "player name or id", pattern: NAME, hint: "name if online, else Steam_<id>" },
 		run: "telnet",
 		kick: (p, r) => `kick ${p}${r ? ` "${r}"` : ""}`,
 		ban: (p, r) => `ban add ${p} 1 year${r ? ` "${r}"` : ""}`,
@@ -86,7 +86,7 @@ const GAMES = {
 			whitelist: { label: "Whitelist", add: (p) => `whitelist add ${p}`, remove: (p) => `whitelist remove ${p}` },
 			admins: { label: "Admins", add: (p) => `admin add ${p} 0`, remove: (p) => `admin remove ${p}` },
 		},
-		nothing: /not found|unknown|no such|invalid|could not|couldn't/i,
+		nothing: /not a valid|not found|unknown|no such|invalid|could not|couldn't/i,
 	},
 	valheim: {
 		who: { label: "Steam ID", pattern: STEAM64, hint: "17-digit SteamID64" },
@@ -127,7 +127,7 @@ async function runConsole(server, game, command) {
 	}
 	if (game.run === "telnet") {
 		if (!server.telnetPort) throw new PlayerAdminError("The Telnet console isn't set up for this server.", "no_console", 409);
-		return (await sendTelnetCommand(server, command)) ?? "";
+		return cleanTelnetOutput((await sendTelnetCommand(server, command)) ?? "", command);
 	}
 	throw new PlayerAdminError("This game has no console to do that from.", "unsupported", 409);
 }

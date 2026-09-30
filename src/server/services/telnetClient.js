@@ -1,11 +1,34 @@
 import net from "node:net";
 
 /**
- * Send one console command over a plain Telnet connection (7 Days to Die's admin
- * console) and return what it printed. The connection is closed once output has gone
- * quiet for `quietMs`, or after `maxMs`. A password prompt is answered when one is given.
+ * What a command printed, from everything the console sent back. 7 Days to Die's Telnet
+ * prints a welcome banner, then its own log lines all the time, with the command's answer
+ * among them after a line "Executing command '<cmd>' by Telnet". Only that answer is
+ * wanted: log lines (they start with a timestamp) and the stack-trace lines some of them
+ * carry are left out. Seen on a real server.
  */
-export function sendTelnetCommand(server, command, { quietMs = 1200, maxMs = 8000, password = server.telnetPassword } = {}) {
+export function cleanTelnetOutput(text, command) {
+	const lines = String(text).split(/\r?\n/);
+	const at = lines.findIndex((l) => l.includes(`Executing command '${command}'`));
+	if (at === -1) return "";
+	const answer = [];
+	for (const line of lines.slice(at + 1)) {
+		if (/^\d{4}-\d{2}-\d{2}T/.test(line)) continue;
+		if (/^From: /.test(line) || /^[A-Za-z_.`0-9]+:[A-Za-z_<>0-9.`]+ \(/.test(line)) continue;
+		if (line.trim() === "") continue;
+		answer.push(line.trimEnd());
+	}
+	return answer.join("\n");
+}
+
+/**
+ * Send one console command over a plain Telnet connection (7 Days to Die's admin console)
+ * and return everything it printed in the next couple of seconds (see cleanTelnetOutput for
+ * picking the answer out). A console that keeps printing its own log never goes quiet, so the
+ * connection is closed a fixed time after the command, not when the output stops. A password
+ * prompt is answered when one is given.
+ */
+export function sendTelnetCommand(server, command, { maxMs = 8000, afterSendMs = 2500, password = server.telnetPassword } = {}) {
 	return new Promise((resolve, reject) => {
 		let output = "";
 		let sent = false;
@@ -20,8 +43,8 @@ export function sendTelnetCommand(server, command, { quietMs = 1200, maxMs = 800
 		};
 		const overall = setTimeout(() => finish(), maxMs);
 		const armQuiet = () => {
-			clearTimeout(quietTimer);
-			if (sent) quietTimer = setTimeout(() => finish(), quietMs);
+			if (!sent || quietTimer) return;
+			quietTimer = setTimeout(() => finish(), afterSendMs);
 		};
 		const send = () => {
 			if (sent) return;
