@@ -6,6 +6,8 @@ import { checkProcess } from "./processCheck.js";
 import { resolveResource } from "../../shared/resources.js";
 import { effectiveWindowMode, hideWindows, markHidingStarted } from "./serverWindows.js";
 import { launchWindowless, getRecordedPid, forgetPid } from "./windowlessLauncher.js";
+import { getSaveCommand, stopCommandFor } from "./gameCommands.js";
+import { setIntent } from "../data/serverIntent.js";
 
 const LAUNCH_HIDDEN_SCRIPT = resolveResource("scripts/launch-hidden.ps1");
 
@@ -42,36 +44,13 @@ function sendTelnetSave(server, timeoutMs = 8000) {
 	});
 }
 
-// RCON command that forces a world save, sent before every stop (and so
-// before every update too, since updateService.js stops a server before
-// running SteamCMD) — the stop/DoExit command that follows isn't guaranteed
-// to save on its own for every game, and an update always kills the
-// process outright once SteamCMD needs the files. Only games with a real,
-// documented save command are covered here; anything else (no RCON, or
-// RCON without a known save command) is silently skipped, same as
-// getBroadcastCommand() in autoUpdateService.js.
-function getSaveCommand(server) {
-	switch (server.type) {
-		case "ark":
-			return "saveworld";
-		case "minecraft":
-			return "save-all flush";
-		// Conan's RCON has 25 commands and none of them saves on its own —
-		// there is no saveworld. Its Shutdown command saves as it exits, which is
-		// why Stop uses that and nothing here.
-		case "conan":
-			return null;
-		case "Palword":
-			return "Save";
-		default:
-			return null;
-	}
-}
-
 // Runs a server's start script. Shared by the "start" control action and
 // the update-and-reboot flow (which starts servers back up once SteamCMD
 // finishes).
 export async function startServer(server) {
+	// Recorded first: from here on the server is meant to be running, which is what
+	// tells a later crash apart from a deliberate stop.
+	setIntent(server.name, "running");
 	// "No window" mode skips the start script entirely and runs the program
 	// itself; every other mode goes through the script below.
 	const windowMode = effectiveWindowMode(server);
@@ -205,24 +184,11 @@ export async function startServer(server) {
 	});
 }
 
-// The command each game's RCON uses to shut the server down. Getting this
-// wrong is silent: an unknown command is simply ignored, so the server carries
-// on running and Stop appears to do nothing.
-function stopCommandFor(server) {
-	switch (server.type) {
-		case "minecraft":
-			return "stop";
-		case "conan":
-			return "Shutdown";
-		default:
-			return "DoExit";
-	}
-}
-
 // Stops a server: RCON if configured, otherwise a close request by process name.
 // Shared by the "stop" control action and the update flow (which stops
 // servers before running SteamCMD).
 export async function stopServer(server) {
+	setIntent(server.name, "stopped");
 	if (server.rconPort && server.rconPassword) {
 		try {
 			await withRcon(

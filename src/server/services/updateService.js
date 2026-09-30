@@ -108,6 +108,7 @@ export async function updateServer(
 	});
 	trackSteamCmd(child.pid);
 	child.on("error", (err) => {
+		finish?.();
 		untrackSteamCmd(child.pid);
 		logStream.end(`
 Could not run SteamCMD: ${err.message}
@@ -115,6 +116,11 @@ Could not run SteamCMD: ${err.message}
 		console.error(`[update] SteamCMD failed to start for ${server.name}:`, err.message);
 	});
 	child.on("exit", () => untrackSteamCmd(child.pid));
+
+	// Settles when SteamCMD has finished and, for update-and-reboot, the servers have
+	// been started again, so callers can hold the server's lock until then.
+	let finish;
+	const finished = new Promise((resolve) => (finish = resolve));
 
 	if (restart) {
 		// Stay attached so this handler survives to see steamcmd finish —
@@ -150,11 +156,15 @@ Could not run SteamCMD: ${err.message}
 				}
 			}
 			logStream.end();
+			finish();
 		});
 	} else {
-		child.on("exit", () => logStream.end());
+		child.on("exit", () => {
+			logStream.end();
+			finish();
+		});
 		child.unref();
 	}
 
-	return { groupNames, logPath, restart };
+	return { groupNames, logPath, restart, finished };
 }

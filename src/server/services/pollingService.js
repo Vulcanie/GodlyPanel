@@ -221,6 +221,18 @@ async function pollOne(server) {
 	if (hasServer(name)) serverStatus[name] = status;
 }
 
+/**
+ * Poll one server now and return its fresh status. For code that has just
+ * stopped or started something and needs the real answer rather than whatever the
+ * last scheduled cycle saw.
+ */
+export async function pollServerNow(name) {
+	const server = getServerEntry(name);
+	if (!server) return null;
+	await pollOne(server);
+	return serverStatus[name] ?? null;
+}
+
 // Renders a percentage as a fixed-width block bar (Discord has no real
 // progress-bar element, so this is the text approximation of the
 // dashboard's RAM/CPU meters — mirrors SystemStatsBar.jsx on the frontend).

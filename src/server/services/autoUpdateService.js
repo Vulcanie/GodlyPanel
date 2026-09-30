@@ -6,6 +6,7 @@ import { serverStatus } from "./pollingService.js";
 import { sendUpdateAlert } from "./discordService.js";
 import { isAutoUpdateEnabled } from "./autoUpdateSettings.js";
 import { sleep } from "../util/async.js";
+import { getBroadcastCommand } from "./gameCommands.js";
 
 // Minutes-remaining checkpoints for the pre-update warning, plus an
 // explicit "now" broadcast right before the update actually starts.
@@ -19,25 +20,6 @@ const inProgress = new Set();
 async function filterAsync(items, predicate) {
 	const keep = await Promise.all(items.map(predicate));
 	return items.filter((_, i) => keep[i]);
-}
-
-// Only ARK, Minecraft, and Palworld have a known/tested broadcast command
-// here. Games without RCON configured (or without a known broadcast syntax)
-// are silently skipped for the in-game warning — they still get updated on
-// schedule, just without a heads-up inside the game itself.
-function getBroadcastCommand(server, message) {
-	switch (server.type) {
-		case "ark":
-			return `serverchat ${message}`;
-		case "minecraft":
-			return `say ${message}`;
-		case "Palword":
-			return `Broadcast ${message}`;
-		case "conan":
-			return `broadcast ${message}`;
-		default:
-			return null;
-	}
 }
 
 async function broadcastToGroup(group, message) {

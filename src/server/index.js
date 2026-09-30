@@ -28,6 +28,8 @@ import { initConfig, getConfig, onConfigChange } from "./config/configStore.js";
 import { initSecrets } from "./config/secretsStore.js";
 import { initServerStore } from "./data/serverStore.js";
 import { initAppearanceStore } from "./data/appearanceStore.js";
+import { initServerIntent } from "./data/serverIntent.js";
+import { initServerOptions } from "./data/serverOptions.js";
 import { initStorage, rescan } from "./services/storageService.js";
 import { registerTimer, scheduleAll, rescheduleAll, stopAll } from "./timerManager.js";
 
@@ -59,6 +61,8 @@ await initSecrets();
 await initUserStore();
 await initServerStore();
 await initAppearanceStore();
+await initServerIntent();
+await initServerOptions();
 await initStorage();
 initPollingState();
 

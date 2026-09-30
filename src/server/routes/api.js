@@ -20,6 +20,8 @@ import {
 	sendRconCommand,
 } from "../services/serverControl.js";
 import { updateServer } from "../services/updateService.js";
+import { runDetached, allOperations } from "../services/serverOps.js";
+import { waitUntilStopped, waitUntilOnline } from "../services/serverLifecycle.js";
 import {
 	isAutoUpdateEnabled,
 	setAutoUpdateEnabled,
@@ -171,31 +173,47 @@ router.post("/config/:serverName", async (req, res) => {
 
 // What each control action does. All but "rcon" refresh the dashboard right
 // away instead of leaving it on stale state until the next scheduled poll.
+// Each holds the server's lock (see serverOps) until the thing has really finished
+// (stopped, online, update done), while answering the request as soon as the
+// command has gone out. That is what lets the dashboard say "Stopping..." and
+// refuse a second action while one is under way.
 const CONTROL_ACTIONS = {
-	async start(server) {
-		// A second launch of a running server fails on its ports at best, and at
-		// worst leaves two copies fighting over the same save files. The status
-		// can be a few seconds old — right after a stop it still says online — so
-		// where the process can be checked directly, it is, rather than refusing
-		// a start that would be fine.
-		let running = Boolean(serverStatus[server.name]?.online);
-		if (running && server.method === "process") {
-			running = await checkProcess(server.processName, { fresh: true });
-		}
-		if (running) {
-			const err = new Error(`${server.name} is already running.`);
-			err.status = 409;
-			throw err;
-		}
-		return startServer(server);
-	},
-	stop: (server) => stopServer(server),
-	async update(server) {
-		return describeUpdate(server, await updateServer(server, { restart: false }), false);
-	},
-	async "update-reboot"(server) {
-		return describeUpdate(server, await updateServer(server, { restart: true }), true);
-	},
+	start: (server) =>
+		runDetached(server.name, "starting", async (report) => {
+			// A second launch of a running server fails on its ports at best, and at
+			// worst leaves two copies fighting over the same save files. The status
+			// can be a few seconds old — right after a stop it still says online — so
+			// where the process can be checked directly, it is, rather than refusing
+			// a start that would be fine.
+			let running = Boolean(serverStatus[server.name]?.online);
+			if (running && server.method === "process") {
+				running = await checkProcess(server.processName, { fresh: true });
+			}
+			if (running) {
+				const err = new Error(`${server.name} is already running.`);
+				err.status = 409;
+				throw err;
+			}
+			report(await startServer(server));
+			await waitUntilOnline(server);
+		}),
+	stop: (server) =>
+		runDetached(server.name, "stopping", async (report) => {
+			report(await stopServer(server));
+			await waitUntilStopped(server).catch(() => {});
+		}),
+	update: (server) =>
+		runDetached(server.name, "updating", async (report) => {
+			const started = await updateServer(server, { restart: false });
+			report(describeUpdate(server, started, false));
+			await started.finished;
+		}),
+	"update-reboot": (server) =>
+		runDetached(server.name, "updating", async (report) => {
+			const started = await updateServer(server, { restart: true });
+			report(describeUpdate(server, started, true));
+			await started.finished;
+		}),
 };
 
 function describeUpdate(server, { groupNames, logPath }, restart) {

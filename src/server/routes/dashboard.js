@@ -9,6 +9,7 @@ import { addSseClient } from "../services/sseHub.js";
 import { sanitizeStatusMap } from "../data/sanitize.js";
 import { getStorage } from "../services/storageService.js";
 import { requireRole } from "../middleware/auth.js";
+import { allOperations } from "../services/serverOps.js";
 
 const router = express.Router();
 
@@ -22,6 +23,11 @@ router.get("/status", (req, res) => {
 
 router.get("/status/latest", (req, res) => {
 	res.json(sanitizeStatusMap(serverStatus, req.user?.role));
+});
+
+// What each server is in the middle of (starting, stopping, updating, backing up...).
+router.get("/operations", (req, res) => {
+	res.json(allOperations());
 });
 
 // Cheap now (Node's own counters), so always current rather than last-polled.

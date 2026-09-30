@@ -1,0 +1,53 @@
+// What each game's console understands. Getting one wrong is silent (an unknown
+// command is ignored), so they live in one place rather than being repeated in
+// the stop, update, restart and backup code.
+
+/**
+ * A command that forces a world save, sent before a stop, an update or a live
+ * backup. Only games with a real, documented one are listed; for the rest this is
+ * null and the caller does without.
+ */
+export function getSaveCommand(server) {
+	switch (server.type) {
+		case "ark":
+			return "saveworld";
+		case "minecraft":
+			return "save-all flush";
+		// Conan's RCON has no save command; its Shutdown saves as it exits, which is
+		// why Stop uses that and nothing here.
+		case "conan":
+			return null;
+		case "Palword":
+			return "Save";
+		default:
+			return null;
+	}
+}
+
+/** The in-game broadcast for a warning message, or null when the game has none. */
+export function getBroadcastCommand(server, message) {
+	switch (server.type) {
+		case "ark":
+			return `serverchat ${message}`;
+		case "minecraft":
+			return `say ${message}`;
+		case "Palword":
+			return `Broadcast ${message}`;
+		case "conan":
+			return `broadcast ${message}`;
+		default:
+			return null;
+	}
+}
+
+/** The RCON command that shuts the server down cleanly. */
+export function stopCommandFor(server) {
+	switch (server.type) {
+		case "minecraft":
+			return "stop";
+		case "conan":
+			return "Shutdown";
+		default:
+			return "DoExit";
+	}
+}
