@@ -7,6 +7,7 @@ import { get as getServerEntry } from "../data/serverStore.js";
 import { noteServerCameOnline } from "./serverWindows.js";
 import { checkPort } from "./portCheck.js";
 import { checkProcess } from "./processCheck.js";
+import { findServerProcesses } from "./serverProcesses.js";
 import { latestServerStats } from "./serverResourceStats.js";
 import { latestStats } from "./systemStats.js";
 import { getConfig } from "../config/configStore.js";
@@ -190,7 +191,9 @@ async function pollGamedig(server, base) {
 // No port to check — process running means the server is up. These games
 // don't expose a queryable port, which is why they use process detection.
 async function pollProcess(server, base) {
-	const running = await checkProcess(server.processName);
+	let running = await checkProcess(server.processName);
+	// Another server running the same program isn't this one: look at where it runs from.
+	if (running) running = (await findServerProcesses(server)).owned.length > 0;
 	return { ...base, online: running, playerCount: 0, playerList: [] };
 }
 

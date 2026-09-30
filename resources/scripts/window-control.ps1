@@ -9,7 +9,7 @@
 # invisible helper windows every program keeps are left alone. Windows that were
 # hidden are recorded, and "show" restores exactly those and nothing else.
 #
-# -SpecFile  JSON array of { key, names[], cmdContains }
+# -SpecFile  JSON array of { key, names[], cmdContains, roots[] }  (roots: lower-case folder prefixes)
 # -Action    hide | show
 # -Seconds   how long to keep watching (hide only)
 param(
@@ -92,6 +92,13 @@ function Get-Pids($spec, $procs) {
 	$direct = @()
 	foreach ($p in $procs) {
 		if ($spec.names -contains $p.Name) {
+			# Only programs running from the server's own folder: another server with the
+			# same program name must keep its window.
+			if ($spec.roots -and @($spec.roots).Count -gt 0) {
+				$under = $false
+				foreach ($r in @($spec.roots)) { if ($p.ExecutablePath -and $p.ExecutablePath.ToLower().StartsWith($r)) { $under = $true } }
+				if (-not $under) { continue }
+			}
 			if ($spec.cmdContains -and -not ($p.CommandLine -and $p.CommandLine.Contains($spec.cmdContains))) { continue }
 			[void]$set.Add([uint32]$p.ProcessId)
 			$direct += [uint32]$p.ProcessId
@@ -125,7 +132,7 @@ try {
 		$startUtc = (Get-Date).ToUniversalTime()
 		$deadline = (Get-Date).AddSeconds($Seconds)
 		do {
-			$procs = @(Get-CimInstance Win32_Process | Select-Object ProcessId, ParentProcessId, Name, CommandLine)
+			$procs = @(Get-CimInstance Win32_Process | Select-Object ProcessId, ParentProcessId, Name, CommandLine, ExecutablePath)
 			foreach ($spec in $specs) {
 				# The owner asked for this server's window back (or changed its mode)
 				# after this watcher started: stop hiding it, or the window we just

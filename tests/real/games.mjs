@@ -11,6 +11,8 @@ export const PANEL_PORTS = [7100];
 export const GAMES = {
 	conan: {
 		templateId: "conan",
+		// Programs this game runs. If any is already running on this PC (a real server), the game is skipped.
+		programs: ["ConanSandboxServer","ConanSandboxServer-Win64-Shipping"],
 		name: "Real Conan",
 		params: { sessionName: "GodlyTest", serverPassword: "TestJoin1", port: 8892, queryPort: 8894, rconPort: 8895 },
 		ports: { udp: [8892, 8893, 8894], tcp: [8895] },
@@ -20,6 +22,8 @@ export const GAMES = {
 	},
 	valheim: {
 		templateId: "valheim",
+		// Programs this game runs. If any is already running on this PC (a real server), the game is skipped.
+		programs: ["valheim_server"],
 		name: "Real Valheim",
 		params: { sessionName: "GodlyTest", serverPassword: "TestJoin1", port: 8892 },
 		ports: { udp: [8892, 8893], tcp: [] },
@@ -29,6 +33,8 @@ export const GAMES = {
 	},
 	enshrouded: {
 		templateId: "enshrouded",
+		// Programs this game runs. If any is already running on this PC (a real server), the game is skipped.
+		programs: ["enshrouded_server"],
 		name: "Real Enshrouded",
 		params: { sessionName: "GodlyTest", serverPassword: "TestJoin1", port: 8892 },
 		ports: { udp: [8892], tcp: [] },
@@ -38,6 +44,8 @@ export const GAMES = {
 	},
 	subsistence: {
 		templateId: "subsistence",
+		// Programs this game runs. If any is already running on this PC (a real server), the game is skipped.
+		programs: ["Subsistence"],
 		name: "Real Subsistence",
 		params: { serverPassword: "TestJoin1", port: 8892 },
 		ports: { udp: [8892], tcp: [] },
@@ -48,6 +56,8 @@ export const GAMES = {
 	},
 	dragonwilds: {
 		templateId: "dragonwilds",
+		// Programs this game runs. If any is already running on this PC (a real server), the game is skipped.
+		programs: ["RSDragonwildsServer","RSDragonwildsServer-Win64-Shipping"],
 		name: "Real Dragonwilds",
 		params: { sessionName: "GodlyTest", serverPassword: "TestJoin1", port: 8892 },
 		ports: { udp: [8892], tcp: [] },
@@ -57,6 +67,8 @@ export const GAMES = {
 	},
 	windrose: {
 		templateId: "windrose",
+		// Programs this game runs. If any is already running on this PC (a real server), the game is skipped.
+		programs: ["WindroseServer-Win64-Shipping","WindroseServer"],
 		name: "Real Windrose",
 		params: { sessionName: "GodlyTest", serverPassword: "TestJoin1", port: 8892 },
 		ports: { udp: [8892], tcp: [] },
@@ -66,6 +78,8 @@ export const GAMES = {
 	},
 	palworld: {
 		templateId: "palworld",
+		// Programs this game runs. If any is already running on this PC (a real server), the game is skipped.
+		programs: ["PalServer","PalServer-Win64-Shipping-Cmd","PalServer-Win64-Shipping"],
 		name: "Real Palworld",
 		params: { sessionName: "GodlyTest", serverPassword: "TestJoin1", rconPassword: "TestRcon1", port: 8892, queryPort: 8894, rconPort: 8895 },
 		ports: { udp: [8892, 8894], tcp: [8895] },
@@ -75,6 +89,8 @@ export const GAMES = {
 	},
 	"7days": {
 		templateId: "7days",
+		// Programs this game runs. If any is already running on this PC (a real server), the game is skipped.
+		programs: ["7DaysToDieServer","7DaysToDie"],
 		name: "Real 7 Days",
 		params: { sessionName: "GodlyTest", serverPassword: "TestJoin1", port: 8892 },
 		ports: { udp: [8892, 8893, 8894, 8895], tcp: [8892] },
@@ -84,6 +100,8 @@ export const GAMES = {
 	},
 	"ark-ase": {
 		templateId: "ark-ase",
+		// Programs this game runs. If any is already running on this PC (a real server), the game is skipped.
+		programs: ["ShooterGameServer"],
 		name: "Real ARK Evolved",
 		params: { sessionName: "GodlyTest", serverPassword: "TestJoin1", rconPassword: "TestRcon1", mapCode: "TheIsland", port: 8892, queryPort: 8894, rconPort: 8895 },
 		ports: { udp: [8892, 8893, 8894], tcp: [8895] },
@@ -93,6 +111,8 @@ export const GAMES = {
 	},
 	"ark-asa": {
 		templateId: "ark-asa",
+		// Programs this game runs. If any is already running on this PC (a real server), the game is skipped.
+		programs: ["ArkAscendedServer"],
 		name: "Real ARK Ascended",
 		params: { sessionName: "GodlyTest", serverPassword: "TestJoin1", rconPassword: "TestRcon1", mapCode: "TheIsland_WP", clusterId: "TestCluster", port: 8892, queryPort: 8894, rconPort: 8895 },
 		ports: { udp: [8892, 8894], tcp: [8895] },

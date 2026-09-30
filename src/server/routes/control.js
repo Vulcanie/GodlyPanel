@@ -2,6 +2,7 @@
 import express from "express";
 import { get as getServer } from "../data/serverStore.js";
 import { checkProcess } from "../services/processCheck.js";
+import { findServerProcesses } from "../services/serverProcesses.js";
 import { pollServers, serverStatus } from "../services/pollingService.js";
 import { startServer, stopServer, sendRconCommand } from "../services/serverControl.js";
 import { updateServer } from "../services/updateService.js";
@@ -45,7 +46,7 @@ const CONTROL_ACTIONS = {
 			// a start that would be fine.
 			let running = Boolean(serverStatus[server.name]?.online);
 			if (running && server.method === "process") {
-				running = await checkProcess(server.processName, { fresh: true });
+				running = (await checkProcess(server.processName, { fresh: true })) && (await findServerProcesses(server)).owned.length > 0;
 			}
 			if (running) {
 				const err = new Error(`${server.name} is already running.`);

@@ -62,7 +62,11 @@ function processSpec(server) {
 		names.add("ShooterGameServer.exe");
 		if (server.rconPort) cmdContains = `-RCONPort=${server.rconPort}`;
 	}
-	return names.size ? { key: server.name, names: [...names], cmdContains } : null;
+	// A program counts as this server's only if it runs from inside its folder. (Not for
+	// shared programs like java.exe, whose location says nothing about which server it is.)
+	const shared = [...names].some((n) => /^javaw?(\.exe)?$/i.test(n));
+	const roots = shared ? [] : [server.installDir, server.workingDir].filter(Boolean).map((d) => `${path.resolve(d).replace(/[\\/]+$/, "").toLowerCase()}${path.sep}`);
+	return names.size ? { key: server.name, names: [...names], cmdContains, roots: [...new Set(roots)] } : null;
 }
 
 // A watcher that's still running when someone asks for a window back would hide

@@ -98,6 +98,13 @@ console.log(`=== ${NAME} (${game.templateId}) ===  testbed ${TESTBED}, ${freeGB(
 
 // ---- safety first ---------------------------------------------------------------
 const need = [...new Set([...game.ports.udp, ...game.ports.tcp])];
+// A program with the same name already running means a real server of this game is up
+// on this PC. Nothing is started, and nothing of it is ever touched.
+const running = ps(`Get-Process -Name ${game.programs.map((n) => "'" + n + "'").join(",")} -ErrorAction SilentlyContinue | ForEach-Object { $_.ProcessName + ':' + $_.Id + ':' + $_.Path }`).split(/\r?\n/).filter(Boolean);
+if (running.length > 0) {
+	console.log(`SKIPPED: ${NAME} can't be tested while this is running on the PC: ${running.join(" ; ")}. Nothing was started.`);
+	process.exit(3);
+}
 const busy = await portsFree([...need, ...game.extraFree]);
 if (busy.length > 0) {
 	console.log(`SKIPPED: port(s) ${busy.join(", ")} are in use on this PC (a real server?). Nothing was started.`);

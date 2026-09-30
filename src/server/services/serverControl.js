@@ -2,7 +2,7 @@ import { execFile, spawn } from "child_process";
 import net from "net";
 import { withRcon } from "./rconClient.js";
 import { sleep } from "../util/async.js";
-import { checkProcess } from "./processCheck.js";
+import { findServerProcesses } from "./serverProcesses.js";
 import { resolveResource } from "../../shared/resources.js";
 import { effectiveWindowMode, hideWindows, markHidingStarted } from "./serverWindows.js";
 import { launchWindowless, getRecordedPid, forgetPid } from "./windowlessLauncher.js";
@@ -250,16 +250,11 @@ export async function stopServer(server) {
 	throw new Error(`No stop method is configured for ${server.name}.`);
 }
 
-// No shell involved: the image name comes from a config file, and building a
-// command string around it would let a hostile or mistyped entry inject one.
-function taskkill(imageName, { force = false } = {}) {
+// No shell involved: building a command string around a value from a config file
+// would let a hostile or mistyped entry inject one.
+function killPid(pid, { force = false } = {}) {
 	return new Promise((resolve) => {
-		execFile(
-			"taskkill",
-			["/IM", imageName, ...(force ? ["/F"] : [])],
-			{ windowsHide: true },
-			(error, stdout, stderr) => resolve({ error, stdout, stderr }),
-		);
+		execFile("taskkill", ["/PID", String(pid), ...(force ? ["/T", "/F"] : [])], { windowsHide: true }, (error, stdout, stderr) => resolve({ error, stdout, stderr }));
 	});
 }
 
@@ -271,22 +266,37 @@ function taskkill(imageName, { force = false } = {}) {
 // every game honors a close request), just a real chance instead of none.
 // Escalates to a forced kill only if the process is still running after the
 // grace window.
+//
+// Only programs running from inside THIS server's folder are ever closed. Stopping by
+// image name used to close every program with that name on the PC, so stopping one
+// Valheim server stopped all of them. A same-named program from somewhere else is left
+// alone, and if that is all there is, Stop says so instead of acting on it.
 async function gracefulThenForceKill(server, graceMs = 15000, pollMs = 2000) {
-	await taskkill(server.processName);
+	const { owned, foreign } = await findServerProcesses(server);
+	if (owned.length === 0) {
+		const pid = await getRecordedPid(server);
+		if (pid) return stopByPid(server, pid, graceMs, pollMs);
+		if (foreign.length > 0) {
+			const err = new Error(
+				`${server.processName} is running, but not from ${server.name}'s folder, so it is another server's and was left alone. Nothing was stopped.`,
+			);
+			err.status = 409;
+			throw err;
+		}
+		return { success: true, message: `${server.name} wasn't running.` };
+	}
+
+	await Promise.all(owned.map((p) => killPid(p.pid)));
 
 	const deadline = Date.now() + graceMs;
 	while (Date.now() < deadline) {
 		await sleep(pollMs);
-		if (!(await checkProcess(server.processName))) {
+		if ((await findServerProcesses(server)).owned.length === 0) {
 			return { success: true, message: `${server.name} closed gracefully.` };
 		}
 	}
 
-	const { error, stderr } = await taskkill(server.processName, { force: true });
-	if (error && !stderr.includes("not found")) {
-		throw new Error(`Failed to stop server: ${error.message}`);
-	}
-
+	for (const p of (await findServerProcesses(server)).owned) await killPid(p.pid, { force: true });
 	return {
 		success: true,
 		message: `${server.name} didn't close on its own within ${Math.round(graceMs / 1000)}s — force-stopped.`,
