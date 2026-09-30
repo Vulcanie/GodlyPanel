@@ -134,6 +134,18 @@ try {
 	const login = await call("POST", "/api/auth/login", ADMIN);
 	step("signing in works", login.status === 200);
 
+	// ---- start with Windows: the real login entry, written by the real app
+	const runKey = "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run";
+	await call("PUT", "/api/settings", { startup: { openAtLogin: true, startHidden: true } });
+	await sleep(3000);
+	const loginEntry = ps(`(Get-ItemProperty '${runKey}' -ErrorAction SilentlyContinue).PSObject.Properties | Where-Object { $_.Value -like '*GodlyPanel*' } | ForEach-Object { $_.Value }`);
+	step("turning on start-with-Windows writes the login entry, hidden", /GodlyPanel\.exe/i.test(loginEntry) && /--hidden/.test(loginEntry), loginEntry);
+	await call("PUT", "/api/settings", { startup: { openAtLogin: false } });
+	await sleep(3000);
+	const gone2 = ps(`(Get-ItemProperty '${runKey}' -ErrorAction SilentlyContinue).PSObject.Properties | Where-Object { $_.Value -like '*GodlyPanel*' } | Measure-Object | ForEach-Object { $_.Count }`);
+	step("and turning it off removes it", gone2 === "0", gone2);
+
+
 	if (withConan) {
 		// ---- the exact mistake a tester made: the query port one above the game port
 		const bad = await call("POST", "/api/servers", { templateId: "conan", name: "Conan Clean", sessionName: "Clean", serverPassword: "abcdef", port: 8892, queryPort: 8893, rconPort: 8895, acceptSteamCmdDownload: true });
@@ -204,17 +216,6 @@ try {
 		await call("PUT", base + "/options", { autoRestart: false });
 		await until(idle, { timeoutMs: 60_000, everyMs: 2000, label: "idle" });
 
-		// ---- start with Windows: the real login entry, written by the real app
-		const runKey = "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run";
-		await call("PUT", "/api/settings", { startup: { openAtLogin: true, startHidden: true } });
-		await sleep(3000);
-		const loginEntry = ps(`(Get-ItemProperty '${runKey}' -ErrorAction SilentlyContinue).PSObject.Properties | Where-Object { $_.Value -like '*GodlyPanel*' } | ForEach-Object { $_.Value }`);
-		step("turning on start-with-Windows writes the login entry, hidden", /GodlyPanel\.exe/i.test(loginEntry) && /--hidden/.test(loginEntry), loginEntry);
-		await call("PUT", "/api/settings", { startup: { openAtLogin: false } });
-		await sleep(3000);
-		const gone2 = ps(`(Get-ItemProperty '${runKey}' -ErrorAction SilentlyContinue).PSObject.Properties | Where-Object { $_.Value -like '*GodlyPanel*' } | Measure-Object | ForEach-Object { $_.Count }`);
-		step("and turning it off removes it", gone2 === "0", gone2);
-
 		// ---- ports cannot be changed while it runs; once stopped they can
 		const whileRunning = await call("PUT", "/api/server/Conan%20Clean/ports", { ports: { port: 8902 } });
 		step("ports can't be changed while it is running", whileRunning.status === 409);
@@ -254,7 +255,10 @@ try {
 	try { await page?.screenshot({ path: path.join(OUT, "z-final.png") }); } catch {}
 	try { await browser?.close(); } catch {}
 	try { execFileSync("taskkill", ["/PID", String(app.pid), "/T", "/F"], { stdio: "ignore" }); } catch {}
-	try { ps("Get-Process ConanSandboxServer*, steamcmd -ErrorAction SilentlyContinue | Stop-Process -Force"); } catch {}
+	// Only what this run started: the test may be run on a PC that has real servers.
+	try { ps(`Get-Process ConanSandboxServer*, steamcmd -ErrorAction SilentlyContinue | Where-Object { $_.Path -like '${WORK.replaceAll("/", "\\")}*' } | Stop-Process -Force`); } catch {}
+	// And no login entry left behind if the run stopped halfway through the startup check.
+	try { ps(`$k='HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run'; (Get-ItemProperty $k).PSObject.Properties | Where-Object { $_.Value -like '*${WORK.replaceAll("/", "\\\\")}*' } | ForEach-Object { Remove-ItemProperty -Path $k -Name $_.Name }`); } catch {}
 	try { fs.copyFileSync(path.join(APP, "data", "logs", "api.log"), path.join(OUT, "api.log")); } catch {}
 }
 
