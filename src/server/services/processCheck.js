@@ -53,6 +53,10 @@ export async function checkProcess(processName, { fresh = false } = {}) {
 	const names = await snapshot(fresh);
 	if (!names) return false;
 
-	// tasklist truncates image names to 25 characters.
-	return names.has(processName.trim().toLowerCase().slice(0, 25));
+	// The CSV listing has the full image name (only its table view cuts names to 25
+	// characters). Unreal servers have long ones, e.g. RSDragonwildsServer-Win64-Shipping.exe,
+	// which a 25-character comparison never matched. The short form is also accepted in case
+	// another Windows build does cut them.
+	const wanted = processName.trim().toLowerCase();
+	return names.has(wanted) || (wanted.length > 25 && names.has(wanted.slice(0, 25)));
 }
