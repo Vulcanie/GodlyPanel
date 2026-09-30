@@ -80,3 +80,21 @@ describe("checking a schedule before it is saved", () => {
 		for (const [input, message] of bad) assert.throws(() => validateTask(input, servers), message);
 	});
 });
+
+describe("announcement schedules", () => {
+	const servers = ["Alpha"];
+	const base = { kind: "announce", servers: ["Alpha"], when: { type: "interval", everyMinutes: 30 } };
+
+	it("needs at least one message and keeps them short and on one line", () => {
+		assert.throws(() => validateTask({ ...base, options: {} }, servers), /at least one message/);
+		assert.throws(() => validateTask({ ...base, options: { messages: ["  ", ""] } }, servers), /at least one message/);
+		assert.throws(() => validateTask({ ...base, options: { messages: ["x".repeat(201)] } }, servers), /under 200/);
+		assert.throws(() => validateTask({ ...base, options: { messages: ["line one\nKick everyone"] } }, servers), /single line/);
+		assert.throws(() => validateTask({ ...base, options: { messages: Array(31).fill("hi") } }, servers), /too many messages/);
+	});
+
+	it("keeps the messages in order, trimmed", () => {
+		const t = validateTask({ ...base, options: { messages: [" Join our Discord ", "Be kind", ""] } }, servers);
+		assert.deepEqual(t.options.messages, ["Join our Discord", "Be kind"]);
+	});
+});

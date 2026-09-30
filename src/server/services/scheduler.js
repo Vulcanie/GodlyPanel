@@ -6,7 +6,7 @@ import { all as allServers, get as getServer } from "../data/serverStore.js";
 import { sleep } from "../util/async.js";
 import { dueAt, decide, validateTask } from "./schedule.js";
 import { runOperation } from "./serverOps.js";
-import { stopAndWait, startAndWait, warnPlayers } from "./serverLifecycle.js";
+import { stopAndWait, startAndWait, warnPlayers, broadcast } from "./serverLifecycle.js";
 import { isServerRunning } from "./serverState.js";
 import { createBackup } from "./backupService.js";
 import { updateServer } from "./updateService.js";
@@ -138,6 +138,16 @@ async function runOnServer(task, server) {
 				{ wait: true },
 			);
 			return "updated";
+		}
+		case "announce": {
+			if (!(await isServerRunning(server))) return "wasn't running, so nothing was announced";
+			const messages = task.options.messages ?? [];
+			// Each run says the next message in turn, wrapping round.
+			const at = (task.nextMessage ?? 0) % messages.length;
+			const r = await broadcast(server, messages[at]);
+			if (!r.sent) throw new Error(`couldn't announce: ${r.reason}`);
+			tasks = tasks.map((t) => (t.id === task.id ? { ...t, nextMessage: (at + 1) % messages.length } : t));
+			return `announced "${messages[at].slice(0, 60)}"`;
 		}
 		case "command": {
 			if (!(await isServerRunning(server))) return "wasn't running, so the command wasn't sent";

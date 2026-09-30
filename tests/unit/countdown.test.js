@@ -39,3 +39,15 @@ describe("the countdown before a scheduled restart", () => {
 		assert.equal(waited.reduce((a, b) => a + b, 0), 15);
 	});
 });
+
+describe("which games can be spoken to", () => {
+	it("knows the broadcast command of the games that have one, and of no others", async () => {
+		const { getBroadcastCommand } = await import("../../src/server/services/gameCommands.js");
+		assert.equal(getBroadcastCommand({ type: "minecraft" }, "hi"), "say hi");
+		assert.equal(getBroadcastCommand({ type: "ark" }, "hi"), "serverchat hi");
+		assert.equal(getBroadcastCommand({ type: "Palword" }, "hi"), "Broadcast hi");
+		assert.equal(getBroadcastCommand({ type: "conan" }, "hi"), "broadcast hi");
+		assert.equal(getBroadcastCommand({ type: "valheim" }, "hi"), null);
+		assert.equal(getBroadcastCommand({ type: "custom" }, "hi"), null);
+	});
+});

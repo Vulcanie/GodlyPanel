@@ -188,3 +188,71 @@ describe("schedules", () => {
 		});
 	});
 });
+
+describe("announcements", () => {
+	let panel;
+	let api;
+	let folders;
+
+	const enc = encodeURIComponent;
+	const logOf = (folder) => gameLog(folder);
+
+	before(async () => {
+		const ports = [await freePort(), await freePort()];
+		folders = [];
+		panel = await startInstance({
+			servers: (dir) => {
+				const make = (name, exe, port, extra = {}) => {
+					const folder = path.join(dir, exe);
+					folders.push(folder);
+					return { ...makeFakeGame(folder, { name, rconPort: port, exe: `${exe}.exe` }), ...extra };
+				};
+				return [make("Talk Here", "gp-fake-talk", ports[0]), make("Mute Game", "gp-fake-mute", ports[1], { method: "process", rconPort: undefined, rconPassword: undefined })];
+			},
+		});
+		api = panel.api;
+	});
+	after(async () => {
+		for (const f of folders) killFakeGames(f);
+		await panel.stop();
+	});
+
+	const task = async (id) => (await api.get("/api/schedules")).json.find((t) => t.id === id);
+	const runAndWait = async (id) => {
+		const before = (await task(id)).lastRunAt;
+		await api.post(`/api/schedules/${id}/run`);
+		await until(async () => (await task(id)).lastRunAt !== before && !(await task(id)).running);
+		return task(id);
+	};
+
+	it("says each message in turn, wrapping round", async () => {
+		await api.post("/api/control/Talk%20Here/start");
+		await until(async () => (await api.get("/api/status")).json["Talk Here"]?.online === true);
+		await until(async () => !(await api.get("/api/operations")).json["Talk Here"]);
+		const made = (await api.post("/api/schedules", { kind: "announce", name: "Reminders", servers: ["Talk Here"], when: { type: "interval", everyMinutes: 30 }, options: { messages: ["Join our Discord", "Be kind to each other"] } })).json;
+		const first = await runAndWait(made.id);
+		assert.equal(first.lastStatus, "ok");
+		assert.match(first.lastMessage, /announced "Join our Discord"/);
+		await runAndWait(made.id);
+		await runAndWait(made.id);
+		const log = logOf(folders[0]);
+		const said = [...log.matchAll(/rcon: broadcast (.+)/g)].map((m) => m[1]);
+		assert.deepEqual(said, ["Join our Discord", "Be kind to each other", "Join our Discord"]);
+	});
+
+	it("does nothing to a server that isn't running", async () => {
+		const made = (await api.post("/api/schedules", { kind: "announce", servers: ["Mute Game"], when: { type: "interval", everyMinutes: 30 }, options: { messages: ["hi"] } })).json;
+		const r = await runAndWait(made.id);
+		assert.match(r.lastMessage, /wasn't running, so nothing was announced/);
+	});
+
+	it("says plainly when a server has no RCON to broadcast through", async () => {
+		await api.post("/api/control/Mute%20Game/start");
+		assert.equal(await until(async () => (await api.get("/api/status")).json["Mute Game"]?.online === true), true);
+		await until(async () => !(await api.get("/api/operations")).json["Mute Game"]);
+		const made = (await api.post("/api/schedules", { kind: "announce", servers: ["Mute Game"], when: { type: "interval", everyMinutes: 30 }, options: { messages: ["hi"] } })).json;
+		const r = await runAndWait(made.id);
+		assert.equal(r.lastStatus, "failed", r.lastMessage);
+		assert.match(r.lastMessage, /RCON isn't set up for this server/);
+	});
+});

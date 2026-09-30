@@ -2,7 +2,7 @@
 // days, every N minutes, once) can be tested without waiting for a clock. Times
 // are the PC's local time, which is what someone setting "4am" means.
 
-export const KINDS = ["backup", "restart", "update", "command"];
+export const KINDS = ["backup", "restart", "update", "command", "announce"];
 
 const MIN_INTERVAL_MINUTES = 5;
 const TIME = /^([01]\d|2[0-3]):([0-5]\d)$/;
@@ -109,6 +109,17 @@ export function validateTask(input, knownServers) {
 		if (!command) fail("Enter the command to send.");
 		if (command.length > 500) fail("That command is too long.");
 		options.command = command;
+	}
+
+	if (input.kind === "announce") {
+		const given2 = Array.isArray(given.messages) ? given.messages : [];
+		const messages = given2.map((m) => String(m ?? "").trim()).filter(Boolean);
+		if (messages.length === 0) fail("Enter at least one message.");
+		if (messages.length > 30) fail("That is too many messages for one schedule.");
+		if (messages.some((m) => m.length > 200)) fail("Keep each message under 200 characters.");
+		// A line break would end the command early and let the rest run as another one.
+		if (messages.some((m) => /[\r\n]/.test(m))) fail("A message has to be a single line.");
+		options.messages = messages;
 	}
 
 	const name = String(input.name ?? "").trim().slice(0, 80);

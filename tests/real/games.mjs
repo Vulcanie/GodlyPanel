@@ -22,7 +22,7 @@ export const GAMES = {
 		templateId: "valheim",
 		name: "Real Valheim",
 		params: { sessionName: "GodlyTest", serverPassword: "TestJoin1", port: 8892 },
-		ports: { udp: [8892, 8893, 8894], tcp: [] },
+		ports: { udp: [8892, 8893], tcp: [] },
 		extraFree: [],
 		onlineMin: 10,
 		logName: /./,

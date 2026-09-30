@@ -58,16 +58,26 @@ export async function startAndWait(server, { timeoutMs = START_TIMEOUT_MS } = {}
 	return { online: await waitUntilOnline(server, { timeoutMs }) };
 }
 
-/** Tell players in-game, where the game has a broadcast command. Never throws. */
-export async function warnPlayers(server, message) {
-	if (!server.rconPort || !server.rconPassword) return false;
+/**
+ * Say something in the game's chat. Resolves to { sent, reason }: `reason` says why
+ * not when it couldn't be sent (no broadcast command for this game, no RCON set up,
+ * the server didn't answer).
+ */
+export async function broadcast(server, message) {
 	const command = getBroadcastCommand(server, message);
-	if (!command) return false;
+	if (!command) return { sent: false, reason: `there is no known way to broadcast a message in this game` };
+	if (!server.rconPort || !server.rconPassword) return { sent: false, reason: "RCON isn't set up for this server" };
 	try {
 		await sendRconCommand(server, command);
-		return true;
+		return { sent: true };
 	} catch (err) {
-		console.warn(`[lifecycle] Warning to ${server.name} failed: ${err.message}`);
-		return false;
+		return { sent: false, reason: err.message };
 	}
+}
+
+/** Tell players in-game, where the game has a broadcast command. Never throws. */
+export async function warnPlayers(server, message) {
+	const r = await broadcast(server, message);
+	if (!r.sent && r.reason && !/no known way|isn't set up/.test(r.reason)) console.warn(`[lifecycle] Warning to ${server.name} failed: ${r.reason}`);
+	return r.sent;
 }
