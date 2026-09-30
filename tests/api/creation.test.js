@@ -92,7 +92,7 @@ describe("creating a server", () => {
 		it("refuses a query or RCON port right after the game port", async () => {
 			const palworld = await create("palworld", { name: "P1", port: 9700, queryPort: 9701, rconPort: 9703 });
 			assert.equal(palworld.status, 400);
-			assert.match(palworld.json.error, /Query Port 9701 is the game port \+ 1, which Palworld may use for a companion port/);
+			assert.match(palworld.json.error, /REST API Port 9701 is the game port \+ 1, which Palworld may use for a companion port/);
 			const minecraft = await create("minecraft-modpack", { name: "M1", port: 9800, rconPort: 9801 });
 			assert.equal(minecraft.status, 400);
 			assert.match(minecraft.json.error, /RCON Port 9801 is the game port \+ 1/);

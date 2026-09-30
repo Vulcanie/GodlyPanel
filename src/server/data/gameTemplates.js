@@ -761,7 +761,7 @@ export const GAME_TEMPLATES = [
 		fields: ["sessionName", "serverPassword", "rconPassword"],
 		ports: [
 			{ key: "port", label: "Game Port", default: 8920 },
-			{ key: "queryPort", label: "REST API Port (panel status)", default: 8922 },
+			{ key: "queryPort", label: "REST API Port", default: 8922 },
 			{ key: "rconPort", label: "RCON Port", default: 8923 },
 		],
 		buildStartScriptFilename: () => "Start_Palworld.bat",
