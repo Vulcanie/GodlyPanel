@@ -53,6 +53,7 @@ const supervisor = new ApiSupervisor({
 	dataDir,
 	resourceRoot,
 	getPort: () => readConfiguredPort(dataDir),
+	env: { GHP_APP_VERSION: app.getVersion() },
 });
 
 function showWindow() {

@@ -23,7 +23,13 @@ const net = require("node:net");
 const fs = require("node:fs");
 const path = require("node:path");
 const arg = (name, fallback) => { const i = process.argv.indexOf("--" + name); return i > 0 ? process.argv[i + 1] : fallback; };
-const rconPort = Number(arg("rcon")); const password = arg("password", "pw"); const home = arg("home", process.cwd());
+let rconPort = Number(arg("rcon")); let password = arg("password", "pw"); const home = arg("home", process.cwd());
+const ini = path.join(home, "ConanSandbox", "Saved", "Config", "WindowsServer", "ServerSettings.ini");
+if (!rconPort && fs.existsSync(ini)) {
+  const text = fs.readFileSync(ini, "utf8");
+  rconPort = Number(/^RconPort\s*=\s*(\d+)/im.exec(text)?.[1]);
+  password = /^RconPassword\s*=\s*(.*)$/im.exec(text)?.[1]?.trim() || password;
+}
 const saved = path.join(home, "ConanSandbox", "Saved"); const logs = path.join(saved, "Logs");
 fs.mkdirSync(logs, { recursive: true });
 const log = (line) => fs.appendFileSync(path.join(logs, "game.log"), new Date().toISOString() + " " + line + "\n");
@@ -68,7 +74,7 @@ setInterval(() => {}, 1000);
  * @param {string} [options.exe]      image name; give each fake its own so they are told apart
  * @param {number} [options.crashAfterMs]  die this long after starting (0 = never), to test crash loops
  */
-export function makeFakeGame(folder, { name, rconPort, exe = "fakegame.exe", password = "pw", crashAfterMs = 0 }) {
+export function makeFakeGame(folder, { name, rconPort, exe = "fakegame.exe", password = "pw", crashAfterMs = 0, ports = null }) {
 	fs.mkdirSync(folder, { recursive: true });
 	fs.copyFileSync(process.execPath, path.join(folder, exe));
 	fs.writeFileSync(path.join(folder, "fakegame.cjs"), SCRIPT);
@@ -78,9 +84,21 @@ export function makeFakeGame(folder, { name, rconPort, exe = "fakegame.exe", pas
 	fs.writeFileSync(path.join(saved, "world.sav"), "world v1\n");
 	fs.writeFileSync(path.join(saved, "Config", "settings.ini"), "[Server]\nName=fake\n");
 	const script = path.join(folder, "Start_Fake.bat");
+	// With `ports`, the game is set up like a real Conan server: its ports are flags on
+	// the launch line, and its RCON port and password live in ServerSettings.ini, so the
+	// panel's port and clone code have real places to read and change them.
+	let launch = `--rcon ${rconPort} --password ${password}`;
+	let configPath;
+	if (ports) {
+		const dir = path.join(saved, "Config", "WindowsServer");
+		fs.mkdirSync(dir, { recursive: true });
+		configPath = path.join(dir, "ServerSettings.ini");
+		fs.writeFileSync(configPath, `[ServerSettings]\r\nAdminPassword=${password}\r\nRconPort=${rconPort}\r\nRconPassword=${password}\r\n`);
+		launch = `-Port=${ports.port} -QueryPort=${ports.queryPort}`;
+	}
 	fs.writeFileSync(
 		script,
-		`@echo off\r\ncd /d "%~dp0"\r\nstart /MIN "${name}" ${exe} fakegame.cjs --rcon ${rconPort} --password ${password} --home "%~dp0."${crashAfterMs ? ` --crash-after ${crashAfterMs}` : ""}\r\n`,
+		`@echo off\r\ncd /d "%~dp0"\r\nstart /MIN "${name}" ${exe} fakegame.cjs ${launch} --home "%~dp0."${crashAfterMs ? ` --crash-after ${crashAfterMs}` : ""}\r\n`,
 	);
 	return {
 		name,
@@ -94,6 +112,7 @@ export function makeFakeGame(folder, { name, rconPort, exe = "fakegame.exe", pas
 		workingDir: folder,
 		startScriptPath: script,
 		source: "created",
+		...(ports ? { port: ports.port, queryPort: ports.queryPort, configPath } : {}),
 	};
 }
 

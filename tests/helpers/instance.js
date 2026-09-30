@@ -115,8 +115,9 @@ export class Api {
  * @param {object}   [options.config]   merged over the minimal test config
  * @param {boolean}  [options.admin]    create the admin (and a guest) account
  * @param {(dir: string) => void} [options.prepare]  runs before boot, e.g. to make files
+ * @param {object}   [options.env]      extra environment for the API process
  */
-export async function startInstance({ servers = [], config = {}, admin = true, prepare } = {}) {
+export async function startInstance({ servers = [], config = {}, admin = true, prepare, env = {} } = {}) {
 	const dir = tempDir("api");
 	const port = await freePort();
 	prepare?.(dir);
@@ -140,6 +141,7 @@ export async function startInstance({ servers = [], config = {}, admin = true, p
 			GHP_DATA_DIR: dir,
 			GHP_PORT: String(port),
 			GHP_RESOURCE_ROOT: path.join(ROOT, "resources"),
+			...env,
 		},
 		stdio: ["ignore", logFd, logFd],
 	});

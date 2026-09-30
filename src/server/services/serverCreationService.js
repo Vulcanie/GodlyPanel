@@ -81,7 +81,7 @@ export async function getJob(jobId) {
 	}
 }
 
-function slugify(name) {
+export function slugify(name) {
 	return name
 		.toLowerCase()
 		.replace(/[^a-z0-9]+/g, "-")
@@ -210,7 +210,7 @@ export async function suggestParams(templateId) {
 	};
 }
 
-async function validateNewServer(template, name, ports, sharedInstallDir) {
+export async function validateNewServer(template, name, ports, sharedInstallDir) {
 	if (!name || !name.trim()) throw new Error("A server name is required.");
 	if (allServers().some((s) => s.name === name)) {
 		throw new Error(`A server named "${name}" already exists.`);

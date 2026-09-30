@@ -81,6 +81,13 @@ export const DEFAULTS = {
 		autoStartDelaySec: 20,
 	},
 
+	updates: {
+		// Ask GitHub's public releases list whether there is a newer GodlyPanel.
+		check: true,
+		includePrereleases: true,
+		repo: "Vulcanie/GodlyPanel",
+	},
+
 	notifications: {
 		// A native Windows notification. Webhook and email are set up with their own
 		// secrets (Settings -> Notifications).
@@ -393,6 +400,26 @@ export const FIELD_SPECS = [
 		help: "For servers set to start with the panel.",
 	},
 
+	{
+		path: "updates.check",
+		type: "bool",
+		restart: false,
+		label: "Check for new versions of GodlyPanel",
+		help: "Asks GitHub's public releases list, every few hours. Nothing about you or your servers is sent. It never installs anything.",
+	},
+	{
+		path: "updates.includePrereleases",
+		type: "bool",
+		restart: false,
+		label: "Include pre-release (alpha/beta) versions",
+	},
+	{
+		path: "updates.repo",
+		type: "string",
+		restart: false,
+		label: "Where releases are published",
+		help: "owner/name on GitHub.",
+	},
 	{
 		path: "notifications.desktop",
 		type: "bool",

@@ -23,7 +23,7 @@ export async function waitUntilStopped(server, { timeoutMs = STOP_TIMEOUT_MS, ev
 // A program that has been gone for this long after starting isn't loading, it died.
 const DEAD_AFTER_MS = 20_000;
 
-export async function waitUntilOnline(server, { timeoutMs = START_TIMEOUT_MS, everyMs = 5000 } = {}) {
+export async function waitUntilOnline(server, { timeoutMs = START_TIMEOUT_MS, everyMs = 2000 } = {}) {
 	const startedAt = Date.now();
 	const deadline = startedAt + timeoutMs;
 	let goneInARow = 0;

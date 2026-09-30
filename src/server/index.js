@@ -24,6 +24,9 @@ import { cleanupStaleUploads } from "./services/modpackService.js";
 import { killTrackedSteamCmd, hasActiveJobs } from "./services/processRegistry.js";
 import batchFileRoutes from "./routes/batchFiles.js";
 import controlRoutes from "./routes/control.js";
+import updatesRoutes from "./routes/updates.js";
+import { initPanelUpdate, checkForPanelUpdate } from "./services/panelUpdate.js";
+import { initPresets } from "./services/presetService.js";
 import operationsRoutes from "./routes/operations.js";
 import { ensureDataDirs, paths } from "./paths.js";
 import { initConfig, getConfig, onConfigChange } from "./config/configStore.js";
@@ -70,6 +73,8 @@ await initAppearanceStore();
 await initServerIntent();
 await initServerOptions();
 await initScheduler();
+await initPanelUpdate();
+await initPresets();
 await initStorage();
 initPollingState();
 
@@ -121,6 +126,7 @@ app.use("/api", viewers, dashboardRoutes);
 app.use("/api", operators, controlRoutes);
 app.use("/api", operators, operationsRoutes);
 app.use("/api/users", requireRole("admin"), userRoutes);
+app.use("/api/updates", requireRole("admin"), updatesRoutes);
 app.use("/api/settings", requireRole("admin"), settingsRoutes);
 app.use("/api/batch-files", requireRole("admin"), batchFileRoutes);
 app.use("/api", requireRole("admin"), apiRouter);
@@ -215,6 +221,12 @@ registerTimer(
 // reacting promptly, not about how often to poll, so they aren't settings.
 registerTimer("scheduler", () => tickScheduler().catch((err) => console.error("[schedule]", err)), () => 15_000);
 registerTimer("crash-watch", () => checkServersOnce().catch((err) => console.error("[recovery]", err)), () => 5_000);
+registerTimer(
+	"panel-update-check",
+	() => checkForPanelUpdate().catch(() => {}),
+	() => 6 * 3600_000,
+	(c) => c.updates.check,
+);
 registerTimer("disk-watch", () => checkDisks().catch((err) => console.error("[disk]", err)), () => 10 * 60_000);
 registerTimer(
 	"storage-scan",
@@ -249,6 +261,7 @@ const server = app.listen(PORT, HOST, () => {
 	setTimeout(() => startAutoStartServers().catch((err) => console.error("[autostart]", err)), 12_000);
 	sweepPartialBackups().catch(() => {});
 	startNotifier();
+	if (getConfig().updates.check) setTimeout(() => checkForPanelUpdate().catch(() => {}), 60_000);
 	setTimeout(() => checkDisks().catch(() => {}), 30_000);
 
 	// Deferred: the first poll matters more than the disk figure, and a walk

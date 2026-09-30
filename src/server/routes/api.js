@@ -12,6 +12,8 @@ import { describePorts, checkPorts, applyPorts } from "../services/serverPorts.j
 import { planRemoval, removeServerCompletely } from "../services/serverRemoval.js";
 import { forgetServerInSchedules } from "../services/scheduler.js";
 import { forgetPlayers } from "../services/playerTracker.js";
+import { CloneError, startClone, getCloneJob } from "../services/cloneService.js";
+import { PresetError, listPresets, savePreset, deletePreset, applyPreset } from "../services/presetService.js";
 import { extractModpackZip, cleanupUpload } from "../services/modpackService.js";
 import { SUPPORTED_MODLOADER_FAMILIES } from "../data/gameTemplates.js";
 import { pollServers } from "../services/pollingService.js";
@@ -133,6 +135,54 @@ router.delete("/server/:serverName", async (req, res) => {
 		const status = err.code === "files_protected" ? 400 : 500;
 		if (status === 500) console.error(`Removing ${req.server.name} failed:`, err);
 		res.status(status).json({ error: err.message, code: err.code });
+	}
+});
+
+// --- Cloning and presets ---
+
+// Copies the whole server under a new name, ports and RCON password. Returns at once;
+// the copy carries on in the background (progress on the live stream and at clone-jobs).
+router.post("/server/:serverName/clone", async (req, res) => {
+	try {
+		const { name, sessionName } = req.body ?? {};
+		res.status(202).json(await startClone(req.server, name, { sessionName: typeof sessionName === "string" && sessionName.trim() ? sessionName.trim() : undefined }));
+	} catch (err) {
+		if (err instanceof CloneError || err.code) return res.status(err.status ?? 400).json({ error: err.message, code: err.code });
+		console.error(`Cloning ${req.server.name} failed:`, err);
+		res.status(500).json({ error: err.message });
+	}
+});
+
+router.get("/clone-jobs/:id", (req, res) => {
+	const job = getCloneJob(req.params.id);
+	job ? res.json(job) : res.status(404).json({ error: "No such job." });
+});
+
+router.get("/presets", (req, res) => {
+	res.json(listPresets());
+});
+
+router.post("/server/:serverName/presets", async (req, res) => {
+	try {
+		res.json(await savePreset(req.server, req.body?.name));
+	} catch (err) {
+		if (err instanceof PresetError) return res.status(err.status).json({ error: err.message, code: err.code });
+		console.error("Saving a preset failed:", err);
+		res.status(500).json({ error: err.message });
+	}
+});
+
+router.delete("/presets/:id", async (req, res) => {
+	(await deletePreset(req.params.id)) ? res.json({ success: true }) : res.status(404).json({ error: "No such preset." });
+});
+
+router.post("/server/:serverName/presets/:id/apply", async (req, res) => {
+	try {
+		res.json({ success: true, ...(await applyPreset(req.server, req.params.id, { keepIdentity: req.body?.keepIdentity !== false })) });
+	} catch (err) {
+		if (err instanceof PresetError) return res.status(err.status).json({ error: err.message, code: err.code });
+		console.error("Applying a preset failed:", err);
+		res.status(500).json({ error: err.message });
 	}
 });
 
