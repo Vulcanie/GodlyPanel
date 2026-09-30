@@ -14,6 +14,7 @@ import { rescan } from "../services/storageService.js";
 import { inspectFolder } from "../services/folderCheck.js";
 import { EVENT_LABELS, sendTest, checkDisks } from "../services/notifier.js";
 import { BackupError } from "../services/backupService.js";
+import { panelChecklist, summarise } from "../services/setupChecklist.js";
 import { listDestinations, saveDestination, removeDestination, testDestination, retryReplication } from "../services/backupDestinations.js";
 
 const router = express.Router();
@@ -86,6 +87,11 @@ router.put("/secrets", async (req, res) => {
 	}
 	await patchSecrets(patch);
 	res.json({ success: true, secrets: describeSecrets() });
+});
+
+router.get("/checklist", async (req, res) => {
+	const items = await panelChecklist();
+	res.json({ items, ...summarise(items) });
 });
 
 // ---- off-machine backup destinations ------------------------------------------

@@ -1,6 +1,7 @@
 import React from "react";
 import { Alert, Box, Chip, CircularProgress, Paper, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
 import { api } from "../api/client";
+import PlayerAdminCard from "./PlayerAdminCard";
 
 const ago = (iso) => {
 	const seconds = Math.max(0, (Date.now() - Date.parse(iso)) / 1000);
@@ -52,6 +53,8 @@ function PlayersPanel({ serverName }) {
 					</Box>
 				)}
 			</Paper>
+
+			<PlayerAdminCard serverName={serverName} online={data.online} />
 
 			<Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", alignItems: "flex-start" }}>
 				<Paper sx={{ flex: "1 1 320px", p: 2 }}>

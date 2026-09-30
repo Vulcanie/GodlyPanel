@@ -8,9 +8,11 @@ import { getOptions, setOptions } from "../data/serverOptions.js";
 import { requirePermission, canAccessServer, can } from "../middleware/permissions.js";
 import { listTasks, addTask, updateTask, removeTask, runTask } from "../services/scheduler.js";
 import { recoveryState } from "../services/crashWatcher.js";
-import { recentActivity } from "../services/activityLog.js";
+import { recentActivity, logActivity } from "../services/activityLog.js";
 import { listLogs, readLog, searchLog } from "../services/logService.js";
 import { playersFor } from "../services/playerTracker.js";
+import { firewallReport, lanAddresses, ruleCommands, runElevated, forgetFirewallCache } from "../services/firewallCheck.js";
+import { serverChecklist, summarise } from "../services/setupChecklist.js";
 import { PlayerAdminError, capabilities, readLists, kickPlayer, banPlayer, unbanPlayer, addToList, removeFromList } from "../services/playerAdmin.js";
 import { readSeries, RANGES } from "../services/metrics.js";
 import { statsFor } from "../services/playerStats.js";
@@ -313,6 +315,44 @@ router.delete("/server/:serverName/player-lists/:list/:player", requirePermissio
 		res.json(await removeFromList(req.server, req.params.list, req.params.player, actorOf(req)));
 	} catch (err) {
 		adminFail(res, err, "Removing from the list");
+	}
+});
+
+// ---- can people reach it? ---------------------------------------------------------
+
+router.get("/server/:serverName/checklist", requirePermission("server.control"), async (req, res) => {
+	const items = await serverChecklist(req.server, { withFirewall: req.query.firewall !== "0" });
+	res.json({ items, ...summarise(items) });
+});
+
+// This PC's addresses, what Windows Firewall does about the server's ports, and what the router needs.
+router.get("/server/:serverName/network", requirePermission("server.control"), async (req, res) => {
+	const firewall = await firewallReport(req.server, { force: req.query.refresh === "1" });
+	const lan = lanAddresses();
+	const gamePort = firewall.needs.find((n) => n.label === "Game port")?.port ?? firewall.needs[0]?.port ?? null;
+	res.json({
+		lan: lan.map((a) => ({ ...a, join: gamePort ? `${a.address}:${gamePort}` : a.address })),
+		firewall,
+		router: firewall.needs,
+	});
+});
+
+// Opens the server's ports in Windows Firewall. Needs administrator rights on this PC, which Windows
+// asks for with its own prompt; "dryRun" only returns what would be run.
+router.post("/server/:serverName/network/firewall-rule", async (req, res) => {
+	if (req.user?.role !== "admin") return res.status(403).json({ error: "Only an administrator can change the firewall.", code: "forbidden" });
+	try {
+		const firewall = await firewallReport(req.server, { force: true });
+		const missing = (firewall.missing ?? firewall.needs ?? []).filter((p) => p.open !== true);
+		if (missing.length === 0) return res.json({ changed: false, message: "Every port is already allowed." });
+		const plan = ruleCommands(req.server, missing, { publicNetworks: req.body?.publicNetworks === true });
+		if (req.body?.dryRun === true) return res.json({ changed: false, ...plan });
+		await runElevated(plan.commands);
+		forgetFirewallCache();
+		logActivity({ type: "firewall.rule_added", server: req.server.name, message: `${req.user.username}: Opened ${missing.map((p) => `${p.port}/${p.protocol}`).join(", ")} in Windows Firewall for ${req.server.name}.` });
+		res.json({ changed: true, ...plan, firewall: await firewallReport(req.server, { force: true }) });
+	} catch (err) {
+		res.status(err.status ?? 500).json({ error: err.message });
 	}
 });
 
