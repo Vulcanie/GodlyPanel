@@ -215,6 +215,29 @@ try {
 		}
 	}
 
+	// For a game the panel has no player-admin entry for yet: try its console commands on a player
+	// who isn't there and see what files they touch, so the entry can be written from facts.
+	if (game.probeCommands) {
+		const since = Date.now() - 1000;
+		for (const command of game.probeCommands) {
+			const r = await post(`/api/control/${enc(NAME)}/rcon`, { command });
+			note(`console ${JSON.stringify(command)} -> ${r.status} ${JSON.stringify(r.json).slice(0, 200)}`);
+		}
+		await sleep(3000);
+		const touched = [];
+		(function walk(dir, depth = 0) {
+			if (depth > 6) return;
+			for (const f of fs.readdirSync(dir, { withFileTypes: true })) {
+				const full = path.join(dir, f.name);
+				try {
+					if (f.isDirectory()) walk(full, depth + 1);
+					else if (fs.statSync(full).mtimeMs >= since && !/\\(Logs|logs|Crashes|CrashReportClient)\\|\.log$/.test(full)) touched.push(full);
+				} catch {}
+			}
+		})(entry.installDir);
+		note(`files changed by those commands: ${touched.slice(0, 12).join(" ; ") || "none"}`);
+	}
+
 	// ---- backup ----------------------------------------------------------------
 	step("Backup");
 	const overview = (await get(`/api/server/${enc(NAME)}/backups`)).json;
