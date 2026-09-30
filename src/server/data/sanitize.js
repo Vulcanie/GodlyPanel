@@ -13,6 +13,7 @@ const GUEST_FIELDS = [
 	"ping",
 	"sessionName",
 	"joinAddress",
+	"tags",
 ];
 
 export function sanitizeServerStatus(status, role) {

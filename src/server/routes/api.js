@@ -3,7 +3,7 @@
 // and filesystem paths, or changes something.
 import express from "express";
 import multer from "multer";
-import { get as getServer } from "../data/serverStore.js";
+import { get as getServer, update as updateServer } from "../data/serverStore.js";
 import { readManagedFile, writeManagedFile, sendFileError } from "../util/managedFiles.js";
 import { singleFile } from "../middleware/uploadErrors.js";
 import serverWindowRoutes from "./serverWindowRoutes.js";
@@ -85,6 +85,26 @@ router.post("/server/:serverName/auto-update", async (req, res) => {
 
 	await setAutoUpdateEnabled(server.name, enabled);
 	res.json({ success: true, autoUpdateEnabled: enabled });
+});
+
+// --- Tags: free labels for finding and grouping servers on the dashboard ---
+
+const TAG = /^[\p{L}\p{N} ._-]{1,24}$/u;
+
+router.put("/server/:serverName/tags", async (req, res) => {
+	const raw = req.body?.tags;
+	if (!Array.isArray(raw)) return res.status(400).json({ error: "tags must be a list." });
+	const tags = [];
+	for (const item of raw) {
+		if (typeof item !== "string") return res.status(400).json({ error: "Each tag must be text.", code: "bad_tag" });
+		const tag = item.trim().replace(/\s+/g, " ");
+		if (!TAG.test(tag)) return res.status(400).json({ error: `"${tag.slice(0, 30)}" isn't a valid tag: use up to 24 letters, numbers, spaces, dots, dashes or underscores.`, code: "bad_tag" });
+		if (!tags.some((t) => t.toLowerCase() === tag.toLowerCase())) tags.push(tag);
+	}
+	if (tags.length > 10) return res.status(400).json({ error: "A server can have up to 10 tags.", code: "too_many_tags" });
+	const updated = await updateServer(req.server.name, { tags });
+	pollServers().catch(() => {});
+	res.json({ tags: updated.tags });
 });
 
 // --- Ports ---

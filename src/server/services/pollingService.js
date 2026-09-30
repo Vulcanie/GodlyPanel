@@ -41,6 +41,7 @@ export function syncServerStatusKeys() {
 				sessionName: s.sessionName,
 				serverPassword: s.serverPassword,
 				joinAddress: s.joinAddress,
+				tags: s.tags ?? [],
 				// Not yet checked. This used to default to `true`, which meant
 				// anything the panel hadn't successfully polled — a server
 				// that's simply down, or one whose poll hangs — was reported
@@ -205,6 +206,7 @@ async function pollOne(server) {
 		sessionName: server.sessionName,
 		serverPassword: server.serverPassword,
 		joinAddress: server.joinAddress,
+		tags: server.tags ?? [],
 		type: server.type,
 	};
 
