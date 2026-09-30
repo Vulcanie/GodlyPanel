@@ -29,6 +29,11 @@ const SAFE_ID = /^[A-Za-z0-9._-]+$/;
 const SAFETY_KINDS = ["pre-restore", "pre-update"];
 const SAFETY_KEEP = 3;
 
+// Things that want to know about each finished backup (copying it off the machine) register
+// here, so this file doesn't have to know about them.
+const backupHooks = [];
+export const onBackupFinished = (fn) => backupHooks.push(fn);
+
 export class BackupError extends Error {
 	constructor(message, code, status = 400) {
 		super(message);
@@ -396,6 +401,8 @@ export async function createBackup(server, { kind = "manual", reason = null, mod
 			message: `Backup of ${server.name} finished (${(sizeBytes / 1024 ** 2).toFixed(1)} MB, ${kind}${consistent ? "" : ", copied while running"}).`,
 			data: { id, kind, sizeBytes },
 		});
+		// Copying elsewhere carries on in the background; it never holds up or fails the backup.
+		for (const hook of backupHooks) Promise.resolve(hook(server, id)).catch((err) => console.warn(`[backup] After-backup step failed: ${err.message}`));
 		return { ...record, hasRecord: true };
 	} catch (err) {
 		await fs.rm(partial, { force: true }).catch(() => {});

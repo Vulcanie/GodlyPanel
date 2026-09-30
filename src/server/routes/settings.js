@@ -13,6 +13,8 @@ import { remove as removeServer, all as allServers } from "../data/serverStore.j
 import { rescan } from "../services/storageService.js";
 import { inspectFolder } from "../services/folderCheck.js";
 import { EVENT_LABELS, sendTest, checkDisks } from "../services/notifier.js";
+import { BackupError } from "../services/backupService.js";
+import { listDestinations, saveDestination, removeDestination, testDestination, retryReplication } from "../services/backupDestinations.js";
 
 const router = express.Router();
 
@@ -84,6 +86,52 @@ router.put("/secrets", async (req, res) => {
 	}
 	await patchSecrets(patch);
 	res.json({ success: true, secrets: describeSecrets() });
+});
+
+// ---- off-machine backup destinations ------------------------------------------
+
+const destFail = (res, err) => {
+	if (err instanceof BackupError || err.status) return res.status(err.status ?? 400).json({ error: err.message, code: err.code });
+	console.error("Backup destinations:", err);
+	res.status(500).json({ error: err.message });
+};
+
+router.get("/backup-destinations", async (req, res) => res.json({ destinations: await listDestinations() }));
+
+router.post("/backup-destinations", async (req, res) => {
+	try {
+		res.status(201).json(await saveDestination(req.body ?? {}));
+	} catch (err) {
+		destFail(res, err);
+	}
+});
+
+// Checks a form's values without saving them ({ id } of a saved one tests it as stored).
+router.post("/backup-destinations/test", async (req, res) => {
+	try {
+		res.json(await testDestination(req.body?.id && Object.keys(req.body).length === 1 ? req.body.id : (req.body ?? {})));
+	} catch (err) {
+		destFail(res, err);
+	}
+});
+
+router.post("/backup-destinations/retry", async (req, res) => res.json(await retryReplication()));
+
+router.put("/backup-destinations/:id", async (req, res) => {
+	try {
+		res.json(await saveDestination(req.body ?? {}, req.params.id));
+	} catch (err) {
+		destFail(res, err);
+	}
+});
+
+router.delete("/backup-destinations/:id", async (req, res) => {
+	try {
+		await removeDestination(req.params.id);
+		res.json({ success: true });
+	} catch (err) {
+		destFail(res, err);
+	}
 });
 
 router.post("/storage/rescan", async (req, res) => {

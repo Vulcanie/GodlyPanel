@@ -38,7 +38,8 @@ import { initServerIntent } from "./data/serverIntent.js";
 import { initServerOptions } from "./data/serverOptions.js";
 import { initScheduler, tickScheduler } from "./services/scheduler.js";
 import { checkServersOnce, startAutoStartServers } from "./services/crashWatcher.js";
-import { sweepPartialBackups } from "./services/backupService.js";
+import { sweepPartialBackups, onBackupFinished } from "./services/backupService.js";
+import { replicateBackup, retryReplication } from "./services/backupDestinations.js";
 import { startNotifier, checkDisks } from "./services/notifier.js";
 import { sampleOnce } from "./services/metricsSampler.js";
 import { initStorage, rescan } from "./services/storageService.js";
@@ -231,6 +232,8 @@ registerTimer(
 	(c) => c.updates.check,
 );
 registerTimer("metrics", () => sampleOnce().catch((err) => console.error("[metrics]", err)), (c) => c.metrics.sampleSec * 1000, (c) => c.metrics.enabled);
+onBackupFinished((server, id) => replicateBackup(server, id));
+registerTimer("offsite-retry", () => retryReplication().catch((err) => console.error("[offsite]", err)), () => 10 * 60_000);
 registerTimer("disk-watch", () => checkDisks().catch((err) => console.error("[disk]", err)), () => 10 * 60_000);
 registerTimer(
 	"storage-scan",

@@ -22,6 +22,7 @@ import {
 	restoreBackup,
 	validateBackupPaths,
 } from "../services/backupService.js";
+import { listDestinations, replicationFor, listRemote, fetchRemote, backfill } from "../services/backupDestinations.js";
 
 const router = express.Router();
 
@@ -44,7 +45,9 @@ function fail(res, err, what) {
 
 router.get("/server/:serverName/backups", requirePermission("server.backup"), async (req, res) => {
 	try {
-		res.json(await backupOverview(req.server));
+		const overview = await backupOverview(req.server);
+		// Where each backup has been copied, so the list can show it.
+		res.json({ ...overview, replication: await replicationFor(req.server), destinations: (await listDestinations()).map((d) => ({ id: d.id, name: d.name, type: d.type, enabled: d.enabled })) });
 	} catch (err) {
 		fail(res, err, "Reading the backups");
 	}
@@ -71,6 +74,31 @@ router.post("/server/:serverName/backups", requirePermission("server.backup"), a
 		res.status(202).json(started);
 	} catch (err) {
 		fail(res, err, "The backup");
+	}
+});
+
+// What a destination holds for this server, and pulling a copy back into the local folder.
+router.get("/server/:serverName/backups/offsite/:destId", requirePermission("server.backup"), async (req, res) => {
+	try {
+		res.json({ backups: await listRemote(req.params.destId, req.server) });
+	} catch (err) {
+		fail(res, err, "Reading the destination");
+	}
+});
+
+router.post("/server/:serverName/backups/offsite/:destId/sync", requirePermission("server.backup"), async (req, res) => {
+	try {
+		res.json(await backfill(req.params.destId, req.server));
+	} catch (err) {
+		fail(res, err, "Copying to the destination");
+	}
+});
+
+router.post("/server/:serverName/backups/offsite/:destId/:id/fetch", requirePermission("backup.restore"), async (req, res) => {
+	try {
+		res.json(await fetchRemote(req.params.destId, req.server, req.params.id));
+	} catch (err) {
+		fail(res, err, "Downloading the backup");
 	}
 });
 

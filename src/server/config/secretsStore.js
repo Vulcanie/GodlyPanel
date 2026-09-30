@@ -21,6 +21,8 @@ const EMPTY = {
 	// Where alerts are posted (Discord, Slack and similar), and the mail account's password.
 	alertWebhookUrl: "",
 	smtpPassword: "",
+	// Secret access keys of off-machine backup destinations, by destination id.
+	destinationKeys: {},
 };
 
 let current = null;
@@ -106,7 +108,7 @@ export async function patchSecrets(partial) {
 export function describeSecrets() {
 	const s = getSecrets();
 	return Object.fromEntries(
-		Object.keys(EMPTY).map((k) => [k, Boolean(s[k])]),
+		Object.keys(EMPTY).filter((k) => typeof EMPTY[k] === "string").map((k) => [k, Boolean(s[k])]),
 	);
 }
 
