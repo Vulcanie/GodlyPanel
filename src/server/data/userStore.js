@@ -10,7 +10,8 @@ const SCHEMA_VERSION = 1;
 const BCRYPT_ROUNDS = 12;
 const enqueue = createWriteQueue();
 
-export const ROLES = ["admin", "guest"];
+export { ROLES } from "../middleware/permissions.js";
+import { ROLES } from "../middleware/permissions.js";
 
 let users = [];
 
@@ -61,6 +62,8 @@ function makeUser(username, role, passwordHash) {
 		// invalidates every outstanding session for that user immediately —
 		// without it, demoting someone would take up to the token lifetime.
 		sessionVersion: 1,
+		// null = may act on every server; a list limits a moderator to those servers.
+		servers: null,
 		disabled: false,
 		createdAt: new Date().toISOString(),
 	};
@@ -128,7 +131,15 @@ function assertValidPassword(password) {
 	}
 }
 
-export async function createUser({ username, password, role }) {
+function assertValidServers(servers) {
+	if (servers === null || servers === undefined) return null;
+	if (!Array.isArray(servers) || servers.some((s) => typeof s !== "string")) {
+		throw new Error("The server list must be a list of server names.");
+	}
+	return [...new Set(servers)];
+}
+
+export async function createUser({ username, password, role, servers = null }) {
 	return enqueue(async () => {
 		assertValidUsername(username);
 		assertValidPassword(password);
@@ -138,6 +149,7 @@ export async function createUser({ username, password, role }) {
 		}
 
 		const user = makeUser(username, role, await bcrypt.hash(password, BCRYPT_ROUNDS));
+		user.servers = role === "moderator" ? assertValidServers(servers) : null;
 		users = [...users, user];
 		await persist();
 		return publicView(user);
@@ -190,7 +202,16 @@ export async function setRole(id, role) {
 		const user = getById(id);
 		if (!user) throw new Error("No such user.");
 		if (user.role !== role) assertNotLastAdmin(user, { changingRole: true });
-		return mutate(id, { role }, { bumpSession: true });
+		return mutate(id, { role, ...(role === "moderator" ? {} : { servers: null }) }, { bumpSession: true });
+	});
+}
+
+/** Limit a moderator to some servers, or pass null to allow all. */
+export async function setServers(id, servers) {
+	return enqueue(async () => {
+		const user = getById(id);
+		if (!user) throw new Error("No such user.");
+		return mutate(id, { servers: user.role === "moderator" ? assertValidServers(servers) : null }, { bumpSession: true });
 	});
 }
 

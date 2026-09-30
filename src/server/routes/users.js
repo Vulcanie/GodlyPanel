@@ -4,6 +4,7 @@ import {
 	createUser,
 	setRole,
 	setDisabled,
+	setServers,
 	setPassword,
 	removeUser,
 	getById,
@@ -17,9 +18,9 @@ router.get("/", (req, res) => {
 });
 
 router.post("/", async (req, res) => {
-	const { username, password, role } = req.body || {};
+	const { username, password, role, servers } = req.body || {};
 	try {
-		res.json(await createUser({ username, password, role: role || "guest" }));
+		res.json(await createUser({ username, password, role: role || "guest", servers }));
 	} catch (e) {
 		res.status(400).json({ error: e.message });
 	}
@@ -30,6 +31,16 @@ router.put("/:id/role", async (req, res) => {
 		const user = await setRole(req.params.id, req.body?.role);
 		// The role change already invalidated their token; close any live
 		// stream too so they aren't left watching admin-level updates.
+		dropSessionsFor(req.params.id);
+		res.json(user);
+	} catch (e) {
+		res.status(400).json({ error: e.message });
+	}
+});
+
+router.put("/:id/servers", async (req, res) => {
+	try {
+		const user = await setServers(req.params.id, req.body?.servers ?? null);
 		dropSessionsFor(req.params.id);
 		res.json(user);
 	} catch (e) {

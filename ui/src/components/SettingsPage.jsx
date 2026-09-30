@@ -33,6 +33,9 @@ const GROUP_LABELS = {
 	storage: "Storage",
 	servers: "New servers",
 	discord: "Discord",
+	backups: "Backups",
+	startup: "Starting with Windows",
+	recovery: "Crash recovery",
 };
 
 const SECRET_FIELDS = [

@@ -171,3 +171,23 @@ export async function removeServerCompletely(server, { deleteFiles = false } = {
 	result.removedFromPanel = true;
 	return result;
 }
+
+/**
+ * Why this folder must not be replaced or deleted wholesale, or null if it may be.
+ * The same rules as file deletion, for anything else that overwrites a folder
+ * (restoring a backup).
+ */
+export function protectedReason(target, env = process.env) {
+	const dir = norm(target);
+	const parsed = path.parse(dir);
+	if (dir === parsed.root.replace(/[\/]+$/, "").toLowerCase() || path.dirname(dir) === dir) {
+		return "That is the top of a drive.";
+	}
+	if (systemPlaces(env).some((place) => inside(dir, place) || inside(place, dir))) {
+		return "That is in a Windows system location.";
+	}
+	for (const place of protectedPlaces(env)) {
+		if (dir === place || inside(place, dir)) return "That is, or contains, a protected location (your profile folders or the panel's own data).";
+	}
+	return null;
+}

@@ -7,21 +7,12 @@ import { get as getServer } from "../data/serverStore.js";
 import { readManagedFile, writeManagedFile, sendFileError } from "../util/managedFiles.js";
 import { singleFile } from "../middleware/uploadErrors.js";
 import serverWindowRoutes from "./serverWindowRoutes.js";
-import { checkProcess } from "../services/processCheck.js";
 import { isServerRunning } from "../services/serverState.js";
 import { describePorts, checkPorts, applyPorts } from "../services/serverPorts.js";
 import { planRemoval, removeServerCompletely } from "../services/serverRemoval.js";
 import { extractModpackZip, cleanupUpload } from "../services/modpackService.js";
 import { SUPPORTED_MODLOADER_FAMILIES } from "../data/gameTemplates.js";
-import { pollServers, serverStatus } from "../services/pollingService.js";
-import {
-	startServer,
-	stopServer,
-	sendRconCommand,
-} from "../services/serverControl.js";
-import { updateServer } from "../services/updateService.js";
-import { runDetached, allOperations } from "../services/serverOps.js";
-import { waitUntilStopped, waitUntilOnline } from "../services/serverLifecycle.js";
+import { pollServers } from "../services/pollingService.js";
 import {
 	isAutoUpdateEnabled,
 	setAutoUpdateEnabled,
@@ -168,94 +159,6 @@ router.post("/config/:serverName", async (req, res) => {
 		res.json({ success: true, message: `${fileName ?? "Config"} saved successfully!` });
 	} catch (err) {
 		sendFileError(res, err, `the config for ${req.server.name}`);
-	}
-});
-
-// What each control action does. All but "rcon" refresh the dashboard right
-// away instead of leaving it on stale state until the next scheduled poll.
-// Each holds the server's lock (see serverOps) until the thing has really finished
-// (stopped, online, update done), while answering the request as soon as the
-// command has gone out. That is what lets the dashboard say "Stopping..." and
-// refuse a second action while one is under way.
-const CONTROL_ACTIONS = {
-	start: (server) =>
-		runDetached(server.name, "starting", async (report) => {
-			// A second launch of a running server fails on its ports at best, and at
-			// worst leaves two copies fighting over the same save files. The status
-			// can be a few seconds old — right after a stop it still says online — so
-			// where the process can be checked directly, it is, rather than refusing
-			// a start that would be fine.
-			let running = Boolean(serverStatus[server.name]?.online);
-			if (running && server.method === "process") {
-				running = await checkProcess(server.processName, { fresh: true });
-			}
-			if (running) {
-				const err = new Error(`${server.name} is already running.`);
-				err.status = 409;
-				throw err;
-			}
-			report(await startServer(server));
-			await waitUntilOnline(server);
-		}),
-	stop: (server) =>
-		runDetached(server.name, "stopping", async (report) => {
-			report(await stopServer(server));
-			await waitUntilStopped(server).catch(() => {});
-		}),
-	update: (server) =>
-		runDetached(server.name, "updating", async (report) => {
-			const started = await updateServer(server, { restart: false });
-			report(describeUpdate(server, started, false));
-			await started.finished;
-		}),
-	"update-reboot": (server) =>
-		runDetached(server.name, "updating", async (report) => {
-			const started = await updateServer(server, { restart: true });
-			report(describeUpdate(server, started, true));
-			await started.finished;
-		}),
-};
-
-function describeUpdate(server, { groupNames, logPath }, restart) {
-	const who =
-		groupNames.length > 1 ? `${groupNames.join(", ")} (shared install)` : server.name;
-	const afterward = restart
-		? "they'll start back up automatically once the update finishes"
-		: "left stopped when it's done";
-	return {
-		success: true,
-		message: `Update${restart ? " + reboot" : ""} started for ${who}. This can take several minutes; ${afterward}. Log: ${logPath}`,
-	};
-}
-
-// Start, stop, or update a server
-router.post("/control/:serverName/:action", async (req, res) => {
-	const { action } = req.params;
-	const server = req.server;
-
-	if (action === "rcon") {
-		const { command } = req.body || {};
-		if (!command || typeof command !== "string") {
-			return res.status(400).json({ error: "A command is required." });
-		}
-		try {
-			res.json({ success: true, response: await sendRconCommand(server, command) });
-		} catch (e) {
-			console.error(`RCON command error for ${server.name}:`, e);
-			res.status(500).json({ error: e.message });
-		}
-		return;
-	}
-
-	const run = CONTROL_ACTIONS[action];
-	if (!run) return res.status(400).json({ error: "Invalid action." });
-
-	try {
-		res.json(await run(server));
-		pollServers().catch(() => {});
-	} catch (e) {
-		if (!e.status) console.error(`${action} error for ${server.name}:`, e);
-		res.status(e.status ?? 500).json({ error: e.message });
 	}
 });
 

@@ -23,6 +23,8 @@ import { sweepWindowsOnBoot } from "./services/serverWindows.js";
 import { cleanupStaleUploads } from "./services/modpackService.js";
 import { killTrackedSteamCmd, hasActiveJobs } from "./services/processRegistry.js";
 import batchFileRoutes from "./routes/batchFiles.js";
+import controlRoutes from "./routes/control.js";
+import operationsRoutes from "./routes/operations.js";
 import { ensureDataDirs, paths } from "./paths.js";
 import { initConfig, getConfig, onConfigChange } from "./config/configStore.js";
 import { initSecrets } from "./config/secretsStore.js";
@@ -102,11 +104,17 @@ app.use(attachUser);
 // and server passwords.
 app.use("/api/setup", setupRoutes);
 app.use("/api/auth", authRoutes);
-app.use("/api/art", requireRole("admin", "guest"), artRoutes);
+const viewers = requireRole("admin", "moderator", "guest");
+const operators = requireRole("admin", "moderator");
+app.use("/api/art", viewers, artRoutes);
 // Guests can read how a card should look — the dashboard can't draw one
 // otherwise; the routes that change it enforce admin individually.
-app.use("/api/appearance", requireRole("admin", "guest"), appearanceRoutes);
-app.use("/api", requireRole("admin", "guest"), dashboardRoutes);
+app.use("/api/appearance", viewers, appearanceRoutes);
+app.use("/api", viewers, dashboardRoutes);
+// What a moderator may do as well as an admin. Each route names the permission it
+// needs, so anything they may not do is refused there.
+app.use("/api", operators, controlRoutes);
+app.use("/api", operators, operationsRoutes);
 app.use("/api/users", requireRole("admin"), userRoutes);
 app.use("/api/settings", requireRole("admin"), settingsRoutes);
 app.use("/api/batch-files", requireRole("admin"), batchFileRoutes);

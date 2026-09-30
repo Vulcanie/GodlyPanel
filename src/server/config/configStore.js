@@ -22,6 +22,7 @@ function withResolvedPaths(config) {
 	resolved.paths.steamCmdPath =
 		config.paths.steamCmdPath ||
 		path.join(paths.dataDir, "tools", "steamcmd", "steamcmd.exe");
+	resolved.backups.dir = config.backups.dir || path.join(paths.dataDir, "backups");
 	// jcmdPath stays blank when unset — blank means "use jcmd from PATH".
 	return resolved;
 }

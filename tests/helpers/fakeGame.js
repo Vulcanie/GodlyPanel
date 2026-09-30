@@ -24,7 +24,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const arg = (name, fallback) => { const i = process.argv.indexOf("--" + name); return i > 0 ? process.argv[i + 1] : fallback; };
 const rconPort = Number(arg("rcon")); const password = arg("password", "pw"); const home = arg("home", process.cwd());
-const saved = path.join(home, "Saved"); const logs = path.join(saved, "Logs");
+const saved = path.join(home, "ConanSandbox", "Saved"); const logs = path.join(saved, "Logs");
 fs.mkdirSync(logs, { recursive: true });
 const log = (line) => fs.appendFileSync(path.join(logs, "game.log"), new Date().toISOString() + " " + line + "\n");
 if (!fs.existsSync(path.join(saved, "world.sav"))) fs.writeFileSync(path.join(saved, "world.sav"), "world v1\n");
@@ -69,9 +69,11 @@ export function makeFakeGame(folder, { name, rconPort, exe = "fakegame.exe", pas
 	fs.mkdirSync(folder, { recursive: true });
 	fs.copyFileSync(process.execPath, path.join(folder, exe));
 	fs.writeFileSync(path.join(folder, "fakegame.cjs"), SCRIPT);
-	fs.mkdirSync(path.join(folder, "Saved", "Logs"), { recursive: true });
-	fs.writeFileSync(path.join(folder, "Saved", "world.sav"), "world v1\n");
-	fs.writeFileSync(path.join(folder, "Saved", "settings.ini"), "[Server]\nName=fake\n");
+	const saved = path.join(folder, "ConanSandbox", "Saved");
+	fs.mkdirSync(path.join(saved, "Logs"), { recursive: true });
+	fs.mkdirSync(path.join(saved, "Config"), { recursive: true });
+	fs.writeFileSync(path.join(saved, "world.sav"), "world v1\n");
+	fs.writeFileSync(path.join(saved, "Config", "settings.ini"), "[Server]\nName=fake\n");
 	const script = path.join(folder, "Start_Fake.bat");
 	fs.writeFileSync(
 		script,
@@ -112,7 +114,7 @@ export function killFakeGames(folder) {
 /** Text of the game's own log. */
 export const gameLog = (folder) => {
 	try {
-		return fs.readFileSync(path.join(folder, "Saved", "Logs", "game.log"), "utf8");
+		return fs.readFileSync(path.join(folder, "ConanSandbox", "Saved", "Logs", "game.log"), "utf8");
 	} catch {
 		return "";
 	}

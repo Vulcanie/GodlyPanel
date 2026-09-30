@@ -64,6 +64,31 @@ export const DEFAULTS = {
 		enabled: false,
 		adminRoleId: "",
 	},
+
+	backups: {
+		// "" means a folder inside the data directory.
+		dir: "",
+		keepCount: 10,
+		keepDays: 0,
+		minFreeGB: 2,
+	},
+
+	startup: {
+		openAtLogin: false,
+		startHidden: true,
+		// Servers set to start with the panel are started this far apart, so a
+		// dozen games don't all load at once.
+		autoStartDelaySec: 20,
+	},
+
+	recovery: {
+		// How long a server has to be down before it counts as crashed, and how
+		// many times in a window the panel will restart it before giving up.
+		graceSec: 45,
+		maxRestarts: 3,
+		windowMin: 15,
+		startupGraceMin: 10,
+	},
 };
 
 /**
@@ -281,6 +306,97 @@ export const FIELD_SPECS = [
 		type: "string",
 		restart: false,
 		label: "Discord admin role mention",
+	},
+
+	{
+		path: "backups.dir",
+		type: "string",
+		restart: false,
+		label: "Backup folder",
+		help: "Where backups are stored. Blank uses a folder inside your data directory. Put it on another drive to survive a disk failure.",
+	},
+	{
+		path: "backups.keepCount",
+		type: "int",
+		min: 1,
+		max: 500,
+		restart: false,
+		label: "Scheduled backups to keep",
+		help: "Per server. Older scheduled backups are deleted; ones you made by hand never are.",
+	},
+	{
+		path: "backups.keepDays",
+		type: "int",
+		min: 0,
+		max: 3650,
+		restart: false,
+		label: "Delete scheduled backups older than (days)",
+		help: "0 keeps them until the count above pushes them out.",
+	},
+	{
+		path: "backups.minFreeGB",
+		type: "int",
+		min: 0,
+		max: 100000,
+		restart: false,
+		label: "Refuse backups below this much free space (GB)",
+		help: "A backup that would leave the drive with less than this is not started.",
+	},
+
+	{
+		path: "startup.openAtLogin",
+		type: "bool",
+		restart: false,
+		label: "Start GodlyPanel when I sign in to Windows",
+	},
+	{
+		path: "startup.startHidden",
+		type: "bool",
+		restart: false,
+		label: "Start in the tray, without opening the window",
+	},
+	{
+		path: "startup.autoStartDelaySec",
+		type: "int",
+		min: 0,
+		max: 600,
+		restart: false,
+		label: "Delay between starting servers at launch (seconds)",
+		help: "For servers set to start with the panel.",
+	},
+
+	{
+		path: "recovery.graceSec",
+		type: "int",
+		min: 10,
+		max: 3600,
+		restart: false,
+		label: "Seconds down before it counts as a crash",
+	},
+	{
+		path: "recovery.maxRestarts",
+		type: "int",
+		min: 1,
+		max: 50,
+		restart: false,
+		label: "Automatic restarts before giving up",
+		help: "Within the window below. Stops a server that crashes on every start from restarting forever.",
+	},
+	{
+		path: "recovery.windowMin",
+		type: "int",
+		min: 1,
+		max: 1440,
+		restart: false,
+		label: "Window for counting restarts (minutes)",
+	},
+	{
+		path: "recovery.startupGraceMin",
+		type: "int",
+		min: 1,
+		max: 120,
+		restart: false,
+		label: "Minutes a restarted server gets to come online",
 	},
 ];
 

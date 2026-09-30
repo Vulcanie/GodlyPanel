@@ -71,7 +71,7 @@ describe("start and stop a server", () => {
 		assert.match(meanwhile.json.error, /busy \(stopping\)/);
 		assert.equal(await until(async () => !(await online()) && (await operation()) === null, { timeoutMs: 60_000 }), true);
 		assert.match(gameLog(folder), /rcon: Shutdown/);
-		assert.match(fs.readFileSync(path.join(folder, "Saved", "world.sav"), "utf8"), /saved on exit/);
+		assert.match(fs.readFileSync(path.join(folder, "ConanSandbox", "Saved", "world.sav"), "utf8"), /saved on exit/);
 	});
 
 	it("records that the stop was on purpose", async () => {
