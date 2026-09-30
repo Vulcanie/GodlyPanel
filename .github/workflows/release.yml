@@ -35,6 +35,35 @@ jobs:
       - name: Build the interface and package the app
         run: npm run package
 
+      # Code signing (see docs/CODE_SIGNING.md). Only runs once the SignPath settings exist in the
+      # repository; until then the zip is released unsigned, exactly as before.
+      - name: Upload the unsigned zip for signing
+        id: unsigned
+        if: ${{ vars.SIGNPATH_ORGANIZATION_ID != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: GodlyPanel-unsigned
+          path: dist/GodlyPanel-*-win.zip
+
+      - name: Sign it with SignPath
+        if: ${{ vars.SIGNPATH_ORGANIZATION_ID != '' }}
+        uses: signpath/github-action-submit-signing-request@v1
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: godlypanel
+          signing-policy-slug: release-signing
+          github-artifact-id: ${{ steps.unsigned.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: signed
+
+      - name: Use the signed zip
+        if: ${{ vars.SIGNPATH_ORGANIZATION_ID != '' }}
+        shell: pwsh
+        run: |
+          Get-ChildItem dist -Filter "GodlyPanel-*-win.zip" | Remove-Item
+          Copy-Item signed/*.zip dist/
+
       - name: Attach the zip to the release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2

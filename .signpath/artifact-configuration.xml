@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- How SignPath signs the release zip: the app's own program only. The Electron runtime files
+     beside it (DLLs) already carry their publisher's signature, and the scripts are plain text. -->
+<artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
+  <zip-file>
+    <pe-file path="GodlyPanel.exe">
+      <authenticode-sign />
+    </pe-file>
+  </zip-file>
+</artifact-configuration>
