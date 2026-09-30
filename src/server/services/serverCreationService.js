@@ -14,6 +14,7 @@ import { assertStorageHeadroom } from "./storageService.js";
 import { inspectFolder } from "./folderCheck.js";
 import { resolveResource } from "../../shared/resources.js";
 import { deriveLaunch } from "./batchLaunch.js";
+import { writeMarker } from "./serverRemoval.js";
 import {
 	trackSteamCmd,
 	untrackSteamCmd,
@@ -61,6 +62,7 @@ export function listTemplates() {
 		sharedInstall: Boolean(t.sharedInstall),
 		fields: t.fields,
 		ports: t.ports,
+		implicitPorts: t.implicitPorts ?? [],
 		mapChoices: t.mapChoices ?? null,
 		fieldMeta: t.fieldMeta ?? null,
 		requiresEula: Boolean(t.requiresEula),
@@ -86,12 +88,23 @@ function slugify(name) {
 		.slice(0, 40);
 }
 
-async function usedPorts(extraScanDir) {
+/** The ports a game takes for itself, given the game port chosen for it. */
+export function impliedPortsFor(template, ports) {
+	if (!ports?.port) return [];
+	return (template?.implicitPorts ?? []).map(({ offset, label }) => ({ port: ports.port + offset, offset, label }));
+}
+
+// `exclude` leaves one server's own ports out, for checking a change to them.
+export async function usedPorts(extraScanDir, { excludeName, excludeScript } = {}) {
 	const used = new Set();
 	for (const s of allServers()) {
+		if (s.name === excludeName) continue;
 		for (const key of ["port", "queryPort", "rconPort"]) {
 			if (s[key]) used.add(s[key]);
 		}
+		// A server's implied ports are as taken as the ones written in its entry.
+		const template = GAME_TEMPLATES.find((t) => t.type === s.type && t.implicitPorts);
+		for (const { port } of impliedPortsFor(template, s)) used.add(port);
 	}
 
 	// ARK's shared-install maps don't store their actual game/query port in
@@ -105,6 +118,7 @@ async function usedPorts(extraScanDir) {
 			const files = await fs.readdir(extraScanDir);
 			for (const file of files) {
 				if (!/^Start_.*\.bat$/i.test(file)) continue;
+				if (excludeScript && path.win32.join(extraScanDir, file).toLowerCase() === String(excludeScript).toLowerCase()) continue;
 				const content = await fs.readFile(path.win32.join(extraScanDir, file), "utf8");
 				for (const m of content.matchAll(/-(?:Port|QueryPort|RCONPort)=(\d+)/g)) {
 					used.add(Number(m[1]));
@@ -171,15 +185,45 @@ export async function suggestParams(templateId) {
 	};
 }
 
-async function validateNewServer(name, ports, sharedInstallDir) {
+async function validateNewServer(template, name, ports, sharedInstallDir) {
 	if (!name || !name.trim()) throw new Error("A server name is required.");
 	if (allServers().some((s) => s.name === name)) {
 		throw new Error(`A server named "${name}" already exists.`);
 	}
+	const labelOf = (key) => template.ports.find((p) => p.key === key)?.label ?? key;
+	const entries = Object.entries(ports);
+
+	// Two of this server's own ports can't be the same.
+	const seen = new Map();
+	for (const [key, value] of entries) {
+		if (seen.has(value)) {
+			throw new Error(`${labelOf(seen.get(value))} and ${labelOf(key)} are both ${value}. Each needs its own port.`);
+		}
+		seen.set(value, key);
+	}
+
 	const used = await usedPorts(sharedInstallDir);
-	for (const [key, value] of Object.entries(ports)) {
+
+	// Ports the game takes for itself next to the game port. Choosing one of them
+	// for something else is what makes a server that starts but can't be reached.
+	for (const { port, offset, label } of impliedPortsFor(template, ports)) {
+		const clash = entries.find(([, value]) => value === port);
+		if (clash) {
+			throw new Error(
+				`${labelOf(clash[0])} ${port} is the game port + ${offset}, which ${template.displayName} uses for ${label}. ` +
+					`Pick a different ${labelOf(clash[0]).toLowerCase()} — ${port + 1} or higher is safe.`,
+			);
+		}
+		if (used.has(port)) {
+			throw new Error(
+				`${template.displayName} also needs port ${port} (game port + ${offset}, for ${label}), and another server is already using it. Choose a different game port.`,
+			);
+		}
+	}
+
+	for (const [key, value] of entries) {
 		if (used.has(value)) {
-			throw new Error(`Port ${value} (${key}) is already used by another server.`);
+			throw new Error(`Port ${value} (${labelOf(key)}) is already used by another server.`);
 		}
 	}
 }
@@ -432,6 +476,12 @@ async function runJob(jobId, template, params) {
 				log(`Direct launch not recorded: ${found.reason}`);
 			}
 		}
+		// A small marker in the server's own folder, so that deleting it later can
+		// confirm the folder really is one the panel made for this server. Shared
+		// installs (extra ARK maps) don't get one: the folder isn't theirs alone.
+		if (!template.sharedInstall) {
+			await writeMarker(installDir, entry).catch((err) => log(`Couldn't write the folder marker: ${err.message}`));
+		}
 		log(`Registering "${entry.name}".`);
 		await addServer(entry);
 
@@ -493,7 +543,7 @@ export async function createServer(templateId, rawParams) {
 		ports[portDef.key] = Number(rawParams[portDef.key]) || suggested.ports[portDef.key];
 	}
 
-	await validateNewServer(rawParams.name, ports, suggested.sharedInstallDir);
+	await validateNewServer(template, rawParams.name, ports, suggested.sharedInstallDir);
 
 	// Checked up front so it fails the request rather than dying partway
 	// through a multi-gigabyte download.

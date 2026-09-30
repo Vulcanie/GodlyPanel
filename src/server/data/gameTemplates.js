@@ -291,6 +291,11 @@ export const GAME_TEMPLATES = [
 			{ key: "queryPort", label: "Query Port", default: 8894 },
 			{ key: "rconPort", label: "RCON Port", default: 8895 },
 		],
+		// Conan opens a second UDP socket on the game port + 1 without being asked.
+		// Nothing else may use it: with the query port there, the game and the
+		// panel's status query fight over it, and the server neither shows as
+		// online nor accepts players. This is why the defaults leave a gap.
+		implicitPorts: [{ offset: 1, label: "its raw UDP socket" }],
 		buildStartScriptFilename: () => "Start_Conan.bat",
 		buildStartScript: (p) =>
 			[
@@ -353,6 +358,11 @@ export const GAME_TEMPLATES = [
 		installLayoutRoot: "steamapps\\common\\Valheim dedicated server",
 		fields: ["sessionName", "serverPassword"],
 		ports: [{ key: "port", label: "Game Port", default: 7777 }],
+		// Valheim uses three consecutive UDP ports: the game port and the two above it.
+		implicitPorts: [
+			{ offset: 1, label: "Steam queries" },
+			{ offset: 2, label: "its third UDP port" },
+		],
 		buildStartScriptFilename: () => "Valheim-Server-Start.bat",
 		buildStartScript: (p) =>
 			[

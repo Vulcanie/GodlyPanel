@@ -63,6 +63,7 @@ export const api = {
 		apiFetch(path, { method: "POST", body: body === undefined ? undefined : JSON.stringify(body) }),
 	put: (path, body) =>
 		apiFetch(path, { method: "PUT", body: body === undefined ? undefined : JSON.stringify(body) }),
-	del: (path) => apiFetch(path, { method: "DELETE" }),
+	del: (path, body) =>
+		apiFetch(path, { method: "DELETE", body: body === undefined ? undefined : JSON.stringify(body) }),
 	upload: (path, formData) => apiFetch(path, { method: "POST", body: formData }),
 };

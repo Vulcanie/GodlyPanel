@@ -21,6 +21,8 @@ import StatusDisplay from "./StatusDisplay";
 import ConfigForm from "./ConfigForm";
 import RconConsole from "./RconConsole";
 import ServerWindowPanel from "./ServerWindowPanel";
+import PortsEditor from "./PortsEditor";
+import DeleteServer from "./DeleteServer";
 import { api } from "../api/client";
 import { parseIni, serializeIni } from "../configParsers/ini";
 import { parseProperties, serializeProperties } from "../configParsers/properties";
@@ -370,6 +372,8 @@ function ConfigPage({
 					<RconConsole serverName={serverName} />
 				)}
 				<ServerWindowPanel serverName={serverName} />
+				<PortsEditor serverName={serverName} />
+				<DeleteServer serverName={serverName} onDeleted={onBack} />
 				<StatusDisplay serverStatus={serverStatus} />
 			</Box>
 		);
@@ -481,6 +485,8 @@ function ConfigPage({
 			)}
 
 			<ServerWindowPanel serverName={serverName} />
+				<PortsEditor serverName={serverName} />
+				<DeleteServer serverName={serverName} onDeleted={onBack} />
 
 			{loading ? (
 				<CircularProgress />

@@ -8,6 +8,9 @@ import { readManagedFile, writeManagedFile, sendFileError } from "../util/manage
 import { singleFile } from "../middleware/uploadErrors.js";
 import serverWindowRoutes from "./serverWindowRoutes.js";
 import { checkProcess } from "../services/processCheck.js";
+import { isServerRunning } from "../services/serverState.js";
+import { describePorts, checkPorts, applyPorts } from "../services/serverPorts.js";
+import { planRemoval, removeServerCompletely } from "../services/serverRemoval.js";
 import { extractModpackZip, cleanupUpload } from "../services/modpackService.js";
 import { SUPPORTED_MODLOADER_FAMILIES } from "../data/gameTemplates.js";
 import { pollServers, serverStatus } from "../services/pollingService.js";
@@ -82,6 +85,57 @@ router.post("/server/:serverName/auto-update", async (req, res) => {
 
 	await setAutoUpdateEnabled(server.name, enabled);
 	res.json({ success: true, autoUpdateEnabled: enabled });
+});
+
+// --- Ports ---
+
+router.get("/server/:serverName/ports", async (req, res) => {
+	res.json({ ...(await describePorts(req.server)), running: await isServerRunning(req.server) });
+});
+
+// Live validation for the ports form: the same check the save runs.
+router.post("/server/:serverName/ports/check", async (req, res) => {
+	res.json(await checkPorts(req.server, req.body?.ports));
+});
+
+router.put("/server/:serverName/ports", async (req, res) => {
+	// A running game keeps the ports it started with, so a change would be
+	// recorded as done while the server carried on using the old ones.
+	if (await isServerRunning(req.server)) {
+		return res.status(409).json({ error: "Stop the server first: a running game keeps the ports it started with.", code: "server_running" });
+	}
+	try {
+		const result = await applyPorts(req.server, req.body?.ports);
+		pollServers().catch(() => {});
+		res.json({ success: true, ...result, ...(await describePorts(getServer(req.server.name))) });
+	} catch (err) {
+		if (err.code === "port_conflict") return res.status(400).json({ error: err.message, code: err.code });
+		console.error(`Port change failed for ${req.server.name}:`, err);
+		res.status(500).json({ error: `Couldn't change the ports: ${err.message}` });
+	}
+});
+
+// --- Removing a server ---
+
+router.get("/server/:serverName/removal", async (req, res) => {
+	res.json({ ...planRemoval(req.server), running: await isServerRunning(req.server) });
+});
+
+router.delete("/server/:serverName", async (req, res) => {
+	const { deleteFiles = false, confirmName } = req.body ?? {};
+	if (confirmName !== req.server.name) {
+		return res.status(400).json({ error: "Type the server's exact name to confirm.", code: "confirm_mismatch" });
+	}
+	if (await isServerRunning(req.server)) {
+		return res.status(409).json({ error: "Stop the server first. A running server can't be removed.", code: "server_running" });
+	}
+	try {
+		res.json({ success: true, ...(await removeServerCompletely(req.server, { deleteFiles: deleteFiles === true })) });
+	} catch (err) {
+		const status = err.code === "files_protected" ? 400 : 500;
+		if (status === 500) console.error(`Removing ${req.server.name} failed:`, err);
+		res.status(status).json({ error: err.message, code: err.code });
+	}
 });
 
 // Get content of a specific config file

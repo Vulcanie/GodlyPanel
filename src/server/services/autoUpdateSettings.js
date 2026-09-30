@@ -35,3 +35,11 @@ export async function setAutoUpdateEnabled(serverName, enabled) {
 	settings[serverName] = enabled;
 	await saveSettings(settings);
 }
+
+/** Forget a removed server's stored toggle, so a new server of the same name starts clean. */
+export async function forgetAutoUpdateSetting(serverName) {
+	const settings = await loadSettings();
+	if (!(serverName in settings)) return;
+	delete settings[serverName];
+	await saveSettings(settings);
+}

@@ -30,7 +30,7 @@ computer and trust it with your game servers:
   Pro plan**. There's no team, no company, and no budget. I direct the work, decide
   what it should do, run it against my own servers, and review what comes back.
 - **The code has not had an independent security audit.** It has an extensive
-  automated test suite (over 130 tests, described [below](#tests)), and the design
+  automated test suite (over 180 tests, described [below](#tests)), and the design
   choices are written down in [SECURITY.md](SECURITY.md), but that isn't the same as
   a professional review. The threat model is a trusted home or community network, not
   the internet.
@@ -60,6 +60,14 @@ commit messages describe the problem each change solved.
   has one, and optional automatic updates with an in-game countdown.
 - **Edits config files** through a form when it knows the format, or as raw text,
   keeping a `.bak` of whatever it replaces.
+- **Changes a server's ports safely.** Every change is checked as you type against the
+  server's own other ports, the ports its game quietly takes for itself (Conan Exiles
+  uses the game port + 1, Valheim uses three in a row), every other server, and the
+  panel's own port. It then updates the start script, the game's config and the panel's
+  record together, with a `.bak` of each file.
+- **Deletes servers completely,** or just removes them from the panel. Deleting files is
+  only offered for servers the panel created, never for a shared install other servers
+  use, never for a protected location, and only after you type the server's name.
 - **Shares a read-only view** with your community through a real guest account. Guests
   see what's running and how to join; they can't see passwords or change anything.
 - **Runs servers without cluttering your taskbar.** Each server can be minimized, hidden,
@@ -284,7 +292,7 @@ npm run test:desktop   # real processes and windows: about 2 minutes
 npm run test:all       # both
 ```
 
-- **Unit and API tests** (over 110) boot the real API against a throwaway folder and a
+- **Unit and API tests** (over 160) boot the real API against a throwaway folder and a
   random port, so they check what a user actually gets, not mocks. They cover accounts
   and sessions, the network filter, polling, file access, uploads, first-run setup, the
   launch-script reader, and a fake Conan Exiles server that reproduces its RCON quirk.

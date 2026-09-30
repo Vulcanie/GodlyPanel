@@ -24,6 +24,7 @@ import { ArrowBack as ArrowBackIcon } from "@mui/icons-material";
 import { grey } from "@mui/material/colors";
 import ModpackUploadField from "./ModpackUploadField";
 import FolderField from "./FolderField";
+import PortsToOpen from "./PortsToOpen";
 import { api } from "../api/client";
 
 const FIELD_LABELS = {
@@ -342,6 +343,14 @@ function CreateServerPage({ onBack, userRole }) {
 							onChange={(e) => setField(p.key, e.target.value)}
 						/>
 					))}
+
+					<PortsToOpen
+						game={form.port}
+						query={form.queryPort}
+						rcon={form.rconPort}
+						implicit={selected.implicitPorts}
+						gameName={selected.displayName}
+					/>
 
 					<Dialog open={askSteamCmd} onClose={() => setAskSteamCmd(false)}>
 						<DialogTitle>Download SteamCMD?</DialogTitle>
