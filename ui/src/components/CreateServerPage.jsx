@@ -30,6 +30,7 @@ import { api } from "../api/client";
 const FIELD_LABELS = {
 	sessionName: "Server / Session Name",
 	serverPassword: "Server Password",
+	adminPassword: "Admin Password (in-game admin rights; must differ from the server password)",
 	rconPassword: "RCON Password",
 	clusterId: "Cluster ID",
 	mods: "Mod IDs (comma-separated, optional)",
@@ -80,6 +81,7 @@ function CreateServerPage({ onBack, userRole }) {
 				name: "",
 				rconPassword: data.rconPassword ?? "",
 				serverPassword: randomJoinPassword(),
+				adminPassword: randomJoinPassword(10),
 				sessionName: "",
 				maxPlayers: "",
 				mapCode: template.mapChoices?.[0]?.code || "",

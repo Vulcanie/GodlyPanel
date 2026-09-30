@@ -1,3 +1,5 @@
+import crypto from "node:crypto";
+
 // Recipes for one-click server creation. Each template knows everything
 // generic per-game creation logic (services/serverCreationService.js) needs:
 // the Steam appid to install, where within that install the actual server
@@ -417,7 +419,7 @@ export const GAME_TEMPLATES = [
 		// of however that one was originally installed, not what a new
 		// install actually produces — don't assume the two match.
 		installLayoutRoot: "",
-		fields: ["sessionName", "serverPassword"],
+		fields: ["sessionName", "serverPassword", "adminPassword"],
 		ports: [{ key: "port", label: "Query Port", default: 15637 }],
 		buildStartScriptFilename: () => "Launch Enshrouded Server.bat",
 		buildStartScript: () =>
@@ -448,7 +450,10 @@ export const GAME_TEMPLATES = [
 					userGroups: [
 						{
 							name: "Admin",
-							password: p.adminPassword || p.serverPassword,
+							// The game refuses to start when two groups share a password ("user groups
+							// passwords must be unique", seen on a real install), so the admin one is
+							// never the join password, even when none was given.
+							password: p.adminPassword && p.adminPassword !== p.serverPassword ? p.adminPassword : crypto.randomBytes(6).toString("base64url"),
 							canKickBan: true,
 							canAccessInventories: true,
 							canEditWorld: true,

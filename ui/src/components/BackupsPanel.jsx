@@ -30,6 +30,7 @@ import { api } from "../api/client";
 import { onLive } from "../liveEvents";
 import { formatBytes } from "../utils/format";
 import { useOperation, operationLabel } from "../OperationsContext";
+import OffsiteCopies, { CopyChips } from "./OffsiteCopies";
 
 const PHASES = {
 	checking: "Checking there is room…",
@@ -232,6 +233,7 @@ function BackupsPanel({ serverName, serverStatus, canManage }) {
 									{b.consistent === false ? " · copied while running" : ""}
 								</Typography>
 							</Box>
+							<CopyChips copies={data.replication?.[b.id]} />
 							<Chip size="small" label={KIND_LABELS[b.kind] ?? b.kind} color={b.kind === "manual" ? "primary" : "default"} variant={b.kind === "manual" ? "filled" : "outlined"} />
 							{canManage && (
 								<>
@@ -255,6 +257,8 @@ function BackupsPanel({ serverName, serverStatus, canManage }) {
 					))
 				)}
 			</Paper>
+
+			<OffsiteCopies base={base} data={data} canManage={canManage} busy={busy} onError={setError} onChanged={load} />
 
 			{restoreTarget && <RestoreDialog serverName={serverName} base={base} backup={restoreTarget} sharedFolders={data.specs.filter((s) => s.shared).map((s) => s.path)} onClose={() => setRestoreTarget(null)} onError={setError} onStarted={() => setNotice("Restore started.")} />}
 			{showSettings && <BackupSettingsDialog base={base} data={data} onClose={() => setShowSettings(false)} onSaved={(next) => setData(next)} />}

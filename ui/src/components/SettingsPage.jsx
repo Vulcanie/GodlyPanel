@@ -20,6 +20,7 @@ import AppearanceSettings from "./AppearanceSettings";
 import FolderField from "./FolderField";
 import PanelUpdateCard from "./PanelUpdateCard";
 import NotificationEvents from "./NotificationEvents";
+import BackupDestinations from "./BackupDestinations";
 import { formatBytes } from "../utils/format";
 
 // The form is generated from the schema the server sends, so it can't drift
@@ -268,6 +269,8 @@ function SettingsPage({ onBack }) {
 					</Box>
 				</Paper>
 			))}
+
+			<BackupDestinations />
 
 			<AppearanceSettings />
 
