@@ -61,6 +61,15 @@ const exists = async (p) => {
 
 // ---- what to back up --------------------------------------------------------
 
+/** The value a start script gives a flag (`-savedir "x"`, `-UserDataFolder=x`, `"-UserDataFolder=x"`), or null. */
+export function flagValue(text, flag) {
+	const name = flag.replace(/=$/, "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+	const quotedWhole = new RegExp(`"${name}=([^"]*)"`, "i").exec(text);
+	if (quotedWhole) return quotedWhole[1];
+	const m = new RegExp(`(?:^|\\s)${name}(?:=|\\s+)(?:"([^"]*)"|(\\S+))`, "i").exec(text);
+	return m ? (m[1] ?? m[2]) : null;
+}
+
 const baseFor = (server, base) => (base === "install" ? server.installDir : server.workingDir || server.installDir);
 
 /**
@@ -79,7 +88,19 @@ export async function backupSpecsFor(server) {
 		const template = BACKUP_TEMPLATES[templateOfServer(server)?.id];
 		if (template && template.paths.length > 0) {
 			source = "default";
+			const script = server.startScriptPath ? await fs.readFile(server.startScriptPath, "utf8").catch(() => "") : "";
 			for (const p of template.paths) {
+				if (p.base === "flag") {
+					const working = server.workingDir || server.installDir || "";
+					const value = flagValue(script, p.flag);
+					if (value) {
+						const dir = path.resolve(working, value.replaceAll("%~dp0", `${working}\\`));
+						raw.push({ path: p.join ? path.join(dir, p.join) : dir, label: p.label, exclude: p.exclude ?? [] });
+					} else {
+						raw.push({ path: path.resolve(expandEnv(p.fallback)), label: p.label, exclude: p.exclude ?? [], shared: true });
+					}
+					continue;
+				}
 				const root = p.base === "abs" ? null : baseFor(server, p.base);
 				if (p.base !== "abs" && !root) continue;
 				raw.push({
@@ -413,7 +434,7 @@ async function readManifest(zipFile) {
  * stopped; whatever is about to be replaced is backed up first (unless `safety`
  * is false), and if replacing any part fails, the parts already done are put back.
  */
-export async function restoreBackup(server, id, { safety = true, onReady = null } = {}) {
+export async function restoreBackup(server, id, { safety = true, onReady = null, allowShared = false } = {}) {
 	const zipFile = backupFile(server, id);
 	if (!(await exists(zipFile))) throw new BackupError("That backup doesn't exist.", "not_found", 404);
 	if (!(await isFullyStopped(server))) {
@@ -438,6 +459,13 @@ export async function restoreBackup(server, id, { safety = true, onReady = null 
 	for (const entry of manifest.entries ?? []) {
 		if (!names.some((n) => n === entry.name || n.startsWith(`${entry.name}/`))) continue;
 		const match = specs.find((s) => norm(s.path) === norm(entry.path));
+		if (match?.shared && !allowShared) {
+			throw new BackupError(
+				`${match.path} is a folder every such server on this PC shares, and it may hold other servers' worlds, so the restore would replace theirs as well. If you are sure, restore with the go-ahead for shared folders.`,
+				"shared_folder",
+				409,
+			);
+		}
 		if (!match) {
 			throw new BackupError(
 				`This backup holds ${entry.path}, which is no longer one of this server's backup folders, so it won't be restored over anything. Add that folder back in the backup settings, or restore it by hand.`,
@@ -533,7 +561,7 @@ export async function backupOverview(server) {
 		directory: dir,
 		freeBytes: free,
 		source,
-		specs: specs.map((s) => ({ path: s.path, label: s.label, exists: s.exists, exclude: s.exclude })),
+		specs: specs.map((s) => ({ path: s.path, label: s.label, exists: s.exists, exclude: s.exclude, shared: Boolean(s.shared) })),
 		needsSetup: specs.length === 0,
 		mode: options.mode ?? "auto",
 		effectiveMode: resolveMode(server, null),

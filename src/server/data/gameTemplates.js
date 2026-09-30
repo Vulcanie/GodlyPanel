@@ -372,7 +372,11 @@ export const GAME_TEMPLATES = [
 				"@echo off",
 				"set SteamAppId=892970",
 				"",
-				`start /MIN "${p.name}" valheim_server.exe -nographics -batchmode -name "${p.sessionName}" -port ${p.port} -world "${p.worldName || "World"}" -password "${p.serverPassword}"`,
+				// -savedir keeps this server's worlds in its own folder. Without it Valheim
+				// writes to the signed-in user's profile, shared with every other Valheim
+				// server on the PC, so two servers could end up using the same world file
+				// and a restore would replace all of them.
+				`start /MIN "${p.name}" valheim_server.exe -nographics -batchmode -name "${p.sessionName}" -port ${p.port} -world "${p.worldName || p.instanceSlug || "World"}" -savedir "%~dp0saves" -password "${p.serverPassword}"`,
 				"",
 			].join("\r\n"),
 		buildServerEntry: (p) => ({
@@ -671,7 +675,10 @@ export const GAME_TEMPLATES = [
 				"echo|set /p=\"251570\" > steam_appid.txt",
 				"set SteamAppId=251570",
 				"",
-				`start /MIN "${p.name}" 7DaysToDieServer -logfile "output_log.txt" -quit -batchmode -nographics -configfile=serverconfig.xml -dedicated`,
+				// UserDataFolder keeps this server's saves in its own folder; by default 7 Days
+				// to Die writes to the signed-in user's profile, shared with every other
+				// server on the PC.
+				`start /MIN "${p.name}" 7DaysToDieServer -logfile "output_log.txt" -quit -batchmode -nographics -configfile=serverconfig.xml "-UserDataFolder=%~dp0userdata" -dedicated`,
 				"",
 				"echo Server launched minimized. Closing this window.",
 				"exit /b 0",

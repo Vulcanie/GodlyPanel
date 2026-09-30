@@ -6,6 +6,12 @@
 // generous. `exclude` names things inside a folder that aren't worth keeping
 // (logs, crash dumps) or can't be copied while the game runs.
 //
+// A `base: "flag"` entry follows the start script: the game is told where to keep its
+// saves (`-savedir`, `-UserDataFolder=`), and the backup looks there, then inside `join`.
+// Without the flag the game uses a folder in the user's profile that every such server on
+// the PC shares (`fallback`), and the spec is marked shared: it is backed up, but never
+// restored over without an explicit go-ahead.
+//
 // Only Conan Exiles has been checked against a real install so far. The rest are
 // the documented locations; a server can override its list in its own settings,
 // which is what the panel offers for any game it has no list for (`paths: []`).
@@ -25,7 +31,7 @@ export const BACKUP_TEMPLATES = {
 	valheim: {
 		// Where Valheim keeps worlds unless the start script sets -savedir. Every
 		// Valheim server on this PC shares it, so a backup covers all of their worlds.
-		paths: [{ base: "abs", rel: "%USERPROFILE%/AppData/LocalLow/IronGate/Valheim", label: "Worlds and player data" }],
+		paths: [{ base: "flag", flag: "-savedir", join: "", fallback: "%USERPROFILE%/AppData/LocalLow/IronGate/Valheim", label: "Worlds and player data" }],
 	},
 	enshrouded: {
 		paths: [
@@ -47,8 +53,8 @@ export const BACKUP_TEMPLATES = {
 	subsistence: { paths: [] },
 	"7days": {
 		paths: [
-			{ base: "abs", rel: "%APPDATA%/7DaysToDie/Saves", label: "Saved worlds" },
-			{ base: "abs", rel: "%APPDATA%/7DaysToDie/GeneratedWorlds", label: "Generated maps" },
+			{ base: "flag", flag: "-UserDataFolder=", join: "Saves", fallback: "%APPDATA%/7DaysToDie/Saves", label: "Saved worlds" },
+			{ base: "flag", flag: "-UserDataFolder=", join: "GeneratedWorlds", fallback: "%APPDATA%/7DaysToDie/GeneratedWorlds", label: "Generated maps" },
 			{ base: "working", rel: "serverconfig.xml", label: "Server settings" },
 		],
 	},

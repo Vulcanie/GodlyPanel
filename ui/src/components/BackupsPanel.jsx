@@ -256,21 +256,22 @@ function BackupsPanel({ serverName, serverStatus, canManage }) {
 				)}
 			</Paper>
 
-			{restoreTarget && <RestoreDialog serverName={serverName} base={base} backup={restoreTarget} onClose={() => setRestoreTarget(null)} onError={setError} onStarted={() => setNotice("Restore started.")} />}
+			{restoreTarget && <RestoreDialog serverName={serverName} base={base} backup={restoreTarget} sharedFolders={data.specs.filter((s) => s.shared).map((s) => s.path)} onClose={() => setRestoreTarget(null)} onError={setError} onStarted={() => setNotice("Restore started.")} />}
 			{showSettings && <BackupSettingsDialog base={base} data={data} onClose={() => setShowSettings(false)} onSaved={(next) => setData(next)} />}
 		</Box>
 	);
 }
 
-function RestoreDialog({ serverName, base, backup, onClose, onError, onStarted }) {
+function RestoreDialog({ serverName, base, backup, sharedFolders = [], onClose, onError, onStarted }) {
 	const [confirmName, setConfirmName] = React.useState("");
+	const [allowShared, setAllowShared] = React.useState(false);
 	const [safety, setSafety] = React.useState(true);
 	const [busy, setBusy] = React.useState(false);
 
 	const go = async () => {
 		setBusy(true);
 		try {
-			await api.post(`${base}/backups/${encodeURIComponent(backup.id)}/restore`, { confirmName, safety });
+			await api.post(`${base}/backups/${encodeURIComponent(backup.id)}/restore`, { confirmName, safety, allowShared });
 			onStarted();
 			onClose();
 		} catch (e) {
@@ -287,13 +288,19 @@ function RestoreDialog({ serverName, base, backup, onClose, onError, onStarted }
 					This replaces the world and settings on disk with the backup from <strong>{when(backup.createdAt)}</strong>. Anything done since then is lost, unless you keep the safety backup below.
 				</DialogContentText>
 				<FormControlLabel control={<Checkbox checked={safety} onChange={(e) => setSafety(e.target.checked)} />} label="Back up what is there now first (recommended)" />
+				{sharedFolders.length > 0 && (
+					<Alert severity="warning" sx={{ mt: 2 }}>
+						This server keeps its world in a folder every such server on this PC shares ({sharedFolders.join(", ")}). Restoring replaces <strong>their</strong> worlds too.
+						<FormControlLabel control={<Checkbox checked={allowShared} onChange={(e) => setAllowShared(e.target.checked)} />} label="I understand, restore over the shared folder" />
+					</Alert>
+				)}
 				<TextField fullWidth size="small" sx={{ mt: 2 }} label={`Type ${serverName} to confirm`} value={confirmName} onChange={(e) => setConfirmName(e.target.value)} />
 			</DialogContent>
 			<DialogActions>
 				<Button onClick={onClose} disabled={busy}>
 					Cancel
 				</Button>
-				<Button color="warning" variant="contained" disabled={busy || confirmName !== serverName} onClick={go}>
+				<Button color="warning" variant="contained" disabled={busy || confirmName !== serverName || (sharedFolders.length > 0 && !allowShared)} onClick={go}>
 					Restore
 				</Button>
 			</DialogActions>

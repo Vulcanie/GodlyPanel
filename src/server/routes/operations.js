@@ -89,6 +89,7 @@ router.post("/server/:serverName/backups/:id/restore", requirePermission("backup
 		const started = await runDetached(req.server.name, "restoring", async (report) => {
 			const result = await restoreBackup(req.server, req.params.id, {
 				safety: req.body?.safety !== false,
+				allowShared: req.body?.allowShared === true,
 				onReady: () => report({ started: true }),
 			});
 			report({ started: true, ...result });
