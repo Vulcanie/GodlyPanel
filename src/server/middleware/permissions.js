@@ -12,6 +12,8 @@ export const PERMISSIONS = [
 	"server.backup", // list and take backups
 	"server.logs",
 	"server.players",
+	"players.kick", // remove someone from a running server
+	"players.ban", // ban, unban and edit whitelists and admin lists
 	"activity.view",
 	"schedules.view",
 	"metrics.view",

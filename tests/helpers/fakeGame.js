@@ -23,6 +23,7 @@ const net = require("node:net");
 const fs = require("node:fs");
 const path = require("node:path");
 const arg = (name, fallback) => { const i = process.argv.indexOf("--" + name); return i > 0 ? process.argv[i + 1] : fallback; };
+const std = process.argv.includes("--standard-rcon"); // plain Source RCON; without it, Conan Exiles' habit of answering with the request id minus one
 let rconPort = Number(arg("rcon")); let password = arg("password", "pw"); const home = arg("home", process.cwd());
 const ini = path.join(home, "ConanSandbox", "Saved", "Config", "WindowsServer", "Game.ini");
 if (!rconPort && fs.existsSync(ini)) {
@@ -49,18 +50,35 @@ const rconServer = net.createServer((socket) => {
       const id = pending.readInt32LE(4), type = pending.readInt32LE(8);
       const body = pending.subarray(12, 4 + length - 2).toString("utf8");
       pending = pending.subarray(4 + length);
-      if (type === 3) { socket.write(body === password ? packet(0, 2, "") : packet(-1, 2, "")); continue; }
+      if (type === 3) { socket.write(body === password ? packet(std ? id : 0, 2, "") : packet(-1, 2, "")); continue; }
       log("rcon: " + body);
       if (/^(Shutdown|stop|DoExit)$/i.test(body)) { socket.end(); finish(0); return; }
       if (body === "crash") { log("crashing"); process.exit(1); }
       if (body === "hang") { log("hanging: no longer answering"); socket.destroy(); rconServer.close(); return; }
       if (/^(saveworld|save-all flush|Save)$/i.test(body)) fs.appendFileSync(path.join(saved, "world.sav"), "saved on command\n");
       let reply = "ok";
+      const mc = /^(kick|ban|pardon|whitelist (?:add|remove)|op|deop) (\S+)(?: (.*))?$/i.exec(body);
+      if (mc) reply = adminCommand(mc[1].toLowerCase(), mc[2], mc[3]);
       if (/^listplayers$/i.test(body)) reply = players().map((p, i) => i + ". " + p + ", " + (1000 + i)).join("\n");
-      socket.write(packet(id - 1, 2, reply));
+      socket.write(packet(std ? id : id - 1, 2, reply));
     }
   });
 }).listen(rconPort, "127.0.0.1", () => log("rcon listening"));
+// What a Minecraft server answers to its player-admin commands, and the files it keeps them in.
+const readJson = (name) => { try { return JSON.parse(fs.readFileSync(path.join(home, name), "utf8")); } catch { return []; } };
+const writeJson = (name, value) => fs.writeFileSync(path.join(home, name), JSON.stringify(value, null, 2));
+const listFile = { ban: "banned-players.json", pardon: "banned-players.json", "whitelist add": "whitelist.json", "whitelist remove": "whitelist.json", op: "ops.json", deop: "ops.json" };
+function adminCommand(cmd, name, reason) {
+  if (cmd === "kick") return players().includes(name) ? "Kicked " + name + (reason ? ": " + reason : "") : "No player was found";
+  const file = listFile[cmd]; const list = readJson(file); const at = list.findIndex((e) => e.name === name);
+  if (/^(ban|whitelist add|op)$/.test(cmd)) {
+    if (at >= 0) return "Nothing changed. That player is already on the list";
+    list.push({ uuid: "00000000-0000-0000-0000-" + String(list.length).padStart(12, "0"), name, ...(cmd === "ban" ? { reason: reason || "Banned by an operator." } : {}) });
+    writeJson(file, list); return cmd === "ban" ? "Banned " + name : "Added " + name;
+  }
+  if (at < 0) return "Nothing changed. That player is not on the list";
+  list.splice(at, 1); writeJson(file, list); return "Removed " + name;
+}
 const crashAfter = Number(arg("crash-after", 0));
 if (crashAfter) setTimeout(() => { log("crashing on purpose"); process.exit(1); }, crashAfter);
 setInterval(() => {}, 1000);
@@ -75,7 +93,7 @@ setInterval(() => {}, 1000);
  * @param {string} [options.exe]      image name; give each fake its own so they are told apart
  * @param {number} [options.crashAfterMs]  die this long after starting (0 = never), to test crash loops
  */
-export function makeFakeGame(folder, { name, rconPort, exe = "fakegame.exe", password = "pw", crashAfterMs = 0, ports = null }) {
+export function makeFakeGame(folder, { name, rconPort, exe = "fakegame.exe", password = "pw", crashAfterMs = 0, ports = null, standardRcon = false }) {
 	fs.mkdirSync(folder, { recursive: true });
 	fs.copyFileSync(process.execPath, path.join(folder, exe));
 	fs.writeFileSync(path.join(folder, "fakegame.cjs"), SCRIPT);
@@ -88,7 +106,7 @@ export function makeFakeGame(folder, { name, rconPort, exe = "fakegame.exe", pas
 	// With `ports`, the game is set up like a real Conan server: its ports are flags on
 	// the launch line, and its RCON port and password live in Game.ini ([RconPlugin], as in a real Conan install), so the
 	// panel's port and clone code have real places to read and change them.
-	let launch = `--rcon ${rconPort} --password ${password}`;
+	let launch = `--rcon ${rconPort} --password ${password}${standardRcon ? " --standard-rcon" : ""}`;
 	let configPath;
 	if (ports) {
 		const dir = path.join(saved, "Config", "WindowsServer");

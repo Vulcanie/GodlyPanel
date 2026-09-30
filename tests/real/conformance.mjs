@@ -152,7 +152,19 @@ try {
 	const again = await portsFree([...need, ...game.extraFree]);
 	if (again.length) throw new Error(`port(s) ${again.join(", ")} became busy before start; not starting`);
 	check("start is accepted", (await post(`/api/control/${enc(NAME)}/start`)).status === 200);
-	const cameUp = await until(() => online(), { timeoutMs: game.onlineMin * 60_000, everyMs: 5000, label: `${NAME} to come online` }).catch(() => null);
+	const startedAt = Date.now();
+	let goneSince = 0;
+	// A program that started and is gone again won't come online however long we wait.
+	const onlineOrDead = async () => {
+		if (await online()) return true;
+		if (ours().length > 0) goneSince = 0;
+		else if (Date.now() - startedAt > 60_000) {
+			goneSince ||= Date.now();
+			if (Date.now() - goneSince > 60_000 && (await idle())) throw new Error("the program started and is no longer running");
+		}
+		return false;
+	};
+	const cameUp = await until(() => onlineOrDead(), { timeoutMs: game.onlineMin * 60_000, everyMs: 5000, label: `${NAME} to come online` }).catch(() => null);
 	check("the panel sees it online", Boolean(cameUp));
 	if (!cameUp) {
 		note(`never seen online in ${game.onlineMin} min. process(es): ${ours().join(", ") || "none"}`);

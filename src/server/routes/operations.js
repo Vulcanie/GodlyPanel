@@ -5,12 +5,13 @@
 import express from "express";
 import { get as getServer, all as allServers } from "../data/serverStore.js";
 import { getOptions, setOptions } from "../data/serverOptions.js";
-import { requirePermission, canAccessServer } from "../middleware/permissions.js";
+import { requirePermission, canAccessServer, can } from "../middleware/permissions.js";
 import { listTasks, addTask, updateTask, removeTask, runTask } from "../services/scheduler.js";
 import { recoveryState } from "../services/crashWatcher.js";
 import { recentActivity } from "../services/activityLog.js";
 import { listLogs, readLog, searchLog } from "../services/logService.js";
 import { playersFor } from "../services/playerTracker.js";
+import { PlayerAdminError, capabilities, readLists, kickPlayer, banPlayer, unbanPlayer, addToList, removeFromList } from "../services/playerAdmin.js";
 import { readSeries, RANGES } from "../services/metrics.js";
 import { statsFor } from "../services/playerStats.js";
 import { runDetached } from "../services/serverOps.js";
@@ -248,6 +249,71 @@ router.get("/server/:serverName/logs/:id", requirePermission("server.logs"), asy
 
 router.get("/server/:serverName/players", requirePermission("server.players"), (req, res) => {
 	res.json(playersFor(req.server.name));
+});
+
+// ---- kicking, banning and the lists ---------------------------------------------
+
+function adminFail(res, err, what) {
+	if (err instanceof PlayerAdminError) return res.status(err.status).json({ error: err.message, code: err.code });
+	if (err.code === "path_not_allowed") return res.status(403).json({ error: err.message, code: err.code });
+	console.error(`${what} failed:`, err);
+	res.status(500).json({ error: `${what} failed: ${err.message}` });
+}
+
+router.get("/server/:serverName/player-admin", requirePermission("server.players"), async (req, res) => {
+	const caps = capabilities(req.server);
+	let lists = [];
+	let listError = null;
+	if (caps.lists.length > 0) {
+		try {
+			lists = await readLists(req.server);
+		} catch (err) {
+			listError = err.message;
+		}
+	}
+	res.json({ ...caps, lists, listError, canBan: can(req.user, "players.ban"), canKick: can(req.user, "players.kick") });
+});
+
+const actorOf = (req) => req.user?.username ?? null;
+
+router.post("/server/:serverName/players/kick", requirePermission("players.kick"), async (req, res) => {
+	try {
+		res.json(await kickPlayer(req.server, req.body?.player, req.body?.reason, actorOf(req)));
+	} catch (err) {
+		adminFail(res, err, "Kicking");
+	}
+});
+
+router.post("/server/:serverName/players/ban", requirePermission("players.ban"), async (req, res) => {
+	try {
+		res.json(await banPlayer(req.server, req.body?.player, req.body?.reason, actorOf(req)));
+	} catch (err) {
+		adminFail(res, err, "Banning");
+	}
+});
+
+router.post("/server/:serverName/players/unban", requirePermission("players.ban"), async (req, res) => {
+	try {
+		res.json(await unbanPlayer(req.server, req.body?.player, actorOf(req)));
+	} catch (err) {
+		adminFail(res, err, "Unbanning");
+	}
+});
+
+router.post("/server/:serverName/player-lists/:list", requirePermission("players.ban"), async (req, res) => {
+	try {
+		res.json(await addToList(req.server, req.params.list, req.body?.player, actorOf(req)));
+	} catch (err) {
+		adminFail(res, err, "Adding to the list");
+	}
+});
+
+router.delete("/server/:serverName/player-lists/:list/:player", requirePermission("players.ban"), async (req, res) => {
+	try {
+		res.json(await removeFromList(req.server, req.params.list, req.params.player, actorOf(req)));
+	} catch (err) {
+		adminFail(res, err, "Removing from the list");
+	}
 });
 
 // ---- how busy things have been --------------------------------------------------

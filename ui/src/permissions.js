@@ -9,6 +9,8 @@ const MODERATOR = new Set([
 	"server.backup",
 	"server.logs",
 	"server.players",
+	"players.kick",
+	"players.ban",
 	"activity.view",
 	"schedules.view",
 	"metrics.view",
