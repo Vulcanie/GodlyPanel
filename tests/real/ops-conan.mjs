@@ -97,7 +97,7 @@ try {
 	await until(() => online(), { timeoutMs: 12 * 60_000, everyMs: 5000, label: "Conan to come online" });
 	await until(() => idle(), { timeoutMs: 60_000 });
 	await sleep(8000);
-	ps("Stop-Process -Name ConanSandboxServer-Win64-Shipping -Force");
+	ps("Get-Process ConanSandboxServer-Win64-Shipping -ErrorAction SilentlyContinue | Where-Object { $_.Path -like 'C:\\gp-testbed*' } | Stop-Process -Force");
 	await until(async () => !(await online()), { timeoutMs: 90_000, everyMs: 2000, label: "it to be seen down" });
 	check("the panel notices it went down", true);
 	await until(async () => (await events("server.restarted.auto")).length > 0, { timeoutMs: 4 * 60_000, everyMs: 3000, label: "an automatic restart" });

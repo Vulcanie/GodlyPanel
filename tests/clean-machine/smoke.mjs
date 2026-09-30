@@ -210,7 +210,7 @@ try {
 
 		await call("PUT", base + "/options", { autoRestart: true });
 		await sleep(8000);
-		ps("Stop-Process -Name ConanSandboxServer-Win64-Shipping -Force");
+		ps(`Get-Process ConanSandboxServer-Win64-Shipping -ErrorAction SilentlyContinue | Where-Object { $_.Path -like '${WORK.replaceAll("/", "\\")}*' } | Stop-Process -Force`);
 		step("the panel restarts the game after it is killed", Boolean(await until(async () => (await call("GET", `/api/activity?server=Conan%20Clean&types=server.restarted.auto`)).json.length > 0, { timeoutMs: 6 * 60_000, everyMs: 3000, label: "an automatic restart" })));
 		step("and it comes back online", Boolean(await until(async () => (await call("GET", "/api/status")).json["Conan Clean"]?.online === true, { timeoutMs: 12 * 60_000, everyMs: 5000, label: "Conan back online" })));
 		await call("PUT", base + "/options", { autoRestart: false });
