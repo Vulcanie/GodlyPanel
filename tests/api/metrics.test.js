@@ -73,3 +73,43 @@ describe("CPU, memory and player history", () => {
 		assert.equal((await api.get("/api/metrics/system", { cookie: guest })).status, 403);
 	});
 });
+
+describe("player statistics endpoint", () => {
+	let panel;
+	let api;
+	let folder;
+	const NAME = "Fake Stats";
+
+	before(async () => {
+		const rconPort = await freePort();
+		panel = await startInstance({
+			config: { metrics: { enabled: true, sampleSec: 5 } },
+			servers: (dir) => {
+				folder = path.join(dir, "fake-stats");
+				return [makeFakeGame(folder, { name: NAME, rconPort, exe: "gp-fake-stats.exe" })];
+			},
+		});
+		api = panel.api;
+		fs.writeFileSync(path.join(folder, "players.txt"), "Alice\nBob\n");
+	});
+	after(async () => {
+		killFakeGames(folder);
+		await panel.stop();
+	});
+
+	it("works out the peak, the busiest hours and who plays most", async () => {
+		await api.post(`/api/control/${encodeURIComponent(NAME)}/start`);
+		const get = async () => (await api.get(`/api/server/${encodeURIComponent(NAME)}/player-stats?days=7`)).json;
+		const ok = await until(async () => (await get()).peak.players >= 2, { timeoutMs: 90_000 });
+		assert.equal(ok, true);
+		const s = await get();
+		assert.equal(s.peak.players, 2);
+		assert.ok(s.averageWhileUp > 0);
+		assert.equal(s.hours.length, 7);
+		assert.equal(s.hours[0].length, 24);
+		const now = new Date();
+		assert.ok(s.hours[now.getDay()][now.getHours()] > 0, "the current hour of the current weekday has players");
+		assert.equal(s.daily.at(-1).date.length, 10);
+		assert.equal((await api.get(`/api/server/${encodeURIComponent(NAME)}/player-stats?days=9999`)).json.days, 90, "capped at ninety days");
+	});
+});

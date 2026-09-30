@@ -8,6 +8,8 @@
 
 export const LOG_TEMPLATES = {
 	conan: [{ kind: "dir", base: "working", rel: "ConanSandbox/Saved/Logs", label: "Game log" }],
+	// Valheim prints to its console; the start script sends it to this file (-logFile).
+	valheim: [{ kind: "file", base: "working", rel: "valheim_server.log", label: "Server log" }],
 	"ark-asa": [{ kind: "dir", base: "working", rel: "ShooterGame/Saved/Logs", label: "Game log" }],
 	"ark-ase": [{ kind: "dir", base: "working", rel: "../../Saved/Logs", label: "Game log" }],
 	enshrouded: [{ kind: "dir", base: "working", rel: "logs", label: "Server log" }],

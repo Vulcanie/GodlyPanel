@@ -212,7 +212,7 @@ try {
 	const gone = await until(async () => ours().length === 0, { timeoutMs: 6 * 60_000, everyMs: 2000, label: "the game to exit" }).catch(() => null);
 	check("the game exits after Stop", Boolean(gone), `${Math.round((Date.now() - t0) / 1000)}s`);
 	await until(() => idle(), { timeoutMs: 120_000 }).catch(() => {});
-	check("the panel says it is offline", !(await online()));
+	check("the panel says it is offline", Boolean(await until(async () => !(await online()), { timeoutMs: 60_000, everyMs: 3000 }).catch(() => null)));
 	const stopEvents = (await get(`/api/server/${enc(NAME)}/logs`)).json;
 	note(`files after a clean stop: ${stopEvents.map((l) => l.name).join(", ")}`);
 

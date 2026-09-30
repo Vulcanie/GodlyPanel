@@ -368,7 +368,7 @@ export const GAME_TEMPLATES = [
 		// Valheim uses three consecutive UDP ports: the game port and the two above it.
 		implicitPorts: [
 			{ offset: 1, label: "Steam queries" },
-			{ offset: 2, label: "its third UDP port" },
+			{ offset: 2, label: "a third port some versions use", precaution: true },
 		],
 		buildStartScriptFilename: () => "Valheim-Server-Start.bat",
 		buildStartScript: (p) =>
@@ -380,7 +380,7 @@ export const GAME_TEMPLATES = [
 				// writes to the signed-in user's profile, shared with every other Valheim
 				// server on the PC, so two servers could end up using the same world file
 				// and a restore would replace all of them.
-				`start /MIN "${p.name}" valheim_server.exe -nographics -batchmode -name "${p.sessionName}" -port ${p.port} -world "${p.worldName || p.instanceSlug || "World"}" -savedir "%~dp0saves" -password "${p.serverPassword}"`,
+				`start /MIN "${p.name}" valheim_server.exe -nographics -batchmode -name "${p.sessionName}" -port ${p.port} -world "${p.worldName || p.instanceSlug || "World"}" -savedir "%~dp0saves" -logFile "%~dp0valheim_server.log" -password "${p.serverPassword}"`,
 				"",
 			].join("\r\n"),
 		buildServerEntry: (p) => ({

@@ -11,6 +11,7 @@ import ModsPanel from "./ModsPanel";
 import ActivityPanel from "./ActivityPanel";
 import AutomationPanel from "./AutomationPanel";
 import ConfigHistoryPanel from "./ConfigHistoryPanel";
+import StatsPanel from "./StatsPanel";
 import { useOperation, operationLabel } from "../OperationsContext";
 
 /**
@@ -30,6 +31,7 @@ function ServerWorkspace({ serverName, serverStatus, servers, userRole, onBack, 
 				{ key: "schedules", label: "Schedules" },
 				{ key: "logs", label: "Logs" },
 				{ key: "players", label: "Players" },
+				{ key: "stats", label: "Stats" },
 				isAdmin && { key: "mods", label: "Mods" },
 				{ key: "activity", label: "Activity" },
 				isAdmin && { key: "history", label: "History" },
@@ -87,6 +89,7 @@ function ServerWorkspace({ serverName, serverStatus, servers, userRole, onBack, 
 			{active === "schedules" && <SchedulesPanel serverName={serverName} serverNames={serverNames} canManage={isAdmin} />}
 			{active === "logs" && <LogsPanel serverName={serverName} />}
 			{active === "players" && <PlayersPanel serverName={serverName} />}
+			{active === "stats" && <StatsPanel serverName={serverName} />}
 			{active === "mods" && <ModsPanel serverName={serverName} serverStatus={serverStatus} />}
 			{active === "activity" && <ActivityPanel serverName={serverName} />}
 			{active === "history" && <ConfigHistoryPanel serverName={serverName} serverStatus={serverStatus} />}

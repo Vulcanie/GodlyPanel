@@ -12,6 +12,7 @@ import { recentActivity } from "../services/activityLog.js";
 import { listLogs, readLog, searchLog } from "../services/logService.js";
 import { playersFor } from "../services/playerTracker.js";
 import { readSeries, RANGES } from "../services/metrics.js";
+import { statsFor } from "../services/playerStats.js";
 import { runDetached } from "../services/serverOps.js";
 import {
 	BackupError,
@@ -231,6 +232,11 @@ router.get("/metrics/system", requirePermission("metrics.view"), async (req, res
 
 router.get("/server/:serverName/metrics", requirePermission("metrics.view"), async (req, res) => {
 	res.json(await readSeries(`server:${req.server.name}`, rangeOf(req)));
+});
+
+router.get("/server/:serverName/player-stats", requirePermission("server.players"), async (req, res) => {
+	const days = Math.min(90, Math.max(1, Number(req.query.days) || 7));
+	res.json(await statsFor(req.server.name, days));
 });
 
 // ---- what has happened -----------------------------------------------------------
