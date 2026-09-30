@@ -1,0 +1,56 @@
+name: Clean machine test
+
+# Builds the app and runs it on a Windows machine that has never seen it: unzip,
+# first run, then a real Conan Exiles install, start, port change, stop and
+# delete. This is the closest thing to "does it work on someone else's PC" that
+# doesn't need someone else's PC. Run it from the Actions tab.
+#
+# Not covered: Windows *client* behaviour (this is Windows Server), SmartScreen,
+# a home router, and the Windows Firewall prompt.
+on:
+  workflow_dispatch:
+    inputs:
+      conan:
+        description: "Also install, start, and manage a real Conan Exiles server (about 15 minutes)"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: windows-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            ui/package-lock.json
+
+      - run: npm run setup
+
+      - name: Package the app
+        run: npm run package
+
+      - name: Run it on this clean machine
+        shell: pwsh
+        run: |
+          $zip = (Get-ChildItem dist -Filter "GodlyPanel-*-win.zip" | Select-Object -First 1).FullName
+          $flag = if ("${{ inputs.conan }}" -eq "false") { "--no-conan" } else { "" }
+          node tests/clean-machine/smoke.mjs $zip $flag
+        env:
+          GP_ARTIFACTS: clean-machine-artifacts
+
+      - name: Keep screenshots and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: clean-machine-results
+          path: clean-machine-artifacts
+          retention-days: 14
