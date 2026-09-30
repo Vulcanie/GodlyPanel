@@ -25,6 +25,7 @@ import { killTrackedSteamCmd, hasActiveJobs } from "./services/processRegistry.j
 import batchFileRoutes from "./routes/batchFiles.js";
 import controlRoutes from "./routes/control.js";
 import updatesRoutes from "./routes/updates.js";
+import modsRoutes from "./routes/mods.js";
 import { initPanelUpdate, checkForPanelUpdate } from "./services/panelUpdate.js";
 import { initPresets } from "./services/presetService.js";
 import operationsRoutes from "./routes/operations.js";
@@ -127,6 +128,7 @@ app.use("/api", operators, controlRoutes);
 app.use("/api", operators, operationsRoutes);
 app.use("/api/users", requireRole("admin"), userRoutes);
 app.use("/api/updates", requireRole("admin"), updatesRoutes);
+app.use("/api", requireRole("admin"), modsRoutes);
 app.use("/api/settings", requireRole("admin"), settingsRoutes);
 app.use("/api/batch-files", requireRole("admin"), batchFileRoutes);
 app.use("/api", requireRole("admin"), apiRouter);

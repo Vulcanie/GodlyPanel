@@ -421,7 +421,12 @@ export async function restoreBackup(server, id, { safety = true, onReady = null 
 	}
 
 	progress(server, "checking");
-	const names = await listZip(zipFile);
+	let names;
+	try {
+		names = await listZip(zipFile);
+	} catch (err) {
+		throw new BackupError(`That backup can't be read (${err.message}), so nothing was changed. It may be damaged.`, "unreadable");
+	}
 	const unsafe = unsafeEntries(names);
 	if (unsafe.length > 0) throw new BackupError(`That archive contains paths outside its folders (${unsafe[0]}), so it won't be restored.`, "unsafe_archive");
 	const manifest = await readManifest(zipFile);
