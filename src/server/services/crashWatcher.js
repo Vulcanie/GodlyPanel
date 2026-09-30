@@ -4,6 +4,7 @@ import { getIntent, intentSince } from "../data/serverIntent.js";
 import { getConfig } from "../config/configStore.js";
 import { serverStatus } from "./pollingService.js";
 import { startServer } from "./serverControl.js";
+import { stopAndWait } from "./serverLifecycle.js";
 import { isProgramAlive } from "./serverState.js";
 import { currentOperation, runOperation } from "./serverOps.js";
 import { logActivity } from "./activityLog.js";
@@ -66,7 +67,8 @@ export async function checkServersOnce(now = Date.now()) {
 
 		const online = serverStatus[server.name]?.online === true;
 		const alive = online ? true : await isProgramAlive(server);
-		const result = step(entry.policy, { online, alive, now }, cfg());
+		const hangMs = options.restartWhenUnresponsive ? options.unresponsiveMinutes * 60_000 : null;
+		const result = step(entry.policy, { online, alive, now }, { ...cfg(), hangRestartMs: hangMs });
 
 		if (result.action === "restart" && currentOperation(server.name)) continue;
 		entry.policy = result.state;
@@ -106,14 +108,22 @@ export async function checkServersOnce(now = Date.now()) {
 }
 
 async function restart(server, reason) {
+	const hung = reason === "hung";
 	logActivity({
-		type: "server.crashed",
+		type: hung ? "server.hung" : "server.crashed",
 		server: server.name,
 		level: "warn",
-		message: reason === "start_timeout" ? `${server.name} didn't come back after its restart.` : `${server.name} went down unexpectedly.`,
+		message: hung
+			? `${server.name} was running but hadn't answered for ${getOptions(server.name).unresponsiveMinutes} minutes, so it is being restarted.`
+			: reason === "start_timeout"
+				? `${server.name} didn't come back after its restart.`
+				: `${server.name} went down unexpectedly.`,
 	});
 	try {
 		await runOperation(server.name, "restarting", async () => {
+			// A hung program is still there: stop it (the normal stop, which falls back to
+			// ending the process when it doesn't answer) before starting it again.
+			if (hung) await stopAndWait(server);
 			await startServer(server);
 		});
 		logActivity({ type: "server.restarted.auto", server: server.name, message: `${server.name} was restarted automatically.` });

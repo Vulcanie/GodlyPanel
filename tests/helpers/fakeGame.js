@@ -38,7 +38,7 @@ log("server starting on rcon " + rconPort);
 const packet = (id, type, body) => { const t = Buffer.from(body, "utf8"); const b = Buffer.alloc(14 + t.length); b.writeInt32LE(10 + t.length, 0); b.writeInt32LE(id, 4); b.writeInt32LE(type, 8); t.copy(b, 12); return b; };
 const players = () => { try { return fs.readFileSync(path.join(home, "players.txt"), "utf8").split(/\r?\n/).filter(Boolean); } catch { return []; } };
 const finish = (code) => { log("server stopping"); fs.appendFileSync(path.join(saved, "world.sav"), "saved on exit\n"); setTimeout(() => process.exit(code), 150); };
-net.createServer((socket) => {
+const rconServer = net.createServer((socket) => {
   let pending = Buffer.alloc(0);
   socket.on("error", () => {});
   socket.on("data", (chunk) => {
@@ -53,6 +53,7 @@ net.createServer((socket) => {
       log("rcon: " + body);
       if (/^(Shutdown|stop|DoExit)$/i.test(body)) { socket.end(); finish(0); return; }
       if (body === "crash") { log("crashing"); process.exit(1); }
+      if (body === "hang") { log("hanging: no longer answering"); socket.destroy(); rconServer.close(); return; }
       if (/^(saveworld|save-all flush|Save)$/i.test(body)) fs.appendFileSync(path.join(saved, "world.sav"), "saved on command\n");
       let reply = "ok";
       if (/^listplayers$/i.test(body)) reply = players().map((p, i) => i + ". " + p + ", " + (1000 + i)).join("\n");

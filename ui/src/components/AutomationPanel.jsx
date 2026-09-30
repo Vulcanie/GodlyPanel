@@ -81,9 +81,31 @@ function AutomationPanel({ serverName, serverStatus, onCloned }) {
 				)}
 				{options.recovery.unresponsive && (
 					<Alert severity="warning" sx={{ ml: 6, mb: 1 }}>
-						It is running but has stopped answering. It was left alone in case it is saving.
+						It is running but has stopped answering.{options.restartWhenUnresponsive ? " It will be restarted if that goes on." : " It was left alone in case it is saving."}
 					</Alert>
 				)}
+				<Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
+					<FormControlLabel
+						control={<Switch checked={options.restartWhenUnresponsive} disabled={!options.autoRestart} onChange={(e) => set({ restartWhenUnresponsive: e.target.checked })} />}
+						label="Also restart it if it is running but stops answering"
+					/>
+					<TextField
+						size="small"
+						type="number"
+						label="After (minutes)"
+						sx={{ width: 140 }}
+						disabled={!options.autoRestart || !options.restartWhenUnresponsive}
+						value={options.unresponsiveMinutes}
+						inputProps={{ min: 1, max: 240 }}
+						onChange={(e) => {
+							const m = Math.round(Number(e.target.value));
+							if (m >= 1 && m <= 240) set({ unresponsiveMinutes: m });
+						}}
+					/>
+				</Box>
+				<Typography variant="caption" sx={{ display: "block", ml: 6, mb: 1, color: "text.secondary" }}>
+					A world can look frozen for a while when it is saving or loading, so give it time. Needs "Restart it if it crashes" on.
+				</Typography>
 				<FormControlLabel
 					sx={{ display: "block" }}
 					control={<Switch checked={options.autoStart} onChange={(e) => set({ autoStart: e.target.checked })} />}

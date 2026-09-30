@@ -16,7 +16,11 @@ import { fileURLToPath } from "node:url";
 export const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 export const TESTBED = process.env.GP_TESTBED || "C:/gp-testbed";
 export const PANEL_PORT = Number(process.env.GP_PANEL_PORT || 7100);
-export const DATA = path.join(TESTBED, "data");
+// A conformance run for one game gets a panel of its own (data-<game>, servers-<game>),
+// so the ports it is given don't clash with servers registered in another run.
+const gameArg = process.argv.includes("--game") ? process.argv[process.argv.indexOf("--game") + 1] : null;
+export const DATA = path.join(TESTBED, gameArg ? `data-${gameArg}` : "data");
+const SERVERS_DIR = gameArg ? `servers-${gameArg}` : "servers";
 export const BASE = `http://127.0.0.1:${PANEL_PORT}`;
 export const ADMIN = { username: "admin", password: "TestAdmin!2345" };
 
@@ -31,6 +35,20 @@ export async function call(method, url, body) {
 	});
 	const set = res.headers.get("set-cookie");
 	if (set) cookie = set.split(";")[0];
+	const text = await res.text();
+	let json;
+	try {
+		json = JSON.parse(text);
+	} catch {
+		json = text;
+	}
+	return { status: res.status, json };
+}
+/** A multipart upload as the signed-in admin. */
+export async function upload(url, field, filename, bytes) {
+	const form = new FormData();
+	form.append(field, new Blob([bytes]), filename);
+	const res = await fetch(BASE + url, { method: "POST", headers: cookie ? { Cookie: cookie } : {}, body: form });
 	const text = await res.text();
 	let json;
 	try {
@@ -64,7 +82,7 @@ export async function startPanel() {
 			configFile,
 			JSON.stringify({
 				http: { port: PANEL_PORT, bindAll: false },
-				paths: { serversRoot: path.join(TESTBED, "servers").replaceAll("/", "\\") },
+				paths: { serversRoot: path.join(TESTBED, SERVERS_DIR).replaceAll("/", "\\") },
 				polling: { serversMs: 4000, enableServerStats: false },
 				recovery: { graceSec: 20, startupGraceMin: 6, maxRestarts: 3, windowMin: 30 },
 			}),

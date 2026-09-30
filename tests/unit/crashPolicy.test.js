@@ -98,3 +98,31 @@ describe("crash recovery decisions", () => {
 		assert.equal(second.state.restarts.length, 0, "and never restarted");
 	});
 });
+
+describe("a program that is running but not answering, with restart-when-unresponsive on", () => {
+	const hang = { ...cfg, hangRestartMs: 5 * 60_000 };
+	const up = { ...initialState(), up: true, downSince: 0 };
+
+	it("says so first, then restarts once it has been silent for the set time", () => {
+		const first = step(up, { online: false, alive: true, now: 100 * S }, hang);
+		assert.equal(first.action, "unresponsive");
+		const waiting = step(first.state, { online: false, alive: true, now: 250 * S }, hang);
+		assert.equal(waiting.action, null);
+		const restart = step(waiting.state, { online: false, alive: true, now: 301 * S }, hang);
+		assert.equal(restart.action, "restart");
+		assert.equal(restart.reason, "hung");
+		assert.equal(restart.state.restarts.length, 1, "it counts against the same limit as a crash");
+	});
+
+	it("never restarts it when the setting is off", () => {
+		const r = step(up, { online: false, alive: true, now: 100_000 * S }, { ...cfg, hangRestartMs: null });
+		assert.equal(r.action, "unresponsive");
+		assert.equal(step(r.state, { online: false, alive: true, now: 200_000 * S }, { ...cfg, hangRestartMs: null }).action, null);
+	});
+
+	it("gives up after too many, like any other restart", () => {
+		const worn = { ...up, restarts: [90 * 60 * S, 91 * 60 * S, 92 * 60 * S] };
+		const r = step(worn, { online: false, alive: true, now: 100 * 60 * S }, hang);
+		assert.equal(r.action, "give_up");
+	});
+});

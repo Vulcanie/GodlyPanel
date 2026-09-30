@@ -18,6 +18,10 @@ export const OPTION_DEFAULTS = Object.freeze({
 	// Start it when the panel starts (which, with "start with Windows", means when
 	// the PC starts).
 	autoStart: false,
+	// Restart it when its program is running but it has stopped answering, after this
+	// many minutes. Off by default: a server mid-save can look unresponsive for a while.
+	restartWhenUnresponsive: false,
+	unresponsiveMinutes: 10,
 	backup: Object.freeze({
 		// null = the game's usual save folders; otherwise [{ path, label? }].
 		paths: null,

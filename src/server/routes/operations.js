@@ -125,8 +125,8 @@ router.put("/server/:serverName/backups/settings", requirePermission("backup.set
 // ---- what a server does on its own ------------------------------------------
 
 router.get("/server/:serverName/options", requirePermission("server.control"), (req, res) => {
-	const { autoRestart, autoStart } = getOptions(req.server.name);
-	res.json({ autoRestart, autoStart, recovery: recoveryState(req.server.name) });
+	const { autoRestart, autoStart, restartWhenUnresponsive, unresponsiveMinutes } = getOptions(req.server.name);
+	res.json({ autoRestart, autoStart, restartWhenUnresponsive, unresponsiveMinutes, recovery: recoveryState(req.server.name) });
 });
 
 router.put("/server/:serverName/options", requirePermission("server.options"), async (req, res) => {
@@ -136,8 +136,17 @@ router.put("/server/:serverName/options", requirePermission("server.options"), a
 		if (typeof req.body[key] !== "boolean") return res.status(400).json({ error: `${key} must be true or false.` });
 		patch[key] = req.body[key];
 	}
-	const { autoRestart, autoStart } = await setOptions(req.server.name, patch);
-	res.json({ autoRestart, autoStart, recovery: recoveryState(req.server.name) });
+	if (req.body?.restartWhenUnresponsive !== undefined) {
+		if (typeof req.body.restartWhenUnresponsive !== "boolean") return res.status(400).json({ error: "restartWhenUnresponsive must be true or false." });
+		patch.restartWhenUnresponsive = req.body.restartWhenUnresponsive;
+	}
+	if (req.body?.unresponsiveMinutes !== undefined) {
+		const m = req.body.unresponsiveMinutes;
+		if (!Number.isInteger(m) || m < 1 || m > 240) return res.status(400).json({ error: "unresponsiveMinutes must be a whole number from 1 to 240." });
+		patch.unresponsiveMinutes = m;
+	}
+	const { autoRestart, autoStart, restartWhenUnresponsive, unresponsiveMinutes } = await setOptions(req.server.name, patch);
+	res.json({ autoRestart, autoStart, restartWhenUnresponsive, unresponsiveMinutes, recovery: recoveryState(req.server.name) });
 });
 
 // ---- schedules ------------------------------------------------------------------

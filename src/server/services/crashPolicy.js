@@ -19,8 +19,9 @@ export const initialState = () => ({
  * @param {object} state  from initialState() or a previous call
  * @param {{ online: boolean, alive: boolean|null, now: number }} seen
  *   `alive` is whether the program is still running when that can be told (null = can't tell)
- * @param {{ graceMs: number, maxRestarts: number, windowMs: number, startupGraceMs: number }} cfg
- * @returns {{ state: object, action: null|"recovered"|"restart"|"give_up"|"unresponsive", reason?: "crashed"|"start_timeout" }}
+ * @param {{ graceMs: number, maxRestarts: number, windowMs: number, startupGraceMs: number, hangRestartMs?: number|null }} cfg
+ *   `hangRestartMs`: restart a program that is running but has not answered for this long (null = never)
+ * @returns {{ state: object, action: null|"recovered"|"restart"|"give_up"|"unresponsive", reason?: "crashed"|"start_timeout"|"hung" }}
  */
 export function step(state, { online, alive, now }, cfg) {
 	const restarts = state.restarts.filter((t) => now - t < cfg.windowMs);
@@ -41,13 +42,18 @@ export function step(state, { online, alive, now }, cfg) {
 	// while the program is still there: one that has already gone isn't loading.
 	if (next.pendingSince && alive !== false && now - next.pendingSince < cfg.startupGraceMs) return { state: next, action: null };
 
-	// Still running but not answering: a hang, or a slow load. Restarting would
-	// kill a world that may be mid-save, so say so and leave it.
+	// Still running but not answering: a hang, or a slow load. Restarting would kill a
+	// world that may be mid-save, so by default say so and leave it. A server set to
+	// restart when unresponsive is given the configured time first.
+	let reason = next.pendingSince ? "start_timeout" : "crashed";
 	if (alive === true) {
-		return { state: { ...next, unresponsive: true }, action: next.unresponsive ? null : "unresponsive" };
+		const limit = cfg.hangRestartMs ?? null;
+		if (limit === null || now - next.downSince < limit) {
+			return { state: { ...next, unresponsive: true }, action: next.unresponsive ? null : "unresponsive" };
+		}
+		reason = "hung";
 	}
 
-	const reason = next.pendingSince ? "start_timeout" : "crashed";
 	if (restarts.length >= cfg.maxRestarts) return { state: { ...next, gaveUp: true }, action: "give_up", reason };
 	return {
 		state: { ...next, restarts: [...restarts, now], pendingSince: now, downSince: now },

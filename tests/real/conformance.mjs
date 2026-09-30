@@ -13,7 +13,7 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { TESTBED, startPanel, get, post, put, del, check, summary, sleep, until, freeGB, dirGB } from "./lib.mjs";
+import { TESTBED, startPanel, get, post, put, del, upload, check, summary, sleep, until, freeGB, dirGB } from "./lib.mjs";
 import { GAMES } from "./games.mjs";
 import { portBusy } from "../../src/server/util/portProbe.js";
 import { listZip } from "../../src/server/util/tarZip.js";
@@ -262,10 +262,11 @@ try {
 	if (modsInfo.supported && modsInfo.adapter === "folder") {
 		const ext = modsInfo.accepts?.includes(".jar") ? ".jar" : modsInfo.accepts?.includes(".pak") ? ".pak" : null;
 		if (ext) {
-			const form = new FormData();
-			form.append("mod", new Blob(["x"]), `gp-test${ext}`);
-			const res = await fetch(`http://127.0.0.1:${process.env.GP_PANEL_PORT || 7100}/api/server/${enc(NAME)}/mods/upload`, { method: "POST", headers: { Cookie: (await import("./lib.mjs")).cookieValue?.() ?? "" }, body: form }).catch(() => null);
-			note(`folder mod upload ${res ? res.status : "not tried"} (needs the session cookie; see the stand-in tests for coverage)`);
+			const up = await upload(`/api/server/${enc(NAME)}/mods/upload`, "mod", `gp-test${ext}`, Buffer.from("x"));
+			check("a mod file can be added through the panel", up.status === 200, JSON.stringify(up.json));
+			const listed = (await get(`/api/server/${enc(NAME)}/mods`)).json;
+			check("and it lands in the folder the game reads", listed.mods.some((m) => m.name === `gp-test${ext}`) && fs.existsSync(path.join(listed.directory, `gp-test${ext}`)), listed.directory);
+			await post(`/api/server/${enc(NAME)}/mods/remove`, { id: `gp-test${ext}` });
 		}
 	}
 
