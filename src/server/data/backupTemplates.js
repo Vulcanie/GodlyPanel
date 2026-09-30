@@ -51,6 +51,8 @@ export const BACKUP_TEMPLATES = {
 	// No documented save location has been confirmed, so nothing is guessed: the
 	// panel asks for the folders instead.
 	subsistence: { paths: [] },
+	// Rust keeps everything for a server (world saves, settings, player data) in server<identity>.
+	rust: { paths: [{ base: "working", rel: "server", label: "World, settings and player data" }] },
 	"7days": {
 		paths: [
 			{ base: "flag", flag: "-UserDataFolder=", join: "Saves", fallback: "%APPDATA%/7DaysToDie/Saves", label: "Saved worlds" },

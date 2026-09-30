@@ -19,6 +19,8 @@ export function getSaveCommand(server) {
 			return null;
 		case "Palword":
 			return "Save";
+		case "rust":
+			return "server.save";
 		default:
 			return null;
 	}
@@ -33,6 +35,8 @@ export function getBroadcastCommand(server, message) {
 			return `say ${message}`;
 		case "Palword":
 			return `Broadcast ${message}`;
+		case "rust":
+			return `say ${message}`;
 		case "conan":
 			return `broadcast ${message}`;
 		default:
@@ -47,6 +51,8 @@ export function stopCommandFor(server) {
 			return "stop";
 		case "conan":
 			return "Shutdown";
+		case "rust":
+			return "quit";
 		default:
 			return "DoExit";
 	}

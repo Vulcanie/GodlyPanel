@@ -152,6 +152,7 @@ const SIGNATURES = [
 	{ type: "enshrouded", match: ["enshrouded_server.exe"], label: "Enshrouded" },
 	{ type: "minecraft", match: ["variables.txt", "server.properties"], label: "Minecraft" },
 	{ type: "Palword", match: ["PalServer.exe"], label: "Palworld" },
+	{ type: "rust", match: ["RustDedicated.exe"], label: "Rust" },
 	{ type: "7days", match: ["7DaysToDieServer.exe"], label: "7 Days to Die" },
 	{ type: "subsistence", match: ["Subsistence.exe"], label: "Subsistence" },
 ];

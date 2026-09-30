@@ -147,6 +147,22 @@ function parseRconPlayers(text) {
 		.map((line) => line.substring(line.indexOf(".") + 2, line.indexOf(",")));
 }
 
+// Games whose console lists players in another way than ARK's "0. Name, id" lines.
+const RCON_PLAYERS = {
+	// Rust: "playerlist" answers with JSON, [{ "SteamID": "...", "DisplayName": "..." }, ...].
+	rust: {
+		command: "playerlist",
+		parse: (text) => {
+			try {
+				const list = JSON.parse(text);
+				return Array.isArray(list) ? list.map((p) => p.DisplayName).filter(Boolean) : [];
+			} catch {
+				return [];
+			}
+		},
+	},
+};
+
 // RCON is TCP, so a quick pre-check avoids a slower failed handshake when the
 // port's trivially closed. gamedig's protocols are mostly UDP (a TCP pre-check
 // wouldn't work at all) and process polling has no port to check, so those
@@ -155,9 +171,10 @@ async function pollRcon(server, base) {
 	if (!(await checkPort(server.host, server.rconPort, 1500))) return offline(base);
 
 	const startedAt = Date.now();
-	const text = await withRcon(server, (_rcon, send) => send("ListPlayers"), { timeoutMs: 5000 });
+	const how = RCON_PLAYERS[server.type];
+	const text = await withRcon(server, (_rcon, send) => send(how?.command ?? "ListPlayers"), { timeoutMs: 5000 });
 	const ping = Date.now() - startedAt;
-	const players = parseRconPlayers(text);
+	const players = (how?.parse ?? parseRconPlayers)(text);
 	return { ...base, online: true, playerCount: players.length, playerList: players, ping };
 }
 

@@ -15,6 +15,7 @@ export const LOG_TEMPLATES = {
 	enshrouded: [{ kind: "dir", base: "working", rel: "logs", label: "Server log" }],
 	dragonwilds: [{ kind: "dir", base: "working", rel: "RSDragonwilds/Saved/Logs", label: "Game log" }],
 	windrose: [{ kind: "dir", base: "working", rel: "R5/Saved/Logs", label: "Game log" }],
+	rust: [{ kind: "file", base: "working", rel: "rustserver.log", label: "Server log" }],
 	"7days": [{ kind: "file", base: "working", rel: "output_log.txt", label: "Server log" }],
 	// Palworld's server writes no log file at all (its Shipping build logs to the console only:
 	// checked on a real install), so there is nothing to list; a server started with no window

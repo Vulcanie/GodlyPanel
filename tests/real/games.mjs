@@ -123,7 +123,18 @@ export const GAMES = {
 		onlineMin: 20,
 		logName: /./,
 	},
+	rust: {
+		templateId: "rust",
+		programs: ["RustDedicated"],
+		name: "Real Rust",
+		params: { sessionName: "GodlyTest", rconPassword: "TestRcon1", port: 8892, queryPort: 8893, rconPort: 7101, worldSize: 1000 },
+		ports: { udp: [8892, 8893], tcp: [7101] },
+		extraFree: [28015, 28016, 28017],
+		probeCommands: ["status", "playerlist", "server.save", "kick 76561198000000000", "ban 76561198000000000", "unban 76561198000000000", "say hello"],
+		onlineMin: 12,
+		logName: /./,
+	},
 };
 
 /** Games in the order they are run: small and quick first, so harness problems show up cheaply. */
-export const ORDER = ["valheim", "enshrouded", "subsistence", "dragonwilds", "windrose", "palworld", "7days", "ark-ase", "ark-asa", "conan"];
+export const ORDER = ["valheim", "enshrouded", "subsistence", "dragonwilds", "windrose", "palworld", "7days", "ark-ase", "ark-asa", "conan", "rust"];

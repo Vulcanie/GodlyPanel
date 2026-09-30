@@ -980,6 +980,54 @@ export const GAME_TEMPLATES = [
 			autoUpdate: false,
 		}),
 	},
+	// ---------------------------------------------------------------------
+	{
+		id: "rust",
+		displayName: "Rust",
+		type: "rust",
+		method: "rcon",
+		updateAppId: "258550",
+		storeAppId: "252490",
+		sharedInstall: false,
+		installLayoutRoot: "",
+		fields: ["sessionName", "rconPassword"],
+		ports: [
+			{ key: "port", label: "Game Port", default: 28015 },
+			{ key: "queryPort", label: "Query Port", default: 28017 },
+			{ key: "rconPort", label: "RCON Port", default: 28016 },
+		],
+		buildStartScriptFilename: () => "Start_Rust.bat",
+		// Rust keeps each server's world and settings under server\<identity>, inside this
+		// folder. +rcon.web 0 selects the ordinary (Source) RCON over TCP instead of the
+		// WebSocket one; +app.port -1 turns off the Rust+ companion-app port.
+		buildStartScript: (p) =>
+			[
+				"@echo off",
+				"cd /d \"%~dp0\"",
+				"",
+				`start /MIN "${p.name}" RustDedicated.exe -batchmode -nographics -logfile "rustserver.log" +server.ip 0.0.0.0 +server.port ${p.port} +server.queryport ${p.queryPort} +rcon.ip 127.0.0.1 +rcon.port ${p.rconPort} +rcon.password "${p.rconPassword}" +rcon.web 0 +app.port -1 +server.identity "${p.instanceSlug || "server"}" +server.hostname "${p.sessionName}" +server.maxplayers ${p.maxPlayers || 20} +server.worldsize ${p.worldSize || 3000} +server.seed ${p.seed || 1337} +server.saveinterval 300`,
+				"",
+			].join("\r\n"),
+		buildServerEntry: (p) => ({
+			name: p.name,
+			type: "rust",
+			method: "rcon",
+			host: "127.0.0.1",
+			port: p.port,
+			queryPort: p.queryPort,
+			rconPort: p.rconPort,
+			rconPassword: p.rconPassword,
+			sessionName: p.sessionName,
+			configPath: `${p.installDir}\\server\\${p.instanceSlug || "server"}\\cfg\\server.cfg`,
+			startScriptPath: `${p.installDir}\\${p.startScriptFilename}`,
+			workingDir: `${p.installDir}`,
+			processName: "RustDedicated.exe",
+			steamCmdPath: p.steamCmdExe,
+			installDir: `${p.installDir}\\`,
+			updateAppId: "258550",
+			autoUpdate: false,
+		}),
+	},
 ];
 
 export function getTemplate(id) {
