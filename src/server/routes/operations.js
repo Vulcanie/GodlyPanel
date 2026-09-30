@@ -6,6 +6,9 @@ import express from "express";
 import { get as getServer, all as allServers } from "../data/serverStore.js";
 import { getOptions, setOptions } from "../data/serverOptions.js";
 import { requirePermission, canAccessServer } from "../middleware/permissions.js";
+import { listTasks, addTask, updateTask, removeTask, runTask } from "../services/scheduler.js";
+import { recoveryState } from "../services/crashWatcher.js";
+import { recentActivity } from "../services/activityLog.js";
 import { runDetached } from "../services/serverOps.js";
 import {
 	BackupError,
@@ -114,6 +117,75 @@ router.put("/server/:serverName/backups/settings", requirePermission("backup.set
 	} catch (err) {
 		fail(res, err, "Saving the backup settings");
 	}
+});
+
+// ---- what a server does on its own ------------------------------------------
+
+router.get("/server/:serverName/options", requirePermission("server.control"), (req, res) => {
+	const { autoRestart, autoStart } = getOptions(req.server.name);
+	res.json({ autoRestart, autoStart, recovery: recoveryState(req.server.name) });
+});
+
+router.put("/server/:serverName/options", requirePermission("server.options"), async (req, res) => {
+	const patch = {};
+	for (const key of ["autoRestart", "autoStart"]) {
+		if (req.body?.[key] === undefined) continue;
+		if (typeof req.body[key] !== "boolean") return res.status(400).json({ error: `${key} must be true or false.` });
+		patch[key] = req.body[key];
+	}
+	const { autoRestart, autoStart } = await setOptions(req.server.name, patch);
+	res.json({ autoRestart, autoStart, recovery: recoveryState(req.server.name) });
+});
+
+// ---- schedules ------------------------------------------------------------------
+
+router.get("/schedules", requirePermission("schedules.view"), (req, res) => {
+	// A limited moderator only sees schedules that involve their servers.
+	res.json(listTasks().filter((t) => t.servers.some((s) => canAccessServer(req.user, s))));
+});
+
+router.post("/schedules", requirePermission("schedules.manage"), async (req, res) => {
+	try {
+		res.json(await addTask(req.body));
+	} catch (err) {
+		res.status(err.status ?? 500).json({ error: err.message });
+	}
+});
+
+router.put("/schedules/:id", requirePermission("schedules.manage"), async (req, res) => {
+	try {
+		const task = await updateTask(req.params.id, req.body ?? {});
+		if (!task) return res.status(404).json({ error: "No such schedule." });
+		res.json(task);
+	} catch (err) {
+		res.status(err.status ?? 500).json({ error: err.message });
+	}
+});
+
+router.delete("/schedules/:id", requirePermission("schedules.manage"), async (req, res) => {
+	if (!(await removeTask(req.params.id))) return res.status(404).json({ error: "No such schedule." });
+	res.json({ success: true });
+});
+
+// Runs in the background; the result shows in the activity log and on the schedule.
+router.post("/schedules/:id/run", requirePermission("schedules.manage"), (req, res) => {
+	if (!listTasks().some((t) => t.id === req.params.id)) return res.status(404).json({ error: "No such schedule." });
+	runTask(req.params.id, { manual: true }).catch((err) => console.error("[schedule] manual run failed:", err));
+	res.status(202).json({ started: true });
+});
+
+// ---- what has happened -----------------------------------------------------------
+
+// Newest first. A limited moderator only sees events for their servers (and the
+// ones about no server in particular, like a skipped schedule).
+router.get("/activity", requirePermission("activity.view"), (req, res) => {
+	const limit = Math.min(Number(req.query.limit) || 100, 500);
+	const types = typeof req.query.types === "string" && req.query.types ? req.query.types.split(",") : null;
+	const server = typeof req.query.server === "string" && req.query.server ? req.query.server : null;
+	if (server && !canAccessServer(req.user, server)) {
+		return res.status(403).json({ error: "You don't have access to that server.", code: "forbidden_server" });
+	}
+	res.json(recentActivity({ server, types, limit }).filter((e) => !e.server || canAccessServer(req.user, e.server)));
 });
 
 // ---- a server as a moderator may see it -------------------------------------

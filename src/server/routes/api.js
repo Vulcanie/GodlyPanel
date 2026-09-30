@@ -10,6 +10,7 @@ import serverWindowRoutes from "./serverWindowRoutes.js";
 import { isServerRunning } from "../services/serverState.js";
 import { describePorts, checkPorts, applyPorts } from "../services/serverPorts.js";
 import { planRemoval, removeServerCompletely } from "../services/serverRemoval.js";
+import { forgetServerInSchedules } from "../services/scheduler.js";
 import { extractModpackZip, cleanupUpload } from "../services/modpackService.js";
 import { SUPPORTED_MODLOADER_FAMILIES } from "../data/gameTemplates.js";
 import { pollServers } from "../services/pollingService.js";
@@ -123,7 +124,9 @@ router.delete("/server/:serverName", async (req, res) => {
 		return res.status(409).json({ error: "Stop the server first. A running server can't be removed.", code: "server_running" });
 	}
 	try {
-		res.json({ success: true, ...(await removeServerCompletely(req.server, { deleteFiles: deleteFiles === true })) });
+		const removed = await removeServerCompletely(req.server, { deleteFiles: deleteFiles === true });
+		await forgetServerInSchedules(req.server.name);
+		res.json({ success: true, ...removed });
 	} catch (err) {
 		const status = err.code === "files_protected" ? 400 : 500;
 		if (status === 500) console.error(`Removing ${req.server.name} failed:`, err);

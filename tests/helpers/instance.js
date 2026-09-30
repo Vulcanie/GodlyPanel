@@ -173,6 +173,12 @@ export async function startInstance({ servers = [], config = {}, admin = true, p
 		api,
 		log: () => fs.readFileSync(logPath, "utf8"),
 		async stop() {
+			// GP_TEST_LOG=1 shows the panel's own log at the end of a test file, minus the
+			// request noise, for working out why a test failed.
+			if (process.env.GP_TEST_LOG) {
+				const lines = fs.readFileSync(logPath, "utf8").split("\n").filter((l) => !/GET \/api\/(status|operations|activity|server)/.test(l));
+				console.log(`----- panel log -----\n${lines.slice(-80).join("\n")}`);
+			}
 			child.kill();
 			await new Promise((resolve) => (child.exitCode !== null ? resolve() : child.once("exit", resolve)));
 			fs.closeSync(logFd);

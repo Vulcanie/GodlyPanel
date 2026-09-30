@@ -54,6 +54,8 @@ net.createServer((socket) => {
     }
   });
 }).listen(rconPort, "127.0.0.1", () => log("rcon listening"));
+const crashAfter = Number(arg("crash-after", 0));
+if (crashAfter) setTimeout(() => { log("crashing on purpose"); process.exit(1); }, crashAfter);
 setInterval(() => {}, 1000);
 `;
 
@@ -64,8 +66,9 @@ setInterval(() => {}, 1000);
  * @param {string} options.name       panel name for the server
  * @param {number} options.rconPort
  * @param {string} [options.exe]      image name; give each fake its own so they are told apart
+ * @param {number} [options.crashAfterMs]  die this long after starting (0 = never), to test crash loops
  */
-export function makeFakeGame(folder, { name, rconPort, exe = "fakegame.exe", password = "pw" }) {
+export function makeFakeGame(folder, { name, rconPort, exe = "fakegame.exe", password = "pw", crashAfterMs = 0 }) {
 	fs.mkdirSync(folder, { recursive: true });
 	fs.copyFileSync(process.execPath, path.join(folder, exe));
 	fs.writeFileSync(path.join(folder, "fakegame.cjs"), SCRIPT);
@@ -77,7 +80,7 @@ export function makeFakeGame(folder, { name, rconPort, exe = "fakegame.exe", pas
 	const script = path.join(folder, "Start_Fake.bat");
 	fs.writeFileSync(
 		script,
-		`@echo off\r\ncd /d "%~dp0"\r\nstart /MIN "${name}" ${exe} fakegame.cjs --rcon ${rconPort} --password ${password} --home "%~dp0."\r\n`,
+		`@echo off\r\ncd /d "%~dp0"\r\nstart /MIN "${name}" ${exe} fakegame.cjs --rcon ${rconPort} --password ${password} --home "%~dp0."${crashAfterMs ? ` --crash-after ${crashAfterMs}` : ""}\r\n`,
 	);
 	return {
 		name,

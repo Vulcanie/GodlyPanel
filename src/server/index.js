@@ -32,6 +32,9 @@ import { initServerStore } from "./data/serverStore.js";
 import { initAppearanceStore } from "./data/appearanceStore.js";
 import { initServerIntent } from "./data/serverIntent.js";
 import { initServerOptions } from "./data/serverOptions.js";
+import { initScheduler, tickScheduler } from "./services/scheduler.js";
+import { checkServersOnce, startAutoStartServers } from "./services/crashWatcher.js";
+import { sweepPartialBackups } from "./services/backupService.js";
 import { initStorage, rescan } from "./services/storageService.js";
 import { registerTimer, scheduleAll, rescheduleAll, stopAll } from "./timerManager.js";
 
@@ -65,6 +68,7 @@ await initServerStore();
 await initAppearanceStore();
 await initServerIntent();
 await initServerOptions();
+await initScheduler();
 await initStorage();
 initPollingState();
 
@@ -206,6 +210,10 @@ registerTimer(
 	() => cleanupStaleUploads(),
 	(c) => c.polling.uploadSweepMs,
 );
+// Schedules and crash recovery run on their own short, fixed beats: they're about
+// reacting promptly, not about how often to poll, so they aren't settings.
+registerTimer("scheduler", () => tickScheduler().catch((err) => console.error("[schedule]", err)), () => 15_000);
+registerTimer("crash-watch", () => checkServersOnce().catch((err) => console.error("[recovery]", err)), () => 5_000);
 registerTimer(
 	"storage-scan",
 	() => {
@@ -232,6 +240,11 @@ const server = app.listen(PORT, HOST, () => {
 
 	// Servers already running when the panel starts still have their windows.
 	setTimeout(() => sweepWindowsOnBoot(), 15_000);
+
+	// After the first poll has said who is already running, start the servers set
+	// to start with the panel.
+	setTimeout(() => startAutoStartServers().catch((err) => console.error("[autostart]", err)), 12_000);
+	sweepPartialBackups().catch(() => {});
 
 	// Deferred: the first poll matters more than the disk figure, and a walk
 	// of every game install is heavy enough not to want it competing.

@@ -1,5 +1,5 @@
 import { startServer, stopServer, sendRconCommand } from "./serverControl.js";
-import { isServerRunning, isFullyStopped } from "./serverState.js";
+import { isServerRunning, isFullyStopped, isProgramAlive } from "./serverState.js";
 import { pollServerNow } from "./pollingService.js";
 import { getBroadcastCommand } from "./gameCommands.js";
 import { sleep } from "../util/async.js";
@@ -20,11 +20,19 @@ export async function waitUntilStopped(server, { timeoutMs = STOP_TIMEOUT_MS, ev
 	return isFullyStopped(server);
 }
 
+// A program that has been gone for this long after starting isn't loading, it died.
+const DEAD_AFTER_MS = 20_000;
+
 export async function waitUntilOnline(server, { timeoutMs = START_TIMEOUT_MS, everyMs = 5000 } = {}) {
-	const deadline = Date.now() + timeoutMs;
+	const startedAt = Date.now();
+	const deadline = startedAt + timeoutMs;
+	let goneInARow = 0;
 	while (Date.now() < deadline) {
 		const status = await pollServerNow(server.name);
 		if (status?.online) return true;
+		// Don't hold everything up for minutes waiting on something that has already died.
+		goneInARow = (await isProgramAlive(server)) === false ? goneInARow + 1 : 0;
+		if (goneInARow >= 2 && Date.now() - startedAt >= DEAD_AFTER_MS) return false;
 		await sleep(everyMs);
 	}
 	return false;

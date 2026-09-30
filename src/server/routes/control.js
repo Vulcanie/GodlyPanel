@@ -8,6 +8,7 @@ import { updateServer } from "../services/updateService.js";
 import { runDetached } from "../services/serverOps.js";
 import { waitUntilStopped, waitUntilOnline } from "../services/serverLifecycle.js";
 import { requirePermission } from "../middleware/permissions.js";
+import { resetRecovery } from "../services/crashWatcher.js";
 
 const router = express.Router();
 
@@ -41,6 +42,8 @@ const CONTROL_ACTIONS = {
 				err.status = 409;
 				throw err;
 			}
+			// A server the panel gave up on gets a fresh set of tries once someone starts it.
+			resetRecovery(server.name);
 			report(await startServer(server));
 			await waitUntilOnline(server);
 		}),

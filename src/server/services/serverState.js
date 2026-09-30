@@ -7,6 +7,15 @@ import { getRecordedPid } from "./windowlessLauncher.js";
 const SHARED_PROGRAM = /^javaw?(\.exe)?$/i;
 
 /**
+ * Is the server's program running? true/false when its image name says so; null
+ * when it can't be told from the name (Minecraft's java.exe, or no process name).
+ */
+export async function isProgramAlive(server) {
+	if (!server.processName || SHARED_PROGRAM.test(server.processName)) return null;
+	return checkProcess(server.processName, { fresh: true });
+}
+
+/**
  * Is this server running right now? Used before anything that mustn't happen to
  * a live server: changing its ports (a running game keeps the old ones until it
  * restarts) and deleting it.
