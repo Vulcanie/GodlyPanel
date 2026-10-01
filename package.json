@@ -44,7 +44,7 @@
 		"appId": "com.godlypanel.app",
 		"productName": "GodlyPanel",
 		"asar": true,
-		"compression": "maximum",
+		"compression": "normal",
 		"electronLanguages": [
 			"en-US"
 		],

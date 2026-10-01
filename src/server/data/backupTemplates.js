@@ -48,9 +48,17 @@ export const BACKUP_TEMPLATES = {
 			{ base: "working", rel: "R5/ServerDescription.json", label: "Server settings" },
 		],
 	},
-	// No documented save location has been confirmed, so nothing is guessed: the
-	// panel asks for the folders instead.
-	subsistence: { paths: [] },
+	// Seen on a real, running server: the world and players are in UDKGame/SaveData and the settings in
+	// UDKGame/Config, in the game's root folder. A server the panel created runs from Binaries/Win64
+	// (two levels down); one that was imported usually runs from the root itself. Whichever exists is used.
+	subsistence: {
+		paths: [
+			{ base: "working", rel: "UDKGame/SaveData", label: "Saved world and players" },
+			{ base: "working", rel: "../../UDKGame/SaveData", label: "Saved world and players" },
+			{ base: "working", rel: "UDKGame/Config", label: "Server settings" },
+			{ base: "working", rel: "../../UDKGame/Config", label: "Server settings" },
+		],
+	},
 	// Rust keeps everything for a server (world saves, settings, player data) in server<identity>.
 	rust: { paths: [{ base: "working", rel: "server", label: "World, settings and player data" }] },
 	// Saves and settings are inside the server folder (checked on a real install, not in the user profile).
