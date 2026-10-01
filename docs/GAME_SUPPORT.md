@@ -19,10 +19,15 @@ a failure on your own PC can be compared with what was already seen.
 | ARK: Survival Evolved | Verified (the server's log file stays empty while it runs) | RCON is only switched on by launch-line options (`?RCONEnabled=True?RCONPort=` and `?ServerAdminPassword=`); the `-RCON...` flags the template used are ignored; files are in the folder root |
 | ARK: Survival Ascended | Verified | The admin password has to be the `-ServerAdminPassword=` flag; the query port is UDP |
 | Conan Exiles | Verified earlier (see below) | RCON port lives in `Game.ini`; its RCON replies are out of step (handled) |
-| Rust | See the status line at the end of this file | |
+| Rust | Verified | Source RCON (`say` gets no reply, so the panel doesn't wait for one); the world is saved and the server stopped with `quit` |
+| Project Zomboid | Verified | Brings its own Java; saves, settings and its database live in a `zomboid` folder inside the server's own folder (`-cachedir`); its console answers "User ... doesn't exist" for a name nobody has, read as "nothing happened" |
+| Satisfactory | Verified | The game port is used over UDP *and* TCP, plus a TCP "reliable messaging" port; the save folder only appears after the first save |
+| V Rising | Verified | No RCON at all (a template that asked for one hung every Stop); the panel stops it by process; saves, settings and the admin/ban lists live in `save-data` |
+| Core Keeper | Verified | Saves go in a `data` folder inside the server's own folder (`-datapath`); the log is `CoreKeeperServerLog.txt` |
+| Sons of the Forest | Verified | Three UDP ports (game, +2 and query); saves and the owners list live in a `userdata` folder in the server's own folder |
 | Windrose | **Not run** | Its server binds 7777 and 7778, which a real server on the same PC was using, so it can't be tested there without risking that server. The install layout was corrected from what SteamCMD does for every other game here |
 | Subsistence | **Not run** | A real Subsistence server was running on the machine the tests ran on, so the test was skipped by design. Layout corrected the same way as Windrose |
-| Minecraft (modpacks) | See the status line at the end of this file | |
+| Minecraft (modpacks) | Verified | Run with a CurseForge-format pack that holds only a Fabric loader (so no CurseForge key is needed); the install, start, RCON/console, backup, restore, crash recovery, mod upload and clone all pass. Java is shared with other programs, so the test finds its server by the test-only ports it listens on |
 
 ## What the harness checks
 
@@ -51,3 +56,10 @@ needs is in use, and only ever stops programs that run from inside its own test 
 
 - **Don't Starve Together** needs a server token from a Klei account before its server will start, so it can't
   be installed and checked unattended.
+
+## Player admin (kick, ban, lists) by game
+
+Kick/ban answers were recorded from real servers for Minecraft, Rust, Project Zomboid, 7 Days to Die and ARK
+(both). Valheim, V Rising and Sons of the Forest have no console for it, so the panel edits their admin/ban/
+whitelist (Sons of the Forest: owners) files (the game reads them when it starts). Palworld uses its own admin commands over RCON. Games
+not listed (Satisfactory, Core Keeper, Conan Exiles, Enshrouded, Dragonwilds) show no player-admin controls.

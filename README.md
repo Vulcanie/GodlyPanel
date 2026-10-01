@@ -146,6 +146,11 @@ commit messages describe the problem each change solved.
 | 7 Days to Die | Saves over Telnet before stopping |
 | Palworld | Status through its REST API and saves over RCON; no log file (the game doesn't write one) |
 | Rust | Source RCON; world saved and stopped with `quit` |
+| Project Zomboid | RCON; brings its own Java |
+| Satisfactory | |
+| V Rising | No RCON; stopped by process |
+| Core Keeper | |
+| Sons of the Forest | |
 | **Minecraft (modded)** | Upload a CurseForge modpack's *server* export; NeoForge, Forge and Fabric. Needs a free [CurseForge API key](https://console.curseforge.com/) for downloading mods |
 
 Other games can still be **imported and managed**: monitoring, start/stop, and file
