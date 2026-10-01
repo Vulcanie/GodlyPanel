@@ -75,6 +75,17 @@ const GAMES = {
 		lists: {},
 		nothing: /^failed to/i,
 	},
+	// Rust: checked on a real server. An id nobody has answers "Player not found" (kick, ban) or
+	// "User <id> isn't banned" (unban).
+	rust: {
+		who: { label: "Steam ID or name", pattern: NAME, hint: "SteamID64 or exact name" },
+		run: "rcon",
+		kick: (p, r) => `kick ${p}${r ? ` "${r}"` : ""}`,
+		ban: (p, r) => `ban ${p}${r ? ` "${r}"` : ""}`,
+		unban: (p) => `unban ${p}`,
+		lists: {},
+		nothing: /not found|isn't banned/i,
+	},
 	// ARK (both): checked on a real Evolved server. Every command answers "<id> Kicked" and so
 	// on whether or not anyone by that id exists, so there is no "nothing happened" reply to
 	// read. The game keeps its ban list and its join-without-checks list (its whitelist) in

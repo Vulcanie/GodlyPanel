@@ -44,6 +44,14 @@ export function getBroadcastCommand(server, message) {
 	}
 }
 
+/**
+ * Commands the game runs without answering at all (checked on a real Rust server: "say" gets no
+ * reply, so waiting for one times out even though the message went out).
+ */
+export function answersNothing(server, command) {
+	return server.type === "rust" && /^say /.test(command);
+}
+
 /** The RCON command that shuts the server down cleanly. */
 export function stopCommandFor(server) {
 	switch (server.type) {

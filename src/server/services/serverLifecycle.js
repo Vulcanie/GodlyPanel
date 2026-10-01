@@ -1,7 +1,7 @@
 import { startServer, stopServer, sendRconCommand } from "./serverControl.js";
 import { isServerRunning, isFullyStopped, isProgramAlive } from "./serverState.js";
 import { pollServerNow } from "./pollingService.js";
-import { getBroadcastCommand } from "./gameCommands.js";
+import { getBroadcastCommand, answersNothing } from "./gameCommands.js";
 import { sleep } from "../util/async.js";
 
 // Stop, start and restart that wait for the result. The control routes return the
@@ -71,6 +71,7 @@ export async function broadcast(server, message) {
 		await sendRconCommand(server, command);
 		return { sent: true };
 	} catch (err) {
+		if (answersNothing(server, command) && /Timeout/i.test(err.message)) return { sent: true };
 		return { sent: false, reason: err.message };
 	}
 }

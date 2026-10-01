@@ -50,3 +50,17 @@ describe("ARK's player lists", () => {
 		fs.rmSync(dir, { recursive: true, force: true });
 	});
 });
+
+describe("Rust", () => {
+	it("offers kick, ban and unban through its console", () => {
+		const caps = capabilities({ type: "rust", rconPort: 28018, rconPassword: "x" });
+		assert.deepEqual([caps.supported, caps.kick, caps.ban, caps.unban], [true, true, true, true]);
+	});
+
+	it("is known not to answer \"say\"", async () => {
+		const { answersNothing } = await import("../../src/server/services/gameCommands.js");
+		assert.equal(answersNothing({ type: "rust" }, "say hello"), true);
+		assert.equal(answersNothing({ type: "rust" }, "server.save"), false);
+		assert.equal(answersNothing({ type: "ark" }, "say hello"), false);
+	});
+});
