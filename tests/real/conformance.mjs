@@ -47,7 +47,14 @@ const ours = () =>
 	ps(`Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -like '${TB}*' -and $_.Name -notmatch '^(node|powershell|cmd|conhost|steamcmd)' } | ForEach-Object { ($_.Name -replace '\\.exe$', '') + ':' + $_.ProcessId }`)
 		.split(/\r?\n/)
 		.filter(Boolean);
-const killOurs = () => ps(`Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -like '${TB}*' -and $_.Name -notmatch '^(node|powershell|cmd|conhost)' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }; exit 0`);
+// A game that runs on a shared runtime (Java) has no program of its own inside the test area.
+// Its process is the one listening on this test's own TCP ports, which were free when the run began.
+const listenerOf = () => (game.programs.length === 0 && game.ports.tcp.length ? game.ports.tcp.join(",") : "");
+const killOurs = () => {
+	ps(`Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -like '${TB}*' -and $_.Name -notmatch '^(node|powershell|cmd|conhost)' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }; exit 0`);
+	const ports = listenerOf();
+	if (ports) ps(`Get-NetTCPConnection -State Listen -LocalPort ${ports} -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }; exit 0`);
+};
 
 async function portsFree(list) {
 	const busy = [];
