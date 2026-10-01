@@ -172,7 +172,7 @@ export const GAME_TEMPLATES = [
 				`cd /d "%BasePath%\\ShooterGame\\Binaries\\Win64"`,
 				"",
 				`echo Launching ${p.instanceSlug} server...`,
-				`start /MIN "${p.instanceSlug}" ArkAscendedServer.exe ${p.mapCode}?SessionName=${p.sessionName}${p.serverPassword ? `?ServerPassword=${p.serverPassword}` : ""}?ServerAdminPassword=${p.rconPassword}?RCONEnabled=True?RCONPort=${p.rconPort}?AltSaveDirectoryName=${p.instanceSlug}Save?MaxPlayers=${p.maxPlayers || 10}?ClusterId=${p.clusterId} -RCONPort=${p.rconPort} -Port=${p.port} -QueryPort=${p.queryPort} -server -ForceRespawnDinos -log -NoBattlEye -NoSteamClient -ClusterDirOverride="%ClusterPath%" -ForceAllowCaveFlyers${p.mods ? ` -mods=${p.mods}` : ""}`,
+				`start /MIN "${p.instanceSlug}" ArkAscendedServer.exe ${p.mapCode}?SessionName=${p.sessionName}${p.serverPassword ? `?ServerPassword=${p.serverPassword}` : ""}?RCONEnabled=True?RCONPort=${p.rconPort}?AltSaveDirectoryName=${p.instanceSlug}Save?MaxPlayers=${p.maxPlayers || 10}?ClusterId=${p.clusterId} -RCONPort=${p.rconPort} -ServerAdminPassword=${p.rconPassword} -Port=${p.port} -QueryPort=${p.queryPort} -server -ForceRespawnDinos -log -NoBattlEye -NoSteamClient -ClusterDirOverride="%ClusterPath%" -ForceAllowCaveFlyers${p.mods ? ` -mods=${p.mods}` : ""}`,
 				"",
 				"echo.",
 				`echo ${p.instanceSlug} server has been launched!`,
