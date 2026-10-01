@@ -327,6 +327,7 @@ try {
 	await post(`/api/control/${enc(NAME)}/stop`);
 	await until(async () => ours().length === 0, { timeoutMs: 6 * 60_000, everyMs: 2000, label: "the game to exit" }).catch(() => {});
 	await until(() => idle(), { timeoutMs: 120_000 }).catch(() => {});
+	await until(async () => !(await online()), { timeoutMs: 60_000, everyMs: 2000 }).catch(() => {});
 	if (modsInfo.supported && modsInfo.adapter === "folder") {
 		const ext = modsInfo.accepts?.includes(".jar") ? ".jar" : modsInfo.accepts?.includes(".pak") ? ".pak" : null;
 		if (ext) {
