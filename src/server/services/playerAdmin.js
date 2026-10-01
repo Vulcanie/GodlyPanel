@@ -75,6 +75,16 @@ const GAMES = {
 		lists: {},
 		nothing: /^failed to/i,
 	},
+	// Project Zomboid: checked on a real server. A name nobody has answers "User <name> doesn't exist."
+	zomboid: {
+		who: { label: "player name", pattern: NAME, hint: "exact account name" },
+		run: "rcon",
+		kick: (p, r) => `kickuser "${p}"${r ? ` -r "${r}"` : ""}`,
+		ban: (p, r) => `banuser "${p}"${r ? ` -r "${r}"` : ""}`,
+		unban: (p) => `unbanuser "${p}"`,
+		lists: {},
+		nothing: /doesn't exist/i,
+	},
 	// Rust: checked on a real server. An id nobody has answers "Player not found" (kick, ban) or
 	// "User <id> isn't banned" (unban).
 	rust: {
