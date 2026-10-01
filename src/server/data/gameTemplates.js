@@ -1310,6 +1310,12 @@ export const GAME_TEMPLATES = [
 				2,
 			),
 		}),
+		// Without this file the first start only creates it and quits with "Please restart the server"
+		// (seen on a real install). The owners list is for people allowed to administer in game.
+		buildExtraFiles: () => [
+			{ relPath: "userdata\ownerswhitelist.txt", content: "# Server owners: the Steam ID of everyone allowed to administer the server in game, one per line.
+" },
+		],
 		buildServerEntry: (p) => ({
 			name: p.name,
 			type: "sotf",

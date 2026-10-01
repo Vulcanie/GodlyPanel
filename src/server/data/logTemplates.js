@@ -18,6 +18,7 @@ export const LOG_TEMPLATES = {
 	rust: [{ kind: "file", base: "working", rel: "rustserver.log", label: "Server log" }],
 	satisfactory: [{ kind: "dir", base: "working", rel: "FactoryGame/Saved/Logs", label: "Game log" }],
 	corekeeper: [{ kind: "file", base: "working", rel: "CoreKeeperServerLog.txt", label: "Server log" }],
+	sotf: [{ kind: "dir", base: "working", rel: "userdata/logs", label: "Server log" }],
 	vrising: [{ kind: "file", base: "working", rel: "logs/VRisingServer.log", label: "Server log" }],
 	zomboid: [{ kind: "dir", base: "working", rel: "zomboid/Logs", label: "Game log" }],
 	"7days": [{ kind: "file", base: "working", rel: "output_log.txt", label: "Server log" }],

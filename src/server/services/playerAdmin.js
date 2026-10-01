@@ -75,6 +75,14 @@ const GAMES = {
 		lists: {},
 		nothing: /^failed to/i,
 	},
+	// Sons of the Forest has no console to kick from; its owners list (who may administer in game) is
+	// ownerswhitelist.txt in the userdata folder, one Steam ID per line, # for comments.
+	sotf: {
+		who: { label: "Steam ID", pattern: STEAM64, hint: "17-digit SteamID64" },
+		run: null,
+		listsDir: (server) => path.join(server.workingDir || server.installDir, "userdata"),
+		lists: { admins: { label: "Owners (in-game admins)", file: "ownerswhitelist.txt", kind: "lines" } },
+	},
 	// V Rising has no console to kick from; the game keeps its admin and ban lists as Steam IDs, one
 	// per line, in save-data\Settings (created by the game on first start, checked on a real install).
 	vrising: {
