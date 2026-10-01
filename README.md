@@ -291,20 +291,19 @@ Honest list, roughly by how likely you are to hit them:
 - **The app isn't code-signed,** so Windows SmartScreen warns on first run.
 - **"No window" mode** hasn't been verified for every game. Unreal-engine games may
   still open their own log window in that mode; if so, use Hidden.
-- **Two servers running the same program** (for example two Valheim servers) can't be
-  told apart for window hiding, because the panel identifies a server's windows by its
-  program name. ARK servers are distinguished by their RCON port.
 - **Conan Exiles takes a minute or more to exit** after Stop, because it saves and
   shuts down. The panel shows it online until it has actually gone.
 - **Game artwork comes from Steam's CDN** the first time it's needed, so a brand-new
   install with no internet shows plain colour banners.
 - **Minecraft mods need a CurseForge API key,** and modpacks must be the *server*
   export.
-- **The newest features have had less real-world use.** Backups, crash recovery,
-  schedules, logs and cloning have been run against a real Conan Exiles server and a
-  stand-in game in automated tests, but the save locations for most other games are the
-  documented ones, not yet checked against each game. Every server's backup folders can
-  be changed. Mod support for Valheim and ARK is tested against stand-ins, not the games.
+- **Tested against real installs, with exceptions.** Fifteen games were installed, run,
+  backed up, restored, crashed on purpose and cloned for real (see
+  [docs/GAME_SUPPORT.md](docs/GAME_SUPPORT.md)). **Windrose and Subsistence were not run**
+  (their ports were in use by real servers), so their templates are unverified. The Discord bot,
+  cloud (S3) backups, Windows Firewall rule creation and code signing were tested against
+  stand-ins or in part only, not against Discord, Backblaze/Wasabi/Amazon, or a signing service.
+  Every server's backup folders can be changed.
 - **Backups of a running game can be inconsistent** when the game can't be saved on
   command and you choose "keep it running". The default for those games is to stop
   the server for the copy.
