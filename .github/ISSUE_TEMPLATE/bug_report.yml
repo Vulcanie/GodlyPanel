@@ -1,0 +1,43 @@
+name: Something isn't working
+description: A game, a button or a feature that doesn't do what it should
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for telling us. **Please don't paste passwords, webhooks, tunnel tokens or anything from `secrets.json`.** For a security problem, use the private report link on the Security tab instead of an issue.
+  - type: input
+    id: version
+    attributes:
+      label: GodlyPanel version
+      description: Shown in Settings under "GodlyPanel version", or in the zip file name.
+      placeholder: 0.1.0-alpha.5
+    validations:
+      required: true
+  - type: input
+    id: game
+    attributes:
+      label: Game (if it's about one)
+      placeholder: Valheim, Palworld, Minecraft modpack...
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: How can it be repeated?
+      placeholder: "1. Create a server... 2. Press Start... 3. ..."
+  - type: textarea
+    id: log
+    attributes:
+      label: Anything from the log
+      description: "The panel's log is in your data folder: logs\\api.log. Paste only the lines around the problem."
+      render: text
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+      placeholder: Windows 11 23H2
