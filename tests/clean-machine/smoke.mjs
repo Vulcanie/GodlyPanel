@@ -145,6 +145,38 @@ try {
 	const gone2 = ps(`(Get-ItemProperty '${runKey}' -ErrorAction SilentlyContinue).PSObject.Properties | Where-Object { $_.Value -like '*GodlyPanel*' } | Measure-Object | ForEach-Object { $_.Count }`);
 	step("and turning it off removes it", gone2 === "0", gone2);
 
+	// ---- the newer features, in the packaged app on a machine that has never seen it
+	const checklist = (await call("GET", "/api/settings/checklist")).json;
+	step("the setup checklist answers", Array.isArray(checklist.items) && checklist.items.some((i) => i.id === "servers"), JSON.stringify(checklist.items?.map((i) => i.id)));
+	const access = (await call("GET", "/api/settings/access")).json;
+	step("it says where the panel can be opened from", typeof access.port === "number" && Array.isArray(access.addresses), JSON.stringify(access).slice(0, 160));
+	step("the Discord bot is off until set up", (await call("GET", "/api/settings/discord-bot")).json.status === "off");
+	const shelf = path.join(WORK, "offsite-copies");
+	const dest = await call("POST", "/api/settings/backup-destinations", { type: "folder", name: "Clean shelf", folder: { path: shelf } });
+	step("a folder for off-PC backup copies can be added", dest.status === 201, JSON.stringify(dest.json).slice(0, 160));
+	const tested = await call("POST", "/api/settings/backup-destinations/test", { id: dest.json.id });
+	step("and tested", tested.json.ok === true, JSON.stringify(tested.json).slice(0, 160));
+	await page.getByRole("button", { name: "Appearance" }).click();
+	await page.getByRole("menuitem", { name: "Light" }).click();
+	await page.waitForTimeout(500);
+	const lightBg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+	step("the interface switches to the light theme", /243, 245, 247/.test(lightBg), lightBg);
+	await page.screenshot({ path: path.join(OUT, "2b-dashboard-light.png") });
+	await page.getByRole("button", { name: "Appearance" }).click();
+	await page.getByRole("menuitem", { name: "Dark" }).click();
+	// Resizing a packaged window from the test isn't supported everywhere; the phone-width layout is
+	// checked in tests/ui/appearance.mjs, so a failure to resize only skips this check.
+	try {
+		await page.setViewportSize({ width: 390, height: 844 });
+		await page.waitForTimeout(600);
+		const narrow = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, view: window.innerWidth }));
+		step("and fits a phone-width screen", narrow.scroll <= narrow.view + 1, JSON.stringify(narrow));
+		await page.screenshot({ path: path.join(OUT, "2c-dashboard-phone.png") });
+		await page.setViewportSize({ width: 1280, height: 800 });
+	} catch (e) {
+		console.log(`SKIP  the phone-width check (${String(e.message).slice(0, 120)})`);
+	}
+
 
 	if (withConan) {
 		// ---- the exact mistake a tester made: the query port one above the game port
