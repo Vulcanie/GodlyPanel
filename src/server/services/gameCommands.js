@@ -21,6 +21,8 @@ export function getSaveCommand(server) {
 			return "Save";
 		case "rust":
 			return "server.save";
+		case "zomboid":
+			return "save";
 		default:
 			return null;
 	}
@@ -37,6 +39,8 @@ export function getBroadcastCommand(server, message) {
 			return `Broadcast ${message}`;
 		case "rust":
 			return `say ${message}`;
+		case "zomboid":
+			return `servermsg "${message.replace(/"/g, "'")}"`;
 		case "conan":
 			return `broadcast ${message}`;
 		default:
@@ -60,6 +64,7 @@ export function stopCommandFor(server) {
 		case "conan":
 			return "Shutdown";
 		case "rust":
+		case "zomboid":
 			return "quit";
 		default:
 			return "DoExit";

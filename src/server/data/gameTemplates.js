@@ -1028,6 +1028,82 @@ export const GAME_TEMPLATES = [
 			autoUpdate: false,
 		}),
 	},
+	// ---------------------------------------------------------------------
+	{
+		id: "zomboid",
+		displayName: "Project Zomboid",
+		type: "zomboid",
+		method: "rcon",
+		updateAppId: "380870",
+		storeAppId: "108600",
+		sharedInstall: false,
+		installLayoutRoot: "",
+		fields: ["sessionName", "serverPassword", "rconPassword", "maxMemoryGB"],
+		fieldMeta: {
+			sessionName: { label: "Server Name (shown in the list)", type: "text" },
+			maxMemoryGB: { label: "Max Memory (GB)", type: "text" },
+		},
+		ports: [
+			{ key: "port", label: "Game Port", default: 16261 },
+			{ key: "rconPort", label: "RCON Port", default: 16270 },
+		],
+		// The game's UDP direct-connect port is the one after the game port, and Steam's two
+		// follow; they're set in its settings file below so none of them lands on a default
+		// some other server uses.
+		implicitPorts: [
+			{ offset: 1, label: "its direct-connect port" },
+			{ offset: 2, label: "a Steam port" },
+			{ offset: 3, label: "a Steam port" },
+		],
+		buildStartScriptFilename: () => "Start_Zomboid.bat",
+		// The game's own StartServer64.bat only passes on two extra arguments and asks for 16 GB
+		// of memory, so the java line is written out here (the class path and options are the
+		// ones that file has), with the memory chosen and everything this server's own: its
+		// settings, world and logs go in the zomboid folder beside the game.
+		buildStartScript: (p) =>
+			[
+				"@echo off",
+				"@cd /d \"%~dp0\"",
+				"SET PZ_CLASSPATH=java/;java/projectzomboid.jar",
+				`start /MIN "${p.name}" ".\\jre64\\bin\\java.exe" -Djava.awt.headless=true -Dzomboid.steam=1 -Dzomboid.znetlog=1 -XX:+UseZGC -XX:-CreateCoredumpOnCrash -XX:-OmitStackTraceInFastThrow -Xms${p.maxMemoryGB || 4}g -Xmx${p.maxMemoryGB || 4}g -Djava.library.path=natives/ -cp %PZ_CLASSPATH% zombie.network.GameServer -statistic 0 -cachedir="%~dp0zomboid" -servername ${p.instanceSlug || "servertest"} -adminpassword "${p.rconPassword}"`,
+				"",
+			].join("\r\n"),
+		// The server fills in every setting not written here with its own default.
+		buildConfigFile: (p) => ({
+			relPath: `zomboid\\Server\\${p.instanceSlug || "servertest"}.ini`,
+			content: [
+				`PublicName=${p.sessionName}`,
+				`Password=${p.serverPassword || ""}`,
+				`MaxPlayers=${p.maxPlayers || 16}`,
+				`DefaultPort=${p.port}`,
+				`UDPPort=${p.port + 1}`,
+				`SteamPort1=${p.port + 2}`,
+				`SteamPort2=${p.port + 3}`,
+				"RCONPort=" + p.rconPort,
+				`RCONPassword=${p.rconPassword}`,
+				"",
+			].join("\r\n"),
+		}),
+		buildServerEntry: (p) => ({
+			name: p.name,
+			type: "zomboid",
+			method: "rcon",
+			host: "127.0.0.1",
+			port: p.port,
+			rconPort: p.rconPort,
+			rconPassword: p.rconPassword,
+			sessionName: p.sessionName,
+			serverPassword: p.serverPassword,
+			configPath: `${p.installDir}\\zomboid\\Server\\${p.instanceSlug || "servertest"}.ini`,
+			startScriptPath: `${p.installDir}\\${p.startScriptFilename}`,
+			workingDir: `${p.installDir}`,
+			processName: "java.exe",
+			steamCmdPath: p.steamCmdExe,
+			installDir: `${p.installDir}\\`,
+			updateAppId: "380870",
+			autoUpdate: false,
+		}),
+	},
 ];
 
 export function getTemplate(id) {

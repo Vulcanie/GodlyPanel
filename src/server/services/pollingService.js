@@ -149,6 +149,16 @@ function parseRconPlayers(text) {
 
 // Games whose console lists players in another way than ARK's "0. Name, id" lines.
 const RCON_PLAYERS = {
+	// Project Zomboid: "players" answers "Players connected (2):" and then one "-name" line each.
+	zomboid: {
+		command: "players",
+		parse: (text) =>
+			text
+				.split(/\r?\n/)
+				.map((l) => l.trim())
+				.filter((l) => l.startsWith("-"))
+				.map((l) => l.slice(1).trim()),
+	},
 	// Rust: "playerlist" answers with JSON, [{ "SteamID": "...", "DisplayName": "..." }, ...].
 	rust: {
 		command: "playerlist",

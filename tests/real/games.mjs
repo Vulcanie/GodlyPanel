@@ -123,6 +123,17 @@ export const GAMES = {
 		onlineMin: 20,
 		logName: /./,
 	},
+	zomboid: {
+		templateId: "zomboid",
+		programs: [],
+		name: "Real Zomboid",
+		params: { sessionName: "GodlyTest", serverPassword: "TestJoin1", rconPassword: "TestRcon1", port: 8892, rconPort: 7101, maxMemoryGB: 3 },
+		ports: { udp: [8892, 8893], tcp: [7101] },
+		extraFree: [16261, 16262, 27015, 8766, 8767],
+		probeCommands: ["players", "help", "save", "kickuser GpNobody", "banuser GpNobody", "unbanuser GpNobody", "adduser GpNobody pw", "servermsg \"hello\""],
+		onlineMin: 10,
+		logName: /./,
+	},
 	rust: {
 		templateId: "rust",
 		programs: ["RustDedicated"],
@@ -137,4 +148,4 @@ export const GAMES = {
 };
 
 /** Games in the order they are run: small and quick first, so harness problems show up cheaply. */
-export const ORDER = ["valheim", "enshrouded", "subsistence", "dragonwilds", "windrose", "palworld", "7days", "ark-ase", "ark-asa", "conan", "rust"];
+export const ORDER = ["valheim", "enshrouded", "subsistence", "dragonwilds", "windrose", "palworld", "7days", "ark-ase", "ark-asa", "conan", "rust", "zomboid"];
