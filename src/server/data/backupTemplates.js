@@ -60,6 +60,8 @@ export const BACKUP_TEMPLATES = {
 			{ base: "working", rel: "FactoryGame/Saved/Config/WindowsServer", label: "Server settings" },
 		],
 	},
+	// Settings and saves are in the userdata folder beside the game (-userdatapath).
+	sotf: { paths: [{ base: "working", rel: "userdata", label: "World and settings", exclude: ["Logs"] }] },
 	// Worlds are in the data folder beside the game (-datapath in the start script).
 	corekeeper: { paths: [{ base: "working", rel: "data", label: "Worlds" }] },
 	// The world and the settings are in save-data beside the game.

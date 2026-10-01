@@ -133,6 +133,16 @@ export const GAMES = {
 		onlineMin: 8,
 		logName: /./,
 	},
+	sotf: {
+		templateId: "sotf",
+		programs: ["SonsOfTheForestDS"],
+		name: "Real Sons of the Forest",
+		params: { sessionName: "GodlyTest", serverPassword: "TestJoin1", port: 8892, queryPort: 8895 },
+		ports: { udp: [8892, 8894, 8895], tcp: [] },
+		extraFree: [8766, 27016, 9700],
+		onlineMin: 6,
+		logName: /./,
+	},
 	corekeeper: {
 		templateId: "corekeeper",
 		programs: ["CoreKeeperServer"],
@@ -178,4 +188,4 @@ export const GAMES = {
 };
 
 /** Games in the order they are run: small and quick first, so harness problems show up cheaply. */
-export const ORDER = ["valheim", "enshrouded", "subsistence", "dragonwilds", "windrose", "palworld", "7days", "ark-ase", "ark-asa", "conan", "rust", "zomboid", "satisfactory", "vrising", "corekeeper"];
+export const ORDER = ["valheim", "enshrouded", "subsistence", "dragonwilds", "windrose", "palworld", "7days", "ark-ase", "ark-asa", "conan", "rust", "zomboid", "satisfactory", "vrising", "corekeeper", "sotf"];

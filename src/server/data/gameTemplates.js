@@ -1251,6 +1251,79 @@ export const GAME_TEMPLATES = [
 			autoUpdate: false,
 		}),
 	},
+	// ---------------------------------------------------------------------
+	{
+		id: "sotf",
+		displayName: "Sons of the Forest",
+		type: "sotf",
+		method: "process",
+		updateAppId: "2465200",
+		storeAppId: "1326470",
+		sharedInstall: false,
+		installLayoutRoot: "",
+		fields: ["sessionName", "serverPassword"],
+		// The game has a third port (BlobSyncPort) that is set two above the game port in the
+		// settings file written below, so it is kept free with the others.
+		ports: [
+			{ key: "port", label: "Game Port (UDP)", default: 8766 },
+			{ key: "queryPort", label: "Query Port (UDP)", default: 27016 },
+		],
+		implicitPorts: [
+			{ offset: 1, label: "a companion port", precaution: true },
+			{ offset: 2, label: "its blob-sync port" },
+		],
+		buildStartScriptFilename: () => "Start_SOTF.bat",
+		// The settings, saves and logs go in this server's own userdata folder (-userdatapath) so
+		// two servers on one PC don't share them.
+		buildStartScript: (p) =>
+			[
+				"@echo off",
+				"cd /d \"%~dp0\"",
+				"echo|set /p=\"1326470\" > steam_appid.txt",
+				"set SteamAppId=1326470",
+				"set SteamGameId=1326470",
+				`start /MIN "${p.name}" SonsOfTheForestDS.exe -userdatapath "%~dp0userdata" -batchmode -nographics`,
+				"",
+			].join("\r\n"),
+		buildConfigFile: (p) => ({
+			relPath: "userdata\\dedicatedserver.cfg",
+			content: JSON.stringify(
+				{
+					IpAddress: "0.0.0.0",
+					GamePort: p.port,
+					QueryPort: p.queryPort,
+					BlobSyncPort: p.port + 2,
+					ServerName: p.sessionName,
+					MaxPlayers: p.maxPlayers || 8,
+					Password: p.serverPassword || "",
+					LanOnly: false,
+					SaveSlot: 1,
+					SaveMode: "Continue",
+					GameMode: "Normal",
+				},
+				null,
+				2,
+			),
+		}),
+		buildServerEntry: (p) => ({
+			name: p.name,
+			type: "sotf",
+			method: "process",
+			host: "127.0.0.1",
+			port: p.port,
+			queryPort: p.queryPort,
+			sessionName: p.sessionName,
+			serverPassword: p.serverPassword,
+			configPath: `${p.installDir}\\userdata\\dedicatedserver.cfg`,
+			startScriptPath: `${p.installDir}\\${p.startScriptFilename}`,
+			workingDir: `${p.installDir}`,
+			processName: "SonsOfTheForestDS.exe",
+			steamCmdPath: p.steamCmdExe,
+			installDir: `${p.installDir}\\`,
+			updateAppId: "2465200",
+			autoUpdate: false,
+		}),
+	},
 ];
 
 export function getTemplate(id) {
