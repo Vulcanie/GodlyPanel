@@ -60,6 +60,8 @@ export const BACKUP_TEMPLATES = {
 			{ base: "working", rel: "FactoryGame/Saved/Config/WindowsServer", label: "Server settings" },
 		],
 	},
+	// Worlds are in the data folder beside the game (-datapath in the start script).
+	corekeeper: { paths: [{ base: "working", rel: "data", label: "Worlds" }] },
 	// The world and the settings are in save-data beside the game.
 	vrising: { paths: [{ base: "working", rel: "save-data", label: "World and settings" }] },
 	// Everything for the server is in the zomboid folder beside the game: its world (Saves), its

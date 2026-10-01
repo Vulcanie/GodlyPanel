@@ -133,6 +133,16 @@ export const GAMES = {
 		onlineMin: 8,
 		logName: /./,
 	},
+	corekeeper: {
+		templateId: "corekeeper",
+		programs: ["CoreKeeperServer"],
+		name: "Real Core Keeper",
+		params: { sessionName: "GodlyTest", serverPassword: "TestJoin1", port: 8892 },
+		ports: { udp: [8892], tcp: [] },
+		extraFree: [27015],
+		onlineMin: 5,
+		logName: /./,
+	},
 	vrising: {
 		templateId: "vrising",
 		programs: ["VRisingServer"],
@@ -168,4 +178,4 @@ export const GAMES = {
 };
 
 /** Games in the order they are run: small and quick first, so harness problems show up cheaply. */
-export const ORDER = ["valheim", "enshrouded", "subsistence", "dragonwilds", "windrose", "palworld", "7days", "ark-ase", "ark-asa", "conan", "rust", "zomboid", "satisfactory", "vrising"];
+export const ORDER = ["valheim", "enshrouded", "subsistence", "dragonwilds", "windrose", "palworld", "7days", "ark-ase", "ark-asa", "conan", "rust", "zomboid", "satisfactory", "vrising", "corekeeper"];

@@ -1208,6 +1208,47 @@ export const GAME_TEMPLATES = [
 			autoUpdate: false,
 		}),
 	},
+	// ---------------------------------------------------------------------
+	{
+		id: "corekeeper",
+		displayName: "Core Keeper",
+		type: "corekeeper",
+		method: "process",
+		updateAppId: "1963720",
+		storeAppId: "1621690",
+		sharedInstall: false,
+		installLayoutRoot: "",
+		fields: ["sessionName", "serverPassword"],
+		fieldMeta: { sessionName: { label: "World Name (shown to players)", type: "text" } },
+		// With a port set the server accepts direct connections by IP; without one it only
+		// appears through Steam's relay (a game ID). Direct is what a panel-run server wants.
+		ports: [{ key: "port", label: "Game Port (UDP)", default: 27015 }],
+		buildStartScriptFilename: () => "Start_CoreKeeper.bat",
+		// Saves go in the server's own data folder (-datapath) instead of the user profile.
+		buildStartScript: (p) =>
+			[
+				"@echo off",
+				"cd /d \"%~dp0\"",
+				`start /MIN "${p.name}" CoreKeeperServer.exe -batchmode -logfile CoreKeeperServerLog.txt -datapath "%~dp0data" -port ${p.port} -worldname "${p.sessionName}" -world 0${p.serverPassword ? ` -password "${p.serverPassword}"` : ""} -maxplayers ${p.maxPlayers || 8}`,
+				"",
+			].join("\r\n"),
+		buildServerEntry: (p) => ({
+			name: p.name,
+			type: "corekeeper",
+			method: "process",
+			host: "127.0.0.1",
+			port: p.port,
+			sessionName: p.sessionName,
+			serverPassword: p.serverPassword,
+			startScriptPath: `${p.installDir}\\${p.startScriptFilename}`,
+			workingDir: `${p.installDir}`,
+			processName: "CoreKeeperServer.exe",
+			steamCmdPath: p.steamCmdExe,
+			installDir: `${p.installDir}\\`,
+			updateAppId: "1963720",
+			autoUpdate: false,
+		}),
+	},
 ];
 
 export function getTemplate(id) {
