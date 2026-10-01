@@ -133,6 +133,27 @@ export const GAMES = {
 		onlineMin: 8,
 		logName: /./,
 	},
+	minecraft: {
+		templateId: "minecraft-modpack",
+		// Java is shared with other servers on this PC, so there is no program name to check.
+		programs: [],
+		name: "Real Minecraft",
+		params: { sessionName: "GodlyTest", serverPassword: "", rconPassword: "TestRcon1", maxMemoryGB: 2, port: 8892, rconPort: 7101, eulaAccepted: true },
+		// A modpack with no mods in it (a Fabric loader and nothing else), so nothing needs CurseForge.
+		prepare: async ({ upload }) => {
+			const AdmZip = (await import("adm-zip")).default;
+			const zip = new AdmZip();
+			zip.addFile("manifest.json", Buffer.from(JSON.stringify({ minecraft: { version: "1.21.1", modLoaders: [{ id: "fabric-0.16.9", primary: true }] }, manifestType: "minecraftModpack", manifestVersion: 1, name: "gp-test", files: [], overrides: "overrides" })));
+			zip.addFile("overrides/config/gp-test.txt", Buffer.from("from the modpack\n"));
+			const r = await upload("/api/uploads/modpack", "modpackZip", "gp-test.zip", zip.toBuffer());
+			if (r.status !== 200) throw new Error("the modpack upload failed: " + JSON.stringify(r.json));
+			return { uploadId: r.json.uploadId };
+		},
+		ports: { udp: [], tcp: [8892, 7101] },
+		extraFree: [25565, 25575],
+		onlineMin: 12,
+		logName: /./,
+	},
 	sotf: {
 		templateId: "sotf",
 		programs: ["SonsOfTheForestDS"],
@@ -189,4 +210,4 @@ export const GAMES = {
 };
 
 /** Games in the order they are run: small and quick first, so harness problems show up cheaply. */
-export const ORDER = ["valheim", "enshrouded", "subsistence", "dragonwilds", "windrose", "palworld", "7days", "ark-ase", "ark-asa", "conan", "rust", "zomboid", "satisfactory", "vrising", "corekeeper", "sotf"];
+export const ORDER = ["valheim", "enshrouded", "subsistence", "dragonwilds", "windrose", "palworld", "7days", "ark-ase", "ark-asa", "conan", "rust", "zomboid", "satisfactory", "vrising", "corekeeper", "sotf", "minecraft"];

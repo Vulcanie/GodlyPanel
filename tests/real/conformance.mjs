@@ -131,7 +131,9 @@ try {
 
 	// ---- install ---------------------------------------------------------------
 	step("Install");
-	const created = await post("/api/servers", { templateId: game.templateId, name: NAME, ...game.params, acceptSteamCmdDownload: true });
+	// Some games need something made first (Minecraft: a modpack to upload).
+	const extra = game.prepare ? await game.prepare({ upload }) : {};
+	const created = await post("/api/servers", { templateId: game.templateId, name: NAME, ...game.params, ...extra, acceptSteamCmdDownload: true });
 	if (!check("creating is accepted", created.status === 200, JSON.stringify(created.json))) throw new Error("not accepted");
 	let last = "";
 	const began = Date.now();
