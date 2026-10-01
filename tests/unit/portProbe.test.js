@@ -16,25 +16,55 @@ const free = () =>
 		});
 	});
 
+// Other test files run at the same time and take ports from the same pool, so a port that was
+// free a moment ago can be taken by someone else before it is asked about again. Whatever is
+// being asserted about a port that should be free is tried on a few ports before it counts.
+async function eventually(check) {
+	let last;
+	for (let attempt = 0; attempt < 6; attempt++) {
+		last = await check(await free());
+		if (last === true) return;
+	}
+	assert.fail("never saw a port as free, after six tries on different ports");
+}
+
 describe("noticing a port that something is using", () => {
 	it("sees a TCP listener", async () => {
-		const port = await free();
-		const s = net.createServer();
-		await new Promise((r) => s.listen(port, "0.0.0.0", r));
-		assert.equal(await portBusy(port), true);
-		await new Promise((r) => s.close(r));
-		assert.equal(await portBusy(port), false, "and sees it free again");
+		await eventually(async (port) => {
+			const s = net.createServer();
+			try {
+				await new Promise((resolve, reject) => {
+					s.once("error", reject);
+					s.listen(port, "0.0.0.0", resolve);
+				});
+			} catch {
+				return false; // taken by someone else already; try another
+			}
+			assert.equal(await portBusy(port), true);
+			await new Promise((r) => s.close(r));
+			return (await portBusy(port)) === false;
+		});
 	});
 
 	it("sees a UDP socket", async () => {
-		const port = await free();
-		const s = dgram.createSocket("udp4");
-		await new Promise((r) => s.bind(port, "0.0.0.0", r));
-		assert.equal(await portBusy(port), true);
-		await new Promise((r) => s.close(r));
+		await eventually(async (port) => {
+			const s = dgram.createSocket("udp4");
+			try {
+				await new Promise((resolve, reject) => {
+					s.once("error", reject);
+					s.bind(port, "0.0.0.0", resolve);
+				});
+			} catch {
+				s.close();
+				return false;
+			}
+			assert.equal(await portBusy(port), true);
+			await new Promise((r) => s.close(r));
+			return true;
+		});
 	});
 
 	it("says a free port is free", async () => {
-		assert.equal(await portBusy(await free()), false);
+		await eventually(async (port) => (await portBusy(port)) === false);
 	});
 });
