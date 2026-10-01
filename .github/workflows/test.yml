@@ -4,13 +4,22 @@ on:
   push:
     branches: [main]
   pull_request:
+  # The release workflow runs the same tests, in parallel with building the zip.
+  workflow_call:
 
 jobs:
-  test:
+  # The suite is split into four parts that run on four machines at the same time
+  # (about 3 minutes each instead of about 12 in a row).
+  shards:
+    name: tests (part ${{ matrix.shard }} of 4)
     # The panel manages Windows processes and uses Windows tools (tasklist,
     # taskkill, PowerShell), so it is tested where it runs.
     runs-on: windows-latest
     timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
     env:
       # The tests never launch the desktop shell, so skip the ~100 MB download.
       ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
@@ -26,4 +35,18 @@ jobs:
 
       # Unit and API tests. The desktop tests (real windows and processes) need an
       # interactive Windows session, so they are run locally with `npm run test:desktop`.
-      - run: npm test
+      # (The flag has to come before the file patterns, so this is `npm test` written out.)
+      - run: node --test --test-shard=${{ matrix.shard }}/4 "tests/unit/**/*.test.js" "tests/api/**/*.test.js"
+
+  # One result for the whole suite. This is the check the main branch requires, so the
+  # number of parts can change without touching the repository settings.
+  test:
+    needs: shards
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          if [ "${{ needs.shards.result }}" != "success" ]; then
+            echo "At least one part of the test suite failed or didn't run."
+            exit 1
+          fi
