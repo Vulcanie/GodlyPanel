@@ -39,6 +39,27 @@ Against that model it does the following:
 - keeps API keys and webhooks in a separate file from ordinary settings, so a
   settings file is safe to paste into a support thread.
 
+### The newer surfaces
+
+- **Off-machine backups.** The secret key of an S3-compatible destination is kept in
+  `secrets.json`, never in `config.json` or in anything the interface can read back (it only
+  ever learns that a key is set). A folder destination can't be inside the local backup folder.
+  Use a key limited to one bucket; the panel only ever lists, uploads, downloads and deletes
+  objects under its own server folders in it.
+- **Kicking and banning.** Names and ids typed into the panel are checked against what the game
+  accepts and refused if they could end a console command and start another (line breaks,
+  quotes, semicolons). Every action is in the activity log with who did it. Kick needs the
+  moderator role or above; ban and list changes the same.
+- **The Discord bot.** It uses the bot token from `secrets.json` and answers only in the Discord
+  server it was set up for, never in private messages, and never mentions anyone. Looking at
+  servers is open to everyone in that Discord server; starting, stopping, restarting, backing
+  up and broadcasting need the admin role chosen in Settings. With no role chosen nothing can be
+  changed from Discord. Being a Discord administrator is not enough on its own.
+- **Windows Firewall.** The panel only reads the rule list. Adding a rule is an explicit button
+  press by an administrator, builds the command from validated port numbers and a name stripped
+  to plain characters, and runs it through Windows' own permission prompt on the PC.
+- **Server tags** are plain labels (letters, numbers, spaces, dots, dashes, underscores).
+
 ## What it does not protect against
 
 - **A hostile local network.** The panel is served over plain HTTP, so someone who
