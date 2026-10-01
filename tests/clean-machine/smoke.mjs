@@ -26,7 +26,9 @@ if (!zip || !fs.existsSync(zip)) {
 const WORK = process.env.GP_WORK ?? "C:/gp-clean";
 const OUT = path.resolve(process.env.GP_ARTIFACTS ?? "clean-machine-artifacts");
 const APP = path.join(WORK, "app");
-const PORT = 8765;
+// Defaults are what a clean machine uses; GP_PORT / GP_DEBUG_PORT let a developer's PC run it beside other things.
+const PORT = Number(process.env.GP_PORT) || 8765;
+const DEBUG_PORT = Number(process.env.GP_DEBUG_PORT) || 9334;
 const BASE = `http://127.0.0.1:${PORT}`;
 const ADMIN = { username: "admin", password: "CleanMachine!2345" };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -100,8 +102,15 @@ ps(`Expand-Archive -LiteralPath '${path.resolve(zip)}' -DestinationPath '${APP.r
 step("the zip unpacks to the expected layout", fs.existsSync(path.join(APP, "GodlyPanel.exe")) && fs.existsSync(path.join(APP, "data", "portable.txt")));
 
 const env = { ...process.env };
+if (process.env.GP_PORT) {
+	// The app takes its port from its own config.
+	const configFile = path.join(APP, "data", "config.json");
+	let existing = {};
+	try { existing = JSON.parse(fs.readFileSync(configFile, "utf8")); } catch {}
+	fs.writeFileSync(configFile, JSON.stringify({ ...existing, http: { ...existing.http, port: PORT } }));
+}
 delete env.ELECTRON_RUN_AS_NODE;
-const app = spawn(path.join(APP, "GodlyPanel.exe"), ["--remote-debugging-port=9334"], { env, stdio: "ignore", cwd: APP });
+const app = spawn(path.join(APP, "GodlyPanel.exe"), [`--remote-debugging-port=${DEBUG_PORT}`], { env, stdio: "ignore", cwd: APP });
 let browser;
 let page;
 
@@ -113,7 +122,7 @@ try {
 	step("it reports a first run", status.setupRequired === true);
 
 	// ---- the first-run screen, in the real window
-	browser = await chromium.connectOverCDP("http://127.0.0.1:9334");
+	browser = await chromium.connectOverCDP(`http://127.0.0.1:${DEBUG_PORT}`);
 	page = await until(async () => browser.contexts().flatMap((c) => c.pages()).find((p) => p.url().startsWith(BASE)), { timeoutMs: 30_000, everyMs: 500, label: "the window" });
 	step("a window opens on the panel", Boolean(page));
 	await page.waitForLoadState("networkidle");
