@@ -1140,6 +1140,75 @@ export const GAME_TEMPLATES = [
 			autoUpdate: false,
 		}),
 	},
+	// ---------------------------------------------------------------------
+	{
+		id: "vrising",
+		displayName: "V Rising",
+		type: "vrising",
+		method: "process",
+		updateAppId: "1829350",
+		storeAppId: "1604030",
+		sharedInstall: false,
+		installLayoutRoot: "",
+		fields: ["sessionName", "serverPassword", "rconPassword"],
+		ports: [
+			{ key: "port", label: "Game Port", default: 9876 },
+			{ key: "queryPort", label: "Query Port", default: 9878 },
+			{ key: "rconPort", label: "RCON Port", default: 9880 },
+		],
+		buildStartScriptFilename: () => "Start_VRising.bat",
+		// Everything this server saves goes in save-data beside the game, and its log in logs.
+		buildStartScript: (p) =>
+			[
+				"@echo off",
+				"cd /d \"%~dp0\"",
+				"set SteamAppId=1604030",
+				"if not exist logs mkdir logs",
+				`start /MIN "${p.name}" VRisingServer.exe -persistentDataPath ".\\save-data" -serverName "${p.sessionName}" -saveName "${p.instanceSlug || "world1"}" -logFile ".\\logs\\VRisingServer.log"`,
+				"",
+			].join("\r\n"),
+		// The settings file the server reads from its data folder; what it doesn't list keeps the
+		// game's default.
+		buildConfigFile: (p) => ({
+			relPath: "save-data\\Settings\\ServerHostSettings.json",
+			content: JSON.stringify(
+				{
+					Name: p.sessionName,
+					Description: "",
+					Port: p.port,
+					QueryPort: p.queryPort,
+					MaxConnectedUsers: p.maxPlayers || 20,
+					SaveName: p.instanceSlug || "world1",
+					Password: p.serverPassword || "",
+					ListOnSteam: false,
+					ListOnEOS: false,
+					Rcon: { Enabled: true, Port: p.rconPort, Password: p.rconPassword },
+				},
+				null,
+				2,
+			),
+		}),
+		buildServerEntry: (p) => ({
+			name: p.name,
+			type: "vrising",
+			method: "process",
+			host: "127.0.0.1",
+			port: p.port,
+			queryPort: p.queryPort,
+			rconPort: p.rconPort,
+			rconPassword: p.rconPassword,
+			sessionName: p.sessionName,
+			serverPassword: p.serverPassword,
+			configPath: `${p.installDir}\\save-data\\Settings\\ServerHostSettings.json`,
+			startScriptPath: `${p.installDir}\\${p.startScriptFilename}`,
+			workingDir: `${p.installDir}`,
+			processName: "VRisingServer.exe",
+			steamCmdPath: p.steamCmdExe,
+			installDir: `${p.installDir}\\`,
+			updateAppId: "1829350",
+			autoUpdate: false,
+		}),
+	},
 ];
 
 export function getTemplate(id) {

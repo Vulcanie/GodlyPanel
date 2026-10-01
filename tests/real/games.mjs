@@ -133,6 +133,16 @@ export const GAMES = {
 		onlineMin: 8,
 		logName: /./,
 	},
+	vrising: {
+		templateId: "vrising",
+		programs: ["VRisingServer"],
+		name: "Real V Rising",
+		params: { sessionName: "GodlyTest", serverPassword: "TestJoin1", rconPassword: "TestRcon1", port: 8892, queryPort: 8894, rconPort: 7101 },
+		ports: { udp: [8892, 8894], tcp: [7101] },
+		extraFree: [9876, 9877, 25575],
+		onlineMin: 6,
+		logName: /./,
+	},
 	zomboid: {
 		templateId: "zomboid",
 		programs: [],
@@ -158,4 +168,4 @@ export const GAMES = {
 };
 
 /** Games in the order they are run: small and quick first, so harness problems show up cheaply. */
-export const ORDER = ["valheim", "enshrouded", "subsistence", "dragonwilds", "windrose", "palworld", "7days", "ark-ase", "ark-asa", "conan", "rust", "zomboid", "satisfactory"];
+export const ORDER = ["valheim", "enshrouded", "subsistence", "dragonwilds", "windrose", "palworld", "7days", "ark-ase", "ark-asa", "conan", "rust", "zomboid", "satisfactory", "vrising"];
