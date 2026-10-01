@@ -64,3 +64,26 @@ describe("Rust", () => {
 		assert.equal(answersNothing({ type: "ark" }, "say hello"), false);
 	});
 });
+
+describe("V Rising's lists", () => {
+	it("are files of Steam IDs in its settings folder, edited without a console", async () => {
+		const { addToList, removeFromList, readLists } = await import("../../src/server/services/playerAdmin.js");
+		const fs = await import("node:fs");
+		const os = await import("node:os");
+		const path = await import("node:path");
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gp-vr-"));
+		const settings = path.join(dir, "save-data", "Settings");
+		fs.mkdirSync(settings, { recursive: true });
+		const server = { name: "V", type: "vrising", workingDir: dir };
+		const caps = capabilities(server);
+		assert.deepEqual([caps.kick, caps.ban], [false, false]);
+		assert.deepEqual(caps.lists.map((l) => l.id), ["admins", "bans"]);
+		// The list files are written outside the folders the panel manages in this test, so the plain writer is used.
+		const r = await addToList(server, "bans", "76561198000000007");
+		assert.equal(r.changed, true);
+		assert.equal(fs.readFileSync(path.join(settings, "banlist.txt"), "utf8"), "76561198000000007\n");
+		assert.deepEqual((await readLists(server)).find((l) => l.id === "bans").entries.map((e) => e.id), ["76561198000000007"]);
+		assert.equal((await removeFromList(server, "bans", "76561198000000007")).changed, true);
+		fs.rmSync(dir, { recursive: true, force: true });
+	});
+});

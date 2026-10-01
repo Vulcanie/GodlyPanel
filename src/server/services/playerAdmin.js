@@ -75,6 +75,17 @@ const GAMES = {
 		lists: {},
 		nothing: /^failed to/i,
 	},
+	// V Rising has no console to kick from; the game keeps its admin and ban lists as Steam IDs, one
+	// per line, in save-data\Settings (created by the game on first start, checked on a real install).
+	vrising: {
+		who: { label: "Steam ID", pattern: STEAM64, hint: "17-digit SteamID64" },
+		run: null,
+		listsDir: (server) => path.join(server.workingDir || server.installDir, "save-data", "Settings"),
+		lists: {
+			admins: { label: "Admins", file: "adminlist.txt", kind: "lines" },
+			bans: { label: "Banned", file: "banlist.txt", kind: "lines" },
+		},
+	},
 	// Project Zomboid: checked on a real server. A name nobody has answers "User <name> doesn't exist."
 	zomboid: {
 		who: { label: "player name", pattern: NAME, hint: "exact account name" },
@@ -208,6 +219,7 @@ export async function unbanPlayer(server, who, actor = null) {
 // ---- the lists -----------------------------------------------------------------
 
 async function listFolder(server, game) {
+	if (game.listsDir) return game.listsDir(server);
 	const kind = Object.values(game.lists)[0]?.kind;
 	if (kind === "mcjson" || game.listsIn === "working") return server.workingDir || server.installDir;
 	// Valheim keeps these beside its saves: the -savedir folder, or the shared default.
