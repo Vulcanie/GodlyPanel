@@ -1150,11 +1150,12 @@ export const GAME_TEMPLATES = [
 		storeAppId: "1604030",
 		sharedInstall: false,
 		installLayoutRoot: "",
-		fields: ["sessionName", "serverPassword", "rconPassword"],
+		// No RCON: the game's has no stop command, and with one recorded the panel would ask the
+		// game to stop over it and wait for a program that never exits (seen on a real install).
+		fields: ["sessionName", "serverPassword"],
 		ports: [
 			{ key: "port", label: "Game Port", default: 9876 },
 			{ key: "queryPort", label: "Query Port", default: 9878 },
-			{ key: "rconPort", label: "RCON Port", default: 9880 },
 		],
 		buildStartScriptFilename: () => "Start_VRising.bat",
 		// Everything this server saves goes in save-data beside the game, and its log in logs.
@@ -1182,7 +1183,7 @@ export const GAME_TEMPLATES = [
 					Password: p.serverPassword || "",
 					ListOnSteam: false,
 					ListOnEOS: false,
-					Rcon: { Enabled: true, Port: p.rconPort, Password: p.rconPassword },
+					Rcon: { Enabled: false, Port: 25575, Password: "" },
 				},
 				null,
 				2,
@@ -1195,8 +1196,6 @@ export const GAME_TEMPLATES = [
 			host: "127.0.0.1",
 			port: p.port,
 			queryPort: p.queryPort,
-			rconPort: p.rconPort,
-			rconPassword: p.rconPassword,
 			sessionName: p.sessionName,
 			serverPassword: p.serverPassword,
 			configPath: `${p.installDir}\\save-data\\Settings\\ServerHostSettings.json`,
