@@ -1300,6 +1300,11 @@ export const GAME_TEMPLATES = [
 					SaveSlot: 1,
 					SaveMode: "Continue",
 					GameMode: "Normal",
+					// The server's start-up "public accessibility" test needs the ports reachable from the internet;
+					// without it passing, it waits and never starts listening (seen on a real install). Players on
+					// the same network, or through a forwarded port, don't need that test.
+					SkipNetworkAccessibilityTest: true,
+					LogFilesEnabled: true,
 				},
 				null,
 				2,
