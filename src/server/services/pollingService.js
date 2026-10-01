@@ -13,6 +13,7 @@ import { latestStats } from "./systemStats.js";
 import { getConfig } from "../config/configStore.js";
 import { sanitizeServerStatus } from "../data/sanitize.js";
 import { noteServerPlayers } from "./playerTracker.js";
+import { roleMention } from "../util/discordRole.js";
 
 // Holds the latest known status
 export let serverStatus = {};
@@ -319,7 +320,7 @@ function buildServerDashboard(status) {
 	msg += "\n_Last updated: " + new Date().toLocaleTimeString() + "_";
 	// The role mention is optional now that Discord is opt-in, so don't leave
 	// a dangling blank line when it isn't set.
-	if (adminRoleId) msg += `\n${adminRoleId}`;
+	if (adminRoleId) msg += `\n${roleMention(adminRoleId)}`;
 	return msg.trim();
 }
 

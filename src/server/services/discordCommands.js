@@ -6,6 +6,7 @@ import { runDetached, currentOperation } from "./serverOps.js";
 import { broadcast } from "./serverLifecycle.js";
 import { logActivity } from "./activityLog.js";
 import { getConfig } from "../config/configStore.js";
+import { roleIdOf } from "../util/discordRole.js";
 
 // What the Discord bot does with a slash command. Looking is open to everyone in the
 // Discord server; changing anything (start, stop, restart, back up, say) needs the admin
@@ -39,8 +40,9 @@ const reply = (content, { ephemeral = false } = {}) => ({ type: 4, data: { conte
 
 /** May this person change servers? They need the admin role chosen in Settings. */
 export function isAdminMember(interaction, adminRoleId = getConfig().discord.adminRoleId) {
-	if (!adminRoleId) return false;
-	return Array.isArray(interaction.member?.roles) && interaction.member.roles.includes(String(adminRoleId));
+	const id = roleIdOf(adminRoleId);
+	if (!id) return false;
+	return Array.isArray(interaction.member?.roles) && interaction.member.roles.includes(id);
 }
 
 export function hasAdministratorPermission(interaction) {
