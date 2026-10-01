@@ -45,7 +45,7 @@ try {
 	// ---- Conan: the query port one above the game port
 	await choose("Conan Exiles");
 	const game = page.getByLabel("Game Port");
-	const query = page.getByLabel("Query Port");
+	const query = page.getByLabel("REST API Port");
 	const gameValue = Number(await game.inputValue());
 	check("with the defaults there is no warning and Create is enabled", !(await page.getByText(/is used by .* itself/).count()) && (await createBtn.isEnabled()));
 	await query.fill(String(gameValue + 1));
@@ -65,11 +65,11 @@ try {
 	await choose("Palworld");
 	const palGame = Number(await page.getByLabel("Game Port").inputValue());
 	check("Palworld's suggested ports don't trip the rule", await createBtn.isEnabled());
-	await page.getByLabel("Query Port").fill(String(palGame + 1));
+	await page.getByLabel("REST API Port").fill(String(palGame + 1));
 	await settle();
 	check("Palworld: query port = game port + 1 warns as a precaution", await page.getByText(/may use it for itself, so it's\s+kept free/).isVisible());
 	check("and disables Create Server", await createBtn.isDisabled());
-	await page.getByLabel("Query Port").fill(String(palGame + 2));
+	await page.getByLabel("REST API Port").fill(String(palGame + 2));
 	await settle();
 	check("moving it off re-enables it", await createBtn.isEnabled());
 	await back();
