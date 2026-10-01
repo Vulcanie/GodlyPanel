@@ -31,13 +31,13 @@ const SCRIPT_FLAGS = {
 };
 
 const flagPattern = (key, value) =>
-	new RegExp(`((?:^|\\s)-(?:${SCRIPT_FLAGS[key].join("|")})(?:=|\\s+))${value}(?!\\d)`, "gim");
+	new RegExp(`((?:(?:^|\\s)-|\\?)(?:${SCRIPT_FLAGS[key].join("|")})(?:=|\\s+))${value}(?!\\d)`, "gim");
 
 /** Ports a start script sets, for the games whose entry doesn't record them (ARK). */
 function detectFromScript(text) {
 	const found = {};
 	for (const key of Object.keys(SCRIPT_FLAGS)) {
-		const match = text.match(new RegExp(`(?:^|\\s)-(?:${SCRIPT_FLAGS[key].join("|")})(?:=|\\s+)(\\d+)`, "im"));
+		const match = text.match(new RegExp(`(?:(?:^|\\s)-|\\?)(?:${SCRIPT_FLAGS[key].join("|")})(?:=|\\s+)(\\d+)`, "im"));
 		if (match) found[key] = Number(match[1]);
 	}
 	return found;

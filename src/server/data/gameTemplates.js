@@ -172,7 +172,7 @@ export const GAME_TEMPLATES = [
 				`cd /d "%BasePath%\\ShooterGame\\Binaries\\Win64"`,
 				"",
 				`echo Launching ${p.instanceSlug} server...`,
-				`start /MIN "${p.instanceSlug}" ArkAscendedServer.exe ${p.mapCode}?SessionName=${p.sessionName}${p.serverPassword ? `?ServerPassword=${p.serverPassword}` : ""}?ServerAdminPassword=${p.rconPassword}?AltSaveDirectoryName=${p.instanceSlug}Save?MaxPlayers=${p.maxPlayers || 10}?ClusterId=${p.clusterId} -RCONPort=${p.rconPort} -RCONEnabled=True -RCONPassword=${p.rconPassword} -Port=${p.port} -QueryPort=${p.queryPort} -server -ForceRespawnDinos -log -NoBattlEye -NoSteamClient -ClusterDirOverride="%ClusterPath%" -ForceAllowCaveFlyers${p.mods ? ` -mods=${p.mods}` : ""}`,
+				`start /MIN "${p.instanceSlug}" ArkAscendedServer.exe ${p.mapCode}?SessionName=${p.sessionName}${p.serverPassword ? `?ServerPassword=${p.serverPassword}` : ""}?ServerAdminPassword=${p.rconPassword}?RCONEnabled=True?RCONPort=${p.rconPort}?AltSaveDirectoryName=${p.instanceSlug}Save?MaxPlayers=${p.maxPlayers || 10}?ClusterId=${p.clusterId} -RCONPort=${p.rconPort} -Port=${p.port} -QueryPort=${p.queryPort} -server -ForceRespawnDinos -log -NoBattlEye -NoSteamClient -ClusterDirOverride="%ClusterPath%" -ForceAllowCaveFlyers${p.mods ? ` -mods=${p.mods}` : ""}`,
 				"",
 				"echo.",
 				`echo ${p.instanceSlug} server has been launched!`,
@@ -245,7 +245,7 @@ export const GAME_TEMPLATES = [
 				`cd /d "%InstallPath%"`,
 				"",
 				`echo Launching ${p.name} server...`,
-				`start /MIN "${p.name}" ShooterGameServer.exe ${p.mapCode}?listen?SessionName=${p.sessionName}${p.serverPassword ? `?ServerPassword=${p.serverPassword}` : ""}?ServerAdminPassword=${p.rconPassword}?MaxPlayers=${p.maxPlayers || 10}${p.mods ? `?GameModIds=${p.mods}` : ""} ${p.mods ? "-automanagedmods " : ""}-RCONPort=${p.rconPort} -RCONEnabled=True -RCONPassword=${p.rconPassword} -Port=${p.port} -QueryPort=${p.queryPort} -server -ForceRespawnDinos -log -NoBattlEye -NoSteamClient -ForceAllowCaveFlyers`,
+				`start /MIN "${p.name}" ShooterGameServer.exe ${p.mapCode}?listen?SessionName=${p.sessionName}${p.serverPassword ? `?ServerPassword=${p.serverPassword}` : ""}?ServerAdminPassword=${p.rconPassword}?RCONEnabled=True?RCONPort=${p.rconPort}?MaxPlayers=${p.maxPlayers || 10}${p.mods ? `?GameModIds=${p.mods}` : ""} ${p.mods ? "-automanagedmods " : ""}-RCONPort=${p.rconPort} -Port=${p.port} -QueryPort=${p.queryPort} -server -ForceRespawnDinos -log -NoBattlEye -NoSteamClient -ForceAllowCaveFlyers`,
 				"",
 				"echo.",
 				`echo ${p.name} server has been launched!`,
@@ -994,7 +994,7 @@ export const GAME_TEMPLATES = [
 		ports: [
 			{ key: "port", label: "Game Port", default: 28015 },
 			{ key: "queryPort", label: "Query Port", default: 28017 },
-			{ key: "rconPort", label: "RCON Port", default: 28016 },
+			{ key: "rconPort", label: "RCON Port", default: 28018 },
 		],
 		buildStartScriptFilename: () => "Start_Rust.bat",
 		// Rust keeps each server's world and settings under server\<identity>, inside this

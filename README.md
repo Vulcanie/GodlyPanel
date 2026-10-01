@@ -109,6 +109,26 @@ commit messages describe the problem each change solved.
   big), see how much they use, and optionally set a limit.
 - **Posts to Discord** (optional): one status message that updates in place, plus
   update announcements.
+- **Keeps backups off the PC too.** Every backup can be copied to another drive, a network share
+  or a cloud-sync folder (OneDrive, Dropbox, Google Drive), or to S3-compatible storage
+  (Backblaze B2, Wasabi, Cloudflare R2, MinIO, Amazon S3). Copies happen in the background, a
+  failed one is shown and retried, each place has its own keep rules, and a copy can be brought
+  back and restored if the drive holding the local ones is gone.
+- **Watches for hangs.** A server whose program is running but has stopped answering can be
+  restarted automatically, separately from crash recovery.
+- **Talks to players.** Schedule in-game announcements (rotating messages, or a countdown before
+  a restart), set the message of the day, and see who was on when: player counts over time,
+  busiest hours, and CPU, memory and player charts for each server.
+- **Kicks, bans and keeps lists** (whitelist, admins, bans) for the games that support it,
+  from the Players tab.
+- **Remembers every settings change.** Each edit to a config file is kept with a line-by-line
+  diff and can be restored.
+- **Checks whether people can reach a server:** which of its ports Windows Firewall allows (and
+  a button to allow them), the addresses to give friends, and a setup checklist.
+- **Has a Discord bot** (optional) with slash commands: anyone in your Discord server can look
+  at servers and players; an admin role can start, stop, restart, back up and broadcast.
+- **Finds servers quickly:** search, tags and grouping by game or tag on the dashboard; a light
+  or dark theme (or follow Windows); usable on a phone.
 - **Imports an existing setup** instead of starting over.
 
 ### Supported games
@@ -124,7 +144,8 @@ commit messages describe the problem each change solved.
 | Windrose | |
 | Subsistence | |
 | 7 Days to Die | Saves over Telnet before stopping |
-| Palworld | |
+| Palworld | Status through its REST API and saves over RCON; no log file (the game doesn't write one) |
+| Rust | Source RCON; world saved and stopped with `quit` |
 | **Minecraft (modded)** | Upload a CurseForge modpack's *server* export; NeoForge, Forge and Fabric. Needs a free [CurseForge API key](https://console.curseforge.com/) for downloading mods |
 
 Other games can still be **imported and managed**: monitoring, start/stop, and file
