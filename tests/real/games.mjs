@@ -117,7 +117,7 @@ export const GAMES = {
 		programs: ["ArkAscendedServer"],
 		name: "Real ARK Ascended",
 		params: { sessionName: "GodlyTest", serverPassword: "TestJoin1", rconPassword: "TestRcon1", mapCode: "TheIsland_WP", clusterId: "TestCluster", port: 8892, queryPort: 8894, rconPort: 8895 },
-		ports: { udp: [8892], tcp: [8894, 8895] },
+		ports: { udp: [8892, 8894], tcp: [8895] },
 		extraFree: [27015],
 		probeCommands: ["ListPlayers", "KickPlayer 76561198000000000", "BanPlayer 76561198000000000", "UnbanPlayer 76561198000000000", "AllowPlayerToJoinNoCheck 76561198000000000", "DisallowPlayerToJoinNoCheck 76561198000000000", "ServerChat hello"],
 		onlineMin: 20,
