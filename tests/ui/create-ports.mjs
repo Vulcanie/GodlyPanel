@@ -45,7 +45,7 @@ try {
 	// ---- Conan: the query port one above the game port
 	await choose("Conan Exiles");
 	const game = page.getByLabel("Game Port");
-	const query = page.getByLabel("REST API Port");
+	const query = page.getByLabel("Query Port");
 	const gameValue = Number(await game.inputValue());
 	check("with the defaults there is no warning and Create is enabled", !(await page.getByText(/is used by .* itself/).count()) && (await createBtn.isEnabled()));
 	await query.fill(String(gameValue + 1));
