@@ -99,6 +99,14 @@ export function createLanOnly(getConfig) {
 
 const OWN_NAME = os.hostname().toLowerCase();
 
+// This PC's own names on a mesh VPN (Tailscale's "MagicDNS" name, such as pc.tail1234.ts.net),
+// reported by the Tailscale service once it has asked Tailscale. Only this PC's own name is
+// added, never a pattern, so a name someone else controls is still refused.
+let ownMeshNames = [];
+export const setOwnMeshNames = (names) => {
+	ownMeshNames = names.map((n) => String(n).toLowerCase());
+};
+
 /**
  * True for an IP literal, localhost, this machine's own name, or a name the
  * owner has listed. Anything else is a DNS name someone else controls.
@@ -109,7 +117,7 @@ export function isExpectedHost(hostHeader, network = {}) {
 	const host = String(hostHeader).toLowerCase().replace(/:\d+$/, "");
 	if (host.startsWith("[")) return true;
 	if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) return true;
-	if (host === "localhost" || host === OWN_NAME || host === `${OWN_NAME}.local`) return true;
+	if (host === "localhost" || host === OWN_NAME || host === `${OWN_NAME}.local` || ownMeshNames.includes(host)) return true;
 	return (network.extraAllowedHosts ?? []).some((h) => String(h).toLowerCase() === host);
 }
 

@@ -34,6 +34,32 @@ reverse proxy with client certificates). The panel will still refuse the request
 don't come from an allowed network: add the proxy's address under "Additional allowed networks"
 only if you understand what that opens.
 
+## Letting your community in (Tailscale + a guest account)
+
+Two things are needed: a way to *reach* the panel, and an *account* in it.
+
+**1. Reaching it: share this PC through Tailscale.** Install Tailscale on this PC and sign in. Don't invite
+friends into your own Tailscale account: that puts them on the same network as every other device you own.
+Instead, in the Tailscale admin console open *Machines*, choose this PC, then *Share…* and send the link.
+Each friend installs Tailscale, signs in with their own account, accepts the share, and can then reach
+**this PC and nothing else of yours**. The panel's Settings page shows whether Tailscale is connected and
+the address to give them, such as `http://godly-pc.tail1234.ts.net:8765/` (the panel accepts this PC's own
+Tailscale name as well as its `100.x.y.z` address).
+
+**2. The account: a community code.** Settings → *Community access* → switch it on. The panel makes a code
+such as `K7QM-2XPA`. Anyone who opens the panel, chooses *I have a community code* on the sign-in page and
+enters it picks their own username and password and becomes a **guest**: they can look at the dashboard
+(status, players, ports) and cannot change anything. The page also writes a ready-to-send message.
+
+- The code can be switched off, replaced (the old one stops working at once), set to expire, and limited to a
+  number of sign-ups. Accounts already made stay until you remove them under Users.
+- A wrong code gets nothing and says nothing about whether an invite exists; repeated wrong guesses are
+  slowed down for everyone for ten minutes.
+- It only makes guests. Moderators and admins are still made by an administrator under Users.
+- It only works for people who can already reach the panel: the code never opens the panel to the internet.
+
+You can also skip the code and create each person's account yourself under Users.
+
 ## For people who only need to look
 
 Friends and community members who only want to see whether a server is up don't need the panel at

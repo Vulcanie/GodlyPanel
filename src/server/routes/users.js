@@ -10,11 +10,23 @@ import {
 	getById,
 } from "../data/userStore.js";
 import { dropSessionsFor } from "../services/sseHub.js";
+import { inviteStatus, updateInvite } from "../services/communityInvite.js";
 
 const router = express.Router();
 
 router.get("/", (req, res) => {
 	res.json(list());
+});
+
+// The community code (administrators only): see it, switch it on or off, set its limits, replace it.
+router.get("/invite", (req, res) => res.json(inviteStatus()));
+router.put("/invite", async (req, res) => {
+	const { enabled, expiresInDays, maxJoins, regenerate } = req.body || {};
+	try {
+		res.json(await updateInvite({ enabled, expiresInDays, maxJoins, regenerate: regenerate === true }));
+	} catch (e) {
+		res.status(400).json({ error: e.message });
+	}
 });
 
 router.post("/", async (req, res) => {

@@ -49,6 +49,13 @@ export function SessionProvider({ children }) {
 		return data.user;
 	}, []);
 
+	// Someone with the community code makes their own guest account.
+	const join = React.useCallback(async (code, username, password) => {
+		const data = await api.post("/api/auth/join", { code, username, password });
+		setState({ status: "signedIn", user: data.user });
+		return data.user;
+	}, []);
+
 	const completeSetup = React.useCallback(async (username, password, serversRoot = "") => {
 		const data = await api.post("/api/setup/admin", { username, password, serversRoot });
 		setState({ status: "signedIn", user: data.user });
@@ -69,11 +76,12 @@ export function SessionProvider({ children }) {
 			isAdmin: state.user?.role === "admin",
 			role: state.user?.role ?? null,
 			login,
+			join,
 			logout,
 			completeSetup,
 			refresh,
 		}),
-		[state, login, logout, completeSetup, refresh],
+		[state, login, join, logout, completeSetup, refresh],
 	);
 
 	return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

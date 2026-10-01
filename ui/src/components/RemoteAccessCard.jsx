@@ -15,6 +15,9 @@ function RemoteAccessCard() {
 	if (!info) return null;
 	const mesh = info.addresses.filter((a) => a.mesh);
 	const lan = info.addresses.filter((a) => !a.mesh);
+	const ts = info.tailscale;
+	const tsHost = ts?.running ? ts.dnsName || ts.ips?.[0] : null;
+	const tsUrl = tsHost ? `http://${tsHost}:${info.port}/` : mesh[0]?.url ?? null;
 
 	return (
 		<Paper sx={{ p: 2, mb: 2 }}>
@@ -46,12 +49,25 @@ function RemoteAccessCard() {
 				</>
 			)}
 			<Typography variant="body2" sx={{ fontWeight: 500, mb: 0.5 }}>
-				From away from home
+				From away from home, and for friends
 			</Typography>
+			{ts && (
+				<Alert severity={!ts.installed ? "info" : ts.running ? "success" : "warning"} sx={{ mb: 1 }}>
+					{!ts.installed
+						? "Tailscale isn't installed on this PC yet."
+						: ts.running
+							? `Tailscale is connected on this PC as ${ts.dnsName ?? ts.ips[0]}. Open ${tsUrl} from a device on your Tailscale network.`
+							: ts.state === "NeedsLogin"
+								? "Tailscale is installed but needs signing in. Open it from the tray and sign in."
+								: "Tailscale is installed but isn't connected. Open it from the tray and turn it on."}
+				</Alert>
+			)}
 			<Typography variant="body2" sx={{ color: "text.secondary" }}>
-				Don't forward the panel's port on your router: anyone on the internet could then reach a login page that controls your servers. Instead put this PC and your phone on a private mesh network. The easiest is{" "}
-				<Link href="https://tailscale.com/download" target="_blank" rel="noreferrer">Tailscale</Link> (free for personal use): install it on this PC and on your phone, sign in to both with the same account, then open{" "}
-				{mesh[0] ? <code>{mesh[0].url}</code> : <code>http://100.x.y.z:{info.port}/</code>} on the phone. {info.allowCgnat ? "The panel already accepts these addresses." : 'Turn on "Allow mesh VPN addresses" above first.'} ZeroTier works the same way. Friends who only want to see status don't need any of this: they can use the Discord bot.
+				Don't forward the panel's port on your router: anyone on the internet could then reach a login page that controls your servers. Instead use a private mesh network. The easiest is{" "}
+				<Link href="https://tailscale.com/download" target="_blank" rel="noreferrer">Tailscale</Link> (free for personal use): install it on this PC and sign in, install it on your phone and sign in to the same account, then open {tsUrl ? <code>{tsUrl}</code> : <code>http://100.x.y.z:{info.port}/</code>}. {info.allowCgnat ? "The panel already accepts these addresses." : 'Turn on "Allow mesh VPN addresses" above first.'} ZeroTier works the same way.
+			</Typography>
+			<Typography variant="body2" sx={{ color: "text.secondary", mt: 1 }}>
+				<b>For your friends:</b> don't invite them into your own Tailscale account, because that puts them on the same network as all your other devices. Instead, in the Tailscale admin console choose <i>Machines</i>, this PC, <i>Share…</i>, and send them the link. They install Tailscale, accept the share, and can then reach this PC and nothing else of yours. Give them a guest account with the community code below. People who only want status can also use the Discord bot.
 			</Typography>
 		</Paper>
 	);

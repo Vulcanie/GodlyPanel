@@ -103,6 +103,9 @@ commit messages describe the problem each change solved.
   a browser. It never installs anything by itself.
 - **Shares a read-only view** with your community through a real guest account. Guests
   see what's running and how to join; they can't see passwords or change anything.
+  A **community code** lets friends make their own guest account, and with Tailscale's
+  "share this machine" they can reach the panel from anywhere without joining your network
+  (see [docs/REMOTE_ACCESS.md](docs/REMOTE_ACCESS.md)).
 - **Runs servers without cluttering your taskbar.** Each server can be minimized, hidden,
   or launched with no window at all, with its live console output shown in the panel.
 - **Manages storage.** Choose where servers are installed (the drive matters: games are

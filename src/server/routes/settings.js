@@ -17,6 +17,7 @@ import { BackupError } from "../services/backupService.js";
 import { panelChecklist, summarise } from "../services/setupChecklist.js";
 import { applyBotSettings, botState } from "../services/discordBot.js";
 import { lanAddresses } from "../services/firewallCheck.js";
+import { tailscaleStatus } from "../services/tailscale.js";
 import { listDestinations, saveDestination, removeDestination, testDestination, retryReplication } from "../services/backupDestinations.js";
 
 const router = express.Router();
@@ -99,11 +100,12 @@ const inMesh = (address) => {
 	const [a, b] = address.split(".").map(Number);
 	return a === 100 && b >= 64 && b <= 127;
 };
-router.get("/access", (req, res) => {
+router.get("/access", async (req, res) => {
 	const port = Number(process.env.GHP_PORT) || getConfig().http.port;
 	const { bindAll } = getConfig().http;
 	const addresses = lanAddresses().map((a) => ({ ...a, url: `http://${a.address}:${port}/`, mesh: inMesh(a.address) }));
-	res.json({ port, bindAll, local: `http://127.0.0.1:${port}/`, addresses: bindAll ? addresses : [], allowCgnat: getConfig().network.allowCgnat !== false });
+	const tailscale = await tailscaleStatus();
+	res.json({ port, bindAll, local: `http://127.0.0.1:${port}/`, addresses: bindAll ? addresses : [], allowCgnat: getConfig().network.allowCgnat !== false, tailscale });
 });
 
 router.get("/discord-bot", (req, res) => res.json(botState()));

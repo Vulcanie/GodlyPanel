@@ -23,6 +23,7 @@ import NotificationEvents from "./NotificationEvents";
 import BackupDestinations from "./BackupDestinations";
 import DiscordBotCard from "./DiscordBotCard";
 import RemoteAccessCard from "./RemoteAccessCard";
+import CommunityAccessCard from "./CommunityAccessCard";
 import { formatBytes } from "../utils/format";
 
 // The form is generated from the schema the server sends, so it can't drift
@@ -274,6 +275,8 @@ function SettingsPage({ onBack }) {
 			))}
 
 			<RemoteAccessCard />
+
+			<CommunityAccessCard />
 
 			<DiscordBotCard applicationId={data.resolved.discord.botApplicationId} refreshKey={data} />
 

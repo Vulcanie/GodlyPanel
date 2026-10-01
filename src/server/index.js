@@ -32,6 +32,8 @@ import operationsRoutes from "./routes/operations.js";
 import { ensureDataDirs, paths } from "./paths.js";
 import { initConfig, getConfig, onConfigChange } from "./config/configStore.js";
 import { initSecrets } from "./config/secretsStore.js";
+import { initCommunityInvite } from "./services/communityInvite.js";
+import { tailscaleStatus } from "./services/tailscale.js";
 import { initServerStore } from "./data/serverStore.js";
 import { initAppearanceStore } from "./data/appearanceStore.js";
 import { initServerIntent } from "./data/serverIntent.js";
@@ -72,6 +74,7 @@ ensureDataDirs();
 const config = await initConfig();
 await initSecrets();
 await initUserStore();
+await initCommunityInvite();
 await initServerStore();
 await initAppearanceStore();
 await initServerIntent();
@@ -235,7 +238,10 @@ registerTimer(
 registerTimer("metrics", () => sampleOnce().catch((err) => console.error("[metrics]", err)), (c) => c.metrics.sampleSec * 1000, (c) => c.metrics.enabled);
 onBackupFinished((server, id) => replicateBackup(server, id));
 registerTimer("offsite-retry", () => retryReplication().catch((err) => console.error("[offsite]", err)), () => 10 * 60_000);
-registerTimer("disk-watch", () => checkDisks().catch((err) => console.error("[disk]", err)), () => 10 * 60_000);
+// Keeps this PC's Tailscale name current, so the panel opens by that name as well as by address.
+tailscaleStatus().catch(() => {});
+registerTimer("tailscale-names", () => tailscaleStatus({ force: true }).catch(() => {}), () => 5 * 60_000);
+registerTimer("disk-watch",() => checkDisks().catch((err) => console.error("[disk]", err)), () => 10 * 60_000);
 registerTimer(
 	"storage-scan",
 	() => {
