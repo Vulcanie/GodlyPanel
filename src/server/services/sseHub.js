@@ -37,14 +37,19 @@ function drop(client) {
 	}
 }
 
-export function addSseClient(req, res, user) {
+/**
+ * `limits` keeps one kind of viewer from crowding out the rest: clients in a `group` are counted
+ * (and capped) among themselves, and one `address` may hold only `perAddress` streams.
+ */
+export function addSseClient(req, res, user, { group = null, maxGroup = MAX_CLIENTS, address = null, perAddress = Infinity } = {}) {
 	res.setHeader("Content-Type", "text/event-stream");
 	res.setHeader("Cache-Control", "no-cache");
 	res.setHeader("Connection", "keep-alive");
 	res.setHeader("X-Accel-Buffering", "no");
 	if (res.flushHeaders) res.flushHeaders();
 
-	if (clients.size >= MAX_CLIENTS) {
+	const mine = [...clients].filter((c) => c.group === group);
+	if (mine.length >= maxGroup || (address && mine.filter((c) => c.address === address).length >= perAddress)) {
 		res.write(`data: ${JSON.stringify({ type: "error", message: "Too many live connections." })}\n\n`);
 		res.end();
 		return;
@@ -54,6 +59,8 @@ export function addSseClient(req, res, user) {
 		res,
 		userId: user?.id ?? null,
 		role: user?.role ?? null,
+		group,
+		address,
 		heartbeat: setInterval(() => {
 			try {
 				res.write("data: {}\n\n");

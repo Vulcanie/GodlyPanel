@@ -59,6 +59,20 @@ Against that model it does the following:
   press by an administrator, builds the command from validated port numbers and a name stripped
   to plain characters, and runs it through Windows' own permission prompt on the PC.
 - **Server tags** are plain labels (letters, numbers, spaces, dots, dashes, underscores).
+- **The community code and the community view.** The code only ever makes *guest* accounts,
+  can be switched off, replaced, set to expire and capped, and wrong guesses are slowed down
+  for everyone. The community view is the one part meant to be reachable from the internet, so
+  it is a separate, small web server on `127.0.0.1` (published only by a Cloudflare Tunnel the
+  panel starts) rather than the panel: it answers only to its public name; serves the page,
+  guest sign-in and sign-up, and the read-only status a guest sees; refuses administrator and
+  moderator sign-ins (a right password reads exactly like a wrong one) and ignores their
+  sessions; has no route that starts, stops, edits, deletes or reads settings; caps live
+  streams and requests per visitor (using Cloudflare's reported address); and marks its cookie
+  Secure. The panel itself refuses any request that carries Cloudflare's headers, so a tunnel
+  pointed at it by mistake still can't reach it. The tunnel token is kept in `secrets.json`
+  and handed to cloudflared through its environment, not its command line. cloudflared is
+  downloaded only on request, from Cloudflare's GitHub release, and checked against the
+  checksum GitHub publishes. Cloudflare can see the traffic that passes through its tunnel.
 
 ## What it does not protect against
 

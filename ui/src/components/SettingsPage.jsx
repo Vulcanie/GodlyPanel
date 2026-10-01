@@ -24,6 +24,7 @@ import BackupDestinations from "./BackupDestinations";
 import DiscordBotCard from "./DiscordBotCard";
 import RemoteAccessCard from "./RemoteAccessCard";
 import CommunityAccessCard from "./CommunityAccessCard";
+import CommunityViewCard from "./CommunityViewCard";
 import { formatBytes } from "../utils/format";
 
 // The form is generated from the schema the server sends, so it can't drift
@@ -275,6 +276,8 @@ function SettingsPage({ onBack }) {
 			))}
 
 			<RemoteAccessCard />
+
+			<CommunityViewCard />
 
 			<CommunityAccessCard />
 

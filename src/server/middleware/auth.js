@@ -13,9 +13,10 @@ const TOKEN_TTL_SECONDS = 7 * 24 * 60 * 60;
 //
 // Not marked Secure: this is plain HTTP on a LAN. That is a deliberate,
 // documented limitation of v1, paired with refusing non-LAN connections.
-function cookieOptions() {
+function cookieOptions({ secure = false } = {}) {
 	return {
 		httpOnly: true,
+		secure,
 		sameSite: "strict",
 		path: "/",
 		maxAge: TOKEN_TTL_SECONDS * 1000,
@@ -43,13 +44,13 @@ function readSessionCookie(req) {
 	return null;
 }
 
-export function issueSession(res, user) {
+export function issueSession(res, user, { secure = false } = {}) {
 	const token = jwt.sign(
 		{ sub: user.id, u: user.username, role: user.role, sv: user.sessionVersion },
 		getSecrets().jwtSecret,
 		{ expiresIn: TOKEN_TTL_SECONDS, algorithm: "HS256" },
 	);
-	res.cookie(COOKIE_NAME, token, cookieOptions());
+	res.cookie(COOKIE_NAME, token, cookieOptions({ secure }));
 	return token;
 }
 
@@ -115,6 +116,12 @@ export function loopbackOnly(req, res, next) {
 		code: "setup_local_only",
 	});
 }
+
+/**
+ * Who is asking, for counting wrong guesses. Normally the connection's own address; on the community
+ * listener, where every visitor arrives from the tunnel on this PC, the visitor's address as Cloudflare reported it.
+ */
+export const clientAddress = (req) => req.communityClientIp ?? normaliseIp(req.socket.remoteAddress);
 
 /** ::ffff:192.168.1.5 -> 192.168.1.5, and strip any %scope suffix. */
 export function normaliseIp(raw) {

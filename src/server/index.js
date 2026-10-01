@@ -33,6 +33,8 @@ import { ensureDataDirs, paths } from "./paths.js";
 import { initConfig, getConfig, onConfigChange } from "./config/configStore.js";
 import { initSecrets } from "./config/secretsStore.js";
 import { initCommunityInvite } from "./services/communityInvite.js";
+import { initCommunityView, resumeCommunityView, stopCommunityView } from "./services/communityView.js";
+import communityRoutes from "./routes/community.js";
 import { tailscaleStatus } from "./services/tailscale.js";
 import { initServerStore } from "./data/serverStore.js";
 import { initAppearanceStore } from "./data/appearanceStore.js";
@@ -75,6 +77,7 @@ const config = await initConfig();
 await initSecrets();
 await initUserStore();
 await initCommunityInvite();
+await initCommunityView();
 await initServerStore();
 await initAppearanceStore();
 await initServerIntent();
@@ -136,6 +139,7 @@ app.use("/api/users", requireRole("admin"), userRoutes);
 app.use("/api/updates", requireRole("admin"), updatesRoutes);
 app.use("/api", requireRole("admin"), modsRoutes);
 app.use("/api/settings", requireRole("admin"), settingsRoutes);
+app.use("/api/community", requireRole("admin"), communityRoutes);
 app.use("/api/batch-files", requireRole("admin"), batchFileRoutes);
 app.use("/api", requireRole("admin"), apiRouter);
 
@@ -266,6 +270,8 @@ const server = app.listen(PORT, HOST, () => {
 		.then((stats) => broadcastSseEvent({ type: "system_stats", stats }))
 		.catch(() => {});
 	cleanupStaleUploads();
+	// If the community view was on when the panel last stopped, bring it back.
+	resumeCommunityView().catch(() => {});
 
 	// Servers already running when the panel starts still have their windows.
 	setTimeout(() => sweepWindowsOnBoot(), 15_000);
@@ -313,6 +319,7 @@ function shutdown(reason) {
 
 	stopAll();
 	stopBot();
+	stopCommunityView().catch(() => {});
 
 	// Game servers are launched as genuinely independent processes and are
 	// meant to outlive us. In-flight SteamCMD installs are not — they're

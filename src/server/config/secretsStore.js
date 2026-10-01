@@ -22,6 +22,8 @@ const EMPTY = {
 	alertWebhookUrl: "",
 	smtpPassword: "",
 	discordBotToken: "",
+	// The token of a tunnel made in the Cloudflare dashboard, for the community view.
+	cloudflareTunnelToken: "",
 	// Secret access keys of off-machine backup destinations, by destination id.
 	destinationKeys: {},
 };

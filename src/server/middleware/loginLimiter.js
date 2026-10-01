@@ -1,4 +1,4 @@
-import { normaliseIp } from "./auth.js";
+import { clientAddress } from "./auth.js";
 
 // Nothing stopped a person on the network from guessing passwords as fast as
 // bcrypt would let them. This is deliberately small: in-memory (a restart
@@ -33,7 +33,7 @@ function retryAfterSeconds(key, max) {
 }
 
 const keys = (req) => {
-	const ip = normaliseIp(req.socket.remoteAddress);
+	const ip = clientAddress(req);
 	const account = String(req.body?.username ?? "").toLowerCase();
 	return { ipKey: `ip:${ip}`, accountKey: `acct:${account}` };
 };

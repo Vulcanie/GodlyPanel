@@ -27,6 +27,7 @@ function tailscaleUrl(access) {
 function CommunityAccessCard() {
 	const [invite, setInvite] = React.useState(null);
 	const [access, setAccess] = React.useState(null);
+	const [view, setView] = React.useState(null);
 	const [error, setError] = React.useState(null);
 	const [copied, setCopied] = React.useState("");
 	const [expiry, setExpiry] = React.useState("keep");
@@ -38,8 +39,14 @@ function CommunityAccessCard() {
 			setLimit(i.maxJoins ? String(i.maxJoins) : "");
 		}).catch((e) => setError(e.message));
 		api.get("/api/settings/access").then(setAccess).catch(() => {});
+		api.get("/api/community").then(setView).catch(() => {});
 	}, []);
-	React.useEffect(load, [load]);
+	React.useEffect(() => {
+		load();
+		// The public address appears and goes while the community view is switched on and off just above.
+		const timer = setInterval(() => api.get("/api/community").then(setView).catch(() => {}), 4000);
+		return () => clearInterval(timer);
+	}, [load]);
 
 	if (!invite) return null;
 
@@ -64,13 +71,19 @@ function CommunityAccessCard() {
 	};
 
 	const url = tailscaleUrl(access);
-	const message = [
-		"Here's how to see our servers:",
-		"1. Install Tailscale (tailscale.com/download) and accept the share I sent you.",
-		`2. Open ${url ?? "the address I sent you"} in a browser.`,
-		`3. Choose "I have a community code" and use ${invite.code}.`,
-		"Pick any username and password you like. You'll be able to look at the servers, not change them.",
-	].join("\n");
+	// The public address (no software to install) when the community view is on, otherwise Tailscale.
+	const publicUrl = view?.enabled ? view.publicUrl : null;
+	const closing = "Pick any username and password you like. You'll be able to look at the servers, not change them.";
+	const message = (publicUrl
+		? ["Here's how to see our servers:", `1. Open ${publicUrl} in a browser.`, `2. Choose "I have a community code" and use ${invite.code}.`, closing]
+		: [
+				"Here's how to see our servers:",
+				"1. Install Tailscale (tailscale.com/download) and accept the share I sent you.",
+				`2. Open ${url ?? "the address I sent you"} in a browser.`,
+				`3. Choose "I have a community code" and use ${invite.code}.`,
+				closing,
+			]
+	).join("\n");
 
 	return (
 		<Paper sx={{ p: 2, mb: 2 }}>
@@ -151,7 +164,7 @@ function CommunityAccessCard() {
 					<Button size="small" variant="outlined" onClick={() => copy("message", message)}>
 						{copied === "message" ? "Copied" : "Copy message"}
 					</Button>
-					{!url && (
+					{!url && !publicUrl && (
 						<Typography variant="caption" sx={{ display: "block", color: "text.secondary", mt: 1 }}>
 							The address shows up here once Tailscale is installed and connected on this PC.
 						</Typography>

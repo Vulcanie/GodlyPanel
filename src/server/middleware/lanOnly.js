@@ -73,6 +73,13 @@ export function createLanOnly(getConfig) {
 		// and therefore influenced by headers we just removed.
 		const ip = normaliseIp(req.socket.remoteAddress);
 
+		// A tunnel runs on this PC, so its visitors would look like this PC itself. Cloudflare marks what
+		// it forwards, so anything carrying its marks is refused here: people outside reach the separate
+		// community view, never the panel.
+		if (req.headers["cf-connecting-ip"] || req.headers["cf-ray"]) {
+			return res.status(403).json({ error: "This panel can't be opened through a tunnel. Use the community view's address instead.", code: "tunnel_refused" });
+		}
+
 		if (isAllowed(ip, network)) {
 			if (isExpectedHost(req.headers.host, network)) return next();
 			return res.status(400).json({

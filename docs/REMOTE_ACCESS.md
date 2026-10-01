@@ -34,6 +34,34 @@ reverse proxy with client certificates). The panel will still refuse the request
 don't come from an allowed network: add the proxy's address under "Additional allowed networks"
 only if you understand what that opens.
 
+## A public address for your community (no software for them to install)
+
+Settings → **Community view (a public address)** → *Set up*. The panel itself stays on your network;
+this publishes a separate, much smaller page through a **Cloudflare Tunnel** (an outbound connection
+from this PC to Cloudflare, so nothing is opened on your router).
+
+- **What people get:** a web address. They sign in as a **guest**, or choose *I have a community code*
+  and make their own account (see the next section), and look at the dashboard: status, players, join
+  address. They cannot start, stop, change or delete anything, and administrators and moderators can't
+  sign in there at all.
+- **cloudflared** (Cloudflare's tunnel program) is downloaded once, only when you agree in the set-up
+  dialog, from Cloudflare's official GitHub release, checked against its published checksum, and kept in
+  the panel's own data folder. If you already have it, the panel uses that.
+- **Three ways to choose the address:**
+  1. *A temporary link:* no Cloudflare account. A random `...trycloudflare.com` address that changes each
+     time it starts. Good for trying it. Cloudflare doesn't carry live streams on these, so the page
+     refreshes every few seconds instead of live.
+  2. *Your own address, with a tunnel already on this PC:* if you made one with `cloudflared tunnel create`,
+     the dialog finds it. The panel runs it with a settings file of its own that points your address at
+     the community view, and leaves yours alone. **Stop any other cloudflared running the same tunnel**
+     (for example one started by PM2 or a service), or visitors will be split between the two.
+  3. *Your own address, with a token:* in the Cloudflare dashboard (Zero Trust → Networks → Tunnels)
+     create a tunnel, add a *Public Hostname* with service `HTTP` and URL `localhost:<the port shown>`,
+     and paste the tunnel's token and the address in the dialog.
+- **Turn it off** with one button. It starts again by itself when the panel starts, if it was on.
+- The panel refuses any request that carries Cloudflare's headers, so a tunnel pointed at the panel itself
+  (rather than at the community view) can't reach it.
+
 ## Letting your community in (Tailscale + a guest account)
 
 Two things are needed: a way to *reach* the panel, and an *account* in it.

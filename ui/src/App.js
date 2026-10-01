@@ -97,7 +97,32 @@ function Panel() {
 
 		const events = new EventSource("/api/events");
 
+		// Some paths between the browser and the panel (a temporary Cloudflare link, certain proxies) cut live
+		// streams. When the stream is down or has gone quiet, ask for the same information every few seconds instead.
+		let streamOk = false;
+		let lastEvent = Date.now();
+		let lastPoll = 0;
+		const poll = async () => {
+			if (Date.now() - lastPoll < 8000) return;
+			lastPoll = Date.now();
+			try {
+				setServers(await api.get("/api/status"));
+				setApiError(null);
+				const stats = await api.get("/api/system-stats").catch(() => null);
+				if (stats?.totalMemMB != null) setSystemStats(stats);
+				const perServer = await api.get("/api/server-stats").catch(() => null);
+				if (Array.isArray(perServer)) setServerStats(perServer);
+			} catch (err) {
+				setApiError(err.message);
+			}
+		};
+		const fallback = setInterval(() => {
+			if (!streamOk || Date.now() - lastEvent > 45_000) poll();
+		}, 10_000);
+		// Only a message counts as proof the stream works: a proxy may let it open and then hold back everything.
 		events.onmessage = (event) => {
+			streamOk = true;
+			lastEvent = Date.now();
 			// Any message — including the 15s heartbeat — means the connection
 			// is alive. EventSource reconnects on its own after a transient
 			// error, and without clearing here the "lost connection" banner
@@ -149,9 +174,15 @@ function Panel() {
 			}
 		};
 
-		events.onerror = () => setApiError("Lost connection to live updates");
+		events.onerror = () => {
+			streamOk = false;
+			poll();
+		};
 
-		return () => events.close();
+		return () => {
+			clearInterval(fallback);
+			events.close();
+		};
 	}, [signedIn, role]);
 
 	// One place changes page, and it also records the change in the browser's
