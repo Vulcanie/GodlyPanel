@@ -1223,6 +1223,8 @@ export const GAME_TEMPLATES = [
 		// With a port set the server accepts direct connections by IP; without one it only
 		// appears through Steam's relay (a game ID). Direct is what a panel-run server wants.
 		ports: [{ key: "port", label: "Game Port (UDP)", default: 27015 }],
+		// Seen on a real server: it binds the port after the game port as well.
+		implicitPorts: [{ offset: 1, label: "its second UDP port" }],
 		buildStartScriptFilename: () => "Start_CoreKeeper.bat",
 		// Saves go in the server's own data folder (-datapath) instead of the user profile.
 		buildStartScript: (p) =>
