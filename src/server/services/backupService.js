@@ -75,6 +75,13 @@ export function flagValue(text, flag) {
 	return m ? (m[1] ?? m[2]) : null;
 }
 
+/** The value a launch line gives a `?Name=value` option (ARK's way), or null. */
+export function optionValue(text, name) {
+	const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+	const m = new RegExp(`[?&]${escaped}=([^?&\\s"]+)`, "i").exec(text);
+	return m ? m[1] : null;
+}
+
 const baseFor = (server, base) => (base === "install" ? server.installDir : server.workingDir || server.installDir);
 
 /**
@@ -104,6 +111,14 @@ export async function backupSpecsFor(server) {
 					} else {
 						raw.push({ path: path.resolve(expandEnv(p.fallback)), label: p.label, exclude: p.exclude ?? [], shared: true });
 					}
+					continue;
+				}
+				if (p.base === "option") {
+					// A save folder named in the launch line (`?AltSaveDirectoryName=RagnarokSave`), inside `rel`; without
+					// the option the game keeps it under `fallbackRel`.
+					const working = server.workingDir || server.installDir || "";
+					const value = optionValue(script, p.option);
+					raw.push({ path: path.resolve(working, value ? path.join(p.rel, value) : p.fallbackRel), label: p.label, exclude: p.exclude ?? [] });
 					continue;
 				}
 				const root = p.base === "abs" ? null : baseFor(server, p.base);

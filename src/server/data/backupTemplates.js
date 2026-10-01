@@ -17,13 +17,25 @@
 // which is what the panel offers for any game it has no list for (`paths: []`).
 
 const LOGS = ["Logs", "Crashes"];
+// Distant Horizons (a long-range-view mod) keeps a database of far-away terrain next to each dimension. It can be
+// tens of gigabytes, is rebuilt by the mod, and is not part of the world, so a backup leaves it out. The leading *
+// matters: the folders it sits in are nested, and tar only matches a nested file with a pattern that starts with *.
+const DISTANT_HORIZONS = "*DistantHorizons*";
 
 export const BACKUP_TEMPLATES = {
 	conan: {
 		paths: [{ base: "working", rel: "ConanSandbox/Saved", label: "Saved games and settings", exclude: LOGS }],
 	},
+	// Several ARK Ascended maps often share one install, each with its own save folder named in its launch line
+	// (`?AltSaveDirectoryName=RagnarokSave`), so a server's backup is its own map's folder, not the whole Saved
+	// folder (which would copy every map's world once per server). The settings and the cluster's transfer
+	// folder (characters and items moved between maps) are shared and small.
 	"ark-asa": {
-		paths: [{ base: "working", rel: "ShooterGame/Saved", label: "Saved worlds and settings", exclude: LOGS }],
+		paths: [
+			{ base: "option", option: "AltSaveDirectoryName", rel: "ShooterGame/Saved", fallbackRel: "ShooterGame/Saved/SavedArks", label: "This map's saved world" },
+			{ base: "working", rel: "ShooterGame/Saved/Config/WindowsServer", label: "Server settings" },
+			{ base: "working", rel: "ClusterStorage", label: "Cluster transfers" },
+		],
 	},
 	"ark-ase": {
 		paths: [{ base: "working", rel: "../../Saved", label: "Saved worlds and settings", exclude: LOGS }],
@@ -95,9 +107,9 @@ export const BACKUP_TEMPLATES = {
 	},
 	"minecraft-modpack": {
 		paths: [
-			{ base: "working", rel: "world", label: "World", exclude: ["session.lock"] },
-			{ base: "working", rel: "world_nether", label: "Nether", exclude: ["session.lock"] },
-			{ base: "working", rel: "world_the_end", label: "The End", exclude: ["session.lock"] },
+			{ base: "working", rel: "world", label: "World", exclude: ["session.lock", DISTANT_HORIZONS] },
+			{ base: "working", rel: "world_nether", label: "Nether", exclude: ["session.lock", DISTANT_HORIZONS] },
+			{ base: "working", rel: "world_the_end", label: "The End", exclude: ["session.lock", DISTANT_HORIZONS] },
 			{ base: "working", rel: "config", label: "Mod settings" },
 			{ base: "working", rel: "defaultconfigs", label: "Default mod settings" },
 			{ base: "working", rel: "server.properties", label: "Server settings" },
