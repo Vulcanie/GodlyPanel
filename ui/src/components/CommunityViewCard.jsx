@@ -21,6 +21,7 @@ import {
 	Typography,
 } from "@mui/material";
 import { api } from "../api/client";
+import CommunityGuide from "./CommunityGuide";
 
 const CHIP = {
 	off: { color: "default", label: "Off" },
@@ -46,6 +47,7 @@ function CommunityViewCard() {
 	const [wizard, setWizard] = React.useState(false);
 	const [copied, setCopied] = React.useState(false);
 	const [showLog, setShowLog] = React.useState(false);
+	const [guide, setGuide] = React.useState(false);
 
 	const load = React.useCallback(() => api.get("/api/community").then(setStatus).catch((e) => setError(e.message)), []);
 	React.useEffect(() => {
@@ -102,9 +104,14 @@ function CommunityViewCard() {
 			))}
 
 			{state === "off" && (
+				<Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
 				<Button variant="contained" size="small" onClick={() => setWizard(true)}>
 					{status.tokenSaved || status.hostname || status.existing ? "Change settings" : "Set up"}
 				</Button>
+				<Button size="small" onClick={() => setGuide(true)}>
+					Read the guide
+				</Button>
+				</Box>
 			)}
 
 			{state !== "off" && (
@@ -136,6 +143,9 @@ function CommunityViewCard() {
 						<Button size="small" color="warning" variant="outlined" onClick={() => toggle(false)}>
 							Turn off
 						</Button>
+						<Button size="small" onClick={() => setGuide(true)}>
+							Guide
+						</Button>
 						<Button size="small" onClick={() => setShowLog((v) => !v)}>
 							{showLog ? "Hide details" : "Details"}
 						</Button>
@@ -149,7 +159,8 @@ function CommunityViewCard() {
 				</>
 			)}
 
-			<SetupDialog open={wizard} onClose={() => setWizard(false)} status={status} reload={load} onDone={() => setWizard(false)} />
+			<SetupDialog open={wizard} onClose={() => setWizard(false)} status={status} reload={load} onDone={() => setWizard(false)} onGuide={() => setGuide(true)} />
+			<CommunityGuide open={guide} onClose={() => setGuide(false)} port={status.port} />
 		</Paper>
 	);
 }
@@ -158,7 +169,7 @@ function CommunityViewCard() {
 
 const STEPS = ["Get cloudflared", "Choose an address", "Turn it on"];
 
-function SetupDialog({ open, onClose, status, reload, onDone }) {
+function SetupDialog({ open, onClose, status, reload, onDone, onGuide }) {
 	const [step, setStep] = React.useState(0);
 	const [mode, setMode] = React.useState("quick");
 	const [hostname, setHostname] = React.useState("");
@@ -334,6 +345,9 @@ function SetupDialog({ open, onClose, status, reload, onDone }) {
 				)}
 			</DialogContent>
 			<DialogActions>
+				<Button onClick={onGuide} sx={{ mr: "auto" }}>
+					Read the guide
+				</Button>
 				<Button onClick={onClose} disabled={busy}>
 					Cancel
 				</Button>

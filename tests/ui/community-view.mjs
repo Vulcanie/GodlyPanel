@@ -52,11 +52,26 @@ try {
 		page.on("pageerror", (e) => errors.push(e.message));
 		await openSettings(page, panel.B);
 		check("it starts off", (await page.getByTestId("community-view-state").textContent()) === "Off");
+		// The written guide is inside the app.
+		await page.getByRole("button", { name: "Read the guide" }).click();
+		await page.getByRole("heading", { name: "Community view: guide" }).waitFor();
+		check("the guide opens, starting with what it is", await page.getByText(/not your panel on the internet|It is not/).first().isVisible().catch(() => false) || await page.getByText("What it is, and what your friends get").isVisible());
+		await page.getByText("Set up your own address with a token (recommended)").click();
+		check("it names the community view's own port where Cloudflare asks for it", await page.locator("code", { hasText: /localhost:[0-9]{4,5}/ }).first().waitFor({ timeout: 5000 }).then(() => true, () => false));
+		await page.getByText("If something doesn't work").click();
+		check("and it covers the common problems", await page.getByText(/error 1033 or 530/).waitFor({ timeout: 5000 }).then(() => true, () => false));
+		await shot(page, "cview-0-guide");
+		await page.getByRole("button", { name: "Close" }).click();
+		await page.getByRole("heading", { name: "Community view: guide" }).waitFor({ state: "hidden" });
 		await page.getByRole("button", { name: "Set up", exact: true }).click();
 		await page.getByRole("heading", { name: "Set up the community view" }).waitFor();
 		check("with cloudflared already there, the dialog skips the download", await page.getByText("cloudflared is ready").isVisible());
 		await page.waitForTimeout(700);
 		await shot(page, "cview-1-choose");
+		await page.getByRole("button", { name: "Read the guide" }).last().click();
+		check("the dialog links to the guide too", await page.getByRole("heading", { name: "Community view: guide" }).isVisible());
+		await page.getByRole("button", { name: "Close" }).click();
+		await page.getByRole("heading", { name: "Community view: guide" }).waitFor({ state: "hidden" });
 		await page.getByRole("button", { name: "Next" }).click();
 		check("it says what will happen", await page.getByText(/temporary address/i).first().isVisible());
 		await page.getByRole("button", { name: "Turn it on" }).click();
