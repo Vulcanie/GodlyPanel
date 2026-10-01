@@ -140,6 +140,7 @@ export const GAMES = {
 		params: { sessionName: "GodlyTest", serverPassword: "TestJoin1", port: 8892, queryPort: 8895 },
 		ports: { udp: [8892, 8894, 8895], tcp: [] },
 		extraFree: [8766, 27016, 9700],
+		portsWaitMin: 6,
 		onlineMin: 6,
 		logName: /./,
 	},

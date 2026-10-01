@@ -179,6 +179,9 @@ try {
 	}
 	await until(() => idle(), { timeoutMs: 120_000, label: "start to settle" }).catch(() => {});
 	await sleep(20_000); // let it write its files
+	// Some games bind their ports only once the world has loaded, minutes after the program is up.
+	const portsBy = Date.now() + (game.portsWaitMin ?? 0) * 60_000;
+	while (Date.now() < portsBy && (game.ports.udp.some((x) => !bound().udp.includes(x)) || game.ports.tcp.some((x) => !bound().tcp.includes(x)))) await sleep(10_000);
 	const b = bound();
 	for (const p of game.ports.udp) check(`UDP ${p} is bound`, b.udp.includes(p), `bound now: udp ${b.udp.join(",")} tcp ${b.tcp.join(",")}`);
 	for (const p of game.ports.tcp) check(`TCP ${p} is listening`, b.tcp.includes(p));
