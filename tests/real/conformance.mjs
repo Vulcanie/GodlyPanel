@@ -351,7 +351,9 @@ try {
 		const changed = await put(`/api/server/${enc(NAME)}/ports`, { ports: { [swapKey]: target } });
 		check("the RCON port can be changed on the stopped server", changed.status === 200, changed.json?.error);
 		const scriptAfter = entry.startScriptPath ? fs.readFileSync(entry.startScriptPath, "utf8") : "";
-		const inFiles = scriptAfter.includes(String(target)) || (entry.configPath && fs.existsSync(entry.configPath) && fs.readFileSync(entry.configPath, "utf8").includes(String(target)));
+		const gameIni = entry.configPath ? path.join(path.dirname(entry.configPath), "Game.ini") : null; // Conan keeps its RCON port here
+		const has = (f) => Boolean(f) && fs.existsSync(f) && fs.readFileSync(f, "utf8").includes(String(target));
+		const inFiles = scriptAfter.includes(String(target)) || has(entry.configPath) || has(gameIni);
 		check("and the new number is in the game's files, not only the panel's record", Boolean(inFiles), (changed.json?.warnings ?? []).join(" "));
 		await put(`/api/server/${enc(NAME)}/ports`, { ports: { [swapKey]: before.current[swapKey] } });
 	}
