@@ -1104,6 +1104,42 @@ export const GAME_TEMPLATES = [
 			autoUpdate: false,
 		}),
 	},
+	// ---------------------------------------------------------------------
+	{
+		id: "satisfactory",
+		displayName: "Satisfactory",
+		type: "satisfactory",
+		method: "process",
+		updateAppId: "1690800",
+		storeAppId: "526870",
+		sharedInstall: false,
+		installLayoutRoot: "",
+		fields: [],
+		// The game port carries UDP and TCP; the "reliable messaging" port is TCP only.
+		ports: [
+			{ key: "port", label: "Game Port (UDP and TCP)", default: 7777 },
+			{ key: "queryPort", label: "Reliable Messaging Port (TCP)", default: 8888 },
+		],
+		buildStartScriptFilename: () => "Start_Satisfactory.bat",
+		buildStartScript: (p) =>
+			["@echo off", "cd /d \"%~dp0\"", "", `start /MIN "${p.name}" FactoryServer.exe -Port=${p.port} -ReliablePort=${p.queryPort} -log -unattended`, ""].join("\r\n"),
+		buildServerEntry: (p) => ({
+			name: p.name,
+			type: "satisfactory",
+			method: "process",
+			host: "127.0.0.1",
+			port: p.port,
+			queryPort: p.queryPort,
+			sessionName: p.name,
+			startScriptPath: `${p.installDir}\\${p.startScriptFilename}`,
+			workingDir: `${p.installDir}`,
+			processName: "FactoryServer-Win64-Shipping-Cmd.exe",
+			steamCmdPath: p.steamCmdExe,
+			installDir: `${p.installDir}\\`,
+			updateAppId: "1690800",
+			autoUpdate: false,
+		}),
+	},
 ];
 
 export function getTemplate(id) {

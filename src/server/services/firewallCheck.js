@@ -124,6 +124,13 @@ export async function portsPlayersNeed(server) {
 		for (const offset of [0, 1, 2]) add((current.port ?? 0) + offset, "UDP", "Game port");
 		return needs;
 	}
+	if (server.type === "satisfactory") {
+		// UDP and TCP on the game port, and TCP on the reliable-messaging port (checked on a real install).
+		add(current.port, "UDP", "Game port");
+		add(current.port, "TCP", "Game port");
+		add(current.queryPort, "TCP", "Reliable messaging port");
+		return needs;
+	}
 	add(current.port, "UDP", "Game port");
 	// Palworld's "query" port is its REST API, which only the panel uses (TCP, on this PC).
 	if (server.type === "Palword") return needs;

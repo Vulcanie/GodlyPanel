@@ -53,6 +53,13 @@ export const BACKUP_TEMPLATES = {
 	subsistence: { paths: [] },
 	// Rust keeps everything for a server (world saves, settings, player data) in server<identity>.
 	rust: { paths: [{ base: "working", rel: "server", label: "World, settings and player data" }] },
+	// Saves and settings are inside the server folder (checked on a real install, not in the user profile).
+	satisfactory: {
+		paths: [
+			{ base: "working", rel: "FactoryGame/Saved/SaveGames", label: "Saved factories" },
+			{ base: "working", rel: "FactoryGame/Saved/Config/WindowsServer", label: "Server settings" },
+		],
+	},
 	// Everything for the server is in the zomboid folder beside the game: its world (Saves), its
 	// settings (Server) and its player accounts (db).
 	zomboid: {

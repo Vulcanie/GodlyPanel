@@ -123,6 +123,16 @@ export const GAMES = {
 		onlineMin: 20,
 		logName: /./,
 	},
+	satisfactory: {
+		templateId: "satisfactory",
+		programs: ["FactoryServer", "FactoryServer-Win64-Shipping-Cmd"],
+		name: "Real Satisfactory",
+		params: { port: 8892, queryPort: 8894 },
+		ports: { udp: [8892], tcp: [8892, 8894] },
+		extraFree: [],
+		onlineMin: 8,
+		logName: /./,
+	},
 	zomboid: {
 		templateId: "zomboid",
 		programs: [],
@@ -148,4 +158,4 @@ export const GAMES = {
 };
 
 /** Games in the order they are run: small and quick first, so harness problems show up cheaply. */
-export const ORDER = ["valheim", "enshrouded", "subsistence", "dragonwilds", "windrose", "palworld", "7days", "ark-ase", "ark-asa", "conan", "rust", "zomboid"];
+export const ORDER = ["valheim", "enshrouded", "subsistence", "dragonwilds", "windrose", "palworld", "7days", "ark-ase", "ark-asa", "conan", "rust", "zomboid", "satisfactory"];

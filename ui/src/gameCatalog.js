@@ -19,6 +19,7 @@ const CATALOG = {
 	palword: { title: "Palworld" },
 	rust: { title: "Rust" },
 	zomboid: { title: "Project Zomboid" },
+	satisfactory: { title: "Satisfactory" },
 	minecraft: {
 		title: "Minecraft",
 		gradient: "linear-gradient(135deg, #1f4d2c 0%, #2f7a3f 60%, #4caf50 100%)",

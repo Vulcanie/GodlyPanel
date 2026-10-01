@@ -16,6 +16,7 @@ export const LOG_TEMPLATES = {
 	dragonwilds: [{ kind: "dir", base: "working", rel: "RSDragonwilds/Saved/Logs", label: "Game log" }],
 	windrose: [{ kind: "dir", base: "working", rel: "R5/Saved/Logs", label: "Game log" }],
 	rust: [{ kind: "file", base: "working", rel: "rustserver.log", label: "Server log" }],
+	satisfactory: [{ kind: "dir", base: "working", rel: "FactoryGame/Saved/Logs", label: "Game log" }],
 	zomboid: [{ kind: "dir", base: "working", rel: "zomboid/Logs", label: "Game log" }],
 	"7days": [{ kind: "file", base: "working", rel: "output_log.txt", label: "Server log" }],
 	// Palworld's server writes no log file at all (its Shipping build logs to the console only:

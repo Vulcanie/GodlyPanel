@@ -26,7 +26,7 @@ const KEYS = Object.keys(PORT_LABELS);
 // (Palworld passes the same number twice).
 const SCRIPT_FLAGS = {
 	port: ["port", "publicport", "serverport"],
-	queryPort: ["queryport"],
+	queryPort: ["queryport", "reliableport"],
 	rconPort: ["rconport"],
 };
 
