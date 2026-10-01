@@ -270,7 +270,13 @@ export async function readLists(server) {
 }
 
 async function writeList(file, text, source) {
-	if (isWithinAllowedRoots(file)) return writeManagedFile(file, text, source);
+	let managed = false;
+	try {
+		managed = isWithinAllowedRoots(file);
+	} catch {
+		// No settings to say where the managed folders are (outside the running panel): plain write below.
+	}
+	if (managed) return writeManagedFile(file, text, source);
 	// A shared default folder (outside the server's own): only these fixed list files are written.
 	await fs.mkdir(path.dirname(file), { recursive: true });
 	await fs.copyFile(file, `${file}.bak`).catch(() => {});
