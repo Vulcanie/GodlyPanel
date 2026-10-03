@@ -97,6 +97,7 @@ describe("rotating an RCON password", () => {
 		assert.deepEqual(p.servers.sort(), ["ArkA", "ArkB"]);
 		assert.ok(p.files.some((f) => f.endsWith("GameUserSettings.ini")));
 		assert.ok(p.files.some((f) => f.endsWith("Start_A.bat")) && p.files.some((f) => f.endsWith("Start_B.bat")));
+		assert.equal(new Set(p.files.map((f) => f.toLowerCase())).size, p.files.length, "each file is listed once");
 		assert.equal(record("ArkA").rconPassword, OLD, "a preview changes nothing");
 		assert.deepEqual((await preview("McOne")).json.servers, ["McOne"], "a server with the same password and no shared file is not in the group");
 	});

@@ -113,7 +113,20 @@ async function plan(server) {
 			for (const f of await textFilesIn(path.dirname(dir))) if (HISTORY_FILE.test(path.basename(f))) history.add(f);
 		}
 	}
-	return { old, group, exact: [...exact], beside: [...beside], history: [...history] };
+	// The same file can arrive by more than one route, spelled a little differently (slashes, capitals). Count
+	// it once, under the strongest reason it is there: named by the record, then beside a config file, then history.
+	const taken = new Set();
+	const once = (files) =>
+		[...files].filter((f) => {
+			const key = norm(f);
+			if (taken.has(key)) return false;
+			taken.add(key);
+			return true;
+		});
+	const exactFiles = once(exact);
+	const besideFiles = once(beside);
+	const historyFiles = once(history);
+	return { old, group, exact: exactFiles, beside: besideFiles, history: historyFiles };
 }
 
 /** Files under the servers' folders that still hold `old`, for reporting what couldn't be changed. */
