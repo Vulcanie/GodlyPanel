@@ -13,6 +13,7 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { TESTBED, DATA, startPanel, get, post, put, del, upload, check, summary, sleep, until, freeGB, dirGB } from "./lib.mjs";
 import { GAMES } from "./games.mjs";
 import { portBusy } from "../../src/server/util/portProbe.js";
@@ -20,6 +21,14 @@ import { listZip } from "../../src/server/util/tarZip.js";
 
 const gameId = process.argv[process.argv.indexOf("--game") + 1];
 const keep = process.argv.includes("--keep");
+// --window windowless|hidden|minimized runs the whole lifecycle with the server set to that window mode,
+// and checks what the game (or its start script) put on the taskbar. Without it nothing about windows is changed.
+const windowArg = process.argv.indexOf("--window");
+const windowMode = windowArg === -1 ? null : process.argv[windowArg + 1];
+if (windowMode !== null && !["windowless", "hidden", "minimized"].includes(windowMode)) {
+	console.error(`--window must be windowless, hidden or minimized (got "${windowMode}").`);
+	process.exit(2);
+}
 const game = GAMES[gameId];
 if (!game) {
 	console.error(`Unknown game "${gameId}". Known: ${Object.keys(GAMES).join(", ")}`);
@@ -55,6 +64,20 @@ const killOurs = () => {
 	const ports = listenerOf();
 	if (ports) ps(`Get-NetTCPConnection -State Listen -LocalPort ${ports} -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }; exit 0`);
 };
+
+// Taskbar windows on the PC right now (tests/real/windows-probe.ps1).
+const PROBE = path.join(path.dirname(fileURLToPath(import.meta.url)), "windows-probe.ps1");
+const taskbarWindows = () => {
+	const out = execFileSync("powershell", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", PROBE], { encoding: "utf8" }).trim();
+	return out ? JSON.parse(out) : [];
+};
+// Programs that only exist to host a console window; a new one appearing while a game starts belongs to that game's launch.
+const CONSOLE_HOSTS = /^(conhost|openconsole|cmd|powershell|pwsh|windowsterminal|wt)(\.exe)?$/i;
+/** Windows opened since `baseline` by the game, its children or a console it started, as opposed to anything the user opened. */
+function newGameWindows(baseline) {
+	const seen = new Set(baseline.map((w) => w.handle));
+	return taskbarWindows().filter((w) => !seen.has(w.handle) && ((w.path ?? "").toLowerCase().startsWith(`${TB.toLowerCase()}\\`) || CONSOLE_HOSTS.test(w.name ?? "")));
+}
 
 async function portsFree(list) {
 	const busy = [];
@@ -161,6 +184,40 @@ try {
 	note("top of the install:\n      " + tree(entry.installDir).slice(0, 40).join("\n      "));
 	if (entry.startScriptPath) note("start script: " + fs.readFileSync(entry.startScriptPath, "utf8").replace(/\r?\n/g, " | ").slice(0, 400));
 
+	// ---- window mode -------------------------------------------------------------
+	let windowsBefore = [];
+	if (windowMode) {
+		step(`Window mode: ${windowMode}`);
+		let set = await put(`/api/server/${enc(NAME)}/window-mode`, { mode: windowMode });
+		// A start script the panel can't read (Minecraft's goes through a PowerShell installer chain): the way in is
+		// to start the server as it is, copy how it was started from the running program, then switch.
+		if (set.status === 400 && set.json?.code === "no_launch" && windowMode === "windowless") {
+			note("the start script can't be read, so the launch is copied from the running server (what an owner does)");
+			await post(`/api/control/${enc(NAME)}/start`);
+			await until(() => online(), { timeoutMs: ONLINE_MIN * 60_000, everyMs: 5000, label: `${NAME} to come online` });
+			await until(() => idle(), { timeoutMs: 120_000 }).catch(() => {});
+			await sleep(10_000);
+			const captured = (await post(`/api/server/${enc(NAME)}/launch/capture`)).json;
+			check("the launch can be copied from the running server", captured?.ok === true, captured?.reason ?? "");
+			if (captured?.ok) {
+				note(`copied: ${captured.launch.exe} ${String(captured.launch.args).slice(0, 140)}`);
+				const saved = await put(`/api/server/${enc(NAME)}/launch`, captured.launch);
+				check("and saved", saved.status === 200, saved.json?.error ?? "");
+			}
+			await post(`/api/control/${enc(NAME)}/stop`);
+			await until(async () => !(await online()), { timeoutMs: 6 * 60_000, everyMs: 3000, label: "it to stop" }).catch(() => {});
+			await until(() => idle(), { timeoutMs: 120_000 }).catch(() => {});
+			killOurs();
+			await sleep(5000);
+			set = await put(`/api/server/${enc(NAME)}/window-mode`, { mode: windowMode });
+		}
+		check(`${windowMode} is accepted for this game`, set.status === 200, set.json?.error ?? "");
+		if (set.status !== 200) throw new Error(`the ${windowMode} mode could not be set: ${set.json?.error}`);
+		note(`window mode: requested ${set.json.requested}, effective ${set.json.effective}${set.json.launch ? `; runs ${set.json.launch.exe} ${String(set.json.launch.args).slice(0, 160)}` : ""}${set.json.skipped?.length ? `; skipped from the script: ${JSON.stringify(set.json.skipped).slice(0, 200)}` : ""}`);
+		check("it really is in that mode (not quietly changed to another)", set.json.effective === windowMode, `effective: ${set.json.effective}`);
+		windowsBefore = taskbarWindows();
+	}
+
 	// ---- start -----------------------------------------------------------------
 	step("Start");
 	const again = await portsFree([...need, ...game.extraFree]);
@@ -198,6 +255,17 @@ try {
 	note(`status: players ${st.playerCount}/${st.maxplayers ?? "?"}, ping ${st.ping ?? "?"}, session "${st.sessionName ?? ""}"`);
 	note(`running: ${ours().join(", ")}`);
 
+	// What the start put on the taskbar. "Hidden" mode keeps watching for 90 seconds after the start, so
+	// wait that out before judging it.
+	if (windowMode) {
+		const settle = startedAt + (windowMode === "hidden" ? 110_000 : 30_000) - Date.now();
+		if (settle > 0) await sleep(settle);
+		const opened = newGameWindows(windowsBefore);
+		note(`taskbar windows from this game: ${opened.length ? opened.map((w) => `"${w.title}" (${w.name})`).join("; ") : "none"}`);
+		if (windowMode === "minimized") check("it has a taskbar window to watch (minimized mode)", opened.length > 0, "none appeared");
+		else check(`no taskbar window is left showing (${windowMode})`, opened.length === 0, opened.map((w) => `"${w.title}" (${w.name})`).join("; "));
+	}
+
 	// ---- logs ------------------------------------------------------------------
 	step("Logs");
 	const logs = (await get(`/api/server/${enc(NAME)}/logs`)).json;
@@ -205,7 +273,7 @@ try {
 	const main = logs.find((l) => game.logName.test(l.name));
 	if (game.noLogFile) note("this game writes no log file (expected)");
 	else check("a log file is found", Boolean(main));
-	if (main) {
+	if (main && !game.noLogFile) {
 		const tail = (await get(`/api/server/${enc(NAME)}/logs/${main.id}?lines=100`)).json;
 		check("it has content", tail.lines.length > 3, `${tail.lines.length} lines`);
 	}
@@ -324,6 +392,12 @@ try {
 	check("and restarts it", Boolean(restarted));
 	const back = await until(() => online(), { timeoutMs: ONLINE_MIN * 60_000, everyMs: 5000, label: "it to come back" }).catch(() => null);
 	check("it comes back online", Boolean(back));
+	if (windowMode && windowMode !== "minimized" && back) {
+		// The automatic restart opens the game afresh; it must be as quiet as the first start.
+		await sleep(windowMode === "hidden" ? 110_000 : 30_000);
+		const opened = newGameWindows(windowsBefore);
+		check(`no taskbar window after the automatic restart either (${windowMode})`, opened.length === 0, opened.map((w) => `"${w.title}" (${w.name})`).join("; "));
+	}
 	await put(`/api/server/${enc(NAME)}/options`, { autoRestart: false });
 	await until(() => idle(), { timeoutMs: 120_000 }).catch(() => {});
 
@@ -395,7 +469,7 @@ try {
 	}
 	await panel.stop();
 	fs.mkdirSync(path.join(TESTBED, "results"), { recursive: true });
-	fs.writeFileSync(path.join(TESTBED, "results", `${gameId}.txt`), findings.join("\n"));
+	fs.writeFileSync(path.join(TESTBED, "results", `${gameId}${windowMode ? `-${windowMode}` : ""}.txt`), findings.join("\n"));
 	console.log(`\nTest area now ${dirGB(TESTBED).toFixed(1)} GB; ${freeGB().toFixed(1)} GB free; ${Math.round((Date.now() - startedAt) / 60000)} min.`);
 }
 process.exit(summary() ? 0 : 1);
