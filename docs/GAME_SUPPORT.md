@@ -29,6 +29,35 @@ a failure on your own PC can be compared with what was already seen.
 | Subsistence | **Not run** | A real Subsistence server was running on the machine the tests ran on, so the test was skipped by design. Layout corrected the same way as Windrose |
 | Minecraft (modpacks) | Verified | Run with a CurseForge-format pack that holds only a Fabric loader (so no CurseForge key is needed); the install, start, RCON/console, backup, restore, crash recovery, mod upload and clone all pass. Java is shared with other programs, so the test finds its server by the test-only ports it listens on |
 
+## "No window" mode, checked per game
+
+The same real-install run, repeated with the server set to **No window**, then again checking what appears on
+the taskbar: after the first start and again after a crash and automatic restart. A game passes only if the
+whole run passes (start, ports, backup, stop, restore, crash recovery, clone) **and** no window is left showing.
+Run with `node tests/real/conformance.mjs --game <id> --window windowless` (also `hidden` and `minimized`; see
+`tests/real/run-window-batch.sh`). A control run in Minimized mode confirms the check really does see a window.
+
+| Game | No window | Notes |
+|---|---|---|
+| Enshrouded | Passed | |
+| 7 Days to Die | Passed | |
+| Palworld | Passed (also in Hidden) | Its launcher starts the real server as a console of its own, which on Windows 11 opens a Windows Terminal window. Both Hidden and No window used to leave that window showing; they now hide it. |
+| Rust | Passed | |
+| Project Zomboid | Passed | |
+| Satisfactory | Passed | |
+| V Rising | Passed | |
+| Core Keeper | Passed | |
+| Sons of the Forest | Passed | Its start script writes `steam_appid.txt` before launching; "No window" used to skip that, so a server never started from its script never bound its ports. It now carries that file along. |
+| Conan Exiles | Passed | |
+| ARK: Survival Evolved | Passed windows; one check not applicable | The game's own log file stays empty while it runs, so "the log has content" can't pass. |
+| ARK: Survival Ascended | Passed | |
+| Minecraft (modpacks) | Passed | The generated start script can't be read, so the launch is copied from the running server (the owner's route). That copy used to fail for servers the panel created; it now finds the Java program by the ports it listens on. |
+| Valheim, Subsistence, Dragonwilds, Windrose | **Not run** | Their real servers are running on the test PC (and Dragonwilds and Windrose need port 7777, which Valheim holds). |
+
+What the check can't see: a window that belongs to a program it doesn't recognise as the game's. It recognises
+windows owned by the game or its children, and console windows (Windows Terminal, conhost, cmd, PowerShell) that
+appear while the game starts.
+
 ## What the harness checks
 
 A run is: install, start (and wait for the panel to see it online), ports actually bound, log file found and

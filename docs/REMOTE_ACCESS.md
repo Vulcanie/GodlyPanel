@@ -42,8 +42,12 @@ from this PC to Cloudflare, so nothing is opened on your router).
 
 - **What people get:** a web address. They sign in as a **guest**, or choose *I have a community code*
   and make their own account (see the next section), and look at the dashboard: status, players, join
-  address. They cannot start, stop, change or delete anything, and administrators and moderators can't
-  sign in there at all.
+  address. They cannot start, stop, change or delete anything. Administrators and moderators can't
+  sign in there either, unless you switch on **Let administrators and moderators sign in here too**
+  (off by default): then they get the whole panel at that address, with the same powers as at home.
+  That puts the sign-in page in front of the internet, so use long, unique passwords. Staff sign-in has
+  its own, stricter lockout (five wrong guesses, ten minutes) that doesn't touch your sign-in at home,
+  every staff sign-in from outside is recorded in Activity, and first-run setup is never offered there.
 - **cloudflared** (Cloudflare's tunnel program) is downloaded once, only when you agree in the set-up
   dialog, from Cloudflare's official GitHub release, checked against its published checksum, and kept in
   the panel's own data folder. If you already have it, the panel uses that.
@@ -61,6 +65,31 @@ from this PC to Cloudflare, so nothing is opened on your router).
 - **Turn it off** with one button. It starts again by itself when the panel starts, if it was on.
 - The panel refuses any request that carries Cloudflare's headers, so a tunnel pointed at the panel itself
   (rather than at the community view) can't reach it.
+
+## Letting administrators and moderators in from outside
+
+By default staff (administrators and moderators) can only sign in on your own network or over a VPN. If some of
+them are never at your home, there are two ways, and the first is the safer.
+
+1. **A private network (Tailscale or ZeroTier), above.** They reach the panel as if at home. Nothing is open to
+   the internet.
+2. **Staff sign-in on the community address.** `Settings → Community view → Let administrators and moderators sign
+   in here too`. It is **off until you switch it on**, and switching it on asks you to confirm.
+
+What option 2 does, so you can decide:
+
+- Staff sign in at the public address and get the **whole panel**, with the same powers as at home: a moderator is still a
+  moderator, an administrator can do everything. Guests are unchanged.
+- It adds a login page to the internet for the accounts that can control your PC. **Protect it with long, unique
+  passwords.** The page locks sign-in after 5 wrong guesses for an account (or 12 from one address) for ten minutes, and
+  that count is kept apart from your sign-in at home, so someone guessing from outside can't lock you out indoors.
+- Every staff sign-in from outside is written to **Activity**, with the address it came from.
+- First-run setup is never offered there, and a tunnel pointed at the *panel* instead of the community view still can't reach it.
+- Switching it off signs staff out and closes their live views straight away.
+
+If staff sign-in is off and a moderator or administrator uses the right password on the public address, the page tells them
+so, plainly ("Your password is right, but admin accounts can't sign in on this public address…"). They should use the panel
+on your network or VPN, or you can allow staff sign-in. More in the [security checklist](SECURITY_GUIDE.md#staff-sign-in-from-outside).
 
 ## Letting your community in (Tailscale + a guest account)
 

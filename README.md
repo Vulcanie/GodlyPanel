@@ -163,6 +163,19 @@ editing work for anything with a start script, even without a creation template.
 
 ---
 
+## Help and documentation
+
+Plain-language guides live in [`docs/`](docs/README.md):
+
+- [Getting started](docs/GETTING_STARTED.md): install, first run, your first server
+- [Accounts and roles](docs/ACCOUNTS_AND_ROLES.md): administrator, moderator and viewer
+- [Ports and firewall](docs/PORTS_AND_FIREWALL.md): letting friends join, and what never to open
+- [Managing servers](docs/MANAGING_SERVERS.md): backups, schedules, crash recovery, windows, RCON passwords
+- [What the messages mean](docs/WHAT_THE_MESSAGES_MEAN.md) and [Troubleshooting](docs/TROUBLESHOOTING.md)
+- [Security checklist](docs/SECURITY_GUIDE.md), [FAQ](docs/FAQ.md) and [Glossary](docs/GLOSSARY.md)
+
+---
+
 ## Screenshots
 
 | | |
@@ -184,7 +197,7 @@ image or a colour in Settings → Appearance.
 else, and it uses the PowerShell that ships with Windows.
 
 1. Download the latest `GodlyPanel-…-win.zip` from the
-   [Releases](../../releases) page.
+   [Releases](https://github.com/Vulcanie/GodlyPanel/releases) page.
 2. **Before unzipping, unblock the zip** (this avoids the SmartScreen warning): right-click
    the downloaded zip → **Properties** → tick **Unblock** at the bottom → **OK**. Or in
    PowerShell: `Unblock-File .\GodlyPanel-*-win.zip`. Windows marks everything you
@@ -259,8 +272,8 @@ out of most start scripts, can copy them from a **running** server (which is how
 handles Minecraft's installer chain and scripts too tangled to read), or you can type
 them in. Two things to know: it **skips whatever else your script does** (for example
 a SteamCMD update check before launching; use the panel's own Update or auto-update
-instead), and it has so far only been verified against stand-in programs and a
-handful of real games, so treat it as new.
+instead), and it has been checked against real installs of thirteen games
+(see [docs/GAME_SUPPORT.md](docs/GAME_SUPPORT.md)); Valheim, Subsistence, Dragonwilds and Windrose are not yet checked.
 
 ---
 
@@ -271,8 +284,10 @@ It's built for a **trusted home or community network**. Full details in
 
 - Accepts connections **only from local-network addresses**, and only for the
   computer's IP address, `localhost`, or its own name (which blocks DNS-rebinding).
-- **Two roles, enforced on the server:** *admin* and *guest*. Guests can't see join
-  passwords, config files, or anything that changes state.
+- **Three roles, enforced on the server:** *administrator*, *moderator* (runs servers, can't
+  see passwords or change settings) and *viewer*. Viewers can't see join passwords, config files,
+  or anything that changes state. Administrators and moderators sign in only on your network,
+  unless you choose to allow staff sign-in at the public community address (off by default).
 - bcrypt password hashing, rate-limited sign-in, timing-safe username checks,
   HttpOnly + SameSite=Strict session cookies, and sessions that end immediately when a
   password or role changes.
@@ -290,12 +305,16 @@ start script), so only give admin to people you'd let use your computer.
 
 Honest list, roughly by how likely you are to hit them:
 
-- **Windows only, and tried on one PC.** Everything so far has run on the developer's
-  own Windows 11 machine. A clean-machine test is next. Reports from other setups are
-  very welcome.
+- **Windows only, and mostly tried on one PC.** Day-to-day use and the real-game tests
+  have run on the developer's own Windows 11 machine. A clean-machine test (unzip, first
+  run, a real Conan install, backup, restore, crash recovery) passes on a fresh Windows
+  machine in GitHub Actions, but that is still one kind of setup. Reports from other
+  PCs are very welcome.
 - **The app isn't code-signed,** so Windows SmartScreen warns on first run.
-- **"No window" mode** hasn't been verified for every game. Unreal-engine games may
-  still open their own log window in that mode; if so, use Hidden.
+- **"No window" mode** has been checked against real installs of thirteen games (none left a
+  window showing, including after a crash restart), but **not** Valheim, Subsistence, Dragonwilds or
+  Windrose. A game that opens a console of its own after launch may flash one briefly before the panel
+  hides it.
 - **Conan Exiles takes a minute or more to exit** after Stop, because it saves and
   shuts down. The panel shows it online until it has actually gone.
 - **Game artwork comes from Steam's CDN** the first time it's needed, so a brand-new
