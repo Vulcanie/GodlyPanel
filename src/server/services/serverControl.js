@@ -56,11 +56,15 @@ export async function startServer(server) {
 	const windowMode = effectiveWindowMode(server);
 	if (windowMode === "windowless") {
 		await launchWindowless(server);
+		// Some programs open a console of their own after they start (a launcher that starts the real server),
+		// which no launch setting can prevent. Keep any window it makes hidden for a while.
+		markHidingStarted(server);
+		hideWindows([server], 90);
 		return { success: true, message: `${server.name} is starting (no window)...` };
 	}
 
 	if (!server.startScriptPath) {
-		throw new Error("Start script path is not configured.");
+		throw new Error("The panel doesn't know how to start this server, because it has no start script. Add one in the server's settings.");
 	}
 
 	// Launched via PowerShell's Start-Process rather than the shell's own

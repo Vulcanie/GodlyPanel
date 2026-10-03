@@ -31,6 +31,23 @@ function listProcesses() {
 	});
 }
 
+/**
+ * The ids of programs listening (TCP) on these ports. A server's own ports are a sure way to tell which of
+ * several Java programs is its own, where the command line has nothing that says so.
+ */
+function ownersOfPorts(ports) {
+	const wanted = [...new Set(ports)].filter((p) => Number.isInteger(p) && p > 0 && p < 65536);
+	if (wanted.length === 0) return Promise.resolve([]);
+	return new Promise((resolve) => {
+		execFile(
+			"powershell.exe",
+			["-NoProfile", "-NonInteractive", "-Command", `(Get-NetTCPConnection -State Listen -LocalPort ${wanted.join(",")} -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique) -join ','`],
+			{ windowsHide: true, timeout: 15_000 },
+			(error, stdout) => resolve(error ? [] : String(stdout).trim().split(",").map(Number).filter((n) => Number.isInteger(n) && n > 0)),
+		);
+	});
+}
+
 /** Everything after the program name on a Windows command line. */
 export function argumentsOf(commandLine, exe) {
 	const line = String(commandLine ?? "").trim();
@@ -60,7 +77,13 @@ export async function captureLaunch(server) {
 	const adapted = processes
 		.filter((p) => p.Name)
 		.map((p) => ({ ...p, Name: p.Name.replace(/\.exe$/i, ""), ProcessId: p.ProcessId }));
-	const matches = findMatches(server, adapted).filter((p) => p.ExecutablePath && p.CommandLine);
+	let matches = findMatches(server, adapted).filter((p) => p.ExecutablePath && p.CommandLine);
+	// Not recognised by name or command line (a Minecraft server the panel made, for one): the program that
+	// is listening on this server's own ports is it.
+	if (matches.length === 0) {
+		const owners = new Set(await ownersOfPorts([server.rconPort, server.port, server.queryPort]));
+		matches = adapted.filter((p) => owners.has(Number(p.ProcessId)) && p.ExecutablePath && p.CommandLine);
+	}
 
 	if (matches.length === 0) {
 		return {

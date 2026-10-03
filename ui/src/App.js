@@ -18,6 +18,7 @@ import SetupChecklist from "./components/SetupChecklist";
 import DashboardPage from "./components/DashboardPage";
 import ServerWorkspace from "./components/ServerWorkspace";
 import ActivityPanel from "./components/ActivityPanel";
+import ChangePasswordDialog from "./components/ChangePasswordDialog";
 import UpdateBanner from "./components/UpdateBanner";
 import { OperationsProvider } from "./OperationsContext";
 import { emitLive } from "./liveEvents";
@@ -43,6 +44,7 @@ function Panel() {
 	const [apiError, setApiError] = React.useState(null);
 	const [loading, setLoading] = React.useState(true);
 	const [showActivity, setShowActivity] = React.useState(false);
+	const [showPassword, setShowPassword] = React.useState(false);
 	const [allowedServers, setAllowedServers] = React.useState(null);
 
 	const signedIn = status === "signedIn";
@@ -317,6 +319,12 @@ function Panel() {
 						</Button>
 					)}
 					<ThemeToggle />
+						<Button variant="text" size="small" component="a" href="https://github.com/Vulcanie/GodlyPanel/blob/main/docs/README.md" target="_blank" rel="noopener noreferrer">
+							Help
+						</Button>
+						<Button variant="text" size="small" onClick={() => setShowPassword(true)}>
+							Password
+						</Button>
 					<Button variant="outlined" size="small" onClick={logout}>
 						Sign out
 					</Button>
@@ -359,6 +367,7 @@ function Panel() {
 				<BatchFileEditor serverName={selectedServer} onBack={backToSelectedConfig} />
 			) : null}
 
+			<ChangePasswordDialog open={showPassword} onClose={() => setShowPassword(false)} />
 			<Dialog open={showActivity} onClose={() => setShowActivity(false)} fullWidth maxWidth="md">
 				<DialogTitle>Activity</DialogTitle>
 				<DialogContent>

@@ -593,7 +593,7 @@ export async function createServer(templateId, rawParams) {
 	}
 
 	if (template.requiresEula && rawParams.eulaAccepted !== true) {
-		throw new Error("EULA acknowledgment is required.");
+		throw new Error("A Minecraft server can only be created once you accept Mojang's EULA (https://aka.ms/MinecraftEULA). Tick the box to accept it.");
 	}
 
 	const slug = slugify(rawParams.slug || rawParams.name);

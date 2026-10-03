@@ -83,6 +83,13 @@ export function dropSessionsFor(userId) {
 	}
 }
 
+/** Ends every stream the test accepts — used when a whole class of viewer stops being allowed in. */
+export function dropClientsWhere(test) {
+	for (const client of [...clients]) {
+		if (test(client)) drop(client);
+	}
+}
+
 export function clientCount() {
 	return clients.size;
 }

@@ -46,7 +46,7 @@ export default function CommunityGuide({ open, onClose, port }) {
 						The community view gives people outside your home one web address. They sign in as a <b>guest</b> (or make their own account with a community code) and see the dashboard: which servers are up, who is on, and how to join. That is all.
 					</P>
 					<P>
-						It is <b>not</b> your panel on the internet. It is a separate, much smaller page. Administrators and moderators can't sign in on it, and nothing can be started, stopped, edited or deleted through it. Your panel stays on your own network, and nothing is opened on your router: GodlyPanel makes an outbound connection to Cloudflare (a "tunnel"), and Cloudflare passes visitors back down it.
+						By default it is <b>not</b> your panel on the internet. It is a separate, much smaller page. Administrators and moderators can't sign in on it, and nothing can be started, stopped, edited or deleted through it. (If some of your staff are never on your home network, you can switch on <i>Let administrators and moderators sign in here too</i>. Then they get the whole panel through this address, so use long, unique passwords.) Your panel stays on your own network, and nothing is opened on your router: GodlyPanel makes an outbound connection to Cloudflare (a "tunnel"), and Cloudflare passes visitors back down it.
 					</P>
 					<P>The tunnel is run by cloudflared, Cloudflare's own program. GodlyPanel starts it, keeps it running and stops it for you. Cloudflare can see the traffic that passes through its tunnel, as with any service of its kind.</P>
 				</Section>

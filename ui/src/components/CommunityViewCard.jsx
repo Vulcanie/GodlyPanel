@@ -14,6 +14,7 @@ import {
 	Paper,
 	Radio,
 	RadioGroup,
+	Switch,
 	Step,
 	StepLabel,
 	Stepper,
@@ -48,6 +49,7 @@ function CommunityViewCard() {
 	const [copied, setCopied] = React.useState(false);
 	const [showLog, setShowLog] = React.useState(false);
 	const [guide, setGuide] = React.useState(false);
+	const [confirmStaff, setConfirmStaff] = React.useState(false);
 
 	const load = React.useCallback(() => api.get("/api/community").then(setStatus).catch((e) => setError(e.message)), []);
 	React.useEffect(() => {
@@ -63,6 +65,15 @@ function CommunityViewCard() {
 		setError(null);
 		try {
 			setStatus(await api.post(`/api/community/${on ? "enable" : "disable"}`));
+		} catch (e) {
+			setError(e.message);
+		}
+	};
+	const setStaff = async (on) => {
+		setError(null);
+		setConfirmStaff(false);
+		try {
+			setStatus(await api.put("/api/community", { staffSignIn: on }));
 		} catch (e) {
 			setError(e.message);
 		}
@@ -84,8 +95,18 @@ function CommunityViewCard() {
 				<Chip size="small" color={CHIP[state].color} label={CHIP[state].label} data-testid="community-view-state" />
 			</Box>
 			<Typography variant="body2" sx={{ color: "text.secondary", mb: 1.5 }}>
-				Gives people outside your home one web address where they sign in as a <b>guest</b> and look at your servers. It goes through a Cloudflare Tunnel, so nothing is opened on your router, and it is a separate, much smaller page: administrators and moderators can't sign in on it, and nothing can be started, stopped or changed through it. The panel itself stays on your network.
+				Gives people outside your home one web address where they sign in as a <b>guest</b> and look at your servers. It goes through a Cloudflare Tunnel, so nothing is opened on your router. By default it is a separate, much smaller page: administrators and moderators can't sign in on it, and nothing can be started, stopped or changed through it.
 			</Typography>
+			<FormControlLabel
+				sx={{ display: "block", mb: 1.5 }}
+				control={<Switch checked={status.staffSignIn} onChange={(e) => (e.target.checked ? setConfirmStaff(true) : setStaff(false))} inputProps={{ "data-testid": "community-staff-switch" }} />}
+				label="Let administrators and moderators sign in here too (for staff who aren't on your network)"
+			/>
+			{status.staffSignIn && (
+				<Alert severity="warning" sx={{ mb: 1.5 }}>
+					Staff can use the whole panel through this address, with the same powers as at home. Anyone on the internet can reach its sign-in page, so give staff long, unique passwords. After five wrong guesses the page locks for ten minutes (your own sign-in at home is not affected), and every staff sign-in from outside is recorded in Activity.
+				</Alert>
+			)}
 
 			{error && (
 				<Alert severity="error" sx={{ mb: 1.5 }} onClose={() => setError(null)}>
@@ -160,6 +181,23 @@ function CommunityViewCard() {
 			)}
 
 			<SetupDialog open={wizard} onClose={() => setWizard(false)} status={status} reload={load} onDone={() => setWizard(false)} onGuide={() => setGuide(true)} />
+			<Dialog open={confirmStaff} onClose={() => setConfirmStaff(false)} maxWidth="xs" fullWidth>
+				<DialogTitle>Let staff sign in from the internet?</DialogTitle>
+				<DialogContent>
+					<Typography variant="body2" sx={{ mb: 1 }}>
+						Administrators and moderators will be able to sign in at the public address and use the whole panel from anywhere: start and stop servers, and, for administrators, change settings, manage users and run batch files.
+					</Typography>
+					<Typography variant="body2">
+						Anyone who learns an administrator's password could then control this PC from the internet. Use long, unique passwords, and switch this off again if you don't need it.
+					</Typography>
+				</DialogContent>
+				<DialogActions>
+					<Button onClick={() => setConfirmStaff(false)}>Cancel</Button>
+					<Button color="warning" variant="contained" onClick={() => setStaff(true)}>
+						Allow staff sign-in
+					</Button>
+				</DialogActions>
+			</Dialog>
 			<CommunityGuide open={guide} onClose={() => setGuide(false)} port={status.port} />
 		</Paper>
 	);

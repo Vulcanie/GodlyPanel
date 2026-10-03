@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { paths } from "../paths.js";
 import { writeJsonAtomic, readJson, createWriteQueue } from "../util/atomicJson.js";
 import { getSecrets, patchSecrets } from "../config/secretsStore.js";
+import { passwordProblem } from "../util/passwordRules.js";
 
 const STORE_PATH = path.join(paths.dataDir, "users.json");
 const SCHEMA_VERSION = 1;
@@ -70,7 +71,7 @@ function makeUser(username, role, passwordHash) {
 }
 
 export async function initUserStore() {
-	const stored = await readJson(STORE_PATH, null);
+	const stored = await readJson(STORE_PATH, null, { strict: true });
 
 	if (stored && Array.isArray(stored.users)) {
 		users = stored.users;
@@ -120,15 +121,14 @@ export async function verifyCredentials(username, password) {
 function assertValidUsername(username) {
 	if (!/^[A-Za-z0-9._-]{3,32}$/.test(username ?? "")) {
 		throw new Error(
-			"Username must be 3-32 characters, letters/numbers/dot/underscore/hyphen only.",
+			"A username is 3 to 32 characters long and can use letters, numbers, dots, dashes and underscores (no spaces).",
 		);
 	}
 }
 
-function assertValidPassword(password) {
-	if (typeof password !== "string" || password.length < 8) {
-		throw new Error("Password must be at least 8 characters.");
-	}
+function assertValidPassword(password, username) {
+	const problem = passwordProblem(password, username);
+	if (problem) throw new Error(problem);
 }
 
 function assertValidServers(servers) {
@@ -142,7 +142,7 @@ function assertValidServers(servers) {
 export async function createUser({ username, password, role, servers = null }) {
 	return enqueue(async () => {
 		assertValidUsername(username);
-		assertValidPassword(password);
+		assertValidPassword(password, username);
 		if (!ROLES.includes(role)) throw new Error(`Unknown role "${role}".`);
 		if (getByUsername(username)) {
 			throw new Error(`A user named "${username}" already exists.`);
@@ -185,9 +185,9 @@ async function mutate(id, patch, { bumpSession = false } = {}) {
 
 export async function setPassword(id, password) {
 	return enqueue(async () => {
-		assertValidPassword(password);
 		const user = getById(id);
 		if (!user) throw new Error("No such user.");
+		assertValidPassword(password, user.username);
 		return mutate(
 			id,
 			{ passwordHash: await bcrypt.hash(password, BCRYPT_ROUNDS) },

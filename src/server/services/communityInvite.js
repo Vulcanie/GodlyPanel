@@ -154,7 +154,7 @@ export function joinWithCode({ code, username, password }, address) {
 		if (closed === "off" || !sameCode(code)) {
 			bump(`ip:${address}`);
 			bump("all");
-			throw new JoinError("That code isn't right.", "bad_code", 403);
+			throw new JoinError("That code isn't right. Check it for typos (a code looks like ABCD-EFGH), or ask the owner for it again.", "bad_code", 403);
 		}
 		if (closed !== null) throw new JoinError("That code isn't accepting new people any more. Ask the owner for a new one.", "closed", 403);
 

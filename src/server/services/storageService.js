@@ -81,7 +81,7 @@ function measureRoot(root) {
 
 		worker.on("message", finish);
 		worker.on("error", (err) => finish({ error: err.message }));
-		worker.on("exit", () => finish({ error: "Scan ended unexpectedly." }));
+		worker.on("exit", () => finish({ error: "The disk-usage scan stopped before it finished. It will try again at the next scan." }));
 	});
 }
 

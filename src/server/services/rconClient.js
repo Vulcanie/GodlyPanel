@@ -104,7 +104,7 @@ class SequentialRcon {
 				try {
 					const reply = await this.#request(AUTH, this.password);
 					// A wrong password is answered with id -1 and no "Authenticated".
-					if (reply.id === -1) throw new Error("RCON authentication failed (wrong password)");
+					if (reply.id === -1) throw new Error("RCON authentication failed (wrong password): the game refused the password the panel has for it. If the password was changed in the game's own files, update it in the server's settings to match.");
 					resolve();
 				} catch (err) {
 					reject(err);
@@ -119,7 +119,7 @@ class SequentialRcon {
 
 	#request(type, body) {
 		return new Promise((resolve, reject) => {
-			if (this.closed) return reject(new Error("RCON connection is closed"));
+			if (this.closed) return reject(new Error("The RCON connection to the game was closed. The game may be restarting or shutting down; try again in a moment."));
 			this.waiting = { resolve, reject };
 			this.socket.write(encode(this.nextId++, type, body));
 		});

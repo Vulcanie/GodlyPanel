@@ -50,6 +50,9 @@ export const forgetFirewallCache = () => {
 
 // ---- matching (pure) -------------------------------------------------------------
 
+/** True when a rule's filter list (adapters, local addresses) limits nothing: blank, "Any" or "*". */
+const setOrAny = (list) => (Array.isArray(list) ? list : [list]).every((x) => UNSET.test(String(x ?? "").trim()));
+
 /** Does a rule's port list ("Any", "8892", "8892-8895", "1,2") include this port? */
 export function portCovered(specs, port) {
 	const list = Array.isArray(specs) ? specs : [specs];
@@ -90,6 +93,11 @@ export function evaluateFirewall(needs, programs, rules) {
 			if (rule.restricted) return false;
 			if (rule.service && !UNSET.test(String(rule.service))) return false;
 			if (rule.package && !UNSET.test(String(rule.package))) return false;
+			// A rule tied to one network adapter, one kind of connection, or one of this PC's own addresses
+			// (Tailscale's "allow everything" rule is for its own adapter's address) doesn't open the port on the
+			// PC's other connections, which is where friends arrive.
+			if (!setOrAny(rule.interfaces) || !/^(any|all)?$/i.test(String(rule.interfaceType ?? ""))) return false;
+			if (!setOrAny(rule.localAddress)) return false;
 			if (!protocolCovered(rule.protocol, need.protocol)) return false;
 			const program = String(rule.program ?? "Any");
 			const programMatches = /^any$/i.test(program) || programs.some((exe) => samePath(program, exe));

@@ -28,7 +28,7 @@ function withResolvedPaths(config) {
 }
 
 export async function initConfig() {
-	const raw = await readJson(CONFIG_PATH, null);
+	const raw = await readJson(CONFIG_PATH, null, { strict: true });
 
 	if (raw && raw.schemaVersion > CURRENT_SCHEMA_VERSION) {
 		// Written by a newer build. Don't try to interpret it — keep a copy so

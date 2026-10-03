@@ -60,7 +60,7 @@ function readLegacyEnvFile() {
 }
 
 export async function initSecrets() {
-	const stored = await readJson(SECRETS_PATH, null);
+	const stored = await readJson(SECRETS_PATH, null, { strict: true });
 
 	if (stored) {
 		current = { ...EMPTY, ...stored };

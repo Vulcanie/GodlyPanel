@@ -7,7 +7,8 @@ import { paths } from "../paths.js";
 import { getSecrets } from "../config/secretsStore.js";
 
 const UPLOADS_DIR = paths.uploadsDir;
-const CF_API_BASE = "https://api.curseforge.com/v1";
+// The environment variable exists so tests can point this at a stand-in; nothing else sets it.
+const CF_API_BASE = process.env.GHP_CURSEFORGE_API || "https://api.curseforge.com/v1";
 const DOWNLOAD_CONCURRENCY = 5;
 const RESOLVE_CHUNK_SIZE = 50;
 const STALE_UPLOAD_TTL_MS = 24 * 60 * 60 * 1000;
@@ -132,7 +133,7 @@ export async function cleanupStaleUploads() {
 // Untagged files (neither tag present) are kept rather than guessed at —
 // better to include something unnecessary than silently drop something
 // the server actually needs.
-function isClientOnly(gameVersions) {
+export function isClientOnly(gameVersions) {
 	const tags = gameVersions || [];
 	return tags.includes("Client") && !tags.includes("Server");
 }

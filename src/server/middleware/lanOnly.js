@@ -54,6 +54,35 @@ function isLinkLocalV6(ip) {
 	return /^fe[89ab][0-9a-f]:/i.test(ip);
 }
 
+const escapeHtml = (text) => String(text).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+
+/**
+ * Say no, in words. A person who opens the panel's address in a browser from somewhere it won't answer gets
+ * a page that says what happened and what to do; the app and scripts (which ask for JSON, or hit /api) still
+ * get the JSON they expect.
+ */
+function refuse(req, res, status, { error, code, title, steps, extra = {} }) {
+	res.setHeader("Cache-Control", "no-store");
+	const wantsPage = !req.path.startsWith("/api") && String(req.headers.accept ?? "").includes("text/html");
+	if (!wantsPage) return res.status(status).json({ error, code, ...extra });
+	const list = steps.map((step) => `<li>${step}</li>`).join("");
+	res.status(status).type("html").send(`<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GodlyPanel: ${escapeHtml(title)}</title>
+<style>
+body{font:16px/1.5 system-ui,Segoe UI,sans-serif;background:#10141a;color:#e6e9ee;margin:0;padding:24px}
+main{max-width:34rem;margin:8vh auto 0;background:#1a2029;border:1px solid #2a3340;border-radius:10px;padding:28px}
+h1{font-size:1.3rem;margin:0 0 .6rem}p{margin:.5rem 0}ul{padding-left:1.2rem}li{margin:.4rem 0}
+small{color:#98a2b0}
+@media (prefers-color-scheme:light){body{background:#f3f5f8;color:#1b2430}main{background:#fff;border-color:#d8dee6}small{color:#5b6573}}
+</style></head><body><main>
+<h1>${escapeHtml(title)}</h1>
+<p>${escapeHtml(error)}</p>
+<ul>${list}</ul>
+<p><small>Reference: ${escapeHtml(code)}${extra.clientIp ? ` · your address as seen by the panel: ${escapeHtml(extra.clientIp)}` : ""}</small></p>
+</main></body></html>`);
+}
+
 /**
  * @param {() => object} getConfig  read live so toggles apply without a restart
  */
@@ -77,14 +106,29 @@ export function createLanOnly(getConfig) {
 		// it forwards, so anything carrying its marks is refused here: people outside reach the separate
 		// community view, never the panel.
 		if (req.headers["cf-connecting-ip"] || req.headers["cf-ray"]) {
-			return res.status(403).json({ error: "This panel can't be opened through a tunnel. Use the community view's address instead.", code: "tunnel_refused" });
+			return refuse(req, res, 403, {
+				error: "This panel can't be opened through a tunnel. Use the community view's address instead.",
+				code: "tunnel_refused",
+				title: "Not available through a tunnel",
+				steps: [
+					"This is the panel itself, which stays on the owner's own network. The public address is a separate, smaller page.",
+					"If you are a guest, use the community view's address you were given.",
+					"If you run this PC and see this by mistake, point your tunnel at the community view's port (shown in Settings → Community view), not at the panel.",
+				],
+			});
 		}
 
 		if (isAllowed(ip, network)) {
 			if (isExpectedHost(req.headers.host, network)) return next();
-			return res.status(400).json({
+			return refuse(req, res, 400, {
 				error: "Open GodlyPanel using this computer's IP address or name.",
 				code: "bad_host",
+				title: "Open it by this PC's address",
+				steps: [
+					"GodlyPanel only answers when it is opened by the address of the PC it runs on (for example http://192.168.1.20:8765), not by some other web name pointed at it. This protects it from a trick that makes a website you visit talk to your panel.",
+					"Use the address shown in the GodlyPanel window on that PC, or this PC's name on your network.",
+					"If you set up your own name for it on purpose, the owner can add it in Settings, under 'Additional allowed names'.",
+				],
 			});
 		}
 
@@ -95,11 +139,16 @@ export function createLanOnly(getConfig) {
 			console.warn(`[lan-only] Refused a connection from ${ip} (not a local address).`);
 		}
 
-		res.setHeader("Cache-Control", "no-store");
-		return res.status(403).json({
-			error: "GodlyPanel only accepts connections from your local network.",
+		return refuse(req, res, 403, {
+			error: "GodlyPanel only accepts connections from the local network it runs on, and you are connecting from somewhere else.",
 			code: "lan_only",
-			clientIp: ip,
+			title: "This panel is private",
+			steps: [
+				"If you are a guest or a friend: ask the owner for the community address (a separate public page where you can see the servers), and sign in there.",
+				"If you are an administrator or moderator away from home: sign in at the community address if the owner has allowed staff sign-in there, or connect through the owner's VPN (such as Tailscale) and open the panel by its VPN address.",
+				"If you are the owner and you are at home: make sure this device is on the same network as the PC running GodlyPanel (not a guest Wi-Fi, and not mobile data).",
+			],
+			extra: { clientIp: ip },
 		});
 	};
 }

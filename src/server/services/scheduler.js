@@ -118,7 +118,7 @@ async function runOnServer(task, server) {
 				async () => {
 					await stopAndWait(server);
 					const { online } = await startAndWait(server);
-					if (!online) throw new Error("it didn't come back online after the restart");
+					if (!online) throw new Error("The restart ran, but the server did not come back online afterwards. Check its Logs tab.");
 				},
 				{ wait: true },
 			);

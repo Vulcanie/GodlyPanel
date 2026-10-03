@@ -25,10 +25,20 @@ export async function writeJsonAtomic(filePath, data) {
 	await fs.rename(tmp, filePath);
 }
 
-export async function readJson(filePath, fallback = null) {
+// A file that is missing, or isn't valid JSON, reads as the fallback. With `strict`, a file that exists but
+// can't be opened (permissions, or another program holding it) is an error instead: for the stores that hold
+// accounts, secrets, servers and settings, treating that as "nothing there" would make an existing install
+// look brand new, and the next save would overwrite what is really in the file. Not the default, because
+// some files are read while the panel is running and a momentary lock there is harmless.
+const UNREADABLE = new Set(["EACCES", "EPERM", "EBUSY"]);
+
+export async function readJson(filePath, fallback = null, { strict = false } = {}) {
 	try {
 		return JSON.parse(await fs.readFile(filePath, "utf8"));
-	} catch {
+	} catch (err) {
+		if (strict && UNREADABLE.has(err?.code)) {
+			throw new Error(`GodlyPanel can't read ${filePath} (${err.code}). Check that this Windows account may open it and that no other program has it locked; the file was not changed.`);
+		}
 		return fallback;
 	}
 }

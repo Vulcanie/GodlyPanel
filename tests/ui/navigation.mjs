@@ -35,6 +35,9 @@ try {
 	const page = await browser.newPage({ viewport: { width: 1100, height: 1000 } });
 	const errors = [];
 	page.on("pageerror", (e) => errors.push(e.message));
+	// The browser reports anything the page's security policy blocked as a console message.
+	const blocked = [];
+	page.on("console", (m) => /content security policy|refused to (load|apply|execute|connect)/i.test(m.text()) && blocked.push(m.text().slice(0, 200)));
 	const see = async (text) => page.getByText(text, { exact: false }).first().isVisible().catch(() => false);
 	const onDashboard = async () => (await page.getByRole("button", { name: "Expand All" }).count()) > 0;
 	const settle = () => page.waitForTimeout(700);
@@ -102,6 +105,12 @@ try {
 	check("signing back in starts on the dashboard, not the last page", await onDashboard());
 
 	check("no script errors during any of it", errors.length === 0, errors.join(" | "));
+	check("nothing the page needed was blocked by its security policy", blocked.length === 0, blocked.join(" | "));
+	// And it really enforces: a script injected into the page doesn't run.
+	const injectedRan = await page.evaluate(() => { const el = document.createElement("script"); el.textContent = "window.__injected = true"; document.head.appendChild(el); return window.__injected === true; });
+	check("a script injected into the page does not run", injectedRan === false);
+	const headers = (await fetch(B + "/")).headers;
+	check("the page is sent with a security policy that forbids framing and outside scripts", /frame-ancestors 'none'/.test(headers.get("content-security-policy") ?? "") && /script-src 'self'/.test(headers.get("content-security-policy") ?? "") && headers.get("x-frame-options") === "DENY" && headers.get("x-content-type-options") === "nosniff");
 } finally {
 	await browser.close();
 	api.kill();

@@ -20,6 +20,14 @@ import path from "node:path";
 
 const MAX_DEPTH = 3;
 
+/** `echo|set /p="1234" > steam_appid.txt` gives { path, text }: the text exactly, with no line break. */
+function parseEchoToFile(line, cwd, state, scriptDir) {
+	const m = /^echo\s*\|\s*set\s+\/p\s*=\s*"?([^">|&]*)"?\s*>\s*("?)([^">|&]+)\2\s*$/i.exec(line);
+	if (!m) return null;
+	const target = path.resolve(cwd, unquote(expand(m[3].trim(), state.env, scriptDir)));
+	return { path: target, text: expand(m[1], state.env, scriptDir) };
+}
+
 const IGNORED = new Set([
 	"echo", "echo.", "rem", "title", "color", "setlocal", "endlocal", "cls", "pause",
 	"exit", "timeout", "mode", "chcp", "prompt", "@echo",
@@ -129,7 +137,18 @@ function parseScript(scriptPath, startCwd, state, depth) {
 		const tokens = tokenize(line);
 		const command = tokens[0].raw.toLowerCase();
 
-		if (IGNORED.has(command) || command.startsWith("echo")) continue;
+		// `echo|set /p="text" > file` is how some templates leave a file the game needs, such as Steam's
+		// steam_appid.txt. Skipping it would leave a server that has never been started from its script without
+		// that file, so it is carried along and written before the program starts.
+		const written = parseEchoToFile(line, cwd, state, scriptDir);
+		if (written) {
+			state.files.push(written);
+			continue;
+		}
+		if (IGNORED.has(command) || command.startsWith("echo")) {
+			if (/>/.test(line)) state.skipped.add("a line that writes to a file");
+			continue;
+		}
 
 		if (command === "set") {
 			if (/^set\s+\/[ap]/i.test(line)) throw new Unsupported("computes or asks for a value with set /a or set /p");
@@ -301,14 +320,14 @@ export function deriveLaunch(scriptPath, { workingDir } = {}) {
 	if (!scriptPath || !fs.existsSync(scriptPath)) {
 		return { ok: false, reason: "The start script couldn't be found." };
 	}
-	const state = { env: new Map(), skipped: new Set(), launch: null };
+	const state = { env: new Map(), skipped: new Set(), launch: null, files: [] };
 	try {
 		parseScript(scriptPath, path.resolve(workingDir || path.dirname(scriptPath)), state, 0);
 		if (!state.launch) return { ok: false, reason: "The script doesn't appear to start a program." };
 		const env = Object.fromEntries(state.env);
 		return {
 			ok: true,
-			launch: { ...state.launch, ...(Object.keys(env).length ? { env } : {}) },
+			launch: { ...state.launch, ...(Object.keys(env).length ? { env } : {}), ...(state.files.length ? { files: state.files } : {}) },
 			skipped: [...state.skipped],
 		};
 	} catch (err) {

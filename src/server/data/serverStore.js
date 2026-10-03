@@ -28,7 +28,7 @@ function freeze(entry) {
 }
 
 export async function initServerStore() {
-	const stored = await readJson(STORE_PATH, null);
+	const stored = await readJson(STORE_PATH, null, { strict: true });
 
 	if (stored && Array.isArray(stored.servers)) {
 		servers = stored.servers.map(freeze);

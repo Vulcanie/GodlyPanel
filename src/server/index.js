@@ -2,17 +2,16 @@ import express from "express";
 import path from "node:path";
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
-import apiRouter from "./routes/api.js";
 import { broadcastSseEvent, clientCount } from "./services/sseHub.js";
 import authRoutes from "./routes/auth.js";
 import setupRoutes from "./routes/setup.js";
-import dashboardRoutes from "./routes/dashboard.js";
-import artRoutes from "./routes/art.js";
-import appearanceRoutes from "./routes/appearance.js";
-import userRoutes from "./routes/users.js";
-import settingsRoutes from "./routes/settings.js";
-import { attachUser, requireRole } from "./middleware/auth.js";
+import { attachUser } from "./middleware/auth.js";
+import { createPanelRouter } from "./routes/panelRoutes.js";
+import { providePanelApi } from "./services/communityListener.js";
 import { createLanOnly, localAddresses } from "./middleware/lanOnly.js";
+import { securityHeaders } from "./middleware/securityHeaders.js";
+import { sameOriginOnly } from "./middleware/sameOrigin.js";
+import { lockDownDataDir } from "./util/lockDownDataDir.js";
 import { initUserStore, needsSetup } from "./data/userStore.js";
 import { pollServers, initPollingState } from "./services/pollingService.js";
 import { checkAndHandleUpdates } from "./services/autoUpdateService.js";
@@ -22,19 +21,13 @@ import { discordEnabled } from "./services/discordService.js";
 import { sweepWindowsOnBoot } from "./services/serverWindows.js";
 import { cleanupStaleUploads } from "./services/modpackService.js";
 import { killTrackedSteamCmd, hasActiveJobs } from "./services/processRegistry.js";
-import batchFileRoutes from "./routes/batchFiles.js";
-import controlRoutes from "./routes/control.js";
-import updatesRoutes from "./routes/updates.js";
-import modsRoutes from "./routes/mods.js";
 import { initPanelUpdate, checkForPanelUpdate } from "./services/panelUpdate.js";
 import { initPresets } from "./services/presetService.js";
-import operationsRoutes from "./routes/operations.js";
 import { ensureDataDirs, paths } from "./paths.js";
 import { initConfig, getConfig, onConfigChange } from "./config/configStore.js";
 import { initSecrets } from "./config/secretsStore.js";
 import { initCommunityInvite } from "./services/communityInvite.js";
 import { initCommunityView, resumeCommunityView, stopCommunityView } from "./services/communityView.js";
-import communityRoutes from "./routes/community.js";
 import { tailscaleStatus } from "./services/tailscale.js";
 import { initServerStore } from "./data/serverStore.js";
 import { initAppearanceStore } from "./data/appearanceStore.js";
@@ -71,6 +64,14 @@ process.on("unhandledRejection", (reason) => {
 
 ensureDataDirs();
 
+// The data folder holds every secret the panel keeps. Limit it to the account running the panel (and SYSTEM
+// and Administrators) rather than leaving it open to every account on the PC. In the background, and a failure
+// only means the permissions stay as they were.
+lockDownDataDir(paths.dataDir).then((result) => {
+	if (result.error) console.warn(`[security] Couldn't restrict the data folder's permissions: ${result.error}`);
+	else if (!result.skipped) console.log("[security] The data folder is now limited to this Windows account, SYSTEM and Administrators.");
+});
+
 // Order matters: config and secrets underpin everything, and the server store
 // has to be loaded before anything iterates the server list.
 const config = await initConfig();
@@ -101,6 +102,8 @@ app.set("trust proxy", false);
 // First, ahead of logging and body parsing: a refused request shouldn't get
 // a 10MB body read off the wire before we turn it away.
 app.use(createLanOnly(getConfig));
+app.use(securityHeaders);
+app.use(sameOriginOnly);
 
 app.use((req, res, next) => {
 	console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
@@ -116,32 +119,13 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(attachUser);
 
-// Roles are enforced here, per route group, rather than by the old rule of
-// "any GET is public, writes need admin". That rule existed because the live
-// -update endpoint is an EventSource and can't send an Authorization header —
-// which is no longer a constraint now that sessions are cookies on the same
-// origin. Config reads in particular are admin-only: those files contain RCON
-// and server passwords.
 app.use("/api/setup", setupRoutes);
 app.use("/api/auth", authRoutes);
-const viewers = requireRole("admin", "moderator", "guest");
-const operators = requireRole("admin", "moderator");
-app.use("/api/art", viewers, artRoutes);
-// Guests can read how a card should look — the dashboard can't draw one
-// otherwise; the routes that change it enforce admin individually.
-app.use("/api/appearance", viewers, appearanceRoutes);
-app.use("/api", viewers, dashboardRoutes);
-// What a moderator may do as well as an admin. Each route names the permission it
-// needs, so anything they may not do is refused there.
-app.use("/api", operators, controlRoutes);
-app.use("/api", operators, operationsRoutes);
-app.use("/api/users", requireRole("admin"), userRoutes);
-app.use("/api/updates", requireRole("admin"), updatesRoutes);
-app.use("/api", requireRole("admin"), modsRoutes);
-app.use("/api/settings", requireRole("admin"), settingsRoutes);
-app.use("/api/community", requireRole("admin"), communityRoutes);
-app.use("/api/batch-files", requireRole("admin"), batchFileRoutes);
-app.use("/api", requireRole("admin"), apiRouter);
+// Roles are enforced per route group inside the panel router. The community address
+// shares it for staff accounts, when the owner allows that (see communityListener.js).
+const panelRouter = createPanelRouter();
+app.use(panelRouter);
+providePanelApi(panelRouter);
 
 app.use("/api/*", (req, res) => {
 	console.warn("Unhandled API route:", req.method, req.originalUrl);

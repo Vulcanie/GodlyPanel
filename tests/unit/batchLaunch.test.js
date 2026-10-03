@@ -171,4 +171,21 @@ describe("launch reader", { skip: !onWindows && "Windows batch files" }, () => {
 		assert.equal(r.ok, false);
 		assert.match(r.reason, /doesn't appear to start a program/);
 	});
+
+	it("carries along a file the script writes before it starts the program (Steam's steam_appid.txt)", () => {
+		write("game/Steam.bat", '@echo off\r\ncd /d "%~dp0"\r\necho|set /p="1326470" > steam_appid.txt\r\nset SteamAppId=1326470\r\nstart /MIN "x" Server.exe -batchmode\r\n');
+		const r = derive("game/Steam.bat", path.join(dir, "game"));
+		assert.equal(r.ok, true);
+		assert.deepEqual(r.launch.files, [{ path: path.join(dir, "game", "steam_appid.txt"), text: "1326470" }], "the text exactly, with no line break");
+		assert.deepEqual(r.launch.env, { SteamAppId: "1326470" });
+		assert.deepEqual(r.skipped, []);
+	});
+
+	it("says so when a script writes to a file in a way it can't carry along", () => {
+		write("game/Other.bat", '@echo off\r\necho hello > note.txt\r\nstart /MIN "x" Server.exe\r\n');
+		const r = derive("game/Other.bat", path.join(dir, "game"));
+		assert.equal(r.ok, true);
+		assert.ok(r.skipped.includes("a line that writes to a file"));
+		assert.equal(r.launch.files, undefined);
+	});
 });

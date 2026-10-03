@@ -28,7 +28,7 @@ function LoginPage() {
 			if (joining) await join(code, username, password);
 			else await login(username, password);
 		} catch (e) {
-			setError(e.message);
+			setError({ message: e.message, notice: e.code === "staff_not_allowed_here" });
 			setBusy(false);
 		}
 	};
@@ -50,8 +50,9 @@ function LoginPage() {
 				</Typography>
 
 				{error && (
-					<Alert severity="error" sx={{ mb: 2 }}>
-						{error}
+					// Not a mistake they made: the details are a notice, not an error.
+					<Alert severity={error.notice ? "info" : "error"} sx={{ mb: 2 }}>
+						{error.message}
 					</Alert>
 				)}
 
@@ -92,6 +93,13 @@ function LoginPage() {
 				<Button fullWidth variant="contained" onClick={submit} disabled={busy}>
 					{busy ? <CircularProgress size={22} /> : joining ? "Create my account" : "Sign in"}
 				</Button>
+
+				<Typography variant="caption" align="center" sx={{ display: "block", mt: 2, color: "text.secondary" }}>
+					Trouble signing in?{" "}
+					<Link href="https://github.com/Vulcanie/GodlyPanel/blob/main/docs/WHAT_THE_MESSAGES_MEAN.md#signing-in" target="_blank" rel="noopener noreferrer">
+						What the messages mean
+					</Link>
+				</Typography>
 
 				{canJoin && (
 					<Typography variant="body2" align="center" sx={{ mt: 2 }}>

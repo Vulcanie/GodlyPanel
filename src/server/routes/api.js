@@ -16,6 +16,7 @@ import { forgetMetrics } from "../services/metrics.js";
 import { listVersions, readVersion } from "../services/configHistory.js";
 import { MotdError, readMotd, writeMotd } from "../services/motdService.js";
 import { CloneError, startClone, getCloneJob } from "../services/cloneService.js";
+import { RotationError, describeRotation, rotateRconPassword } from "../services/rconRotation.js";
 import { PresetError, listPresets, savePreset, deletePreset, applyPreset } from "../services/presetService.js";
 import { extractModpackZip, cleanupUpload } from "../services/modpackService.js";
 import { SUPPORTED_MODLOADER_FAMILIES } from "../data/gameTemplates.js";
@@ -247,6 +248,28 @@ router.post("/server/:serverName/clone", async (req, res) => {
 	}
 });
 
+// Replace the RCON password everywhere it is kept. The preview says which servers and files would change,
+// including servers that share them; the change itself needs the server stopped.
+router.get("/server/:serverName/rcon-password/rotation", async (req, res) => {
+	try {
+		res.json(await describeRotation(req.server));
+	} catch (err) {
+		if (err instanceof RotationError) return res.status(err.status).json({ error: err.message, code: err.code });
+		res.status(500).json({ error: err.message });
+	}
+});
+
+router.post("/server/:serverName/rcon-password/rotate", async (req, res) => {
+	if (req.body?.confirm !== true) return res.status(400).json({ error: "Confirm the change to rotate the password.", code: "not_confirmed" });
+	try {
+		res.json(await rotateRconPassword(req.server));
+	} catch (err) {
+		if (err instanceof RotationError) return res.status(err.status).json({ error: err.message, code: err.code });
+		console.error(`Rotating the RCON password of ${req.server.name} failed:`, err);
+		res.status(500).json({ error: err.message });
+	}
+});
+
 router.get("/clone-jobs/:id", (req, res) => {
 	const job = getCloneJob(req.params.id);
 	job ? res.json(job) : res.status(404).json({ error: "No such job." });
@@ -301,7 +324,7 @@ router.post("/config/:serverName", async (req, res) => {
 		return res.status(400).json({ error: "A valid fileName must be provided." });
 	}
 	if (typeof content !== "string") {
-		return res.status(400).json({ error: "Invalid content format" });
+		return res.status(400).json({ error: "The file could not be saved because its text wasn't sent in the expected form. Reload the page and try again." });
 	}
 	try {
 		await writeManagedFile(target, content);

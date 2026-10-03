@@ -14,6 +14,8 @@ import { readJson, writeJsonAtomic, createWriteQueue } from "../util/atomicJson.
 // file the panel can show, and the panel knows the process id exactly.
 
 const PID_FILE = path.join(paths.dataDir, "state", "server-pids.json");
+// Windows' own command interpreter, by full path (a PATH that lists Git's Unix tools first must not change it).
+const COMSPEC = process.env.ComSpec || path.join(process.env.SystemRoot || "C:/Windows", "System32", "cmd.exe");
 const enqueue = createWriteQueue();
 const MAX_LOG_BYTES = 5 * 1024 * 1024;
 const EARLY_EXIT_WINDOW_MS = 3000;
@@ -118,31 +120,50 @@ export async function launchWindowless(server) {
 	const problem = launchProblem(launch);
 	if (problem) throw new Error(problem);
 
+	writeScriptFiles(launch);
+
 	fs.mkdirSync(paths.serverLogsDir, { recursive: true });
 	const logFile = serverLogPath(server);
 	rotateIfLarge(logFile);
-	const fd = fs.openSync(logFile, "a");
+	let fd = fs.openSync(logFile, "a");
 	fs.writeSync(fd, `\n--- started ${new Date().toISOString()} ---\n`);
+
+	// Through a hidden `cmd`, so a console program (most dedicated servers are) gets a console with no window.
+	// Started directly with its output going to a file, Windows is never asked for a hidden console, so a
+	// console program makes its own, and on Windows 11 that opens as a visible Windows Terminal window.
+	// With nothing inherited (stdio "ignore") Node does ask for no window, and `cmd` writes the log itself.
+	// Arguments cmd would read differently from the game (see cmdSafe) are launched directly, as before.
+	const viaCmd = cmdSafe(launch.args ?? "") && !/["%]/.test(launch.exe) && !/["%]/.test(logFile);
+	const cwd = launch.cwd || path.dirname(launch.exe);
+	const env = { ...process.env, ...(launch.env ?? {}) };
 
 	let child;
 	try {
-		child = spawn(launch.exe, launch.args ? [launch.args] : [], {
-			cwd: launch.cwd || path.dirname(launch.exe),
-			env: { ...process.env, ...(launch.env ?? {}) },
-			detached: true, // Its own process group: outlives the panel, as servers should.
-			windowsHide: true, // CREATE_NO_WINDOW.
-			// The tail of the start line, exactly as the script had it. Node would
-			// otherwise re-quote each piece, which changes what the game sees for
-			// things like -Key="a b"; and in this mode it also stops quoting the
-			// program path, so that's supplied quoted, or a game in a folder with a
-			// space in its name receives a corrupted command line.
-			windowsVerbatimArguments: true,
-			argv0: `"${launch.exe}"`,
-			stdio: ["ignore", fd, fd],
-		});
+		if (viaCmd) {
+			fs.closeSync(fd); // cmd opens the log itself, below.
+			fd = -1;
+			// With /s, cmd drops the first and last quote of the line and runs the rest exactly as written.
+			const line = `""${launch.exe}"${launch.args ? ` ${launch.args}` : ""} >> "${logFile}" 2>&1"`;
+			child = spawn(COMSPEC, ["/d", "/s", "/c", line], { cwd, env, windowsHide: true, windowsVerbatimArguments: true, stdio: "ignore" });
+		} else {
+			child = spawn(launch.exe, launch.args ? [launch.args] : [], {
+				cwd,
+				env,
+				detached: true, // Its own process group: outlives the panel, as servers should.
+				windowsHide: true,
+				// The tail of the start line, exactly as the script had it. Node would
+				// otherwise re-quote each piece, which changes what the game sees for
+				// things like -Key="a b"; and in this mode it also stops quoting the
+				// program path, so that's supplied quoted, or a game in a folder with a
+				// space in its name receives a corrupted command line.
+				windowsVerbatimArguments: true,
+				argv0: `"${launch.exe}"`,
+				stdio: ["ignore", fd, fd],
+			});
+		}
 	} finally {
 		// The child has its own copy of the handle.
-		fs.closeSync(fd);
+		if (fd >= 0) fs.closeSync(fd);
 	}
 
 	await new Promise((resolve, reject) => {
@@ -151,33 +172,84 @@ export async function launchWindowless(server) {
 	});
 	child.unref();
 
+	// The program itself is a child of the cmd that was started; find it once it's up.
+	const found = viaCmd ? findChildPid(child.pid, path.basename(launch.exe)) : Promise.resolve(child.pid);
+
+	// A program that dies straight away has almost always been given bad
+	// arguments or is missing a file — say so rather than reporting a launch.
+	let exitCode = null;
+	child.once("exit", (code) => {
+		exitCode = code ?? -1;
+	});
+	await new Promise((resolve) => setTimeout(resolve, EARLY_EXIT_WINDOW_MS));
+	if (exitCode !== null && exitCode !== 0) {
+		const output = tailOf(logFile);
+		throw new Error(
+			`${path.basename(launch.exe)} exited straight away (code ${exitCode}).${output ? ` Its output:\n${output}` : ""}`,
+		);
+	}
+
+	// The program's own id when it can be found; otherwise the cmd around it, which lasts exactly as long.
+	const gamePid = await found;
+	const pid = gamePid ?? child.pid;
+	const exe = gamePid ? launch.exe : COMSPEC;
+
 	const priority = PRIORITIES[launch.priority];
 	if (priority !== undefined) {
 		try {
-			os.setPriority(child.pid, priority);
+			os.setPriority(pid, priority);
 		} catch {
 			// Not fatal; the server just runs at normal priority.
 		}
 	}
 
-	// A program that dies straight away has almost always been given bad
-	// arguments or is missing a file — say so rather than reporting a launch.
-	const exited = await new Promise((resolve) => {
-		const timer = setTimeout(() => resolve(null), EARLY_EXIT_WINDOW_MS);
-		child.once("exit", (code) => {
-			clearTimeout(timer);
-			resolve(code);
+	await recordPid(server.name, pid, exe);
+	return { pid };
+}
+
+/**
+ * Would cmd pass this command-line text to the program exactly as written? Inside quotes, & | < > ^ mean nothing
+ * to cmd, so quoted arguments such as -ServerName="My Server" are fine; outside quotes they are cmd's own
+ * operators. A percent sign is expanded as a variable wherever it is, and an odd number of quotes leaves the
+ * rest of the line quoted.
+ */
+export function cmdSafe(text) {
+	const s = String(text);
+	if (s.includes("%") || /[\r\n]/.test(s)) return false;
+	if ((s.match(/"/g) ?? []).length % 2 !== 0) return false;
+	return !/[&|<>^]/.test(s.replace(/"[^"]*"/g, ""));
+}
+
+/**
+ * Files the start script writes before it launches the program (Steam's steam_appid.txt, say), which a direct
+ * launch would otherwise skip. Only inside the program's own folder, and only when they differ from what is there.
+ */
+function writeScriptFiles(launch) {
+	const folder = path.resolve(launch.cwd || path.dirname(launch.exe)).toLowerCase() + path.sep;
+	for (const file of Array.isArray(launch.files) ? launch.files : []) {
+		if (typeof file?.path !== "string" || typeof file?.text !== "string") continue;
+		const target = path.resolve(file.path);
+		if (!target.toLowerCase().startsWith(folder)) continue;
+		try {
+			if (fs.existsSync(target) && fs.readFileSync(target, "utf8") === file.text) continue;
+			fs.writeFileSync(target, file.text, "utf8");
+		} catch {
+			// The program may still start; if it can't, its own log will say why.
+		}
+	}
+}
+
+/** The process id of a child of `parentPid` with this program name, waiting a while for it to appear. Null if it doesn't. */
+function findChildPid(parentPid, imageName) {
+	return new Promise((resolve) => {
+		// Only an ordinary program name is put into the command.
+		if (!Number.isInteger(parentPid) || !/^[A-Za-z0-9 ._()+-]+$/.test(imageName)) return resolve(null);
+		const script = `$end=(Get-Date).AddSeconds(25); do { $c = Get-CimInstance Win32_Process -Filter "ParentProcessId=${parentPid}" | Where-Object { $_.Name -ieq '${imageName}' } | Select-Object -First 1; if ($c) { $c.ProcessId; exit 0 }; Start-Sleep -Milliseconds 300 } while ((Get-Date) -lt $end); exit 1`;
+		execFile("powershell", ["-NoProfile", "-NonInteractive", "-Command", script], { windowsHide: true, timeout: 40_000 }, (error, stdout) => {
+			const id = Number(String(stdout).trim().split(/\s+/)[0]);
+			resolve(!error && Number.isInteger(id) && id > 0 ? id : null);
 		});
 	});
-	if (exited !== null && exited !== 0) {
-		const output = tailOf(logFile);
-		throw new Error(
-			`${path.basename(launch.exe)} exited straight away (code ${exited}).${output ? ` Its output:\n${output}` : ""}`,
-		);
-	}
-
-	await recordPid(server.name, child.pid, launch.exe);
-	return { pid: child.pid };
 }
 
 // ---- reading the log -----------------------------------------------------

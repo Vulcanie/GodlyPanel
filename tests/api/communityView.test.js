@@ -158,19 +158,138 @@ describe("the community view", () => {
 		assert.equal((await raw(port, { method: "POST", url: "/api/status", cookie: guestCookie, body: {} })).status, 404);
 	});
 
-	it("will not let an administrator or a moderator in, and ignores their sessions", async () => {
+	it("will not let an administrator or a moderator in, says why, and ignores their sessions", async () => {
 		const admin = await raw(port, { method: "POST", url: "/api/auth/login", body: { username: "admin", password: "TestAdmin!2345" } });
-		const wrong = await raw(port, { method: "POST", url: "/api/auth/login", body: { username: "admin", password: "not-the-password" } });
-		assert.equal(admin.status, 401);
-		assert.deepEqual(admin.json, wrong.json, "a right password for an administrator reads exactly like a wrong one");
-		assert.ok(!admin.headers["set-cookie"]);
+		assert.equal(admin.status, 403);
+		assert.equal(admin.json.code, "staff_not_allowed_here");
+		assert.match(admin.json.error, /password is right/i);
+		assert.match(admin.json.error, /admin accounts can't sign in on this public address/i);
+		assert.ok(!admin.headers["set-cookie"], "no session is given");
 		const mod = await raw(port, { method: "POST", url: "/api/auth/login", body: { username: "mod-one", password: "ModPass!12345" } });
-		assert.equal(mod.status, 401);
+		assert.equal(mod.status, 403);
+		assert.match(mod.json.error, /moderator accounts/i);
+		// Everything that is NOT a right password still reads the same, whoever it is for: a stranger learns
+		// nothing about which names exist, or which are administrators.
+		const wrongAdmin = await raw(port, { method: "POST", url: "/api/auth/login", body: { username: "admin", password: "not-the-password" } });
+		const wrongNobody = await raw(port, { method: "POST", url: "/api/auth/login", body: { username: "no-such-person", password: "not-the-password" } });
+		assert.equal(wrongAdmin.status, 401);
+		assert.deepEqual(wrongAdmin.json, wrongNobody.json);
+		assert.equal(wrongAdmin.json.error, "Incorrect username or password.");
+		// A right password isn't a wrong guess: it doesn't count towards a lockout.
+		for (let i = 0; i < 15; i += 1) assert.equal((await raw(port, { method: "POST", url: "/api/auth/login", body: { username: "admin", password: "TestAdmin!2345" }, headers: { "cf-connecting-ip": "203.0.113.99" } })).status, 403);
 		// A real administrator session, made on the panel itself, is worth nothing here.
 		const adminCookie = await api.cookieFor({ username: "admin", password: "TestAdmin!2345" });
 		assert.equal((await raw(port, { url: "/api/auth/me", cookie: adminCookie })).status, 401);
 		assert.equal((await raw(port, { url: "/api/status", cookie: adminCookie })).status, 401);
 		assert.equal((await raw(port, { method: "POST", url: "/api/control/Alpha/stop", cookie: adminCookie, body: {} })).status, 401, "not even a route for them");
+	});
+
+	it("staff sign-in is off until the owner turns it on, and only an administrator can", async () => {
+		assert.equal((await api.get("/api/community")).json.staffSignIn, false);
+		const mod = await api.cookieFor({ username: "mod-one", password: "ModPass!12345" });
+		assert.equal((await api.put("/api/community", { staffSignIn: true }, { cookie: mod })).status, 403);
+		assert.equal((await api.put("/api/community", { staffSignIn: "yes" })).status, 400);
+		assert.equal((await api.get("/api/community")).json.staffSignIn, false);
+	});
+
+	describe("with staff sign-in on", () => {
+		const login = (u, ip) => raw(port, { method: "POST", url: "/api/auth/login", body: u, headers: { "cf-ray": "x", "cf-connecting-ip": ip } });
+		const ADMIN_LOGIN = { username: "admin", password: "TestAdmin!2345" };
+		const MOD_LOGIN = { username: "mod-one", password: "ModPass!12345" };
+		let adminCookie;
+		let modCookie;
+
+		before(async () => {
+			const r = await api.put("/api/community", { staffSignIn: true });
+			assert.equal(r.status, 200);
+			assert.equal(r.json.staffSignIn, true);
+		});
+		after(async () => {
+			await api.put("/api/community", { staffSignIn: false });
+		});
+
+		it("lets an administrator sign in, over https only, and use the whole panel", async () => {
+			const r = await login(ADMIN_LOGIN, "203.0.113.20");
+			assert.equal(r.status, 200, r.text);
+			assert.equal(r.json.user.role, "admin");
+			assert.match(r.headers["set-cookie"][0], /; Secure/i);
+			adminCookie = cookieOf(r);
+			assert.equal((await raw(port, { url: "/api/auth/me", cookie: adminCookie })).json.user.role, "admin");
+			for (const url of ["/api/status", "/api/settings", "/api/users", "/api/community", "/api/server/Alpha", "/api/activity", "/api/storage"]) {
+				assert.equal((await raw(port, { url, cookie: adminCookie })).status, 200, url);
+			}
+			// The panel's own writes work too, and a real request body isn't held to the guest page's 4 KB.
+			const made = await raw(port, { method: "POST", url: "/api/users", cookie: adminCookie, body: { username: "made-outside", password: "Outside!Pass-2345", role: "guest", padding: "x".repeat(6000) } });
+			assert.notEqual(made.status, 413);
+			assert.equal(made.status, 200, made.text);
+			assert.equal((await raw(port, { method: "DELETE", url: `/api/users/${made.json.id}`, cookie: adminCookie })).status, 200);
+		});
+
+		it("lets a moderator sign in, as a moderator: they still can't reach what only an administrator can", async () => {
+			const r = await login(MOD_LOGIN, "203.0.113.21");
+			assert.equal(r.status, 200, r.text);
+			assert.equal(r.json.user.role, "moderator");
+			modCookie = cookieOf(r);
+			assert.equal((await raw(port, { url: "/api/status", cookie: modCookie })).status, 200);
+			assert.equal((await raw(port, { url: "/api/activity", cookie: modCookie })).status, 200);
+			for (const url of ["/api/users", "/api/settings", "/api/community", "/api/storage", "/api/config/Alpha"]) {
+				assert.equal((await raw(port, { url, cookie: modCookie })).status, 403, url);
+			}
+			assert.equal((await raw(port, { method: "POST", url: "/api/users", cookie: modCookie, body: { username: "sneaky", password: "SneakyPass!123", role: "admin" } })).status, 403);
+		});
+
+		it("never offers first-run setup, even though it arrives from this PC", async () => {
+			// An administrator finds no such route; a moderator is turned away by the admin-only groups first.
+			for (const [cookie, expected] of [[adminCookie, [404]], [modCookie, [403, 404]], [undefined, [401]]]) {
+				const get = await raw(port, { url: "/api/setup/status", cookie });
+				const post = await raw(port, { method: "POST", url: "/api/setup/admin", cookie, body: { username: "intruder", password: "IntruderPass!123" } });
+				assert.ok(expected.includes(get.status), `GET setup: ${get.status}`);
+				assert.ok(expected.includes(post.status), `POST setup: ${post.status}`);
+			}
+			assert.equal((await api.get("/api/users")).json.some((u) => u.username === "intruder"), false);
+		});
+
+		it("records who signed in from outside, and that it was switched on", async () => {
+			const log = (await api.get("/api/activity?limit=100")).json;
+			assert.ok(log.some((e) => e.type === "community.staff-on"));
+			const entry = log.find((e) => e.type === "community.staff-signin" && e.message.startsWith("admin "));
+			assert.ok(entry, "the administrator's sign-in is on record");
+			assert.equal(entry.data.ip, "203.0.113.20");
+		});
+
+		it("guests are exactly as before", async () => {
+			assert.equal((await raw(port, { url: "/api/status", cookie: guestCookie })).status, 200);
+			assert.equal((await raw(port, { url: "/api/settings", cookie: guestCookie })).status, 404);
+			assert.equal((await raw(port, { method: "POST", url: "/api/control/Alpha/stop", cookie: guestCookie, body: {} })).status, 404);
+		});
+
+		it("counts wrong guesses more strictly, and apart from the panel's own sign-in", async () => {
+			const guess = () => login({ username: "admin", password: "wrong-wrong" }, "203.0.113.30");
+			let last;
+			for (let i = 0; i < 5; i += 1) last = await guess();
+			assert.equal(last.status, 401);
+			assert.equal((await guess()).status, 429, "locked after five wrong guesses");
+			// Even the right password is refused while locked, from anywhere, at the public address...
+			assert.equal((await login(ADMIN_LOGIN, "203.0.113.31")).status, 429);
+			// ...but the administrator at home is not locked out by someone guessing from the internet.
+			assert.ok(await api.cookieFor(ADMIN_LOGIN), "signing in at the panel still works");
+		});
+
+		it("is switched off again at once: sessions stop working and live streams are cut", async () => {
+			const stream = await raw(port, { url: "/api/events", cookie: modCookie, headers: { "cf-connecting-ip": "203.0.113.40" }, stream: true });
+			assert.equal(stream.status, 200);
+			const ended = new Promise((resolve) => stream.res.on("close", resolve));
+			stream.res.resume();
+			assert.equal((await api.put("/api/community", { staffSignIn: false })).json.staffSignIn, false);
+			await Promise.race([ended, sleep(3000).then(() => assert.fail("the stream was left open"))]);
+			assert.equal((await raw(port, { url: "/api/auth/me", cookie: adminCookie })).status, 401);
+			assert.equal((await raw(port, { url: "/api/status", cookie: modCookie })).status, 401);
+			const refused = await login(MOD_LOGIN, "203.0.113.41");
+			assert.equal(refused.status, 403);
+			assert.equal(refused.json.code, "staff_not_allowed_here");
+			assert.ok(!refused.headers["set-cookie"]);
+			assert.equal((await raw(port, { url: "/api/status", cookie: guestCookie })).status, 200, "guests carry on");
+		});
 	});
 
 	it("lets a friend join with the community code", async () => {

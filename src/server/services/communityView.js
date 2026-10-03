@@ -4,6 +4,7 @@ import { readJson, writeJsonAtomic, createWriteQueue } from "../util/atomicJson.
 import { getSecrets, patchSecrets } from "../config/secretsStore.js";
 import { portBusy } from "../util/portProbe.js";
 import { logActivity } from "./activityLog.js";
+import { dropClientsWhere } from "./sseHub.js";
 import { startListener, stopListener, listenerPort } from "./communityListener.js";
 import { findCloudflared, installCloudflared, isInstalling, detectExistingTunnel, otherConnectors, startTunnel, stopTunnel, tunnelState, validHostname } from "./cloudflared.js";
 
@@ -21,6 +22,9 @@ const EMPTY = {
 	hostname: "", // the public name, for token and existing tunnels
 	port: DEFAULT_PORT, // where the small listener listens on this PC
 	existing: null, // { tunnel, credentialsFile } for mode "existing"
+	// Whether administrators and moderators may sign in at the public address too. Off until the owner
+	// chooses: it puts the whole panel, not just the guest page, within reach of the internet.
+	staffSignIn: false,
 };
 let state = { ...EMPTY };
 let lastError = null;
@@ -62,6 +66,7 @@ export async function communityStatus() {
 		hostname: state.hostname,
 		port: state.port,
 		existing: state.existing,
+		staffSignIn: state.staffSignIn === true,
 		tokenSaved: Boolean(getSecrets().cloudflareTunnelToken),
 		cloudflared: { found: Boolean(found), source: found?.source ?? null, installing: isInstalling(), installLog: installLog.slice(-12), installError: installJob?.error ?? null },
 		detectedTunnel: existing,
@@ -116,6 +121,12 @@ export function saveCommunitySettings(patch) {
 				next.existing = { tunnel: found.tunnel, credentialsFile: found.credentialsFile };
 			}
 		}
+		let staffChanged = null;
+		if (patch.staffSignIn !== undefined) {
+			if (typeof patch.staffSignIn !== "boolean") throw new Error("Staff sign-in must be on or off.");
+			if (patch.staffSignIn !== (state.staffSignIn === true)) staffChanged = patch.staffSignIn;
+			next.staffSignIn = patch.staffSignIn;
+		}
 		if (typeof patch.token === "string" && patch.token.trim()) {
 			const token = patch.token.trim();
 			if (!/^[A-Za-z0-9+/=_-]{40,}$/.test(token)) throw new Error("That doesn't look like a tunnel token. Copy it whole from the Cloudflare dashboard.");
@@ -124,6 +135,12 @@ export function saveCommunitySettings(patch) {
 		if (patch.clearToken === true) await patchSecrets({ cloudflareTunnelToken: "" });
 		state = next;
 		await persist();
+		if (staffChanged !== null) {
+			// Anyone already signed in as staff at the public address is let go at once; their live streams
+			// would otherwise keep running until they next reloaded.
+			if (!staffChanged) dropClientsWhere((c) => c.group === "community" && c.role !== "guest");
+			logActivity({ type: staffChanged ? "community.staff-on" : "community.staff-off", level: staffChanged ? "warn" : "info", message: staffChanged ? "Administrators and moderators can now sign in at the public address." : "Administrators and moderators can no longer sign in at the public address." });
+		}
 		if (state.enabled) await applyState();
 		return communityStatus();
 	});
@@ -168,7 +185,7 @@ async function applyState() {
 		if (listenerPort() !== null && listenerPort() !== port) await stopListener();
 		if (listenerPort() === null) {
 			if (await portBusy(port)) throw new Error(`Port ${port} is in use by something else. Choose another port for the community view.`);
-			await startListener({ port, hostRule });
+			await startListener({ port, hostRule, staffSignIn: () => state.staffSignIn === true });
 		}
 		await startTunnel({ mode: state.mode, port, token: getSecrets().cloudflareTunnelToken, existing: state.existing, hostname: state.hostname });
 	} catch (err) {

@@ -25,6 +25,7 @@ Add-Type -TypeDefinition @"
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Text;
 
 public static class WinCtl {
 	delegate bool EnumProc(IntPtr h, IntPtr l);
@@ -34,6 +35,7 @@ public static class WinCtl {
 	[DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr h, out uint pid);
 	[DllImport("user32.dll")] static extern int GetWindowLong(IntPtr h, int i);
 	[DllImport("user32.dll")] static extern int GetWindowTextLength(IntPtr h);
+	[DllImport("user32.dll", CharSet = CharSet.Unicode)] static extern int GetWindowText(IntPtr h, StringBuilder s, int n);
 	[DllImport("user32.dll")] static extern IntPtr GetWindow(IntPtr h, uint cmd);
 	[DllImport("user32.dll")] static extern bool ShowWindow(IntPtr h, int cmd);
 
@@ -46,6 +48,33 @@ public static class WinCtl {
 			if (GetWindowTextLength(h) == 0) return true;
 			if ((GetWindowLong(h, -20) & 0x80) != 0) return true;   // tool window
 			if (GetWindow(h, 4) != IntPtr.Zero) return true;        // owned by another window
+			ShowWindow(h, 0);                                       // SW_HIDE
+			done.Add(h.ToInt64());
+			return true;
+		}, IntPtr.Zero);
+		return done;
+	}
+
+	// On Windows 11 a console program's window usually belongs to Windows Terminal (or a console host), not to
+	// the program, so the owner test above never finds it. Its title is the program's path, though. Hide the
+	// taskbar windows of these hosts whose title starts with one of the server's folders or contains one of its
+	// program names.
+	public static List<long> HideHosted(HashSet<uint> hosts, string[] startsWith, string[] contains) {
+		var done = new List<long>();
+		EnumWindows((h, l) => {
+			uint pid; GetWindowThreadProcessId(h, out pid);
+			if (!hosts.Contains(pid) || !IsWindowVisible(h)) return true;
+			int len = GetWindowTextLength(h);
+			if (len == 0) return true;
+			if ((GetWindowLong(h, -20) & 0x80) != 0) return true;   // tool window
+			if (GetWindow(h, 4) != IntPtr.Zero) return true;        // owned by another window
+			var text = new StringBuilder(len + 1);
+			GetWindowText(h, text, text.Capacity);
+			string title = text.ToString().ToLowerInvariant();
+			bool match = false;
+			foreach (var s in startsWith) if (s.Length > 0 && title.StartsWith(s)) match = true;
+			foreach (var c in contains) if (c.Length > 0 && title.Contains(c)) match = true;
+			if (!match) return true;
 			ShowWindow(h, 0);                                       // SW_HIDE
 			done.Add(h.ToInt64());
 			return true;
@@ -112,6 +141,7 @@ function Get-Pids($spec, $procs) {
 # Piped through ForEach-Object so a JSON array always becomes separate items.
 # Windows PowerShell 5.1 unrolls a one-element array but keeps a longer one
 # wrapped, which silently broke every run with more than one server.
+$hostNames = @('windowsterminal.exe', 'openconsole.exe', 'conhost.exe')
 $specs = @(Get-Content -Raw -LiteralPath $SpecFile -Encoding UTF8 | ConvertFrom-Json | ForEach-Object { $_ })
 $changed = 0
 
@@ -142,7 +172,14 @@ try {
 				}
 				$pids = Get-Pids $spec $procs
 				if ($pids.Count -eq 0) { continue }
-				$hidden = [WinCtl]::Hide($pids)
+				$hidden = New-Object 'System.Collections.Generic.List[long]'
+				$hidden.AddRange([WinCtl]::Hide($pids))
+				# Windows hosted by Windows Terminal or a console host, named after this server's programs.
+				$hosts = New-Object 'System.Collections.Generic.HashSet[uint32]'
+				foreach ($p in $procs) { if ($hostNames -contains ([string]$p.Name).ToLower()) { [void]$hosts.Add([uint32]$p.ProcessId) } }
+				$starts = [string[]]@($spec.roots | ForEach-Object { $_ })
+				$has = [string[]]@($spec.names | ForEach-Object { ([string]$_).ToLower() })
+				$hidden.AddRange([WinCtl]::HideHosted($hosts, $starts, $has))
 				if ($hidden.Count -gt 0) {
 					$changed += $hidden.Count
 					[void]$mutex.WaitOne(5000)

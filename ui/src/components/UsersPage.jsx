@@ -226,7 +226,9 @@ function UsersPage({ onBack, currentUser }) {
 					onClose={() => setEditing(null)}
 					onSave={(next) =>
 						run(async () => {
-							if (next.role !== editing.role) await api.put(`/api/users/${editing.id}/role`, { role: next.role });
+							// The password first: it signs them out, and the role change would do the same.
+								if (next.password) await api.put(`/api/users/${editing.id}/password`, { password: next.password });
+								if (next.role !== editing.role) await api.put(`/api/users/${editing.id}/role`, { role: next.role });
 							if (next.role === "moderator") await api.put(`/api/users/${editing.id}/servers`, { servers: next.servers });
 							setEditing(null);
 						})
@@ -257,9 +259,10 @@ function ServerPicker({ names, value, onChange }) {
 function AccessDialog({ user, serverNames, onClose, onSave }) {
 	const [role, setRole] = React.useState(user.role);
 	const [servers, setServers] = React.useState(Array.isArray(user.servers) ? user.servers : null);
+	const [password, setPassword] = React.useState("");
 	return (
 		<Dialog open onClose={onClose} fullWidth maxWidth="xs">
-			<DialogTitle>Access for {user.username}</DialogTitle>
+			<DialogTitle>{user.username}: access and password</DialogTitle>
 			<DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: "16px !important" }}>
 				<TextField select size="small" label="Access" value={role} onChange={(e) => setRole(e.target.value)}>
 					<MenuItem value="guest">Viewer</MenuItem>
@@ -268,12 +271,22 @@ function AccessDialog({ user, serverNames, onClose, onSave }) {
 				</TextField>
 				{role === "moderator" && <ServerPicker names={serverNames} value={servers} onChange={setServers} />}
 				<Typography variant="caption" sx={{ color: "text.secondary" }}>
-					They are signed out and have to sign in again for this to apply.
+					A change of access signs them out; they have to sign in again for it to apply.
 				</Typography>
+				<TextField
+					size="small"
+					type="password"
+					label="Set a new password (optional)"
+					autoComplete="new-password"
+					value={password}
+					onChange={(e) => setPassword(e.target.value)}
+					helperText={password && password.length < 8 ? "At least 8 characters." : "Leave empty to keep their current password. Setting one signs them out everywhere, so tell them the new one."}
+					error={password.length > 0 && password.length < 8}
+				/>
 			</DialogContent>
 			<DialogActions>
 				<Button onClick={onClose}>Cancel</Button>
-				<Button variant="contained" onClick={() => onSave({ role, servers })}>
+				<Button variant="contained" disabled={password.length > 0 && password.length < 8} onClick={() => onSave({ role, servers, password })}>
 					Save
 				</Button>
 			</DialogActions>

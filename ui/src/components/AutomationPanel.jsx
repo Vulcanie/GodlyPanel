@@ -119,7 +119,88 @@ function AutomationPanel({ serverName, serverStatus, onCloned }) {
 			<MotdCard base={base} running={serverStatus?.online} />
 			<PresetsCard serverName={serverName} base={base} running={serverStatus?.online} onNotice={setNotice} onError={setError} />
 			<CloneCard serverName={serverName} base={base} running={serverStatus?.online} onCloned={onCloned} onError={setError} />
+			<RconPasswordCard serverName={serverName} base={base} running={serverStatus?.online} />
 		</Box>
+	);
+}
+
+/** Replace the RCON password everywhere the game and the panel keep it. Shown only where there is one. */
+function RconPasswordCard({ serverName, base, running }) {
+	const [plan, setPlan] = React.useState(undefined); // undefined: loading, null: nothing to rotate
+	const [busy, setBusy] = React.useState(false);
+	const [confirming, setConfirming] = React.useState(false);
+	const [result, setResult] = React.useState(null);
+	const [error, setError] = React.useState(null);
+
+	React.useEffect(() => {
+		let live = true;
+		setResult(null);
+		setError(null);
+		api
+			.get(`${base}/rcon-password/rotation`)
+			.then((p) => live && setPlan(p))
+			.catch(() => live && setPlan(null));
+		return () => {
+			live = false;
+		};
+	}, [base]);
+
+	if (!plan) return null;
+	const others = plan.servers.filter((s) => s !== serverName);
+
+	const rotate = async () => {
+		setBusy(true);
+		setError(null);
+		try {
+			setResult(await api.post(`${base}/rcon-password/rotate`, { confirm: true }));
+			setConfirming(false);
+		} catch (e) {
+			setError(e.message);
+		} finally {
+			setBusy(false);
+		}
+	};
+
+	return (
+		<Paper sx={{ p: 2, mt: 2 }}>
+			<Typography variant="subtitle1">Change the RCON password</Typography>
+			<Typography variant="body2" sx={{ color: "text.secondary", mb: 1.5 }}>
+				Gives this server a new, long, random RCON password, in the panel and in the game's own files, so an old one that has been shared or leaked stops working. The server must be stopped; the new password takes effect the next time it starts.
+				{others.length > 0 && ` ${others.join(", ")} share${others.length === 1 ? "s" : ""} files with it, so ${others.length === 1 ? "that server changes" : "those servers change"} too.`}
+			</Typography>
+			{error && (
+				<Alert severity="error" sx={{ mb: 1.5 }}>
+					{error}
+				</Alert>
+			)}
+			{result ? (
+				<Alert severity={result.remaining.length ? "warning" : "success"}>
+					Changed for {result.servers.join(", ")}.
+					{result.remaining.length > 0 && ` The old password is still written in ${result.remaining.length} other file(s) the panel doesn't manage: ${result.remaining.join(", ")}.`}
+				</Alert>
+			) : confirming ? (
+				<Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap" }}>
+					<Typography variant="body2">
+						{plan.files.length} file(s) will be rewritten{others.length > 0 ? ` for ${plan.servers.length} servers` : ""}. Anything else that uses the old password (another tool, a script) will need the new one.
+					</Typography>
+					<Button color="warning" variant="contained" size="small" disabled={busy} onClick={rotate}>
+						{busy ? "Changing…" : "Change it"}
+					</Button>
+					<Button size="small" disabled={busy} onClick={() => setConfirming(false)}>
+						Cancel
+					</Button>
+				</Box>
+			) : (
+				<Button variant="outlined" disabled={running} onClick={() => setConfirming(true)}>
+					Change the RCON password
+				</Button>
+			)}
+			{running && !result && (
+				<Typography variant="caption" sx={{ display: "block", color: "warning.main", mt: 0.5 }}>
+					Stop the server first.
+				</Typography>
+			)}
+		</Paper>
 	);
 }
 

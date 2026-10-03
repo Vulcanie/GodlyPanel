@@ -148,7 +148,7 @@ export function validateBackupPaths(list) {
 	const clean = [];
 	for (const item of list) {
 		const raw = typeof item === "string" ? item : item?.path;
-		if (typeof raw !== "string" || raw.trim() === "") throw new BackupError("Every entry needs a path.", "bad_paths");
+		if (typeof raw !== "string" || raw.trim() === "") throw new BackupError("Each backup folder needs a path. Remove any blank entry.", "bad_paths");
 		const expanded = expandEnv(raw.trim());
 		if (!path.win32.isAbsolute(expanded)) throw new BackupError(`"${raw}" isn't a full path (like D:\\Servers\\World).`, "bad_paths");
 		const full = path.resolve(expanded);

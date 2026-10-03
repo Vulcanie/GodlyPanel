@@ -81,3 +81,43 @@ describe("the rule the panel would add", () => {
 		assert.match(plan.commands[0], /^New-NetFirewallRule -DisplayName '[A-Za-z0-9 ._()-]+' -Direction/);
 	});
 });
+
+describe("rules that only cover part of the PC's traffic", () => {
+	// "Allow everything" rules that Windows or another program makes for a single address or adapter.
+	// They don't open a game's ports to the connections friends arrive on.
+	const base = { name: "r", profile: "Private", protocol: "Any", localPort: ["Any"], program: "Any", service: "Any", remote: ["Any"], localAddress: ["Any"], interfaces: ["Any"], interfaceType: "All" };
+	const need = [{ port: 2456, protocol: "UDP", label: "Game port" }];
+	const open = (rule) => evaluateFirewall(need, ["C:\g\game.exe"], [{ ...base, ...rule }])[0].open;
+
+	it("counts an unrestricted rule", () => {
+		assert.equal(open({}), true);
+	});
+
+	it("does not count a rule tied to one of this PC's own addresses, as Tailscale makes", () => {
+		assert.equal(open({ name: "Tailscale-In", localAddress: ["fd7a:115c:a1e0::bb35:ba31/128"] }), false);
+		assert.equal(open({ name: "Tailscale-In", localAddress: ["100.93.186.48"] }), false);
+		assert.equal(open({ localAddress: ["*"] }), true, "'*' is Windows' way of saying any");
+		assert.equal(open({ localAddress: [""] }), true);
+	});
+
+	it("does not count a rule tied to a network adapter or a kind of connection", () => {
+		assert.equal(open({ interfaces: ["Tailscale"] }), false);
+		assert.equal(open({ interfaces: "Tailscale" }), false, "a single value that PowerShell didn't wrap in a list");
+		assert.equal(open({ interfaceType: "RemoteAccess" }), false);
+		assert.equal(open({ interfaceType: "Lan,Wireless" }), false);
+		assert.equal(open({ interfaces: ["Any"], interfaceType: "All" }), true);
+	});
+
+	it("tells the user which kind of rule it found when a limited one does cover the port", () => {
+		const [r] = evaluateFirewall(need, ["C:\g\game.exe"], [{ ...base, remote: ["LocalSubnet"] }]);
+		assert.equal(r.open, true);
+		assert.equal(r.lanOnly, true, "limited to the local network");
+	});
+
+	it("still finds a normal port rule next to a limited one", () => {
+		const rules = [{ ...base, name: "Tailscale-In", localAddress: ["100.1.2.3"] }, { ...base, name: "Mine", protocol: "UDP", localPort: ["2456-2458"] }];
+		const [r] = evaluateFirewall(need, ["C:\g\game.exe"], rules);
+		assert.equal(r.open, true);
+		assert.equal(r.rule, "Mine");
+	});
+});

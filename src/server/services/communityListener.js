@@ -6,9 +6,12 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { verifyCredentials, getById, needsSetup, setPassword } from "../data/userStore.js";
 import { attachUser, issueSession, clearSession, requireRole, clientAddress } from "../middleware/auth.js";
-import { loginGuard, recordLoginFailure, clearLoginFailures } from "../middleware/loginLimiter.js";
+import { createLoginLimiter } from "../middleware/loginLimiter.js";
+import { securityHeaders } from "../middleware/securityHeaders.js";
+import { sameOriginOnly } from "../middleware/sameOrigin.js";
 import { joiningIsOpen, joinWithCode, JoinError } from "./communityInvite.js";
 import { addSseClient } from "./sseHub.js";
+import { logActivity } from "./activityLog.js";
 import dashboardRoutes from "../routes/dashboard.js";
 import artRoutes from "../routes/art.js";
 import appearanceRoutes from "../routes/appearance.js";
@@ -21,9 +24,15 @@ import appearanceRoutes from "../routes/appearance.js";
 //   - sign-in for GUEST accounts and sign-up with the community code,
 //   - the read-only dashboard data a guest sees: status, players, join address.
 //
-// Administrators and moderators cannot sign in here (even with the right password), and a session
-// belonging to one is ignored here, so there is no way to start, stop, change or delete anything
-// through it. Everything else answers "not found".
+// Unless the owner has switched on staff sign-in (off to begin with), administrators and moderators
+// cannot sign in here (even with the right password), and a session belonging to one is ignored, so
+// there is no way to start, stop, change or delete anything through it. Everything else answers
+// "not found".
+//
+// With staff sign-in on, administrators and moderators can sign in and get the whole panel (the same
+// routes, the same role checks) — except first-run setup, which never exists here. Guests are
+// unchanged. Staff sign-in has its own, stricter, count of wrong guesses that is kept apart from the
+// panel's, so someone guessing from the internet can never lock an administrator out at home.
 
 const GUEST_READS = new Set(["/status", "/status/latest", "/operations", "/system-stats", "/server-stats"]);
 
@@ -41,18 +50,31 @@ export function hostAllowed(hostHeader, rule) {
 	return Boolean(rule.exact) && host === String(rule.exact).toLowerCase();
 }
 
+// The panel's routes, handed over once at start-up (index.js) rather than imported, because they
+// reach back to this module through the community settings. Without them staff can't sign in.
+let panelApi = null;
+export function providePanelApi(router) {
+	panelApi = router;
+}
+
 /**
- * @param {{ hostRule: () => { exact?: string, suffix?: string }, uiDir?: string }} options
+ * @param {{ hostRule: () => { exact?: string, suffix?: string }, uiDir?: string, staffSignIn?: () => boolean }} options
  */
-export function createCommunityApp({ hostRule, uiDir }) {
+export function createCommunityApp({ hostRule, uiDir, staffSignIn = () => false }) {
+	const staffOn = () => panelApi !== null && Boolean(staffSignIn());
+	const isStaff = (user) => Boolean(user) && user.role !== "guest";
+	// Apart from the panel's own counts, and tighter when staff are allowed in.
+	const guestLimiter = createLoginLimiter();
+	const staffLimiter = createLoginLimiter({ maxPerAccount: 5, maxPerAddress: 12 });
+	const limiter = () => (staffOn() ? staffLimiter : guestLimiter);
+
 	const app = express();
 	app.disable("x-powered-by");
 	app.set("trust proxy", false);
 
+	app.use(securityHeaders);
+	app.use(sameOriginOnly);
 	app.use((req, res, next) => {
-		res.setHeader("X-Content-Type-Options", "nosniff");
-		res.setHeader("X-Frame-Options", "DENY");
-		res.setHeader("Referrer-Policy", "no-referrer");
 		res.setHeader("Cache-Control", "no-store");
 		next();
 	});
@@ -83,30 +105,50 @@ export function createCommunityApp({ hostRule, uiDir }) {
 		next();
 	});
 
-	app.use(express.json({ limit: "4kb" }));
 	app.use(attachUser);
-	// Only guests exist here. A session belonging to anyone else is treated as no session at all.
+	// Only guests exist here, unless staff sign-in is on. A session belonging to anyone else is
+	// treated as no session at all.
 	app.use((req, res, next) => {
-		if (req.user && req.user.role !== "guest") req.user = null;
+		if (isStaff(req.user) && !staffOn()) req.user = null;
 		next();
+	});
+	// Strangers get a tiny body limit; a signed-in staff member needs the panel's own (saving a
+	// config, a modpack's details).
+	const smallBody = express.json({ limit: "4kb" });
+	const panelJson = express.json();
+	const panelForm = express.urlencoded({ extended: true });
+	app.use((req, res, next) => {
+		if (!isStaff(req.user)) return smallBody(req, res, next);
+		panelJson(req, res, (err) => (err ? next(err) : panelForm(req, res, next)));
 	});
 
 	// Marked Secure: the tunnel serves this over https, and the cookie shouldn't travel any other way.
 	const secure = (req) => req.headers["x-forwarded-proto"] === "https" || Boolean(req.headers["cf-ray"]);
 
 	// ---- accounts -------------------------------------------------------------------------------
-	app.post("/api/auth/login", loginGuard, async (req, res) => {
+	app.post("/api/auth/login", (req, res, next) => limiter().loginGuard(req, res, next), async (req, res) => {
 		const { username, password } = req.body || {};
 		if (!username || !password) return res.status(400).json({ error: "Username and password are required." });
 		const user = needsSetup() ? null : await verifyCredentials(username, password);
-		// Not a guest: refused the same way as a wrong password, so this page can't be used to find out
-		// which administrator names exist.
-		if (!user || user.role !== "guest") {
-			recordLoginFailure(req);
+		// A wrong password, an unknown name and a disabled account all read the same, so this page can't
+		// be used to find out which names exist.
+		if (!user) {
+			limiter().recordLoginFailure(req);
 			return res.status(401).json({ error: "Incorrect username or password." });
 		}
-		clearLoginFailures(req);
+		// The right password for an administrator or moderator, while staff sign-in is off. Saying "incorrect
+		// password" here would send them round in circles, so they are told what is going on. This is only
+		// reached with the correct password, so it tells a stranger nothing they didn't already have, and it
+		// isn't counted as a wrong guess.
+		if (isStaff(user) && !staffOn()) {
+			return res.status(403).json({
+				error: `Your password is right, but ${user.role} accounts can't sign in on this public address. Open GodlyPanel on your own network (or through your VPN) instead. The owner can also allow staff to sign in here: Settings → Community view → "Let administrators and moderators sign in here too".`,
+				code: "staff_not_allowed_here",
+			});
+		}
+		limiter().clearLoginFailures(req);
 		issueSession(res, user, { secure: secure(req) });
+		if (isStaff(user)) logActivity({ type: "community.staff-signin", message: `${user.username} (${user.role}) signed in from outside the home network.`, data: { ip: req.communityClientIp } });
 		res.json({ user: { username: user.username, role: user.role } });
 	});
 
@@ -137,7 +179,8 @@ export function createCommunityApp({ hostRule, uiDir }) {
 		}
 	});
 
-	app.post("/api/auth/change-password", requireRole("guest"), async (req, res) => {
+	// A staff session only exists here while staff sign-in is on, so the role list needs no further check.
+	app.post("/api/auth/change-password", requireRole("admin", "moderator", "guest"), async (req, res) => {
 		const { currentPassword, newPassword } = req.body || {};
 		const user = getById(req.user.id);
 		if (!user || !(await verifyCredentials(user.username, currentPassword))) return res.status(403).json({ error: "Your current password is incorrect." });
@@ -150,11 +193,21 @@ export function createCommunityApp({ hostRule, uiDir }) {
 		res.json({ success: true });
 	});
 
+	// Live updates for everyone allowed in here. A staff session is only present while staff sign-in is on.
+	app.get("/api/events", requireRole("admin", "moderator", "guest"), (req, res) => addSseClient(req, res, req.user, { ...SSE_GROUP, address: req.communityClientIp }));
+
+	// ---- staff: the panel itself -------------------------------------------------------------------------
+	// The panel's own routes with their own role checks, so a moderator is still a moderator here. Whatever
+	// they don't have is not found. First-run setup and sign-in are not among them.
+	const staffApi = express.Router();
+	staffApi.use((req, res, next) => panelApi(req, res, next));
+	staffApi.use((req, res) => res.status(404).json({ error: "Not found." }));
+	app.use((req, res, next) => (req.path.startsWith("/api/") && isStaff(req.user) ? staffApi(req, res, next) : next()));
+
 	// ---- what a guest may look at ---------------------------------------------------------------------
 	const guest = requireRole("guest");
 	const readOnly = (req, res, next) => (req.method === "GET" ? next() : res.status(404).json({ error: "Not found." }));
 
-	app.get("/api/events", guest, (req, res) => addSseClient(req, res, req.user, { ...SSE_GROUP, address: req.communityClientIp }));
 	app.use("/api/art", guest, readOnly, artRoutes);
 	app.get("/api/appearance", guest, (req, res, next) => {
 		req.url = "/";
@@ -190,10 +243,10 @@ let boundPort = null;
 
 export const listenerPort = () => boundPort;
 
-export function startListener({ port, hostRule, uiDir }) {
+export function startListener({ port, hostRule, uiDir, staffSignIn }) {
 	return new Promise((resolve, reject) => {
 		if (server) return resolve(boundPort);
-		const s = http.createServer(createCommunityApp({ hostRule, uiDir }));
+		const s = http.createServer(createCommunityApp({ hostRule, uiDir, staffSignIn }));
 		// Slow connections and endless headers are how small servers get tied up.
 		s.headersTimeout = 15_000;
 		s.requestTimeout = 0; // live-update streams are long
