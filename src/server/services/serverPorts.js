@@ -60,6 +60,12 @@ const CONFIG_BINDINGS = {
 		{ key: "telnetPort", pattern: /(<property\s+name="TelnetPort"\s+value=")(\d+)/i },
 	],
 	enshrouded: [{ key: "port", pattern: /("queryPort"\s*:\s*)(\d+)/ }],
+	// Subsistence ignores the command line for its ports; they are in UDKEngine.ini beside the recorded settings file
+	// (found on a real install: a fresh one has 7777 and 27015, a server set up by hand had them edited there).
+	subsistence: [
+		{ key: "port", file: "UDKEngine.ini", pattern: /^(Port\s*=\s*)(\d+)/m },
+		{ key: "queryPort", file: "UDKEngine.ini", pattern: /^(QueryPort\s*=\s*)(\d+)/m },
+	],
 	Palword: [
 		{ key: "rconPort", pattern: /(RCONPort\s*=\s*)(\d+)/ },
 		{ key: "port", pattern: /(PublicPort\s*=\s*)(\d+)/ },

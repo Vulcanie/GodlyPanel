@@ -38,6 +38,11 @@ for that game, with a column that says **Allowed** or **No rule** for each. Most
 - **7 Days to Die** uses TCP on the game port and UDP on three ports in a row.
 - **Satisfactory** uses UDP and TCP on the game port, plus a TCP port for reliable messaging.
 - **Palworld** uses UDP on the game port; its query port is the REST API and stays private.
+- **Subsistence** uses UDP on its game port and query port (the form suggests 8900 and 8902), plus two fixed
+  Steam ports, UDP **13000** and **41765**, which don't change with the settings. That also means one
+  Subsistence server per PC unless you change those.
+- **Windrose** needs **no port opened** in its default mode: players join with the server's *invite code*
+  through the game's own relay. (If you turn on direct connection in its settings, open the port you choose there.)
 
 The list is built from checking each game against a real install ([game support](GAME_SUPPORT.md)),
 so trust it over a guide for a different server tool.

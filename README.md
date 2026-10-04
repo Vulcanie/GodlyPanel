@@ -272,8 +272,8 @@ out of most start scripts, can copy them from a **running** server (which is how
 handles Minecraft's installer chain and scripts too tangled to read), or you can type
 them in. Two things to know: it **skips whatever else your script does** (for example
 a SteamCMD update check before launching; use the panel's own Update or auto-update
-instead), and it has been checked against real installs of thirteen games
-(see [docs/GAME_SUPPORT.md](docs/GAME_SUPPORT.md)); Valheim, Subsistence, Dragonwilds and Windrose are not yet checked.
+instead), and it has been checked against real installs of all seventeen games the panel can create
+(see [docs/GAME_SUPPORT.md](docs/GAME_SUPPORT.md)).
 
 ---
 
@@ -311,20 +311,19 @@ Honest list, roughly by how likely you are to hit them:
   machine in GitHub Actions, but that is still one kind of setup. Reports from other
   PCs are very welcome.
 - **The app isn't code-signed,** so Windows SmartScreen warns on first run.
-- **"No window" mode** has been checked against real installs of thirteen games (none left a
-  window showing, including after a crash restart), but **not** Valheim, Subsistence, Dragonwilds or
-  Windrose. A game that opens a console of its own after launch may flash one briefly before the panel
-  hides it.
+- **"No window" mode** has been checked against real installs of all seventeen games (none left a
+  window showing, including after a crash restart). A game that opens a console of its own after
+  launch may flash one briefly before the panel hides it.
 - **Conan Exiles takes a minute or more to exit** after Stop, because it saves and
   shuts down. The panel shows it online until it has actually gone.
 - **Game artwork comes from Steam's CDN** the first time it's needed, so a brand-new
   install with no internet shows plain colour banners.
 - **Minecraft mods need a CurseForge API key,** and modpacks must be the *server*
   export.
-- **Tested against real installs, with exceptions.** Fifteen games were installed, run,
-  backed up, restored, crashed on purpose and cloned for real (see
-  [docs/GAME_SUPPORT.md](docs/GAME_SUPPORT.md)). **Windrose and Subsistence were not run**
-  (their ports were in use by real servers), so their templates are unverified. The Discord bot,
+- **Tested against real installs, with exceptions.** Every game the panel can create was
+  installed, run, backed up, restored, crashed on purpose and cloned for real (see
+  [docs/GAME_SUPPORT.md](docs/GAME_SUPPORT.md)); Windrose and Subsistence were run last and
+  each turned up real bugs, now fixed. The Discord bot,
   cloud (S3) backups, Windows Firewall rule creation and code signing were tested against
   stand-ins or in part only, not against Discord, Backblaze/Wasabi/Amazon, or a signing service.
   Every server's backup folders can be changed.

@@ -25,8 +25,8 @@ a failure on your own PC can be compared with what was already seen.
 | V Rising | Verified | No RCON at all (a template that asked for one hung every Stop); the panel stops it by process; saves, settings and the admin/ban lists live in `save-data` |
 | Core Keeper | Verified | Saves go in a `data` folder inside the server's own folder (`-datapath`); the log is `CoreKeeperServerLog.txt` |
 | Sons of the Forest | Verified | Three UDP ports (game, +2 and query); saves and the owners list live in a `userdata` folder in the server's own folder |
-| Windrose | **Not run** | Its server binds 7777 and 7778, which a real server on the same PC was using, so it can't be tested there without risking that server. The install layout was corrected from what SteamCMD does for every other game here |
-| Subsistence | **Not run** | A real Subsistence server was running on the machine the tests ran on, so the test was skipped by design. Layout corrected the same way as Windrose |
+| Windrose | Verified | Players join with the server's **invite code** through the game's own relay (`UseDirectConnection` is false by default), so the server listens on no port of its own: it listened on one TCP port nobody configured and no UDP port. The template used to list a port to open that the game never used; the Network tab now says no port needs opening. The install layout was corrected from what SteamCMD does for every other game here |
+| Subsistence | Verified | Two real bugs, both fixed. The generated `UpdateandRun.bat` didn't change into its own folder, so it couldn't find `Start_Server.bat` beside it (the panel starts this launcher without a working folder of its own). And the game ignores the command line for its ports, keeping 7777 and 27015 whatever the form said; they live in `UDKGameConfigUDKEngine.ini`, which the game writes itself the first time it runs, so creation now makes that file with just the port and query port and the game builds the rest around them (its own `PreserveKey` lines keep both). It also keeps two fixed Steam ports, UDP 13000 and 41765. Its log is `UDKGameLogsLaunch.log` |
 | Minecraft (modpacks) | Verified | Run with a CurseForge-format pack that holds only a Fabric loader (so no CurseForge key is needed); the install, start, RCON/console, backup, restore, crash recovery, mod upload and clone all pass. Java is shared with other programs, so the test finds its server by the test-only ports it listens on |
 
 ## "No window" mode, checked per game
@@ -52,7 +52,10 @@ Run with `node tests/real/conformance.mjs --game <id> --window windowless` (also
 | ARK: Survival Evolved | Passed windows; one check not applicable | The game's own log file stays empty while it runs, so "the log has content" can't pass. |
 | ARK: Survival Ascended | Passed | |
 | Minecraft (modpacks) | Passed | The generated start script can't be read, so the launch is copied from the running server (the owner's route). That copy used to fail for servers the panel created; it now finds the Java program by the ports it listens on. |
-| Valheim, Subsistence, Dragonwilds, Windrose | **Not run** | Their real servers are running on the test PC (and Dragonwilds and Windrose need port 7777, which Valheim holds). |
+| Valheim | Passed | |
+| RuneScape: Dragonwilds | Passed | |
+| Windrose | Passed | Invite-code mode, so there are no ports to check. |
+| Subsistence | Passed | After the two fixes described above. |
 
 What the check can't see: a window that belongs to a program it doesn't recognise as the game's. It recognises
 windows owned by the game or its children, and console windows (Windows Terminal, conhost, cmd, PowerShell) that

@@ -440,6 +440,26 @@ async function runJob(jobId, template, params) {
 			await writeFileEnsuringDir(configFullPath, content);
 		}
 
+		const installWarnings = [];
+		if (template.patchInstalledConfig) {
+			// A setting the game keeps in a file its install ships with (Subsistence's ports), changed in place.
+			// Relative to the install folder itself, which is where those files are.
+			const target = path.win32.join(installDir, template.patchInstalledConfig.relPath);
+			const original = await fs.readFile(target, "utf8").catch(() => null);
+			if (original !== null) {
+				const patched = template.patchInstalledConfig.apply(original, p);
+				if (patched !== original) await fs.writeFile(target, patched, "utf8");
+				log(`Set the server's ports in: ${target}`);
+			} else if (template.patchInstalledConfig.create) {
+				// Not there yet: the game writes it the first time it runs, so make one with just these settings.
+				await writeFileEnsuringDir(target, template.patchInstalledConfig.create(p));
+				log(`Created ${target} with the server's ports (the game fills in the rest the first time it runs).`);
+			} else {
+				log(`(${target} wasn't found, so the game keeps its own default ports. Set them in that file by hand.)`);
+				installWarnings.push(`${path.win32.basename(target)} wasn't found after the install, so the game will use its own default ports instead of the ones you chose. Set them in that file.`);
+			}
+		}
+
 		if (template.rconConfigRelPath) {
 			// Enable RCON in the freshly-installed config, matching the fix
 			// already applied to the hand-set-up Conan server — a fresh
@@ -543,7 +563,7 @@ async function runJob(jobId, template, params) {
 		setStatus(jobId, {
 			status: "done",
 			serverName: entry.name,
-			warnings: postWriteWarnings,
+			warnings: [...installWarnings, ...postWriteWarnings],
 		});
 		log(`Done. "${entry.name}" is live — no API restart needed.`);
 		if (postWriteWarnings.length > 0) {

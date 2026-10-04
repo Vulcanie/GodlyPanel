@@ -629,12 +629,29 @@ export const GAME_TEMPLATES = [
 		// launcher sits in Binaries\Win64.
 		installLayoutRoot: "Binaries\\Win64",
 		fields: ["serverPassword"],
-		ports: [{ key: "port", label: "Port", default: 8900 }],
+		// Both are written into UDKGame\Config\UDKEngine.ini (see patchInstalledConfig): the game ignores the
+		// command line for them and otherwise keeps its own defaults, 7777 and 27015, whatever the form said.
+		ports: [
+			{ key: "port", label: "Port", default: 8900 },
+			{ key: "queryPort", label: "Query port", default: 8902 },
+		],
+		// The game builds UDKEngine.ini itself the first time it runs (it is not in the download), with Port=7777 near
+		// the top and QueryPort=27015 further down; a real server that was set up by hand had them changed in those two
+		// places. Its DefaultEngine.ini lists both as PreserveKey, which is how it keeps them when it rebuilds that file,
+		// so a file holding only these two settings is enough: the game fills in everything else around them.
+		patchInstalledConfig: {
+			relPath: "UDKGame\\Config\\UDKEngine.ini",
+			apply: (content, p) => content.replace(/^(Port\s*=\s*)\d+/m, `$1${p.port}`).replace(/^(QueryPort\s*=\s*)\d+/m, `$1${p.queryPort}`),
+			create: (p) => ["[URL]", `Port=${p.port}`, "", "[OnlineSubsystemSteamworks.OnlineSubsystemSteamworks]", `QueryPort=${p.queryPort}`, ""].join("\r\n"),
+		},
 		buildStartScriptFilename: () => "UpdateandRun.bat",
 		buildStartScript: (p) =>
 			[
 				"@echo off",
-				"",
+				// The panel starts this launcher without a folder of its own (Subsistence's launcher refuses a
+				// forced one), so it has to go to its own folder first or it can't find Start_Server.bat beside it.
+				// The original UpdateandRun.bat does the same with a fixed path.
+				'cd /d "%~dp0"',
 				`start /MIN "${p.name}" "Start_Server.bat"`,
 				"",
 			].join("\r\n"),
@@ -649,6 +666,7 @@ export const GAME_TEMPLATES = [
 			method: "process",
 			host: "127.0.0.1",
 			port: p.port,
+			queryPort: p.queryPort,
 			sessionName: p.name,
 			configPath: `${p.installDir}\\UDKGame\\Config\\UDKDedServerSettings.ini`,
 			startScriptPath: `${p.installDir}\\${p.installLayoutRoot}\\${p.startScriptFilename}`,

@@ -15,6 +15,13 @@ export const LOG_TEMPLATES = {
 	enshrouded: [{ kind: "dir", base: "working", rel: "logs", label: "Server log" }],
 	dragonwilds: [{ kind: "dir", base: "working", rel: "RSDragonwilds/Saved/Logs", label: "Game log" }],
 	windrose: [{ kind: "dir", base: "working", rel: "R5/Saved/Logs", label: "Game log" }],
+	// Launch.log, which the game fills in as it goes and keeps a timestamped copy of on every start (checked on a real
+	// install). A server the panel made has the game at its folder's root; one set up with SteamCMD by hand is
+	// usually under steamappscommon.
+	subsistence: [
+		{ kind: "dir", base: "install", rel: "UDKGame/Logs", label: "Game log" },
+		{ kind: "dir", base: "install", rel: "steamapps/common/Subsistence Dedicated Server/UDKGame/Logs", label: "Game log" },
+	],
 	rust: [{ kind: "file", base: "working", rel: "rustserver.log", label: "Server log" }],
 	satisfactory: [{ kind: "dir", base: "working", rel: "FactoryGame/Saved/Logs", label: "Game log" }],
 	corekeeper: [{ kind: "file", base: "working", rel: "CoreKeeperServerLog.txt", label: "Server log" }],

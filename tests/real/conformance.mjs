@@ -254,6 +254,15 @@ try {
 	const st = await status();
 	note(`status: players ${st.playerCount}/${st.maxplayers ?? "?"}, ping ${st.ping ?? "?"}, session "${st.sessionName ?? ""}"`);
 	note(`running: ${ours().join(", ")}`);
+	// What the game's programs really listen on, whatever the test expected: the one way to catch a template whose
+	// port setting isn't what the game uses.
+	{
+		const ids = ours().map((x) => x.split(":")[1]).filter(Boolean);
+		if (ids.length) {
+			const list = ps(`$ids = @(${ids.join(",")}); $u = Get-NetUDPEndpoint -ErrorAction SilentlyContinue | Where-Object { $ids -contains $_.OwningProcess } | ForEach-Object { 'udp ' + $_.LocalPort }; $t = Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue | Where-Object { $ids -contains $_.OwningProcess } | ForEach-Object { 'tcp ' + $_.LocalPort }; (@($u) + @($t) | Sort-Object -Unique) -join ', '; exit 0`);
+			note(`ports the game really listens on: ${list || "none found"}`);
+		}
+	}
 
 	// What the start put on the taskbar. "Hidden" mode keeps watching for 90 seconds after the start, so
 	// wait that out before judging it.

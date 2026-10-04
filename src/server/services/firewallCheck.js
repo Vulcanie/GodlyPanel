@@ -139,6 +139,10 @@ export async function portsPlayersNeed(server) {
 		add(current.queryPort, "TCP", "Reliable messaging port");
 		return needs;
 	}
+	// Windrose's servers run in invite-code mode by default (UseDirectConnection is false): players join with the
+	// server's invite code through the game's own relay and the server listens on no port of its own (checked on a
+	// real install, where it listened on one TCP port nobody configured and no UDP port at all).
+	if (server.type === "windrose") return needs;
 	add(current.port, "UDP", "Game port");
 	// Palworld's "query" port is its REST API, which only the panel uses (TCP, on this PC).
 	if (server.type === "Palword") return needs;
@@ -167,16 +171,24 @@ export function lanAddresses() {
 	return out;
 }
 
+/** Something to tell the owner about a game whose ports work differently from the usual. */
+function noteFor(server) {
+	if (server.type === "windrose") {
+		return "Windrose players join with the server's invite code, through the game's own relay, so no port needs opening. (If you turn on direct connection in the server's settings, that changes: open the port you choose there.)";
+	}
+	return null;
+}
+
 export async function firewallReport(server, { force = false } = {}) {
 	const needs = await portsPlayersNeed(server);
 	let rules;
 	try {
 		rules = await readFirewallRules({ force });
 	} catch (err) {
-		return { readable: false, error: err.message, needs, ports: needs.map((n) => ({ ...n, open: null })) };
+		return { readable: false, error: err.message, needs, note: noteFor(server), ports: needs.map((n) => ({ ...n, open: null })) };
 	}
 	const ports = evaluateFirewall(needs, await programsOf(server), rules);
-	return { readable: true, needs, ports, allOpen: ports.length > 0 && ports.every((p) => p.open), missing: ports.filter((p) => !p.open) };
+	return { readable: true, needs, ports, note: noteFor(server), allOpen: ports.length > 0 && ports.every((p) => p.open), missing: ports.filter((p) => !p.open) };
 }
 
 // ---- adding a rule ---------------------------------------------------------------------

@@ -113,6 +113,11 @@ function NetworkPanel({ serverName, canChangeFirewall }) {
 						Check again
 					</Button>
 				</Box>
+				{fw.note && (
+					<Alert severity="info" sx={{ mb: 1 }}>
+						{fw.note}
+					</Alert>
+				)}
 				{!fw.readable && (
 					<Alert severity="info" sx={{ mb: 1 }}>
 						{fw.error}

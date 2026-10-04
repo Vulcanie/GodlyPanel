@@ -1,7 +1,7 @@
 import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
 import path from "node:path";
-import { startInstance, freePort, GUEST } from "../helpers/instance.js";
+import { startInstance, freePort, GUEST, serverEntry } from "../helpers/instance.js";
 import { makeFakeGame, killFakeGames } from "../helpers/fakeGame.js";
 
 // "Can people reach it?" and the setup checklists. Windows Firewall is read for real
@@ -23,7 +23,11 @@ describe("reachability and checklists", () => {
 		panel = await startInstance({
 			servers: (dir) => {
 				folder = path.join(dir, "fake-net");
-				return [makeFakeGame(folder, { name: "Fake Net", rconPort, exe: "gp-fake-net.exe", ports: { port: gamePort, queryPort } })];
+				return [
+					makeFakeGame(folder, { name: "Fake Net", rconPort, exe: "gp-fake-net.exe", ports: { port: gamePort, queryPort } }),
+					// Windrose runs in invite-code mode by default and listens on no port of its own.
+					serverEntry(path.join(dir, "windrose"), { name: "Rose", type: "windrose", method: "process", port: 8890, processName: "WindroseServer-Win64-Shipping.exe" }),
+				];
 			},
 		});
 		api = panel.api;
@@ -34,6 +38,17 @@ describe("reachability and checklists", () => {
 	after(async () => {
 		killFakeGames(folder);
 		await panel.stop();
+	});
+
+	it("tells the owner of a Windrose server that no port needs opening, instead of listing one the game doesn't use", async () => {
+		const r = (await api.get("/api/server/Rose/network?refresh=1")).json;
+		assert.deepEqual(r.firewall.needs, []);
+		assert.deepEqual(r.firewall.ports, []);
+		assert.match(r.firewall.note, /invite code/);
+		assert.match(r.firewall.note, /no port needs opening/);
+		assert.equal(r.firewall.allOpen, false, "nothing to report as open");
+		// A game with ordinary ports has no such note.
+		assert.equal((await api.get("/api/server/Fake%20Net/network")).json.firewall.note, null);
 	});
 
 	it("lists this PC's addresses, with the address to give friends", async () => {

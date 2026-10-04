@@ -47,10 +47,10 @@ export const GAMES = {
 		// Programs this game runs. If any is already running on this PC (a real server), the game is skipped.
 		programs: ["Subsistence"],
 		name: "Real Subsistence",
-		params: { serverPassword: "TestJoin1", port: 8892 },
-		ports: { udp: [8892], tcp: [] },
-		// Its own Steam/query defaults; the user's real Subsistence is running on this PC.
-		extraFree: [7777, 27015],
+		params: { serverPassword: "TestJoin1", port: 8892, queryPort: 8894 },
+		ports: { udp: [8892, 8894], tcp: [] },
+		// Its Steam-sockets ports are fixed, whatever the port is set to, and a real Subsistence holds them while it runs.
+		extraFree: [13000, 41765],
 		onlineMin: 10,
 		logName: /./,
 	},
@@ -71,8 +71,9 @@ export const GAMES = {
 		programs: ["WindroseServer-Win64-Shipping","WindroseServer"],
 		name: "Real Windrose",
 		params: { sessionName: "GodlyTest", serverPassword: "TestJoin1", port: 8892 },
-		ports: { udp: [8892], tcp: [] },
-		extraFree: [7777, 7778],
+		// Invite-code mode (the default): players join through the game's relay and it listens on no port of its own.
+		ports: { udp: [], tcp: [] },
+		extraFree: [],
 		onlineMin: 10,
 		logName: /./,
 	},
