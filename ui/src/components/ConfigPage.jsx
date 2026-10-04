@@ -387,8 +387,10 @@ function ConfigPage({
 				)}
 				<ServerWindowPanel serverName={serverName} />
 				<PortsEditor serverName={serverName} />
-				<DeleteServer serverName={serverName} onDeleted={onBack} />
 				<StatusDisplay serverStatus={serverStatus} />
+				<Box sx={{ mt: 4 }}>
+					<DeleteServer serverName={serverName} onDeleted={onBack} />
+				</Box>
 			</Box>
 		);
 	}
@@ -511,7 +513,6 @@ function ConfigPage({
 
 			<ServerWindowPanel serverName={serverName} />
 				<PortsEditor serverName={serverName} />
-				<DeleteServer serverName={serverName} onDeleted={onBack} />
 
 			{loading ? (
 				<CircularProgress />
@@ -598,6 +599,10 @@ function ConfigPage({
 					)}
 				</>
 			)}
+
+			<Box sx={{ mt: 4 }}>
+				<DeleteServer serverName={serverName} onDeleted={onBack} />
+			</Box>
 
 			<Box
 				sx={{

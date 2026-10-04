@@ -141,6 +141,7 @@ try {
 	check("the dashboard's Activity button lists events for every server", await visible(page, "Fake Conan:"));
 	await page.keyboard.press("Escape");
 	await page.getByRole("button", { name: "Settings" }).click();
+	await page.getByRole("button", { name: "Open all sections" }).click();
 	await settle(page, 1200);
 	check("settings has the update check", await visible(page, "GodlyPanel version"));
 	check("and notification choices", await visible(page, "Events to tell you about"));

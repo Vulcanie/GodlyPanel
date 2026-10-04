@@ -42,6 +42,7 @@ try {
 	await owner.getByLabel(/password/i).fill("TestAdmin!2345");
 	await owner.getByRole("button", { name: /sign in/i }).click();
 	await owner.getByRole("button", { name: "Settings" }).click();
+	await owner.getByRole("button", { name: "Open all sections" }).click();
 	await owner.getByText("Community access").waitFor({ timeout: 30_000 });
 	check("Settings explains Tailscale isn't installed here (or shows it connected)", (await owner.getByText(/Tailscale/).count()) > 0);
 	await owner.getByLabel("Community code is off").click();
@@ -84,6 +85,7 @@ try {
 	// ---- the owner sees the account, and the count
 	await owner.reload({ waitUntil: "domcontentloaded" });
 	await owner.getByRole("button", { name: "Settings" }).click();
+	await owner.getByRole("button", { name: "Open all sections" }).click();
 	await owner.getByText(/1 person has joined/).waitFor({ timeout: 20_000 });
 	check("the owner sees one person has joined", true);
 	check("no page errors along the way", errors.length === 0, errors.slice(0, 2).join(" | "));

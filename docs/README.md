@@ -22,7 +22,9 @@ panel defends itself, and the [README](../README.md) covers building it from sou
 ## How to read the guides
 
 - **Bold names** are things you can click or read on screen, exactly as they are labelled.
-- A path like `Settings → Community view` means: open **Settings**, then find the **Community view** card.
+- A path like `Settings → Community view` means: open **Settings**, then find the **Community view** card. The cards
+  on the Settings page start folded: click one to open it, use **Open all sections**, or type a word in the search box
+  at the top (for example `backup` or `port`) and the matching cards open by themselves.
 - The **panel** is GodlyPanel itself. A **server** is one game server it looks after.
 - "On your network" means on the same home Wi-Fi or cable network as the PC that runs the panel.
 

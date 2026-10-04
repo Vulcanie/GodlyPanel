@@ -180,6 +180,7 @@ try {
 
 		await page.getByText("Back to Dashboard").click();
 		await page.getByRole("button", { name: "Settings" }).click();
+		await page.getByRole("button", { name: "Open all sections" }).click();
 		await settle(page, 1500);
 		check("settings has off-PC backup places", await visible(page, "Copies of backups off this PC"));
 		await page.getByRole("button", { name: "Add a place" }).click();
@@ -218,6 +219,7 @@ try {
 		}
 		await page.getByText("Back to Dashboard").click();
 		await page.getByRole("button", { name: "Settings" }).click();
+		await page.getByRole("button", { name: "Open all sections" }).click();
 		await settle(page, 1500);
 		o = await overflow(page, size.width);
 		check(`${label}: settings fits`, o.scroll <= o.view, `${o.scroll} vs ${o.view}`);

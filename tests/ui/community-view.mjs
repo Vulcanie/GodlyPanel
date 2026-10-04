@@ -39,6 +39,7 @@ const openSettings = async (page, B) => {
 	await page.getByLabel(/password/i).fill("TestAdmin!2345");
 	await page.getByRole("button", { name: /sign in/i }).click();
 	await page.getByRole("button", { name: "Settings" }).click();
+	await page.getByRole("button", { name: "Open all sections" }).click();
 	await page.getByText("Community view (a public address)").waitFor({ timeout: 30_000 });
 };
 
