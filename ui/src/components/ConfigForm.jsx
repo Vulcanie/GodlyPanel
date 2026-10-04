@@ -14,6 +14,7 @@ import { ExpandMore as ExpandMoreIcon, ContentCopy as ContentCopyIcon } from "@m
 import { copyToClipboard } from "../utils/clipboard";
 import { prettifyKey } from "../utils/prettifyKey";
 import { detectSettingType, toBoolString } from "../utils/settingType";
+import { cardAccordionSx } from "./cardStyles";
 
 function SettingControl({ settingKey, value, onChange }) {
 	const isPassword = /password/i.test(settingKey);
@@ -131,6 +132,7 @@ function ConfigForm({ groups, onChange }) {
 					expanded={expanded === group.name}
 					onChange={(_, isExp) => setExpanded(isExp ? group.name : false)}
 					disableGutters
+					sx={cardAccordionSx}
 				>
 					<AccordionSummary expandIcon={<ExpandMoreIcon />}>
 						<Typography variant="subtitle1">{group.name}</Typography>

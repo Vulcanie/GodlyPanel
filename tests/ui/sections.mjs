@@ -38,6 +38,7 @@ const check = (name, cond, detail = "") => { cond ? ok++ : bad++; console.log(`$
 const browser = await chromium.launch({ executablePath: EXE });
 try {
 	const page = await browser.newPage({ viewport: { width: 1200, height: 1000 } });
+	if (process.env.GP_DARK) await page.emulateMedia({ colorScheme: "dark" });
 	const errors = [];
 	page.on("pageerror", (e) => errors.push(e.message));
 	const settle = () => page.waitForTimeout(500);
@@ -138,6 +139,11 @@ try {
 	check("and it is the end of the page, with only room for the Save bar below", tops.del !== null && tops.pageBottom - tops.del < 420, `${Math.round(tops.pageBottom - tops.del)}px below it`);
 	check("the window and ports cards are still the folding ones they were", (await page.locator(".MuiAccordion-root").count()) >= 2);
 	await shot("server-settings-bottom");
+	if (SHOTS) {
+		await page.getByText("Window & console", { exact: false }).first().click();
+		await page.waitForTimeout(500);
+		await page.screenshot({ path: path.join(SHOTS, "server-cards-open.png"), clip: { x: 0, y: 380, width: 1200, height: 560 } });
+	}
 	check("no script errors during any of it", errors.length === 0, errors.join(" | "));
 } finally {
 	await browser.close();

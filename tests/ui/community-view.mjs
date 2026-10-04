@@ -26,6 +26,9 @@ async function boot(extraEnv) {
 	const root = fs.mkdtempSync(path.join(os.tmpdir(), "gp-cview-"));
 	const PORT = await freePort();
 	fs.writeFileSync(path.join(root, "config.json"), JSON.stringify({ http: { port: PORT, bindAll: false }, polling: { serversMs: 3000, enableServerStats: false } }));
+	// Its own community port, so a panel already running on this PC (which holds the default one) can't get in the way.
+	fs.mkdirSync(path.join(root, "state"), { recursive: true });
+	fs.writeFileSync(path.join(root, "state", "community-view.json"), JSON.stringify({ port: await freePort() }));
 	const api = spawn(process.execPath, [path.join(repo, "src/server/index.js")], { env: { ...process.env, ELECTRON_RUN_AS_NODE: "", GHP_DATA_DIR: root, GHP_PORT: String(PORT), GHP_RESOURCE_ROOT: path.join(repo, "resources"), ...extraEnv }, stdio: "ignore" });
 	const B = `http://127.0.0.1:${PORT}`;
 	for (let i = 0; i < 60; i++) { try { if ((await fetch(B + "/api/setup/status")).ok) break; } catch {} await new Promise((r) => setTimeout(r, 250)); }

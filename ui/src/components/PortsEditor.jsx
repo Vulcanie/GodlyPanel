@@ -13,6 +13,7 @@ import {
 import { ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
 import { api } from "../api/client";
 import PortsToOpen from "./PortsToOpen";
+import { cardAccordionSx } from "./cardStyles";
 
 const LABELS = {
 	port: "Game port",
@@ -111,7 +112,7 @@ function PortsEditor({ serverName }) {
 	const shown = { ...info.current, ...Object.fromEntries(Object.entries(values).map(([k, v]) => [k, Number(v)])) };
 
 	return (
-		<Accordion expanded={open} onChange={(_, v) => setOpen(v)} disableGutters>
+		<Accordion expanded={open} onChange={(_, v) => setOpen(v)} disableGutters sx={cardAccordionSx}>
 			<AccordionSummary expandIcon={<ExpandMoreIcon />}>
 				<Typography variant="subtitle1">Ports</Typography>
 			</AccordionSummary>

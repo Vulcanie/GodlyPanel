@@ -18,6 +18,7 @@ import {
 import { ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
 import { api } from "../api/client";
 import ServerConsole from "./ServerConsole";
+import { cardAccordionSx } from "./cardStyles";
 
 const MODES = {
 	minimized: {
@@ -201,11 +202,12 @@ function ServerWindowPanel({ serverName }) {
 	const showsConsole = win.effective === "windowless" || win.hasLog;
 
 	return (
-		<Box sx={{ mt: 3, mb: 2 }}>
+		<Box sx={{ mt: 3 }}>
 			<Accordion
 				expanded={open}
 				onChange={(_, v) => setOpen(v)}
 				disableGutters
+				sx={cardAccordionSx}
 			>
 				<AccordionSummary expandIcon={<ExpandMoreIcon />}>
 					<Box
