@@ -75,9 +75,9 @@ from outside your network anyway, but the point is not to expose it at all.
 
 Before anything else goes wrong:
 
-1. Open the server's **Backups** tab and take a backup. Then try a **restore** once, on a
-   quiet day. The panel takes a safety backup of what it replaces first, so it is safe to
-   try, and a backup you've never restored is a hope, not a backup.
+1. Open the server's **Backups** tab and take a backup. Then try **Restart and use this backup** once, on a
+   quiet day. The panel stops the server, takes a safety backup of what it replaces, puts the backup back and
+   starts the server again, so it is safe to try, and a backup you've never restored is a hope, not a backup.
 2. Add a schedule for regular backups (the server's **Schedules** tab).
 3. Switch on **Restart it if it crashes** (the server's **Automation** tab).
 4. Optionally keep copies off this PC too, under **Copies off this PC** on the **Backups**

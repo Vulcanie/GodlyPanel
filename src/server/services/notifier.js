@@ -21,6 +21,7 @@ export const EVENT_LABELS = {
 	"backup.completed": "A backup finished",
 	"backup.failed": "A backup failed",
 	"backup.restore_failed": "A restore failed",
+	"backup.restart_failed": "A server wouldn't start after a restore",
 	"schedule.failed": "A scheduled task failed",
 	"schedule.skipped": "A scheduled task was skipped",
 	"disk.low": "A drive is running low on space",

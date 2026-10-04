@@ -382,6 +382,25 @@ try {
 			check("restore is accepted", r.status === 202, JSON.stringify(r.json));
 			await until(() => idle(), { timeoutMs: 20 * 60_000, everyMs: 3000, label: "the restore" });
 			check("the marker is back", fs.readFileSync(marker, "utf8") === "v1\n");
+
+			// The one-click way, from a running game: stop it, put the backup back, start it again.
+			step("Restart and use a backup");
+			const useId = o3.backups[0].id;
+			await post(`/api/control/${enc(NAME)}/start`);
+			await until(() => online(), { timeoutMs: ONLINE_MIN * 60_000, everyMs: 5000, label: "the game to come online" });
+			await until(() => idle(), { timeoutMs: 120_000 }).catch(() => {});
+			fs.writeFileSync(marker, "v3\n");
+			const r2 = await post(`/api/server/${enc(NAME)}/backups/${useId}/restore`, { restart: true, confirm: true });
+			check("restart-and-restore is accepted while the game runs", r2.status === 202, JSON.stringify(r2.json));
+			await until(() => idle(), { timeoutMs: 30 * 60_000, everyMs: 3000, label: "the restart-and-restore" });
+			check("the marker is back", fs.readFileSync(marker, "utf8") === "v1\n");
+			const upAgain = await until(() => online(), { timeoutMs: ONLINE_MIN * 60_000, everyMs: 5000, label: "the game to come back" }).catch(() => null);
+			check("and the game is running again", Boolean(upAgain));
+			check("the newer world was kept in a safety backup", (await get(`/api/server/${enc(NAME)}/backups`)).json.backups.some((b) => b.kind === "pre-restore"));
+			// Leave it stopped, as the steps after this expect.
+			await post(`/api/control/${enc(NAME)}/stop`);
+			await until(async () => ours().length === 0, { timeoutMs: 6 * 60_000, everyMs: 2000, label: "the game to exit" }).catch(() => {});
+			await until(() => idle(), { timeoutMs: 120_000 }).catch(() => {});
 		}
 	} else {
 		note("restore not exercised: no folder inside the server's own directory to hold a marker");

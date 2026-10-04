@@ -1,6 +1,7 @@
 import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import { spawn } from "node:child_process";
 import path from "node:path";
 import { startInstance, freePort, sleep } from "../helpers/instance.js";
 import { makeFakeGame, killFakeGames, gameLog } from "../helpers/fakeGame.js";
@@ -144,6 +145,113 @@ describe("backups", () => {
 		const r = await api.post(`${base}/backups/${id}/restore`, { confirmName: "Fake Backup" });
 		assert.equal(r.status, 409);
 		assert.equal(r.json.code, "server_running");
+	});
+
+	describe("restart and use this backup", () => {
+		const activity = async () => (await api.get("/api/activity?limit=100")).json;
+		const copyOfV1 = async () => {
+			// The backup taken when the server was stopped for it: "world v1" plus what the game wrote as it exited.
+			const o = await list();
+			return o.backups.find((b) => b.kind === "manual" && b.mode === "stop");
+		};
+
+		it("asks for a plain yes, or the server's name when there is no safety backup", async () => {
+			const id = (await copyOfV1()).id;
+			const none = await api.post(`${base}/backups/${id}/restore`, { restart: true });
+			assert.equal(none.status, 400);
+			assert.equal(none.json.code, "confirm_mismatch");
+			const noSafety = await api.post(`${base}/backups/${id}/restore`, { restart: true, safety: false, confirm: true });
+			assert.equal(noSafety.status, 400, "without a safety backup, a yes isn't enough");
+			assert.equal(await online(), true, "nothing happened to the server");
+		});
+
+		it("stops a running server, puts the backup back, and starts it again", async () => {
+			assert.equal(await until(online), true);
+			fs.writeFileSync(world, "world v3 - newer than the backup\n");
+			const id = (await copyOfV1()).id;
+			const before = (await list()).backups.length;
+			const shutdowns = () => (gameLog(folder).match(/rcon: Shutdown/g) ?? []).length;
+			const stopsBefore = shutdowns();
+
+			const r = await api.post(`${base}/backups/${id}/restore`, { restart: true, confirm: true });
+			assert.equal(r.status, 202, JSON.stringify(r.json));
+			const ops = new Set();
+			assert.equal(
+				await until(async () => {
+					const op = (await api.get("/api/operations")).json["Fake Backup"]?.op;
+					if (op) ops.add(op);
+					return !op;
+				}),
+				true,
+			);
+			assert.ok(ops.has("restoring"), [...ops].join());
+			assert.equal(shutdowns(), stopsBefore + 1, "it was asked to stop once, by the panel");
+			assert.match(read(), /^world v1\n/, "the older world is back");
+			assert.doesNotMatch(read(), /v3/, "what was newer is gone from the live world");
+			assert.ok(fs.existsSync(path.join(path.dirname(world), "Logs", "game.log")), "the game's logs, which a backup leaves out, weren't swept away with the folder");
+			assert.equal(await until(online), true, "and the server is running on it");
+			const after = (await list()).backups;
+			assert.equal(after.length, before + 1, "after a safety backup of the newer one");
+			const safety = after.find((b) => b.kind === "pre-restore");
+			assert.ok(safety, "the newer world is kept in a safety backup, so this can be undone");
+			const done = (await activity()).find((e) => e.type === "backup.restored");
+			assert.match(done.message, /started it again/);
+		});
+
+		it("starts a stopped server afterwards when asked to, and leaves it stopped otherwise", async () => {
+			assert.equal((await api.post("/api/control/Fake%20Backup/stop")).status, 200);
+			assert.equal(await until(offline), true);
+			await until(idle);
+			const id = (await copyOfV1()).id;
+
+			const stays = await api.post(`${base}/backups/${id}/restore`, { confirm: true });
+			assert.equal(stays.status, 202, JSON.stringify(stays.json));
+			await until(idle);
+			assert.equal(await online(), false, "no restart asked for, so it stays stopped");
+
+			const starts = await api.post(`${base}/backups/${id}/restore`, { confirm: true, restart: true });
+			assert.equal(starts.status, 202, JSON.stringify(starts.json));
+			await until(idle);
+			assert.equal(await until(online), true, "restart asked for, so it is running");
+		});
+
+		it("never takes the server down for a backup it can't restore", async () => {
+			const id = (await copyOfV1()).id;
+			const elsewhere = path.join(path.dirname(folder), "somewhere-else");
+			fs.mkdirSync(elsewhere, { recursive: true });
+			assert.equal((await api.put(`${base}/backups/settings`, { paths: [{ path: elsewhere }] })).status, 200);
+			try {
+				const r = await api.post(`${base}/backups/${id}/restore`, { restart: true, confirm: true });
+				assert.equal(r.status, 400, JSON.stringify(r.json));
+				assert.equal(r.json.code, "paths_changed");
+				assert.equal(await online(), true, "still running, never stopped");
+			} finally {
+				assert.equal((await api.put(`${base}/backups/settings`, { paths: null })).status, 200);
+			}
+		});
+
+		it("rolls back and starts the server again on its old files when the restore can't finish", async () => {
+			const id = (await copyOfV1()).id;
+			fs.writeFileSync(world, "world v4 - must survive a failed restore\n");
+			// A program whose working folder is the save folder keeps Windows from renaming it out of the way.
+			const saved = path.dirname(world);
+			const holder = spawn(process.execPath, ["-e", "setInterval(() => {}, 1000)"], { cwd: saved, stdio: "ignore" });
+			await sleep(500);
+			try {
+				const r = await api.post(`${base}/backups/${id}/restore`, { restart: true, confirm: true });
+				assert.equal(r.status, 202, JSON.stringify(r.json));
+				await until(idle);
+			} finally {
+				holder.kill();
+				await sleep(300);
+			}
+			assert.match(read(), /v4/, "the live world is as it was");
+			assert.equal(await until(online), true, "the server was started again");
+			const failed = (await activity()).find((e) => e.type === "backup.restore_failed");
+			assert.ok(failed, "and the failure is recorded");
+			assert.deepEqual(fs.readdirSync(path.join(folder, "ConanSandbox")).filter((n) => n.startsWith(".gp-")), []);
+			fs.writeFileSync(world, "world v1\n");
+		});
 	});
 
 	it("can copy a running server without stopping it, and says it may be inconsistent", async () => {

@@ -100,7 +100,8 @@ function BackupsPanel({ serverName, serverStatus, canManage }) {
 		const offActivity = onLive("activity", (e) => {
 			if (e.event?.server === serverName && /^backup\./.test(e.event.type)) {
 				load();
-				if (e.event.type === "backup.failed" || e.event.type === "backup.restore_failed") setError(e.event.message);
+				if (e.event.type === "backup.failed" || e.event.type === "backup.restore_failed" || e.event.type === "backup.restart_failed") setError(e.event.message);
+				if (e.event.type === "backup.restored") setNotice(e.event.message);
 			}
 		});
 		return () => {
@@ -237,13 +238,9 @@ function BackupsPanel({ serverName, serverStatus, canManage }) {
 							<Chip size="small" label={KIND_LABELS[b.kind] ?? b.kind} color={b.kind === "manual" ? "primary" : "default"} variant={b.kind === "manual" ? "filled" : "outlined"} />
 							{canManage && (
 								<>
-									<Tooltip title={running ? "Stop the server to restore" : "Restore this backup"}>
-										<span>
-											<IconButton size="small" disabled={busy || running} onClick={() => setRestoreTarget(b)}>
-												<RestoreIcon fontSize="small" />
-											</IconButton>
-										</span>
-									</Tooltip>
+										<Button size="small" variant="outlined" color="warning" startIcon={<RestoreIcon />} disabled={busy} onClick={() => setRestoreTarget(b)}>
+											{running ? "Restart and use this backup" : "Use this backup"}
+										</Button>
 									<Tooltip title="Delete this backup">
 										<span>
 											<IconButton size="small" disabled={busy} onClick={() => remove(b)}>
@@ -260,23 +257,42 @@ function BackupsPanel({ serverName, serverStatus, canManage }) {
 
 			<OffsiteCopies base={base} data={data} canManage={canManage} busy={busy} onError={setError} onChanged={load} />
 
-			{restoreTarget && <RestoreDialog serverName={serverName} base={base} backup={restoreTarget} sharedFolders={data.specs.filter((s) => s.shared).map((s) => s.path)} onClose={() => setRestoreTarget(null)} onError={setError} onStarted={() => setNotice("Restore started.")} />}
+			{restoreTarget && (
+					<RestoreDialog
+						serverName={serverName}
+						base={base}
+						backup={restoreTarget}
+						running={Boolean(running)}
+						players={serverStatus?.playerCount ?? 0}
+						sharedFolders={data.specs.filter((s) => s.shared).map((s) => s.path)}
+						onClose={() => setRestoreTarget(null)}
+						onError={setError}
+						onStarted={(restart) => setNotice(restart ? "Restoring. The server is being stopped, the backup put back, and the server started again; this page says when it is done." : "Restoring. This page says when it is done.")}
+					/>
+				)}
 			{showSettings && <BackupSettingsDialog base={base} data={data} onClose={() => setShowSettings(false)} onSaved={(next) => setData(next)} />}
 		</Box>
 	);
 }
 
-function RestoreDialog({ serverName, base, backup, sharedFolders = [], onClose, onError, onStarted }) {
+function RestoreDialog({ serverName, base, backup, running, players = 0, sharedFolders = [], onClose, onError, onStarted }) {
 	const [confirmName, setConfirmName] = React.useState("");
 	const [allowShared, setAllowShared] = React.useState(false);
 	const [safety, setSafety] = React.useState(true);
+	const [startAfter, setStartAfter] = React.useState(true);
 	const [busy, setBusy] = React.useState(false);
+
+	// A running server is always restarted (it has to be stopped for this); a stopped one is started if asked.
+	const restart = running || startAfter;
+	// Without the safety backup there is no undo, so the server's name has to be typed.
+	const needsName = !safety;
+	const labels = [...new Set((backup.entries ?? []).map((e) => e.label).filter(Boolean))];
 
 	const go = async () => {
 		setBusy(true);
 		try {
-			await api.post(`${base}/backups/${encodeURIComponent(backup.id)}/restore`, { confirmName, safety, allowShared });
-			onStarted();
+			await api.post(`${base}/backups/${encodeURIComponent(backup.id)}/restore`, { confirm: true, ...(needsName ? { confirmName } : {}), safety, allowShared, restart });
+			onStarted(restart);
 			onClose();
 		} catch (e) {
 			onError(e.message);
@@ -286,26 +302,42 @@ function RestoreDialog({ serverName, base, backup, sharedFolders = [], onClose, 
 
 	return (
 		<Dialog open onClose={busy ? undefined : onClose} fullWidth maxWidth="sm">
-			<DialogTitle>Restore {serverName}?</DialogTitle>
+			<DialogTitle>{running ? `Restart ${serverName} and use this backup?` : `Use this backup for ${serverName}?`}</DialogTitle>
 			<DialogContent>
-				<DialogContentText sx={{ mb: 2 }}>
-					This replaces the world and settings on disk with the backup from <strong>{when(backup.createdAt)}</strong>. Anything done since then is lost, unless you keep the safety backup below.
+				<Alert severity="warning" sx={{ mb: 2 }}>
+					<strong>This erases everything newer than this backup.</strong> The server goes back to how it was on <strong>{when(backup.createdAt)}</strong>: anything done in the game since then (
+					{labels.length > 0 ? labels.join(", ").toLowerCase() : "the world and settings"}) is replaced.
+				</Alert>
+				<DialogContentText sx={{ mb: 1 }}>
+					{running ? "The panel will stop the server, put this backup back, and start it again." : "The server is stopped. The panel will put this backup back."}
+					{running && players > 0 ? ` ${players} player${players === 1 ? " is" : "s are"} on it now and will be disconnected.` : ""}
 				</DialogContentText>
-				<FormControlLabel control={<Checkbox checked={safety} onChange={(e) => setSafety(e.target.checked)} />} label="Back up what is there now first (recommended)" />
+				{backup.consistent === false && (
+					<Alert severity="info" sx={{ mb: 1 }}>
+						This backup was copied while the game was running, so it may be a few seconds behind and, rarely, not load. If it doesn't, use an older one.
+					</Alert>
+				)}
+				{!running && <FormControlLabel control={<Checkbox checked={startAfter} onChange={(e) => setStartAfter(e.target.checked)} />} label="Start the server afterwards" />}
+				<FormControlLabel
+					control={<Checkbox checked={safety} onChange={(e) => setSafety(e.target.checked)} />}
+					label="Keep a safety backup of what's there now, so this can be undone (recommended)"
+				/>
 				{sharedFolders.length > 0 && (
 					<Alert severity="warning" sx={{ mt: 2 }}>
 						This server keeps its world in a folder every such server on this PC shares ({sharedFolders.join(", ")}). Restoring replaces <strong>their</strong> worlds too.
 						<FormControlLabel control={<Checkbox checked={allowShared} onChange={(e) => setAllowShared(e.target.checked)} />} label="I understand, restore over the shared folder" />
 					</Alert>
 				)}
-				<TextField fullWidth size="small" sx={{ mt: 2 }} label={`Type ${serverName} to confirm`} value={confirmName} onChange={(e) => setConfirmName(e.target.value)} />
+				{needsName && (
+					<TextField fullWidth size="small" sx={{ mt: 2 }} label={`Without a safety backup, type ${serverName} to confirm`} value={confirmName} onChange={(e) => setConfirmName(e.target.value)} />
+				)}
 			</DialogContent>
 			<DialogActions>
 				<Button onClick={onClose} disabled={busy}>
 					Cancel
 				</Button>
-				<Button color="warning" variant="contained" disabled={busy || confirmName !== serverName || (sharedFolders.length > 0 && !allowShared)} onClick={go}>
-					Restore
+				<Button color="warning" variant="contained" disabled={busy || (needsName && confirmName !== serverName) || (sharedFolders.length > 0 && !allowShared)} onClick={go}>
+					{running ? "Restart and use this backup" : restart ? "Use it and start the server" : "Use this backup"}
 				</Button>
 			</DialogActions>
 		</Dialog>

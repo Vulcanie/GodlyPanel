@@ -28,6 +28,15 @@ export function getSaveCommand(server) {
 	}
 }
 
+/**
+ * Commands that stop a game writing its world while a live backup copies it, and let it carry on after.
+ * Only Minecraft has them: it keeps saving in the background, and a chunk caught half-written is a damaged world.
+ * Whatever "off" does, "on" must follow, even when the copy fails.
+ */
+export function getSavePauseCommands(server) {
+	return server.type === "minecraft" ? { off: "save-off", on: "save-on" } : null;
+}
+
 /** The in-game broadcast for a warning message, or null when the game has none. */
 export function getBroadcastCommand(server, message) {
 	switch (server.type) {

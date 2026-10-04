@@ -47,16 +47,62 @@ Open the **Backups** tab.
   *Delete scheduled backups older than (days)* (default: never), and *Refuse backups below this
   much free space (GB)* (default 2) so a backup can't fill your drive. Backups you take by hand
   are never deleted automatically.
-- **Restoring** is the restore arrow beside a backup. The server must be **stopped** first
-  (restoring replaces files the game is using). You'll be asked to type the server's exact name.
-  The panel takes a **safety backup of what it is about to replace**, restores, and puts
-  everything back if any step fails.
+- **Going back to a backup.** Beside each backup is a button: **Restart and use this backup** while
+  the server is running, **Use this backup** while it is stopped. One click, then one confirmation, and the
+  panel does the rest: it stops the server (the same clean stop as the Stop button), takes a **safety backup of
+  what is there now**, puts the backup back, and starts the server again. A stopped server is only started
+  afterwards if you leave "Start the server afterwards" ticked.
+  - **It erases everything newer than the backup.** Progress, builds and settings changed since then are
+    replaced. The safety backup is what lets you change your mind: it appears in the list as **Before a
+    restore**, with the same button, so going back is one more click. The last three are kept.
+  - Players on the server when you click are disconnected; the dialog says how many.
+  - Everything that can be checked is checked **before** the server is stopped (the backup reads back, its
+    folders are still this server's folders, there is room), so a backup that can't be restored never takes
+    the server down. If the replacing itself fails, everything is put back and a server the panel stopped is
+    started again on its old files.
+  - Logs and crash reports aren't in a backup, so a restore leaves the ones already on disk alone.
+  - Unticking the safety backup removes the undo, so the panel then asks you to type the server's name.
+  - Some games keep their saves in a folder every server of that game on the PC shares (Valheim, 7 Days to Die
+    without a `-UserDataFolder`). Restoring replaces their worlds too, so the dialog asks you to say you
+    understand.
+  - Moderators can take backups but not restore them.
 - **Copies off this PC** (same tab) copy every backup to another drive, a network share, a
   cloud-sync folder (OneDrive, Dropbox, Google Drive) or S3-compatible storage (Backblaze B2,
   Wasabi, Cloudflare R2, MinIO, Amazon S3). Failed copies are shown and retried. A backup on a
   drive that has died can be fetched back and restored.
 
 A backup is only worth something once you've restored from one. Try it once on a quiet day.
+
+### What each game's backup holds
+
+The panel knows where each game keeps its world and settings. **What is backed up** at the top of the Backups tab
+lists the exact folders for your server, and **Choose folders & rules** changes them.
+
+| Game | In the backup | While it runs |
+|---|---|---|
+| ARK: Survival Ascended | This map's own save folder (named in its launch line), the server settings, the cluster's transfer folder | Told to save, then copied |
+| ARK: Survival Evolved | The `Saved` folder (worlds and settings) | Told to save, then copied |
+| Conan Exiles | `ConanSandbox/Saved` | Stopped for the copy |
+| Valheim | The worlds folder (shared by all Valheim servers on the PC unless the start script sets `-savedir`) | Stopped for the copy |
+| Enshrouded | `savegame` and `enshrouded_server.json` | Stopped for the copy |
+| RuneScape: Dragonwilds | `RSDragonwilds/Saved` | Stopped for the copy |
+| Windrose | `R5/Saved` and `ServerDescription.json` | Stopped for the copy |
+| Subsistence | `UDKGame/SaveData` and `UDKGame/Config` | Stopped for the copy |
+| 7 Days to Die | The saved worlds and generated maps (shared unless the start script sets `-UserDataFolder`) and `serverconfig.xml` | Stopped for the copy |
+| Palworld | `Pal/Saved` | Told to save, then copied |
+| Minecraft (modpacks) | The world named by `level-name` in `server.properties` (and its `_nether` and `_the_end` folders where a server keeps them separately), mod settings, the operator, whitelist and ban lists | Autosave switched off, saved, copied, switched back on |
+| Rust | The `server` folder (world, settings, player data) | Told to save, then copied |
+| Project Zomboid | The world, the server settings and the player accounts | Told to save, then copied |
+| Satisfactory | `FactoryGame/Saved/SaveGames` and the server settings | Stopped for the copy |
+| V Rising | `save-data` | Stopped for the copy |
+| Core Keeper | `data` (worlds) | Stopped for the copy |
+| Sons of the Forest | `userdata` | Stopped for the copy |
+
+"Told to save" needs the game's console (RCON) to be set up for the server; without it the panel stops the game for the copy instead.
+"Stopped for the copy" means the game has no way to be told to save while it runs, so the panel stops it,
+copies, and starts it again (a minute or so). Backups taken while a game is running without that (you chose
+"Keep it running") are marked **copied while running**; they usually load fine, but are the first suspects if
+one doesn't.
 
 ## Schedules
 

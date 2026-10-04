@@ -120,8 +120,13 @@ Work from the PC outwards. The panel does the first two for you.
 - **"Not enough room on the backup drive…"**: free some space, change the **Backup folder**, or lower the
   minimum free space (`Settings → Backups`).
 - **"couldn't be read back, so it was discarded"**: the drive may be full or failing. Check it, then try again.
-- **A restore says "Stop the server first".** Restoring replaces files the game is using. Stop the server, wait
-  for **Stopping…** to finish, and restore.
+- **A restore says "Stop the server first".** Restoring replaces files the game is using. Use **Restart and use
+  this backup** (it stops the server for you), or stop it yourself, wait for **Stopping…** to finish, and restore.
+- **The server didn't come back after "Restart and use this backup".** The backup was put back, but the game didn't
+  answer in time (or wouldn't start). Look at its **Logs** tab. If the backup itself is the problem, the **Before a
+  restore** backup in the list holds what was there before: use that to go back.
+- **A restore says a folder "is no longer one of this server's backup folders".** The backup was taken with
+  different folders chosen. Choose them again under **Choose folders & rules**, or restore by hand.
 - **Backups of a running game look inconsistent.** Games that can't save on command are stopped for the copy by
   default. If you chose to keep them running, a backup can catch a save halfway.
 

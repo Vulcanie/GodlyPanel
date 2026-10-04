@@ -92,6 +92,34 @@ try {
 	await page.getByText("Online", { exact: true }).first().waitFor({ timeout: 60_000 }).catch(() => {});
 	check("the server was started again afterwards", await visible(page, "Online"));
 
+	// ---- restart and use a backup
+	const worldFile = path.join(game, "ConanSandbox", "Saved", "world.sav");
+	fs.writeFileSync(worldFile, "world NEWER than the backup\n");
+	await page.getByRole("button", { name: "Restart and use this backup" }).first().click();
+	const dialog = page.getByRole("dialog");
+	await dialog.getByText("This erases everything newer than this backup.").waitFor({ timeout: 10_000 });
+	check("a running server's backup says it will restart and what it erases", (await visible(page, "stop the server, put this backup back, and start it again")) && (await visible(page, "erases everything newer")));
+	check("a safety backup is kept by default, so no name has to be typed", (await dialog.getByLabel(/Keep a safety backup/).isChecked()) && (await dialog.getByLabel(/type Fake Conan to confirm/).count()) === 0);
+	await settle(page, 700);
+	if (SHOTS) await page.screenshot({ path: path.join(SHOTS, "2c-restore-dialog.png") });
+	await dialog.getByLabel(/Keep a safety backup/).uncheck();
+	const confirm = dialog.getByRole("button", { name: "Restart and use this backup" });
+	check("without the safety backup it asks for the server's name", await confirm.isDisabled());
+	await dialog.getByLabel(/type Fake Conan to confirm/).fill("Fake Conan");
+	check("and then goes ahead", await confirm.isEnabled());
+	await dialog.getByLabel(/Keep a safety backup/).check();
+	check("with the safety backup back on, the name isn't needed", (await dialog.getByLabel(/type Fake Conan to confirm/).count()) === 0 && (await confirm.isEnabled()));
+	await confirm.click();
+	await page.getByText(/Restoring. The server is being stopped/).first().waitFor({ timeout: 10_000 }).catch(() => {});
+	check("it says what is happening", (await visible(page, "Restoring.")) || (await visible(page, "Restored Fake Conan")));
+	await page.getByText(/Restored Fake Conan from backup .*started it again/).first().waitFor({ timeout: 120_000 }).catch(() => {});
+	check("and when it is done", await visible(page, "started it again"));
+	await shot(page, "2d-restored");
+	check("the older world is back", fs.readFileSync(worldFile, "utf8").startsWith("world v1"));
+	await page.getByText("Online", { exact: true }).first().waitFor({ timeout: 60_000 }).catch(() => {});
+	check("and the server is running again", await visible(page, "Online"));
+	check("a safety backup of the newer world was kept", await visible(page, "Before a restore"));
+
 	// ---- logs
 	await tab(page, "Logs");
 	check("the logs tab shows the game's log", await visible(page, "rcon listening"));
@@ -183,7 +211,7 @@ try {
 	await shot(mod, "12-moderator-controls");
 	await tab(mod, "Backups");
 	check("a moderator can take a backup", await mod.getByRole("button", { name: "Back up now" }).isEnabled());
-	check("but can't restore or delete", (await mod.getByRole("button", { name: /Choose folders/ }).count()) === 0);
+	check("but can't restore or delete", (await mod.getByRole("button", { name: /Choose folders/ }).count()) === 0 && (await mod.getByRole("button", { name: /use this backup/i }).count()) === 0);
 	await tab(mod, "Logs");
 	check("and read logs", await visible(mod, "rcon listening"));
 	check("no script errors for the moderator", merrors.length === 0, merrors.join(" | "));

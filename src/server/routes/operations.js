@@ -115,14 +115,18 @@ router.delete("/server/:serverName/backups/:id", requirePermission("backup.delet
 });
 
 router.post("/server/:serverName/backups/:id/restore", requirePermission("backup.restore"), async (req, res) => {
-	if (req.body?.confirmName !== req.server.name) {
-		return res.status(400).json({ error: "Type the server's exact name to confirm a restore.", code: "confirm_mismatch" });
+	// A restore that first takes a safety backup can be undone, so a plain "yes" is enough. Without that safety net,
+	// the server's exact name has to be typed.
+	const safety = req.body?.safety !== false;
+	if (safety ? req.body?.confirm !== true && req.body?.confirmName !== req.server.name : req.body?.confirmName !== req.server.name) {
+		return res.status(400).json({ error: safety ? "Confirm the restore first." : "Type the server's exact name to restore without a safety backup.", code: "confirm_mismatch" });
 	}
 	try {
 		const started = await runDetached(req.server.name, "restoring", async (report) => {
 			const result = await restoreBackup(req.server, req.params.id, {
-				safety: req.body?.safety !== false,
+				safety,
 				allowShared: req.body?.allowShared === true,
+				restart: req.body?.restart === true,
 				onReady: () => report({ started: true }),
 			});
 			report({ started: true, ...result });

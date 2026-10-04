@@ -110,6 +110,7 @@ export const DEFAULTS = {
 			"server.start_failed",
 			"backup.failed",
 			"backup.restore_failed",
+			"backup.restart_failed",
 			"schedule.failed",
 			"disk.low",
 			"panel.update_available",

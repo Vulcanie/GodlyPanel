@@ -6,7 +6,7 @@ import { getConfig } from "../config/configStore.js";
 import { getOptions } from "../data/serverOptions.js";
 import { BACKUP_TEMPLATES } from "../data/backupTemplates.js";
 import { templateOfServer } from "./serverCreationService.js";
-import { getSaveCommand } from "./gameCommands.js";
+import { getSaveCommand, getSavePauseCommands } from "./gameCommands.js";
 import { isServerRunning, isFullyStopped } from "./serverState.js";
 import { stopAndWait, waitUntilOnline } from "./serverLifecycle.js";
 import { startServer, sendRconCommand } from "./serverControl.js";
@@ -26,6 +26,7 @@ import { sleep } from "../util/async.js";
 const GIB = 1024 ** 3;
 const MANIFEST_NAME = "gp-backup.json";
 const SAFE_ID = /^[A-Za-z0-9._-]+$/;
+const SAFE_NAME = /^[^\\/:*?"<>|]+$/; // one plain file or folder name, not a path
 const SAFETY_KINDS = ["pre-restore", "pre-update"];
 const SAFETY_KEEP = 3;
 
@@ -82,6 +83,20 @@ export function optionValue(text, name) {
 	return m ? m[1] : null;
 }
 
+/** A `key=value` line's value from a .properties file's text, or null. */
+export function propertyValue(text, key) {
+	for (const line of String(text).split(/\r?\n/)) {
+		const trimmed = line.trim();
+		if (trimmed === "" || trimmed.startsWith("#") || trimmed.startsWith("!")) continue;
+		const at = trimmed.indexOf("=");
+		if (at > 0 && trimmed.slice(0, at).trim() === key) return trimmed.slice(at + 1).trim();
+	}
+	return null;
+}
+
+/** A setting used as a folder name has to be one plain folder name, never a path out of the server's folder. */
+const plainFolderName = (value) => typeof value === "string" && value !== "" && value !== "." && value !== ".." && !/[\\/:*?"<>|]/.test(value);
+
 const baseFor = (server, base) => (base === "install" ? server.installDir : server.workingDir || server.installDir);
 
 /**
@@ -119,6 +134,14 @@ export async function backupSpecsFor(server) {
 					const working = server.workingDir || server.installDir || "";
 					const value = optionValue(script, p.option);
 					raw.push({ path: path.resolve(working, value ? path.join(p.rel, value) : p.fallbackRel), label: p.label, exclude: p.exclude ?? [] });
+					continue;
+				}
+				if (p.base === "property") {
+					const working = server.workingDir || server.installDir || "";
+					const text = await fs.readFile(path.join(working, p.file), "utf8").catch(() => "");
+					const value = propertyValue(text, p.key);
+					const name = plainFolderName(value) ? value : p.default;
+					raw.push({ path: path.resolve(working, name + (p.suffix ?? "")), label: p.label, exclude: p.exclude ?? [] });
 					continue;
 				}
 				const root = p.base === "abs" ? null : baseFor(server, p.base);
@@ -346,6 +369,7 @@ export async function createBackup(server, { kind = "manual", reason = null, mod
 	const wasRunning = await isServerRunning(server);
 	const chosenMode = resolveMode(server, mode);
 	let stoppedByUs = false;
+	let savesPaused = false;
 	let consistent = true;
 
 	const id = `${slug(server.name)}_${stamp()}_${kind}`;
@@ -362,6 +386,12 @@ export async function createBackup(server, { kind = "manual", reason = null, mod
 			if (save && server.rconPort && server.rconPassword) {
 				progress(server, "saving");
 				try {
+					// Stop the game writing while the files are copied (Minecraft only); it is switched back on below.
+					const pause = getSavePauseCommands(server);
+					if (pause) {
+						savesPaused = true;
+						await sendRconCommand(server, pause.off);
+					}
 					await sendRconCommand(server, save);
 					await sleep(5000);
 				} catch (err) {
@@ -424,6 +454,13 @@ export async function createBackup(server, { kind = "manual", reason = null, mod
 		logActivity({ type: "backup.failed", server: server.name, level: "error", message: `Backup of ${server.name} failed: ${err.message}`, data: { kind } });
 		throw err;
 	} finally {
+		if (savesPaused) {
+			try {
+				await sendRconCommand(server, getSavePauseCommands(server).on);
+			} catch (err) {
+				logActivity({ type: "backup.failed", server: server.name, level: "error", message: `Couldn't switch ${server.name}'s autosave back on after its backup (${err.message}). Run "save-on" in its console.` });
+			}
+		}
 		if (stoppedByUs) {
 			progress(server, "starting");
 			try {
@@ -452,15 +489,28 @@ async function readManifest(zipFile) {
 }
 
 /**
- * Put a backup back. The caller holds the server's lock. The server must be
- * stopped; whatever is about to be replaced is backed up first (unless `safety`
- * is false), and if replacing any part fails, the parts already done are put back.
+ * Put a backup back. The caller holds the server's lock.
+ *
+ * By default the server must already be stopped. With `restart` the panel does the whole job: it stops a running
+ * server, puts the backup back, and starts the server again (also when it was already stopped), so one click
+ * turns "use this older copy" into a running server on it.
+ *
+ * Everything that can be checked without touching anything is checked first, so a backup that can't be restored
+ * never takes a server down. Whatever is about to be replaced is backed up first (unless `safety` is false), and if
+ * replacing any part fails, the parts already done are put back and a server the panel stopped is started again on
+ * its old files.
+ *
+ * @returns {Promise<{ restored: string[], safetyBackup: string|null, restarted: boolean, online: boolean|null }>}
  */
-export async function restoreBackup(server, id, { safety = true, onReady = null, allowShared = false } = {}) {
+export async function restoreBackup(server, id, { safety = true, onReady = null, allowShared = false, restart = false } = {}) {
 	const zipFile = backupFile(server, id);
 	if (!(await exists(zipFile))) throw new BackupError("That backup doesn't exist.", "not_found", 404);
-	if (!(await isFullyStopped(server))) {
-		throw new BackupError("Stop the server first. Restoring replaces files the game is using.", "server_running", 409);
+	const wasRunning = await isServerRunning(server);
+	if (wasRunning && !restart) {
+		throw new BackupError("Stop the server first. Restoring replaces files the game is using. (\"Restart and use this backup\" stops it for you.)", "server_running", 409);
+	}
+	if (!wasRunning && !(await isFullyStopped(server))) {
+		throw new BackupError("The server is still shutting down. Give it a moment, then try again.", "server_running", 409);
 	}
 
 	progress(server, "checking");
@@ -505,65 +555,116 @@ export async function restoreBackup(server, id, { safety = true, onReady = null,
 	if (free < needed) throw new BackupError(`Not enough free space to restore: about ${(needed / GIB).toFixed(1)} GB needed.`, "low_space", 507);
 
 	onReady?.();
+	let stoppedByUs = false;
+	let succeeded = false;
 	let safetyId = null;
-	if (safety) {
-		progress(server, "safety-backup");
-		try {
-			safetyId = (await createBackup(server, { kind: "pre-restore", reason: `Before restoring ${id}`, mode: "live" })).id;
-		} catch (err) {
-			if (!["nothing_to_back_up", "no_paths"].includes(err.code)) {
-				throw new BackupError(`Couldn't take the safety backup first (${err.message}), so nothing was changed.`, "safety_failed", 500);
-			}
-		}
-	}
-
-	progress(server, "restoring");
 	const done = [];
 	const cleanup = [];
-	const at = Date.now();
 	try {
-		for (const { entry, target } of targets) {
-			const parent = path.dirname(target);
-			await fs.mkdir(parent, { recursive: true });
-			const staging = path.join(parent, `.gp-restore-${at}`);
-			await fs.mkdir(staging, { recursive: true });
-			cleanup.push(staging);
-			await extractZip(zipFile, staging, [entry.name]);
-			const staged = path.join(staging, entry.name);
-			if (!(await exists(staged))) throw new Error(`${entry.name} was not found in the archive.`);
-
-			const old = path.join(parent, `.gp-old-${at}-${entry.name}`);
-			const hadOld = Boolean(await exists(target));
-			if (hadOld) await fs.rename(target, old);
+		if (wasRunning) {
+			progress(server, "stopping");
 			try {
-				await fs.rename(staged, target);
+				await stopAndWait(server);
 			} catch (err) {
-				if (hadOld) await fs.rename(old, target).catch(() => {});
-				throw err;
+				throw new BackupError(`${err.message} Nothing was changed.`, "stop_failed", 500);
 			}
-			done.push({ target, old: hadOld ? old : null });
-			if (hadOld) cleanup.push(old);
+			stoppedByUs = true;
 		}
-	} catch (err) {
-		// Put back whatever was already replaced.
-		for (const { target, old } of done.reverse()) {
-			await fs.rm(target, { recursive: true, force: true }).catch(() => {});
-			if (old) await fs.rename(old, target).catch(() => {});
+
+		if (safety) {
+			progress(server, "safety-backup");
+			try {
+				safetyId = (await createBackup(server, { kind: "pre-restore", reason: `Before restoring ${id}`, mode: "live" })).id;
+			} catch (err) {
+				if (!["nothing_to_back_up", "no_paths"].includes(err.code)) {
+					throw new BackupError(`Couldn't take the safety backup first (${err.message}), so nothing was changed.`, "safety_failed", 500);
+				}
+			}
+		}
+
+		progress(server, "restoring");
+		const at = Date.now();
+		try {
+			for (const { entry, target } of targets) {
+				const parent = path.dirname(target);
+				await fs.mkdir(parent, { recursive: true });
+				const staging = path.join(parent, `.gp-restore-${at}`);
+				await fs.mkdir(staging, { recursive: true });
+				cleanup.push(staging);
+				await extractZip(zipFile, staging, [entry.name]);
+				const staged = path.join(staging, entry.name);
+				if (!(await exists(staged))) throw new Error(`${entry.name} was not found in the archive.`);
+
+				const old = path.join(parent, `.gp-old-${at}-${entry.name}`);
+				const hadOld = Boolean(await exists(target));
+				if (hadOld) await fs.rename(target, old);
+				try {
+					await fs.rename(staged, target);
+				} catch (err) {
+					if (hadOld) await fs.rename(old, target).catch(() => {});
+					throw err;
+				}
+				done.push({ target, old: hadOld ? old : null });
+				if (hadOld) cleanup.push(old);
+			}
+		} catch (err) {
+			// Put back whatever was already replaced.
+			for (const { target, old } of done.reverse()) {
+				await fs.rm(target, { recursive: true, force: true }).catch(() => {});
+				if (old) await fs.rename(old, target).catch(() => {});
+			}
+			for (const p of cleanup) await fs.rm(p, { recursive: true, force: true }).catch(() => {});
+			cleanup.length = 0;
+			logActivity({ type: "backup.restore_failed", server: server.name, level: "error", message: `Restoring ${id} to ${server.name} failed: ${err.message}${stoppedByUs ? " Starting the server again on its old files." : ""}` });
+			throw new BackupError(`Restore failed and was rolled back: ${err.message}. Something may still be using those files.${stoppedByUs ? " The server is being started again on its old files." : ""}`, "restore_failed", 500);
+		}
+		// What a backup leaves out (logs, crash dumps) isn't in the backup, so replacing the folder would delete it. Carry
+		// it over from the folder that was replaced. Patterns (Minecraft's Distant Horizons data) are not carried: that
+		// data belongs to the world that was just replaced.
+		for (const { entry, target } of targets) {
+			const old = done.find((d) => d.target === target)?.old;
+			if (!old || entry.type !== "dir") continue;
+			for (const name of entry.exclude ?? []) {
+				if (/[*?]/.test(name) || !SAFE_NAME.test(name)) continue;
+				if ((await exists(path.join(old, name))) && !(await exists(path.join(target, name)))) {
+					await fs.rename(path.join(old, name), path.join(target, name)).catch(() => {});
+				}
+			}
 		}
 		for (const p of cleanup) await fs.rm(p, { recursive: true, force: true }).catch(() => {});
-		logActivity({ type: "backup.restore_failed", server: server.name, level: "error", message: `Restoring ${id} to ${server.name} failed: ${err.message}` });
-		throw new BackupError(`Restore failed and was rolled back: ${err.message}. Something may still be using those files.`, "restore_failed", 500);
+		cleanup.length = 0;
+		succeeded = true;
+	} finally {
+		// A server the panel stopped for this goes back up whatever happened; one that was already stopped is only
+		// started when the restore worked (below).
+		if (stoppedByUs && !succeeded) await bringBackUp(server, `${server.name} was stopped for a restore that didn't go ahead`);
 	}
-	for (const p of cleanup) await fs.rm(p, { recursive: true, force: true }).catch(() => {});
+
+	let online = null;
+	if (restart) online = await bringBackUp(server, `${server.name} was restored but could not be started again`);
 
 	logActivity({
 		type: "backup.restored",
 		server: server.name,
-		message: `Restored ${server.name} from backup ${id}.`,
-		data: { id, safetyBackup: safetyId },
+		message: `Restored ${server.name} from backup ${id}${restart ? (online ? " and started it again." : ", but it has not come back online.") : "."}`,
+		data: { id, safetyBackup: safetyId, restarted: restart, online },
 	});
 	progress(server, "done");
-	return { restored: targets.map((t) => t.target), safetyBackup: safetyId };
+	return { restored: targets.map((t) => t.target), safetyBackup: safetyId, restarted: restart, online };
+}
+
+/** Start the server and wait for it to answer, saying so in the activity log when it doesn't. Resolves to whether it did. */
+async function bringBackUp(server, problem) {
+	progress(server, "starting");
+	try {
+		await startServer(server);
+		if (await waitUntilOnline(server)) return true;
+		logActivity({ type: "backup.restart_failed", server: server.name, level: "error", message: `${problem}: it didn't answer within the time allowed. Look at its Logs tab.` });
+		return false;
+	} catch (err) {
+		logActivity({ type: "backup.restart_failed", server: server.name, level: "error", message: `${problem}: ${err.message}` });
+		return false;
+	}
 }
 
 // ---- overview ---------------------------------------------------------------

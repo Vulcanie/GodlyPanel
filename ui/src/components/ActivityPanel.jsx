@@ -17,6 +17,7 @@ const TYPE_LABELS = {
 	"backup.completed": "Backup",
 	"backup.failed": "Backup failed",
 	"backup.restored": "Restored",
+	"backup.restart_failed": "Restart failed",
 	"backup.deleted": "Backup deleted",
 	"schedule.ran": "Schedule",
 	"schedule.failed": "Schedule failed",

@@ -12,9 +12,11 @@
 // the PC shares (`fallback`), and the spec is marked shared: it is backed up, but never
 // restored over without an explicit go-ahead.
 //
-// Only Conan Exiles has been checked against a real install so far. The rest are
-// the documented locations; a server can override its list in its own settings,
-// which is what the panel offers for any game it has no list for (`paths: []`).
+// A `base: "property"` entry names a folder after a setting in one of the game's own files (Minecraft's
+// `level-name` in server.properties), with `default` when the file or the setting isn't there.
+//
+// Every game here has been through a real install's backup and restore (see docs/GAME_SUPPORT.md). A server can
+// override its list in its own settings, which is also what the panel offers for a game it has no list for.
 
 const LOGS = ["Logs", "Crashes"];
 // Distant Horizons (a long-range-view mod) keeps a database of far-away terrain next to each dimension. It can be
@@ -107,9 +109,11 @@ export const BACKUP_TEMPLATES = {
 	},
 	"minecraft-modpack": {
 		paths: [
-			{ base: "working", rel: "world", label: "World", exclude: ["session.lock", DISTANT_HORIZONS] },
-			{ base: "working", rel: "world_nether", label: "Nether", exclude: ["session.lock", DISTANT_HORIZONS] },
-			{ base: "working", rel: "world_the_end", label: "The End", exclude: ["session.lock", DISTANT_HORIZONS] },
+			// Named by level-name. Plain Minecraft keeps the Nether and End inside the world folder; servers that
+			// split them out (Bukkit and its relatives) have <name>_nether and <name>_the_end beside it.
+			{ base: "property", file: "server.properties", key: "level-name", default: "world", label: "World", exclude: ["session.lock", DISTANT_HORIZONS] },
+			{ base: "property", file: "server.properties", key: "level-name", default: "world", suffix: "_nether", label: "Nether", exclude: ["session.lock", DISTANT_HORIZONS] },
+			{ base: "property", file: "server.properties", key: "level-name", default: "world", suffix: "_the_end", label: "The End", exclude: ["session.lock", DISTANT_HORIZONS] },
 			{ base: "working", rel: "config", label: "Mod settings" },
 			{ base: "working", rel: "defaultconfigs", label: "Default mod settings" },
 			{ base: "working", rel: "server.properties", label: "Server settings" },
