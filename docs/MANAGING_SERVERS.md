@@ -5,6 +5,18 @@ Click a server on the dashboard to open it. Its tabs are along the top: **Settin
 **Players**, **Stats**, **Network**, **Mods**, **Activity**, **History** and **Automation**.
 Moderators see the ones they're allowed to use.
 
+## Where a server's files are
+
+A server's own **Settings** tab says where it is installed ("Installed in …", with a button that copies the path), and
+whether that folder is still there. `Settings → Folders` lists every server beside the one setting that decides where *new*
+servers go:
+
+- **Server install folder** only affects servers you create from now on. Changing it never moves a server that already exists.
+- **Where your servers are now** lists each server's folder, how big it is (measured every hour in the background, so a
+  brand-new server says "not measured yet" for a while), and flags a folder that has gone missing, a folder shared with
+  other servers (several ARK maps share one install, so that size is for all of them), and servers that live outside the
+  new-servers folder.
+
 ## Start, stop and restart
 
 - **Start** runs the server's start script, or the program itself if it's set to "No window"

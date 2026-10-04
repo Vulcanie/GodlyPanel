@@ -18,6 +18,7 @@ import {
 } from "@mui/material";
 import { ArrowBack as ArrowBackIcon, Search as SearchIcon, Clear as ClearIcon } from "@mui/icons-material";
 import CollapsibleSection, { useSectionState } from "./CollapsibleSection";
+import ServerLocations from "./ServerLocations";
 import { api } from "../api/client";
 import AppearanceSettings from "./AppearanceSettings";
 import FolderField from "./FolderField";
@@ -55,7 +56,7 @@ const GROUP_LABELS = {
 const GROUP_HINTS = {
 	http: "The panel's port, and who can reach it",
 	network: "Which addresses may open the panel",
-	paths: "Where servers, SteamCMD and tools live",
+	paths: "Where servers, SteamCMD and tools live, and where each server is now",
 	portAllocation: "How new servers get their ports",
 	polling: "How often the panel checks things",
 	storage: "A size limit for your servers",
@@ -73,7 +74,7 @@ const GROUP_HINTS = {
 const GROUP_WORDS = {
 	http: "web port address lan network access listen computer",
 	network: "allow vpn tailscale cidr host name dns",
-	paths: "folder directory install steamcmd jcmd location",
+	paths: "folder directory install steamcmd jcmd location where live path drive disk size server folders existing current",
 	portAllocation: "port spacing reserved",
 	polling: "interval refresh rate speed cpu memory ram stats steam update check",
 	storage: "disk space limit quota size warn",
@@ -291,6 +292,7 @@ function SettingsPage({ onBack }) {
 							<Field key={spec.path} spec={spec} value={current(spec)} onChange={(v) => setField(spec, v)} events={data.notificationEvents} />
 						))}
 					</Box>
+					{group === "paths" && <ServerLocations />}
 				</Paper>
 			),
 			specs.map((spec) => ({ key: spec.path, text: `${spec.label} ${spec.help ?? ""} ${spec.path}`, item: spec })),

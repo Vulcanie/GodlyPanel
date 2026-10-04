@@ -20,6 +20,9 @@ let cache = {
 	schemaVersion: 1,
 	totals: { bytes: 0, files: 0 },
 	roots: [],
+	// Each server's own folder where it sits inside a bigger measured one (a server in the default servers folder,
+	// inside the data folder): measured on its own for the per-server list, and never added to the totals.
+	folders: [],
 	volumes: [],
 	scannedAt: null,
 	status: "idle",
@@ -29,6 +32,14 @@ let scanning = false;
 
 function normalise(p) {
 	return path.resolve(String(p)).replace(/[\\/]+$/, "");
+}
+
+/** The folder a server lives in: its install folder, else the one its start script is in, else its working folder. */
+export function folderOf(server) {
+	if (server.installDir) return normalise(server.installDir);
+	if (server.startScriptPath) return normalise(path.dirname(server.startScriptPath));
+	if (server.workingDir) return normalise(server.workingDir);
+	return null;
 }
 
 /**
@@ -143,9 +154,24 @@ export async function rescan() {
 			results.push(...(await Promise.all(batch.map(measureRoot))));
 		}
 
+		// Server folders that sit inside a bigger folder measured above get their own figure for the per-server list.
+		const nested = new Map();
+		for (const server of allServers()) {
+			const folder = folderOf(server);
+			if (!folder) continue;
+			const holder = results.find((r) => folder.toLowerCase().startsWith(r.path.toLowerCase() + path.sep));
+			if (holder) nested.set(folder.toLowerCase(), folder);
+		}
+		const folders = [];
+		const toMeasure = [...nested.values()];
+		for (let i = 0; i < toMeasure.length; i += limit) {
+			folders.push(...(await Promise.all(toMeasure.slice(i, i + limit).map(measureRoot))));
+		}
+
 		cache = {
 			...cache,
 			roots: results,
+			folders,
 			totals: {
 				bytes: results.reduce((sum, r) => sum + r.bytes, 0),
 				files: results.reduce((sum, r) => sum + r.files, 0),

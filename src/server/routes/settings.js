@@ -11,6 +11,7 @@ import {
 } from "../services/importService.js";
 import { remove as removeServer, all as allServers } from "../data/serverStore.js";
 import { rescan } from "../services/storageService.js";
+import { serverLocations } from "../services/serverLocations.js";
 import { inspectFolder } from "../services/folderCheck.js";
 import { EVENT_LABELS, sendTest, checkDisks } from "../services/notifier.js";
 import { BackupError } from "../services/backupService.js";
@@ -209,6 +210,11 @@ router.post("/import/scan", async (req, res) => {
 });
 
 // --- Server list management (finally possible now it isn't source code) ---
+
+// Where every server's files are now, beside where new ones will go (the "Server install folder" setting).
+router.get("/server-locations", (req, res) => {
+	res.json(serverLocations());
+});
 
 router.get("/servers", (req, res) => {
 	res.json(allServers());

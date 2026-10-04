@@ -91,6 +91,13 @@ try {
 	await settle();
 	check("Open all sections opens everything", await visible("Allow access from your network") && await visible("Web port"));
 	await shot("settings-all-open");
+	// Where existing servers are, beside where new ones will go.
+	if (SHOTS) await page.locator('[data-section="settings:group:paths"]').screenshot({ path: path.join(SHOTS, "folders-section.png") });
+	check("Settings lists where the existing servers are", await visible("Where your servers are now"));
+	const listed = await page.getByTestId("server-locations").innerText();
+	check("it names the server and its folder", listed.includes("Sect Test") && listed.toLowerCase().includes(path.join(root, "srv", "one").toLowerCase()), listed.slice(0, 200).replace(/s+/g, " "));
+	check("and says where new servers will be created, and that existing ones stay put", listed.toLowerCase().includes(path.join(root, "servers").toLowerCase()) && /stay where they are/.test(listed));
+	check("a server outside that folder is marked as elsewhere", /Elsewhere/.test(listed));
 	await page.reload({ waitUntil: "load" });
 	await page.getByLabel("Search settings").waitFor().catch(async () => { await page.getByRole("button", { name: "Settings" }).click(); await page.getByLabel("Search settings").waitFor(); });
 	await settle();
@@ -114,6 +121,9 @@ try {
 	await page.getByRole("button", { name: "Expand All" }).click();
 	await page.getByText("Sect Test", { exact: true }).first().click();
 	await settle();
+	const folderLine = await page.getByTestId("server-folder").first().innerText().catch(() => "");
+	if (SHOTS) await page.screenshot({ path: path.join(SHOTS, "server-header.png"), clip: { x: 0, y: 100, width: 1200, height: 330 } });
+	check("a server's Settings says where it is installed", folderLine.toLowerCase() === path.join(root, "srv", "one").toLowerCase(), folderLine);
 	await shot("server-settings");
 	// Where everything is on the page, top to bottom.
 	const tops = await page.evaluate(() => {

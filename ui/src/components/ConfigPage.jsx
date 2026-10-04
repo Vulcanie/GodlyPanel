@@ -23,6 +23,7 @@ import ServerWindowPanel from "./ServerWindowPanel";
 import PortsEditor from "./PortsEditor";
 import { useOperation } from "../OperationsContext";
 import DeleteServer from "./DeleteServer";
+import ServerLocations from "./ServerLocations";
 import { api } from "../api/client";
 import { parseIni, serializeIni } from "../configParsers/ini";
 import { parseProperties, serializeProperties } from "../configParsers/properties";
@@ -312,6 +313,7 @@ function ConfigPage({
 				<Typography variant="h5" color="info.main">
 					This server does not have any editable config files.
 				</Typography>
+				<ServerLocations only={serverName} />
 				<Box
 					sx={{
 						display: "flex",
@@ -430,6 +432,7 @@ function ConfigPage({
 					<Typography variant="h4">
 						{serverName} - Configuration
 					</Typography>
+					<ServerLocations only={serverName} />
 					<Box
 						sx={{
 							display: "flex",

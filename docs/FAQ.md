@@ -13,6 +13,10 @@ No. GodlyPanel is for Windows 10 and 11 (64-bit), and manages the Windows versio
 Yes. Each gets its own folder (or, for games that share one install, its own start script), its own ports and its own
 settings. The panel checks the ports don't clash.
 
+**Where are my servers installed?**
+`Settings → Folders` lists every server's folder under *Where your servers are now*, and each server's Settings tab says
+"Installed in" at the top. The *Server install folder* setting above that list only decides where **new** servers go.
+
 **Where is my data?**
 In the `data` folder next to the app. Back that folder up to back up your accounts, settings and server list. Your worlds
 are backed up separately, from each server's **Backups** tab.
