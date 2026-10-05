@@ -28,7 +28,8 @@
 		"test": "node --test \"tests/unit/**/*.test.js\" \"tests/api/**/*.test.js\"",
 		"test:desktop": "node --test \"tests/desktop/**/*.test.js\"",
 		"test:all": "node --test \"tests/**/*.test.js\"",
-		"package": "npm run build:ui && electron-builder"
+		"package": "npm run build:ui && electron-builder",
+		"package:update": "node scripts/make-update-payload.mjs"
 	},
 	"dependencies": {
 		"adm-zip": "^0.6.1",

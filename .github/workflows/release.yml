@@ -39,13 +39,20 @@ jobs:
       - name: Build the interface and package the app
         run: npm run package
 
+      # The small app-only update the in-app updater downloads when Electron hasn't changed (see docs/UPDATING.md).
+      - name: Build the in-app update
+        run: node scripts/make-update-payload.mjs
+
       # Handed to the next job (and, when signing is set up, to SignPath).
       - name: Keep the zip
         id: upload
         uses: actions/upload-artifact@v4
         with:
           name: GodlyPanel-unsigned
-          path: dist/GodlyPanel-*-win.zip
+          path: |
+            dist/GodlyPanel-*-win.zip
+            dist/GodlyPanel-*-app.zip
+            dist/update-info.json
           retention-days: 7
 
   publish:
@@ -78,11 +85,19 @@ jobs:
           rm -f dist/GodlyPanel-*-win.zip
           cp signed/*.zip dist/
 
-      - name: Attach the zip to the release
+      # What the in-app updater reads first: both downloads, their sizes and checksums, and the Electron version. Made
+      # here, from the final zips, so the checksums are of exactly what is attached.
+      - name: Write the update manifest
+        run: node scripts/release-manifest.mjs dist
+
+      - name: Attach the zips to the release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/GodlyPanel-*-win.zip
+          files: |
+            dist/GodlyPanel-*-win.zip
+            dist/GodlyPanel-*-app.zip
+            dist/update-manifest.json
           generate_release_notes: true
           prerelease: ${{ contains(github.ref_name, '-') }}
 

@@ -114,6 +114,7 @@ export const DEFAULTS = {
 			"schedule.failed",
 			"disk.low",
 			"panel.update_available",
+			"panel.update_failed",
 		],
 		diskLowGB: 10,
 		email: {

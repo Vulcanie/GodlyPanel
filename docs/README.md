@@ -9,6 +9,7 @@ Plain-language help for running GodlyPanel. Pick what you need:
 | Let friends join my server (router, firewall, ports) | [Ports and firewall](PORTS_AND_FIREWALL.md) |
 | Let people see my servers from outside my home | [Remote access](REMOTE_ACCESS.md) |
 | Look after servers day to day: start, stop, back up, schedule | [Managing servers](MANAGING_SERVERS.md) |
+| Update GodlyPanel to a new version | [Updating GodlyPanel](UPDATING.md) |
 | Understand a message I was shown | [What the messages mean](WHAT_THE_MESSAGES_MEAN.md) |
 | Fix something that isn't working | [Troubleshooting](TROUBLESHOOTING.md) |
 | Make sure I haven't left a door open | [Security checklist](SECURITY_GUIDE.md) |

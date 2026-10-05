@@ -26,6 +26,7 @@ export const EVENT_LABELS = {
 	"schedule.skipped": "A scheduled task was skipped",
 	"disk.low": "A drive is running low on space",
 	"panel.update_available": "A new version of GodlyPanel is available",
+	"panel.update_failed": "An update of GodlyPanel didn't work",
 };
 
 const GIB = 1024 ** 3;

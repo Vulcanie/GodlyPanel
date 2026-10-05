@@ -5,6 +5,7 @@ const { ApiSupervisor } = require("./apiSupervisor.cjs");
 const { resolveDataDir, resolveResourceRoot } = require("./paths.cjs");
 const { createMainWindow } = require("./windows.cjs");
 const { createTray } = require("./tray.cjs");
+const { launchUpdate } = require("./updater.cjs");
 
 const DEFAULT_PORT = 8765;
 
@@ -53,7 +54,13 @@ const supervisor = new ApiSupervisor({
 	dataDir,
 	resourceRoot,
 	getPort: () => readConfiguredPort(dataDir),
-	env: { GHP_APP_VERSION: app.getVersion() },
+	env: {
+		GHP_APP_VERSION: app.getVersion(),
+		// What lets the panel offer "Update now": only the packaged app, which knows where it is installed.
+		GHP_SELF_UPDATE: app.isPackaged ? "1" : "",
+		GHP_APP_DIR: path.dirname(process.execPath),
+		GHP_APP_EXE: process.execPath,
+	},
 });
 
 function showWindow() {
@@ -121,9 +128,25 @@ function showNotification({ title, body }) {
 	toast.show();
 }
 
+// "Update now": the API has downloaded and checked an update. Hand it to the update script and get out of its way.
+async function handleApplyUpdate(request) {
+	const refuse = (reason) => supervisor.sendToApi({ type: "update-refused", reason });
+	try {
+		const jobs = await supervisor.requestActiveJobs();
+		if (jobs.length > 0) return refuse(`${jobs.map((j) => j.label ?? j.id).join(", ")} still running. Wait for it to finish, then update.`);
+		await launchUpdate(request, { dataDir, resourceRoot, execPath: process.execPath, currentVersion: app.getVersion(), argv: process.argv, pid: process.pid });
+	} catch (err) {
+		return refuse(err.message);
+	}
+	quitting = true;
+	await supervisor.stop();
+	app.quit();
+}
+
 supervisor.on("ipc", (msg) => {
 	if (msg?.type === "startup-settings") applyLoginItem(msg);
 	if (msg?.type === "notify") showNotification(msg);
+	if (msg?.type === "apply-update") handleApplyUpdate(msg);
 });
 
 supervisor.on("bind-error", ({ code }) => {

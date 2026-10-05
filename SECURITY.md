@@ -129,6 +129,34 @@ The safer way to give trusted people remote access is still a mesh VPN, which op
 - **Readable refusals.** A browser that is turned away (not on the network, a wrong host name, or arriving through a
   tunnel) gets a page that says why and what to do, while the app and scripts still get JSON.
 
+### Updating
+
+**Update now** (see [Updating GodlyPanel](docs/UPDATING.md)) makes the panel replace its own program files, so it is
+held to the following.
+
+- **Administrators only, and not from outside.** The button is an admin action, and it is refused when the request came
+  through the public address (the community view), so a stolen or phished staff session from the internet can't change
+  what the panel runs.
+- **Only GitHub, only the release's own files.** The panel fetches an update from GitHub over HTTPS, by the file names the
+  release's `update-manifest.json` gives, and follows no redirect off GitHub's download hosts. It only ever moves to a
+  *newer* version.
+- **Checked twice before anything is replaced.** The download must match the SHA-256 the release publishes (and its size),
+  and, once unpacked, every file must match the list inside the archive. A release that publishes no checksum is never
+  installed by itself. An archive with an entry outside its own folder, a link, or (for the small update) anything but
+  the app's own files is refused.
+- **The desktop app checks again.** The Electron process that does the hand-over re-validates the request: the unpacked
+  files must be inside the panel's own updates folder, and the script that swaps them is the copy shipped inside the
+  app, run from a temporary copy so replacing the app can't change it mid-run.
+- **Nothing is replaced in the middle of other work,** and the swap is made by renaming, so each step is instant and can be
+  undone. The new version has to report that it is running; if it doesn't, the old files are put back and the old version
+  is started again.
+- **Game servers and the `data` folder are never touched.**
+
+What this does not do: **it can't protect you from someone who controls the project's GitHub releases.** The checksum is
+published in the same place as the files, so it proves the download is the one that was published (not corrupted, not
+swapped in transit), not that the publisher is honest. The program isn't code-signed yet ([plan](docs/CODE_SIGNING.md)), so
+Windows can't vouch for it either. If that matters to you, leave **Update now** alone and verify releases yourself.
+
 ## What it does not protect against
 
 - **A hostile local network.** The panel is served over plain HTTP, so someone who

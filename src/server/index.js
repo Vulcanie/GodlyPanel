@@ -22,6 +22,7 @@ import { sweepWindowsOnBoot } from "./services/serverWindows.js";
 import { cleanupStaleUploads } from "./services/modpackService.js";
 import { killTrackedSteamCmd, hasActiveJobs } from "./services/processRegistry.js";
 import { initPanelUpdate, checkForPanelUpdate } from "./services/panelUpdate.js";
+import { initSelfUpdate, markHealthy } from "./services/selfUpdate.js";
 import { initPresets } from "./services/presetService.js";
 import { ensureDataDirs, paths } from "./paths.js";
 import { initConfig, getConfig, onConfigChange } from "./config/configStore.js";
@@ -85,6 +86,7 @@ await initServerIntent();
 await initServerOptions();
 await initScheduler();
 await initPanelUpdate();
+await initSelfUpdate();
 await initPresets();
 await initStorage();
 initPollingState();
@@ -254,6 +256,8 @@ const server = app.listen(PORT, HOST, () => {
 		.then((stats) => broadcastSseEvent({ type: "system_stats", stats }))
 		.catch(() => {});
 	cleanupStaleUploads();
+	// An update that is waiting to hear this version is up (see selfUpdate.js) can stop waiting.
+	markHealthy().catch((err) => console.warn("[update] Couldn't write the health marker:", err.message));
 	// If the community view was on when the panel last stopped, bring it back.
 	resumeCommunityView().catch(() => {});
 

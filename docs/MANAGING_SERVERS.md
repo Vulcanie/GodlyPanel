@@ -219,6 +219,7 @@ files are left alone.
 
 ## Keeping the panel itself up to date
 
-`Settings → Panel updates` shows your version and whether a newer one exists. **It never installs
-anything by itself.** It can download the new zip and check it against the checksum in the release
-notes; you then unzip it over the old app (leaving the `data` folder alone). Back up `data` first.
+`Settings → Panel updates` shows your version and whether a newer one exists, and has an **Update now** button. It
+downloads only what changed (a few megabytes), checks it, restarts the panel by itself and puts the old version back if
+the new one doesn't start. Your game servers keep running. Nothing happens until you press the button. The details, and
+when it can't update itself, are in [Updating GodlyPanel](UPDATING.md).

@@ -1,25 +1,27 @@
-import crypto from "node:crypto";
 import fs from "node:fs";
 import { promises as fsp } from "node:fs";
 import path from "node:path";
-import { Readable } from "node:stream";
-import { pipeline } from "node:stream/promises";
 import { fileURLToPath } from "node:url";
 import { getConfig } from "../config/configStore.js";
 import { paths } from "../paths.js";
 import { logActivity } from "./activityLog.js";
 import { broadcastSseEvent } from "./sseHub.js";
 import { readJson, writeJsonAtomic } from "../util/atomicJson.js";
+import { downloadVerified } from "../util/downloadVerified.js";
 
 // Is there a newer GodlyPanel? This asks GitHub's public releases list (nothing
 // about you or your servers is sent), compares versions, and can download the new
 // zip into the data folder and check it against the checksum in the release notes.
-// It never installs anything: replacing the app is left to you, as unzipping is
-// the install. No browser is needed to do any of it.
+// It never installs anything by itself. Installing on request (the "Update now"
+// button) is selfUpdate.js, which builds on what is found here: the release's
+// update-manifest.json says which small or full download to use.
 
 const STATE_FILE = path.join(paths.dataDir, "state", "panel-update.json");
 const DOWNLOAD_DIR = path.join(paths.dataDir, "updates");
 const ASSET_NAME = /^GodlyPanel-.+-win\.zip$/;
+const MANIFEST_ASSET = "update-manifest.json";
+// The only file names the updater will download for a release, whatever its manifest says.
+export const PAYLOAD_NAME = /^GodlyPanel-[0-9A-Za-z.-]+-(?:win|app)\.zip$/;
 const TRUSTED_HOSTS = ["github.com", "objects.githubusercontent.com", "release-assets.githubusercontent.com", "github-releases.githubusercontent.com"];
 
 // A test points this at a stand-in; nothing in the app's own settings can.
@@ -89,7 +91,49 @@ function describeRelease(release) {
 		asset: asset
 			? { name: asset.name, size: asset.size, url: asset.browser_download_url, sha256: checksumFromNotes(release.body, asset.name) }
 			: null,
+		// Everything attached to the release that the updater may ask for (by name, from the manifest).
+		assets: (release.assets ?? [])
+			.filter((a) => PAYLOAD_NAME.test(a.name) || a.name === MANIFEST_ASSET)
+			.map((a) => ({ name: a.name, size: a.size, url: a.browser_download_url })),
+		manifest: null,
 	};
+}
+
+const SHA256 = /^[0-9a-f]{64}$/;
+const payloadOf = (p, assets) => {
+	if (!p || typeof p !== "object" || !PAYLOAD_NAME.test(String(p.name)) || !SHA256.test(String(p.sha256)) || !Number.isSafeInteger(p.size) || p.size <= 0) return null;
+	const asset = assets.find((a) => a.name === p.name);
+	return asset ? { name: p.name, size: p.size, sha256: p.sha256, url: asset.url } : null;
+};
+
+/**
+ * The release's update-manifest.json (see scripts/release-manifest.mjs), checked: it has to be for this very
+ * release, and it may only name downloads that are attached to the release. Older releases have none; that is not
+ * an error, they just can't be installed from inside the app by the small route.
+ */
+export function readManifest(release, text) {
+	try {
+		const m = JSON.parse(text);
+		if (m?.format !== 1 || m.version !== release.version || typeof m.electron !== "string") return null;
+		const full = payloadOf(m.full, release.assets);
+		const app = payloadOf(m.app, release.assets);
+		return full || app ? { version: m.version, electron: m.electron, full, app } : null;
+	} catch {
+		return null;
+	}
+}
+
+async function loadManifest(release) {
+	const asset = release.assets.find((a) => a.name === MANIFEST_ASSET);
+	if (!asset || !trusted(asset.url)) return null;
+	try {
+		const res = await fetch(asset.url, { headers: { "User-Agent": "GodlyPanel" }, redirect: "follow", signal: AbortSignal.timeout(15_000) });
+		if (!res.ok || !trusted(res.url || asset.url)) return null;
+		const text = await res.text();
+		return text.length < 64 * 1024 ? readManifest(release, text) : null;
+	} catch {
+		return null;
+	}
 }
 
 let state = { checkedAt: null, latest: null, error: null, notifiedVersion: null };
@@ -127,6 +171,7 @@ export async function checkForPanelUpdate() {
 			.filter((r) => r.tag_name)
 			.map(describeRelease)
 			.sort((a, b) => compareVersions(b.version, a.version))[0];
+		if (newest) newest.manifest = await loadManifest(newest);
 		state = { ...state, checkedAt: new Date().toISOString(), latest: newest ?? null, error: null };
 	} catch (err) {
 		state = { ...state, checkedAt: new Date().toISOString(), error: err.message };
@@ -149,7 +194,10 @@ export async function checkForPanelUpdate() {
 
 let downloading = null;
 
-const trusted = (url) => {
+export const trustedUrl = (url) => trusted(url);
+export const latestRelease = () => state.latest;
+
+function trusted(url) {
 	if (overridden()) return true;
 	try {
 		const u = new URL(url);
@@ -157,7 +205,7 @@ const trusted = (url) => {
 	} catch {
 		return false;
 	}
-};
+}
 
 export function downloadState() {
 	return downloading ? { ...downloading } : null;
@@ -173,38 +221,27 @@ export async function downloadPanelUpdate() {
 
 	await fsp.mkdir(DOWNLOAD_DIR, { recursive: true });
 	const file = path.join(DOWNLOAD_DIR, asset.name);
-	const partial = `${file}.partial`;
 	downloading = { status: "downloading", name: asset.name, received: 0, total: asset.size, file, verified: null, error: null };
 
 	(async () => {
 		try {
-			const res = await fetch(asset.url, { headers: { "User-Agent": "GodlyPanel" }, redirect: "follow" });
-			if (!res.ok || !res.body) throw new Error(`The download answered ${res.status}.`);
-			if (!trusted(res.url || asset.url)) throw new Error("The download was redirected somewhere the panel doesn't trust.");
-			const hash = crypto.createHash("sha256");
 			let lastShown = 0;
-			const counter = async function* (source) {
-				for await (const chunk of source) {
-					hash.update(chunk);
-					downloading.received += chunk.length;
-					if (downloading.received - lastShown > 2 * 1024 * 1024) {
-						lastShown = downloading.received;
-						broadcastSseEvent({ type: "panel_update_progress", received: downloading.received, total: downloading.total }, (c) => c.role === "admin");
+			const { sha256 } = await downloadVerified({
+				url: asset.url,
+				dest: file,
+				sha256: asset.sha256,
+				isTrusted: trusted,
+				onProgress: (received) => {
+					downloading.received = received;
+					if (received - lastShown > 2 * 1024 * 1024) {
+						lastShown = received;
+						broadcastSseEvent({ type: "panel_update_progress", received, total: downloading.total }, (c) => c.role === "admin");
 					}
-					yield chunk;
-				}
-			};
-			await pipeline(Readable.fromWeb(res.body), counter, fs.createWriteStream(partial));
-			const digest = hash.digest("hex");
-			if (asset.sha256 && digest !== asset.sha256) {
-				await fsp.rm(partial, { force: true });
-				throw new Error(`The download doesn't match the checksum in the release notes (got ${digest.slice(0, 12)}…, expected ${asset.sha256.slice(0, 12)}…), so it was deleted.`);
-			}
-			await fsp.rename(partial, file);
-			downloading = { ...downloading, status: "done", verified: Boolean(asset.sha256), sha256: digest };
+				},
+			});
+			downloading = { ...downloading, status: "done", verified: Boolean(asset.sha256), sha256 };
 			broadcastSseEvent({ type: "panel_update_progress", done: true }, (c) => c.role === "admin");
 		} catch (err) {
-			await fsp.rm(partial, { force: true }).catch(() => {});
 			downloading = { ...downloading, status: "failed", error: err.message };
 			broadcastSseEvent({ type: "panel_update_progress", failed: err.message }, (c) => c.role === "admin");
 		}

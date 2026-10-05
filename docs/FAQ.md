@@ -27,8 +27,9 @@ router forwards need pointing at the new PC. Copy the folder with Explorer rathe
 so the `data` folder takes the new account's permissions.
 
 **How do I update GodlyPanel?**
-`Settings → Panel updates` tells you when there's a new version and can download and verify it. You then unzip it over the old
-app, leaving `data` alone. It never installs by itself. Back up `data` first.
+`Settings → Panel updates` tells you when there's a new version. Press **Update now**: it downloads just what changed,
+restarts the panel by itself and goes back to the old version if the new one doesn't start. Your game servers keep running.
+See [Updating GodlyPanel](UPDATING.md).
 
 ## Friends and access
 

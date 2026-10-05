@@ -235,6 +235,15 @@ class ApiSupervisor extends EventEmitter {
 	}
 
 	/** Resolves with the API's in-flight jobs, or [] if it can't answer. */
+	/** A message for the API process (it may not be listening: the API is only ever told things it can ignore). */
+	sendToApi(message) {
+		try {
+			this.child?.send(message);
+		} catch {
+			// The API is going away; nothing to tell.
+		}
+	}
+
 	requestActiveJobs({ timeoutMs = 1500 } = {}) {
 		if (!this.child || this.state !== "ready") return Promise.resolve([]);
 		return new Promise((resolve) => {

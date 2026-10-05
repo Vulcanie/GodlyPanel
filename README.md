@@ -112,6 +112,9 @@ commit messages describe the problem each change solved.
   or launched with no window at all, with its live console output shown in the panel.
 - **Manages storage.** Choose where servers are installed (the drive matters: games are
   big), see how much they use, and optionally set a limit.
+- **Updates itself when you say so.** A button in Settings downloads only what changed (a few MB, not the
+  whole package), restarts the panel, and puts the old version back if the new one doesn't start. Your game
+  servers keep running. See [docs/UPDATING.md](docs/UPDATING.md).
 - **Posts to Discord** (optional): one status message that updates in place, plus
   update announcements.
 - **Keeps backups off the PC too.** Every backup can be copied to another drive, a network share
@@ -207,7 +210,8 @@ else, and it uses the PowerShell that ships with Windows.
 3. **Unzip it somewhere with plenty of free space,** for example `D:\GodlyPanel`. By
    default, servers you create are stored inside this folder (you can choose another
    drive on first run). Avoid `C:\Program Files`, which is write-protected.
-4. Run **`GodlyPanel.exe`**.
+4. Run **`GodlyPanel.exe`**. After this first install, updates are a button: see
+   [Updating GodlyPanel](docs/UPDATING.md).
 5. If you skipped the unblock step, Windows may say *"Windows protected your PC"*,
    because the app isn't code-signed (that costs money I don't have). Choose
    **More info → Run anyway**. If you'd rather not, [build it from source](#development)

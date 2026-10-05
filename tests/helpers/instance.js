@@ -116,8 +116,10 @@ export class Api {
  * @param {boolean}  [options.admin]    create the admin (and a guest) account
  * @param {(dir: string) => void} [options.prepare]  runs before boot, e.g. to make files
  * @param {object}   [options.env]      extra environment for the API process
+ * @param {boolean}  [options.ipc]      give the API an IPC channel, as the desktop app does; messages it sends are
+ *   collected in `messages`, and `send(message)` replies to it
  */
-export async function startInstance({ servers = [], config = {}, admin = true, prepare, env = {} } = {}) {
+export async function startInstance({ servers = [], config = {}, admin = true, prepare, env = {}, ipc = false } = {}) {
 	const dir = tempDir("api");
 	const port = await freePort();
 	prepare?.(dir);
@@ -143,8 +145,10 @@ export async function startInstance({ servers = [], config = {}, admin = true, p
 			GHP_RESOURCE_ROOT: path.join(ROOT, "resources"),
 			...env,
 		},
-		stdio: ["ignore", logFd, logFd],
+		stdio: ipc ? ["ignore", logFd, logFd, "ipc"] : ["ignore", logFd, logFd],
 	});
+	const messages = [];
+	if (ipc) child.on("message", (m) => messages.push(m));
 
 	const base = `http://127.0.0.1:${port}`;
 	const api = new Api(base);
@@ -174,6 +178,8 @@ export async function startInstance({ servers = [], config = {}, admin = true, p
 		base,
 		api,
 		log: () => fs.readFileSync(logPath, "utf8"),
+		messages,
+		send: (message) => child.send(message),
 		async stop() {
 			// GP_TEST_LOG=1 shows the panel's own log at the end of a test file, minus the
 			// request noise, for working out why a test failed.

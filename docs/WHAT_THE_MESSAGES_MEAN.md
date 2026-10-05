@@ -238,6 +238,26 @@ and if it keeps happening, download from the project's Releases page and compare
 **That download isn't from a place the panel trusts, so it was not fetched.**
 The panel only downloads updates from the project's GitHub releases.
 
+**The download is … bytes but should be …, so it was deleted** / **The download is larger than it should be.**
+What arrived isn't the size the release says it is. It was deleted and nothing was changed. Try again.
+
+**… isn't what its list says, so it was not used** / **The app update holds …, which isn't part of the app's own files.**
+The update was downloaded and matched its checksum, but its contents don't match the list that comes with it. It was
+thrown away before anything was replaced. If it happens again, report it: it may be a faulty release.
+
+**Wait until … have finished, then update.**
+A backup, restore, game update or install is running, and restarting the panel would cut it off. Try again when it's done.
+
+**Version … didn't start properly (…), so … was put back.**
+The update was installed but the new version didn't come up, so the old files were restored and the old version was
+started again. Nothing was lost. `data\logs\update.log` says what happened; please report it.
+
+**The update to … didn't work and was undone.**
+The same thing, shown on the Panel updates card. Your servers were not affected.
+
+**This copy of GodlyPanel isn't the installed app / This Windows account can't change the files in …**
+**Update now** isn't available here. See [When it won't update](UPDATING.md#when-it-wont-update-and-why).
+
 ---
 
 ## The data folder
