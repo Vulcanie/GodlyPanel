@@ -302,8 +302,14 @@ describe("installing an update from inside the app", () => {
 			assert.match(refused.json.error, /Fake Busy/);
 			assert.equal(busy.messages.filter((m) => m.type === "apply-update").length, 0);
 		} finally {
-			killFakeGames(path.join(busy.dir, "fake-busy"));
+			// The server was still starting when the checks ended. Let that finish, so there is a process to find, then clean
+			// up before and after the panel goes (the start script may launch it a moment after the panel is told to stop).
+			const folder = path.join(busy.dir, "fake-busy");
+			await until(async () => !(await busy.api.get("/api/operations").catch(() => ({ json: {} }))).json["Fake Busy"], { timeoutMs: 30_000 });
+			killFakeGames(folder);
 			await busy.stop();
+			await sleep(500);
+			killFakeGames(folder);
 		}
 	});
 });
