@@ -2,7 +2,8 @@ import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import { startInstance, serverEntry, sleep, GUEST } from "../helpers/instance.js";
+import { serverEntry, sleep, GUEST } from "../helpers/instance.js";
+import { startInProcess } from "../helpers/inprocess.js";
 
 // Tags: free labels an administrator puts on servers so the dashboard can be searched
 // and grouped. They are validated, kept across restarts of the panel's data, shown on
@@ -28,7 +29,7 @@ describe("tags", () => {
 	const tagsOf = async (name, cookie) => (await api.call("GET", "/api/status", undefined, cookie ? { cookie } : undefined)).json[name]?.tags;
 
 	before(async () => {
-		panel = await startInstance({
+		panel = await startInProcess({
 			servers: (dir) => [
 				serverEntry(dir, { name: "Alpha", processName: "nope-a.exe", tags: ["friends"] }),
 				serverEntry(dir, { name: "Beta", processName: "nope-b.exe" }),

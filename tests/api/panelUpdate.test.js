@@ -4,8 +4,9 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
-import { startInstance, freePort, sleep } from "../helpers/instance.js";
-import { compareVersions, checksumFromNotes } from "../../src/server/services/panelUpdate.js";
+import { freePort, sleep } from "../helpers/instance.js";
+import { startInProcess } from "../helpers/inprocess.js";
+import { compareVersions, checksumFromNotes } from "../../src/server/util/releaseVersions.js";
 
 // "Is there a newer GodlyPanel?" against a stand-in for GitHub's releases list:
 // it notices a newer version (and not an older or identical one), tells you once,
@@ -78,7 +79,7 @@ describe("checking for and fetching a new version", () => {
 		});
 		await new Promise((r) => github.listen(port, "127.0.0.1", r));
 
-		panel = await startInstance({
+		panel = await startInProcess({
 			env: { GHP_UPDATE_API: url, GHP_APP_VERSION: "0.1.0-alpha.2" },
 			config: { updates: { check: false } },
 		});

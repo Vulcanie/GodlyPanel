@@ -1,24 +1,11 @@
 import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
-import http from "node:http";
-import { startInstance, serverEntry, ADMIN, GUEST } from "../helpers/instance.js";
+import { serverEntry, ADMIN, GUEST } from "../helpers/instance.js";
+import { startInProcess } from "../helpers/inprocess.js";
 
 // Accounts, sessions, roles, and the network-facing hardening. Each test talks
 // to a real API process started for this file, so what's checked is what a
 // person on the network would actually get.
-
-/** A request with a chosen Host header, which fetch() won't allow. */
-function requestWithHost(port, host, path = "/api/setup/status") {
-	return new Promise((resolve, reject) => {
-		const req = http.request({ host: "127.0.0.1", port, path, headers: { Host: host } }, (res) => {
-			let body = "";
-			res.on("data", (d) => (body += d));
-			res.on("end", () => resolve({ status: res.statusCode, body }));
-		});
-		req.on("error", reject);
-		req.end();
-	});
-}
 
 describe("accounts and sessions", () => {
 	let panel;
@@ -27,7 +14,7 @@ describe("accounts and sessions", () => {
 	let guestCookie;
 
 	before(async () => {
-		panel = await startInstance({
+		panel = await startInProcess({
 			prepare: () => {},
 			servers: [serverEntry("C:\\", { name: "Secret Server", serverPassword: "join-me-123", sessionName: "Visible Name", processName: "x.exe" })],
 		});
@@ -97,26 +84,26 @@ describe("accounts and sessions", () => {
 	});
 
 	it("session cookies are HttpOnly and SameSite=Strict", async () => {
-		const res = await fetch(`${panel.base}/api/auth/login`, {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify(GUEST),
-		});
+		// `cookie: ""` keeps this login from replacing the admin session the rest of the file uses.
+		const res = await api.post("/api/auth/login", GUEST, { cookie: "" });
 		const cookie = res.headers.get("set-cookie");
 		assert.match(cookie, /HttpOnly/i);
 		assert.match(cookie, /SameSite=Strict/i);
 	});
 
 	describe("Host header (DNS rebinding)", () => {
+		// A chosen Host header: something fetch() won't send, and a raw http.request used to be needed for.
+		const withHost = (host) => api.get("/api/setup/status", { headers: { Host: host } });
+
 		it("answers to an IP address and to localhost", async () => {
-			assert.equal((await requestWithHost(panel.port, `127.0.0.1:${panel.port}`)).status, 200);
-			assert.equal((await requestWithHost(panel.port, `localhost:${panel.port}`)).status, 200);
+			assert.equal((await withHost(`127.0.0.1:${panel.port}`)).status, 200);
+			assert.equal((await withHost(`localhost:${panel.port}`)).status, 200);
 		});
 
 		it("refuses a name someone else controls", async () => {
-			const r = await requestWithHost(panel.port, "evil.example.com");
+			const r = await withHost("evil.example.com");
 			assert.equal(r.status, 400);
-			assert.match(r.body, /bad_host/);
+			assert.match(JSON.stringify(r.json), /bad_host/);
 		});
 	});
 

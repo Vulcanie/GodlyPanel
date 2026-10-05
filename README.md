@@ -392,14 +392,26 @@ node tests/ui/navigation.mjs   # drives the interface in a real browser (needs a
 node tests/ui/workspace.mjs    # every server tab, as an administrator and as a moderator
 ```
 
-- **Unit and API tests** (over 300) boot the real API against a throwaway folder and a
-  random port, so they check what a user actually gets, not mocks. They cover accounts
-  and sessions, roles, the network filter, polling, file access, uploads, first-run setup,
-  the launch-script reader, and port rules. Many use **a stand-in game**: a renamed copy
-  of node.exe that answers RCON (with Conan Exiles' quirk), keeps a world file and a log,
-  and can be told to crash. That lets the tests start it, stop it, back it up, restore it,
-  kill it and watch it restart, run schedules against it, clone it, and read its logs and
-  players, all for real. They run on Windows in CI on every push.
+- **Unit and API tests** (over 600, split into four parts in CI so a release isn't held up)
+  run the real API against a throwaway folder, so they check what a user actually gets. They
+  cover accounts and sessions, roles, the network filter, polling, file access, uploads,
+  first-run setup, the launch-script reader, and port rules. Two ways, in `tests/api/`:
+  - **In-process** (`startInProcess()` in `tests/helpers/inprocess.js`): the real routes,
+    middleware and stores run inside the test, driven with [supertest](https://github.com/ladjs/supertest)
+    (the Express counterpart of Spring's MockMvc). Fast, no child process to leak, failures
+    are ordinary stack traces, and outgoing HTTP can be mocked with undici's `MockAgent`
+    (see `panelUpdateTrust.test.js`). Use it for anything that is about routes, accounts,
+    settings and logic. One panel per file, and don't import `src/server` modules at the top
+    of such a file (the helper refuses if you do).
+  - **Real process** (`startInstance()`): the panel is started as a separate process on a
+    random port. Use it when the thing under test is the process itself: starting and
+    killing games, crash recovery, the desktop shell. Many use **a stand-in game**: a
+    renamed copy of node.exe that answers RCON (with Conan Exiles' quirk), keeps a world
+    file and a log, and can be told to crash. That lets the tests start it, stop it, back it
+    up, restore it, kill it and watch it restart, run schedules against it, clone it, and
+    read its logs and players, all for real.
+
+  They run on Windows in CI on every push.
 - **Desktop tests** (19) exercise the window modes against stand-in programs and real
   windows, so they need an interactive Windows session and run locally. They only ever
   start and stop programs they created themselves.

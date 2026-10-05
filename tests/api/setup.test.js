@@ -2,7 +2,8 @@ import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import { startInstance, tempDir, removeDir, ADMIN } from "../helpers/instance.js";
+import { tempDir, removeDir, ADMIN } from "../helpers/instance.js";
+import { startInProcess } from "../helpers/inprocess.js";
 
 // First run: choosing where servers live before the account exists, the
 // loopback-only setup routes, settings validation, and how errors are reported.
@@ -16,7 +17,7 @@ describe("first-run setup", { skip: !onWindows && "Windows paths" }, () => {
 	let chosen;
 
 	before(async () => {
-		panel = await startInstance({ admin: false });
+		panel = await startInProcess({ admin: false });
 		api = panel.api;
 		chosen = path.join(tempDir("chosen"), "GameServers");
 	});
@@ -102,15 +103,11 @@ describe("first-run setup", { skip: !onWindows && "Windows paths" }, () => {
 
 	describe("error handling", () => {
 		it("answers malformed JSON with a JSON error, not an HTML page with a stack trace", async () => {
-			const res = await fetch(`${panel.base}/api/settings`, {
-				method: "PUT",
-				headers: { "Content-Type": "application/json", Cookie: api.cookie },
-				body: '{"broken":',
-			});
+			// A string body is sent exactly as given.
+			const res = await api.put("/api/settings", '{"broken":');
 			assert.equal(res.status, 400);
-			const body = await res.text();
-			assert.doesNotMatch(body, /<html|node_modules|at .*\.js/i);
-			assert.match(JSON.parse(body).error, /valid JSON/);
+			assert.doesNotMatch(JSON.stringify(res.json), /<html|node_modules|at .*\.js/i);
+			assert.match(res.json.error, /valid JSON/);
 		});
 
 		it("answers an unknown API route with JSON", async () => {
