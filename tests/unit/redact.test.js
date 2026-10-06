@@ -10,7 +10,11 @@ describe("hiding passwords in log lines", () => {
 		['"password": "s3cret!"', '"password": "********"'],
 		["rcon.password=abc123", "rcon.password=********"],
 		["api_key: abcdef123456", "api_key: ********"],
-		["start valheim_server.exe -name x -password bob", "start valheim_server.exe -name x -password bob"],
+		// A password flag followed by a space (Valheim), not just by an equals sign.
+		["start valheim_server.exe -name x -password bob", "start valheim_server.exe -name x -password ********"],
+		['valheim_server.exe -password "two words" -port 2456', 'valheim_server.exe -password "********" -port 2456'],
+		// Only the flag itself: a longer name that merely starts with it is left alone.
+		["valheim_server.exe -passwordless on -name x", "valheim_server.exe -passwordless on -name x"],
 		["Player joined: Alice", "Player joined: Alice"],
 		["No secrets here, only a port 8892 and a path C:\Games", "No secrets here, only a port 8892 and a path C:\Games"],
 	];

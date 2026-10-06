@@ -18,6 +18,7 @@ describe("hiding secrets in log text", () => {
 
 	const forms = [
 		["a command-line flag", (k, s) => `-${k}=${s}`, ["AdminPassword", "RCONPassword"]],
+		["a command-line flag followed by a space", (k, s) => `-${k} ${s}`, ["Password", "AdminPassword", "RCONPassword", "ServerPassword"]],
 		["key=value", (k, s) => `${k}=${s}`, KEYS],
 		["key = value", (k, s) => `${k} = ${s}`, KEYS],
 		["key: value", (k, s) => `${k}: ${s}`, KEYS],
@@ -28,6 +29,8 @@ describe("hiding secrets in log text", () => {
 		it(`never leaves any of the password showing, written as ${label}`, () => {
 			check(
 				fc.property(fc.constantFrom(...keys), secret, fc.string({ maxLength: 20 }).filter((t) => !/[*]/.test(t)), (key, s, around) => {
+					// The text around it must not happen to contain the password too, or no redaction could ever make it disappear.
+					fc.pre(!around.includes(s));
 					const line = `${around} ${make(key, s)} ${around}`;
 					const out = redactSecrets(line);
 					assert.ok(!out.includes(s), `${JSON.stringify(line)} -> ${JSON.stringify(out)}`);

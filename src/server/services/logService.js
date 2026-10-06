@@ -28,7 +28,8 @@ const VALUE = String.raw`(?:"((?:[^"\\]|\\.)*)"?|'([^']*)'?|(\S+))`;
 const OPTIONAL_VALUE = String.raw`(?:"((?:[^"\\]|\\.)*)"?|'([^']*)'?|(\S*))`;
 
 const secretPatterns = [
-	new RegExp(String.raw`(-(?:ServerPassword|RCONPassword|AdminPassword|Password|ServerAdminPassword|PalworldAdminPassword)=)` + VALUE, "gi"),
+	// A password flag, joined to its value by = (Unreal games) or by a space (Valheim's `-password bob`).
+	new RegExp(String.raw`(-(?:ServerPassword|RCONPassword|AdminPassword|Password|ServerAdminPassword|PalworldAdminPassword)(?:=|\s+))` + VALUE, "gi"),
 	new RegExp(String.raw`((?:password|passwd|pwd|secret|token|api[_-]?key)["']?\s*[:=]\s*)` + VALUE, "gi"),
 	new RegExp(String.raw`(rcon\.password=)` + OPTIONAL_VALUE, "gi"),
 	new RegExp(String.raw`(\+password\s+)` + VALUE, "gi"),
