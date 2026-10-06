@@ -19,17 +19,28 @@ const RECENT_FILES = 8;
 
 const hashOf = (p) => crypto.createHash("sha1").update(p.toLowerCase()).digest("hex").slice(0, 12);
 
+const MASK = "********";
+
+// What follows a key. A value is a double-quoted string (escapes allowed, and an unclosed one runs to the end of the line, which
+// is what a truncated log line looks like), a single-quoted one, or everything up to the next whitespace. Not "up to a comma or
+// a semicolon" as it once was: those are ordinary characters in a password, and stopping at one showed the rest of it.
+const VALUE = String.raw`(?:"((?:[^"\\]|\\.)*)"?|'([^']*)'?|(\S+))`;
+const OPTIONAL_VALUE = String.raw`(?:"((?:[^"\\]|\\.)*)"?|'([^']*)'?|(\S*))`;
+
 const secretPatterns = [
-	/(-(?:ServerPassword|RCONPassword|AdminPassword|Password|ServerAdminPassword|PalworldAdminPassword)=)\S+/gi,
-	/((?:password|passwd|pwd|secret|token|api[_-]?key)["']?\s*[:=]\s*["']?)[^\s"',;]+/gi,
-	/(rcon\.password=)\S*/gi,
-	/(\+password\s+)\S+/gi,
+	new RegExp(String.raw`(-(?:ServerPassword|RCONPassword|AdminPassword|Password|ServerAdminPassword|PalworldAdminPassword)=)` + VALUE, "gi"),
+	new RegExp(String.raw`((?:password|passwd|pwd|secret|token|api[_-]?key)["']?\s*[:=]\s*)` + VALUE, "gi"),
+	new RegExp(String.raw`(rcon\.password=)` + OPTIONAL_VALUE, "gi"),
+	new RegExp(String.raw`(\+password\s+)` + VALUE, "gi"),
 ];
+
+// Keeps the key, and the quotes if the value had them.
+const mask = (match, prefix, doubleQuoted, singleQuoted) => prefix + (doubleQuoted !== undefined ? `"${MASK}"` : singleQuoted !== undefined ? `'${MASK}'` : MASK);
 
 /** Hide anything that looks like a password or key. */
 export function redactSecrets(text) {
 	let out = text;
-	for (const pattern of secretPatterns) out = out.replace(pattern, "$1********");
+	for (const pattern of secretPatterns) out = out.replace(pattern, mask);
 	return out;
 }
 

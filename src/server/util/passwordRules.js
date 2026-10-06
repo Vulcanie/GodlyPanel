@@ -22,7 +22,8 @@ const COMMON = new Set([
  * @returns {string|null}  what is wrong with it, or null if it is fine
  */
 export function passwordProblem(password, username = "") {
-	if (typeof password !== "string" || password.length < MIN_LENGTH) {
+	// Characters, not UTF-16 units: an emoji is one character but two units, so four of them must not pass for eight.
+	if (typeof password !== "string" || [...password].length < MIN_LENGTH) {
 		return `Choose a password of at least ${MIN_LENGTH} characters. A few random words work well and are easy to remember.`;
 	}
 	if (Buffer.byteLength(password, "utf8") > MAX_BYTES) {

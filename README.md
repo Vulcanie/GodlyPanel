@@ -412,6 +412,16 @@ node tests/ui/workspace.mjs    # every server tab, as an administrator and as a 
     read its logs and players, all for real.
 
   They run on Windows in CI on every push.
+- **Property tests** (`tests/unit/properties.*.test.js`, using
+  [fast-check](https://fast-check.dev)) state a rule that must hold for *every* input of
+  some shape and check it on hundreds of generated ones, instead of a few hand-picked
+  examples. They cover the code that reads text other people wrote: path containment,
+  zip-slip detection, launch lines and the start-script reader, command quoting, release
+  versions and notes, passwords, secret redaction in logs, image headers, line diffs, and
+  schedules. When one fails, fast-check shrinks the input to the smallest that still fails
+  and prints the seed. In `npm test` the seed is fixed (so a run is always the same). To go
+  looking for bugs, let it roam:
+  `$env:FC_SEED = "random"; $env:FC_RUNS = "20000"; node --test tests/unit/properties.*.test.js`.
 - **Desktop tests** (19) exercise the window modes against stand-in programs and real
   windows, so they need an interactive Windows session and run locally. They only ever
   start and stop programs they created themselves.
