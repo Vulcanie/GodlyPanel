@@ -15,6 +15,10 @@ import { protectedReason } from "./serverRemoval.js";
 import { broadcastSseEvent } from "./sseHub.js";
 import { createZip, listZip, extractZip, unsafeEntries } from "../util/tarZip.js";
 import { sleep } from "../util/async.js";
+import { flagValue, optionValue, propertyValue } from "../util/launchOptions.js";
+
+// Re-exported: callers (and tests) have always imported these from here.
+export { flagValue, optionValue, propertyValue };
 
 // Backups of a server's saves and settings, as one zip each with a small JSON
 // record beside it. The panel decides what to copy (the game's known save
@@ -66,33 +70,6 @@ const exists = async (p) => {
 };
 
 // ---- what to back up --------------------------------------------------------
-
-/** The value a start script gives a flag (`-savedir "x"`, `-UserDataFolder=x`, `"-UserDataFolder=x"`), or null. */
-export function flagValue(text, flag) {
-	const name = flag.replace(/=$/, "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-	const quotedWhole = new RegExp(`"${name}=([^"]*)"`, "i").exec(text);
-	if (quotedWhole) return quotedWhole[1];
-	const m = new RegExp(`(?:^|\\s)${name}(?:=|\\s+)(?:"([^"]*)"|(\\S+))`, "i").exec(text);
-	return m ? (m[1] ?? m[2]) : null;
-}
-
-/** The value a launch line gives a `?Name=value` option (ARK's way), or null. */
-export function optionValue(text, name) {
-	const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-	const m = new RegExp(`[?&]${escaped}=([^?&\\s"]+)`, "i").exec(text);
-	return m ? m[1] : null;
-}
-
-/** A `key=value` line's value from a .properties file's text, or null. */
-export function propertyValue(text, key) {
-	for (const line of String(text).split(/\r?\n/)) {
-		const trimmed = line.trim();
-		if (trimmed === "" || trimmed.startsWith("#") || trimmed.startsWith("!")) continue;
-		const at = trimmed.indexOf("=");
-		if (at > 0 && trimmed.slice(0, at).trim() === key) return trimmed.slice(at + 1).trim();
-	}
-	return null;
-}
 
 /** A setting used as a folder name has to be one plain folder name, never a path out of the server's folder. */
 const plainFolderName = (value) => typeof value === "string" && value !== "" && value !== "." && value !== ".." && !/[\\/:*?"<>|]/.test(value);

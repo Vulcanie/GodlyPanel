@@ -2,8 +2,9 @@ import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import { startInstance, serverEntry } from "../helpers/instance.js";
-import { optionValue } from "../../src/server/services/backupService.js";
+import { serverEntry } from "../helpers/instance.js";
+import { startInProcess } from "../helpers/inprocess.js";
+import { optionValue } from "../../src/server/util/launchOptions.js";
 
 // Several ARK Ascended maps share one install, each with its own save folder named in its launch line. A server's
 // backup is its own map's folder (plus the small shared settings), never the whole Saved folder.
@@ -28,7 +29,7 @@ describe("ARK Ascended backups with several maps in one install", () => {
 	let install;
 
 	before(async () => {
-		panel = await startInstance({
+		panel = await startInProcess({
 			servers: (dir) => {
 				install = path.join(dir, "ark-asa");
 				const saved = path.join(install, "ShooterGame", "Saved");

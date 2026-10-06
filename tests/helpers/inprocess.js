@@ -49,6 +49,24 @@ export class InProcessApi extends Api {
 		return { status: res.status, json: isJson ? res.body : res.text, headers: out };
 	}
 
+	/**
+	 * Like the global fetch(), against the app: a path instead of a URL, nothing added to the request (no cookie unless the
+	 * headers carry one), and a real Response back, so a test can read headers and raw bytes (an image, say).
+	 */
+	async fetch(url, { method = "GET", headers = {}, body } = {}) {
+		let req = request(this.app)[method.toLowerCase()](url);
+		for (const [name, value] of Object.entries(headers)) req = req.set(name, value);
+		if (body !== undefined) req = req.send(body);
+		const res = await req.buffer(true).parse((stream, done) => {
+			const chunks = [];
+			stream.on("data", (chunk) => chunks.push(chunk));
+			stream.on("end", () => done(null, Buffer.concat(chunks)));
+		});
+		const out = new Headers();
+		for (const [name, value] of Object.entries(res.headers)) for (const v of [].concat(value)) out.append(name, v);
+		return new Response([204, 205, 304].includes(res.status) ? null : res.body, { status: res.status, headers: out });
+	}
+
 	async upload(url, field, filename, bytes) {
 		let req = request(this.app).post(url).attach(field, Buffer.from(bytes), filename);
 		if (this.cookie) req = req.set("Cookie", this.cookie);

@@ -2,7 +2,8 @@ import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import { startInstance, serverEntry } from "../helpers/instance.js";
+import { serverEntry } from "../helpers/instance.js";
+import { startInProcess } from "../helpers/inprocess.js";
 
 // Every change the panel makes to a settings or start-script file is kept, so it can be
 // looked at and undone, including the very first one.
@@ -19,7 +20,7 @@ describe("settings history", () => {
 	const versions = async (key = "config") => (await api.get(`/api/server/History%20Test/history/${enc(key)}`)).json;
 
 	before(async () => {
-		panel = await startInstance({
+		panel = await startInProcess({
 			servers: (d) => {
 				dir = path.join(d, "hist");
 				fs.mkdirSync(dir, { recursive: true });

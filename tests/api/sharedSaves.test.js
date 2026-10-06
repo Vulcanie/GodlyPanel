@@ -2,8 +2,9 @@ import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import { startInstance, serverEntry, sleep, tempDir } from "../helpers/instance.js";
-import { flagValue } from "../../src/server/services/backupService.js";
+import { serverEntry, sleep, tempDir } from "../helpers/instance.js";
+import { startInProcess } from "../helpers/inprocess.js";
+import { flagValue } from "../../src/server/util/launchOptions.js";
 
 // Valheim and 7 Days to Die keep their worlds in the signed-in user's profile unless
 // the start script says otherwise, shared with every other such server on the PC. A
@@ -45,7 +46,7 @@ describe("worlds in the profile folder", () => {
 		profileWorld = path.join(home, "AppData", "LocalLow", "IronGate", "Valheim", "worlds_local");
 		fs.mkdirSync(profileWorld, { recursive: true });
 		fs.writeFileSync(path.join(profileWorld, "OtherServersWorld.fwl"), "someone else's world");
-		panel = await startInstance({
+		panel = await startInProcess({
 			// The API sees this as the user's profile, so nothing real is ever touched.
 			env: { USERPROFILE: home, APPDATA: path.join(home, "AppData", "Roaming"), HOME: home },
 			servers: (dir) => {

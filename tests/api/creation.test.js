@@ -2,7 +2,8 @@ import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import { startInstance, serverEntry } from "../helpers/instance.js";
+import { serverEntry } from "../helpers/instance.js";
+import { startInProcess } from "../helpers/inprocess.js";
 
 // Creating a server: port validation happens before anything is downloaded, and
 // SteamCMD is never fetched without asking. These all stop short of installing
@@ -16,7 +17,7 @@ describe("creating a server", () => {
 	const create = (templateId, body) => api.post("/api/servers", { templateId, sessionName: "Test", serverPassword: "abcdef", ...body });
 
 	before(async () => {
-		panel = await startInstance({
+		panel = await startInProcess({
 			servers: (dir) => {
 				const arkScript = path.join(dir, "Start_ASE.bat");
 				fs.writeFileSync(arkScript, '@echo off\r\nstart /MIN "T" ShooterGameServer.exe TheIsland?listen -RCONPort=9503 -Port=9500 -QueryPort=9502 -server -log\r\n');

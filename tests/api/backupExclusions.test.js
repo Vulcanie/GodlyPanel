@@ -3,7 +3,8 @@ import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { startInstance, serverEntry, sleep } from "../helpers/instance.js";
+import { serverEntry, sleep } from "../helpers/instance.js";
+import { startInProcess } from "../helpers/inprocess.js";
 
 // A modded Minecraft world can carry tens of gigabytes of Distant Horizons data (a rebuildable cache of
 // far-away terrain, in a database next to each dimension). Backups leave it out, wherever it is nested,
@@ -27,7 +28,7 @@ describe("backups of a modded Minecraft world", () => {
 	let folder;
 
 	before(async () => {
-		panel = await startInstance({
+		panel = await startInProcess({
 			servers: (dir) => {
 				folder = path.join(dir, "mc");
 				const w = (rel, text = "x") => {

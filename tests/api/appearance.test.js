@@ -2,7 +2,8 @@ import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import { startInstance, serverEntry, GUEST } from "../helpers/instance.js";
+import { serverEntry, GUEST } from "../helpers/instance.js";
+import { startInProcess } from "../helpers/inprocess.js";
 import { makePng, makeJpeg } from "../helpers/images.js";
 
 // How each game type looks on the dashboard. Deliberately never asks for the
@@ -14,7 +15,7 @@ describe("appearance", () => {
 	let guestCookie;
 
 	before(async () => {
-		panel = await startInstance({
+		panel = await startInProcess({
 			servers: (dir) => [
 				serverEntry(dir, { name: "A", type: "custom", processName: "a.exe" }),
 				serverEntry(dir, { name: "B", type: "minecraft", processName: "b.exe" }),
@@ -79,7 +80,7 @@ describe("appearance", () => {
 			assert.deepEqual([r.json.image.width, r.json.image.height], [1920, 620]);
 			assert.deepEqual(r.json.notes, [], "no advice for the recommended size");
 
-			const served = await fetch(`${panel.base}/api/art/minecraft`, { headers: { Cookie: api.cookie } });
+			const served = await api.fetch("/api/art/minecraft", { headers: { Cookie: api.cookie } });
 			assert.equal(served.headers.get("content-type"), "image/png");
 			assert.deepEqual(Buffer.from(await served.arrayBuffer()), png);
 		});
@@ -96,7 +97,7 @@ describe("appearance", () => {
 			assert.equal(r.status, 200);
 			assert.equal(fs.existsSync(artFile("minecraft.jpg")), true);
 			assert.equal(fs.existsSync(artFile("minecraft.png")), false);
-			const served = await fetch(`${panel.base}/api/art/minecraft`, { headers: { Cookie: api.cookie } });
+			const served = await api.fetch("/api/art/minecraft", { headers: { Cookie: api.cookie } });
 			assert.equal(served.headers.get("content-type"), "image/jpeg");
 		});
 

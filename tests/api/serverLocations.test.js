@@ -2,7 +2,8 @@ import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import { startInstance, serverEntry, GUEST, sleep } from "../helpers/instance.js";
+import { serverEntry, GUEST, sleep } from "../helpers/instance.js";
+import { startInProcess } from "../helpers/inprocess.js";
 
 // Where each server's files are now: beside where new ones will go, which the "Server install folder" setting
 // says. Servers made earlier, or added by hand, can be anywhere; the list says where, whether it is still there,
@@ -16,7 +17,7 @@ describe("where servers live", () => {
 	const find = (list, name) => list.servers.find((s) => s.name === name);
 
 	before(async () => {
-		panel = await startInstance({
+		panel = await startInProcess({
 			prepare: (folder) => {
 				dir = folder;
 				for (const sub of ["servers/made", "elsewhere/hand", "shared", "scriptonly"]) fs.mkdirSync(path.join(folder, sub), { recursive: true });
@@ -90,6 +91,6 @@ describe("where servers live", () => {
 		assert.equal((await api.get("/api/settings/server-locations", { cookie: mod })).status, 403);
 		const guest = await api.cookieFor(GUEST);
 		assert.equal((await api.get("/api/settings/server-locations", { cookie: guest })).status, 403);
-		assert.equal((await fetch(`${api.base}/api/settings/server-locations`)).status, 401);
+		assert.equal((await api.fetch("/api/settings/server-locations")).status, 401);
 	});
 });

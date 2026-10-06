@@ -2,7 +2,8 @@ import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import { startInstance, serverEntry } from "../helpers/instance.js";
+import { serverEntry } from "../helpers/instance.js";
+import { startInProcess } from "../helpers/inprocess.js";
 
 // The message of the day through the API: read, change, in the file and in its history,
 // only for servers of a game that has one, and only while the server is stopped.
@@ -13,7 +14,7 @@ describe("message of the day", () => {
 	let dir;
 
 	before(async () => {
-		panel = await startInstance({
+		panel = await startInProcess({
 			servers: (d) => {
 				dir = path.join(d, "mc");
 				fs.mkdirSync(dir, { recursive: true });
