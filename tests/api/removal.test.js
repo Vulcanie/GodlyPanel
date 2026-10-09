@@ -2,7 +2,7 @@ import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import { runStandIn, stopStandIns, startInstance, serverEntry, GUEST, sleep } from "../helpers/instance.js";
+import { runStandIn, stopStandIns, startInstance, serverEntry, GUEST, sleep, until } from "../helpers/instance.js";
 
 // Removing a server: out of the panel only, or with its files. The files are
 // never touched unless the panel created the server and the folder is
@@ -62,7 +62,7 @@ describe("removing servers", () => {
 		});
 		api = panel.api;
 		guestCookie = await api.cookieFor(GUEST);
-		await sleep(4500); // let a poll see "Running" online
+		await until(async () => (await api.get("/api/status")).json.Running?.online === true, { timeoutMs: 60_000 }); // a poll has seen "Running" online
 	});
 	after(() => {
 		stopStandIns();

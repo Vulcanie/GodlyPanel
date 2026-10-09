@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import net from "node:net";
 import path from "node:path";
-import { runStandIn, stopStandIns, startInstance, serverEntry, freePort, GUEST, sleep } from "../helpers/instance.js";
+import { runStandIn, stopStandIns, startInstance, serverEntry, freePort, GUEST, sleep, until } from "../helpers/instance.js";
 
 // Changing a server's ports: checked against this server's own other ports, the
 // ports the game takes for itself, every other server, the panel's own port and
@@ -57,7 +57,7 @@ describe("changing a server's ports", () => {
 		});
 		api = panel.api;
 		guestCookie = await api.cookieFor(GUEST);
-		await sleep(4500);
+		await until(async () => (await api.get("/api/status")).json.Running?.online === true, { timeoutMs: 60_000 }); // a poll has seen it
 	});
 	after(() => {
 		stopStandIns();

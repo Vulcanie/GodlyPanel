@@ -2,7 +2,7 @@ import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import { runStandIn, stopStandIns, startInstance, serverEntry, freePort, sleep } from "../helpers/instance.js";
+import { runStandIn, stopStandIns, startInstance, serverEntry, freePort, until } from "../helpers/instance.js";
 
 // Status polling, start/stop guards, and reading/writing server files. The
 // servers here are stand-ins written into the test's own folder: one "runs" as
@@ -39,7 +39,8 @@ describe("servers", () => {
 			},
 		});
 		api = panel.api;
-		await sleep(6500); // let a couple of poll cycles land
+		// Until a poll has seen the running stand-in (and so has reported on every server), however long that takes.
+		await until(async () => (await api.get("/api/status")).json.Running?.online === true && "RconDown" in (await api.get("/api/status")).json, { timeoutMs: 60_000 });
 	});
 	after(() => {
 		stopStandIns();

@@ -85,8 +85,7 @@ describe("worlds in the profile folder", () => {
 
 	it("restores a server's own worlds without fuss", async () => {
 		await api.post(`/api/server/${enc("Own Valheim")}/backups`, {});
-		await sleep(1500);
-		await until(async () => !(await api.get("/api/operations")).json["Own Valheim"]);
+		await until(async () => !(await api.get("/api/operations")).json["Own Valheim"]); // the lock is held from the moment the request is answered
 		const id = (await api.get(`/api/server/${enc("Own Valheim")}/backups`)).json.backups[0].id;
 		fs.writeFileSync(path.join(own, "saves", "worlds_local", "Mine.fwl"), "changed");
 		const r = await api.post(`/api/server/${enc("Own Valheim")}/backups/${id}/restore`, { confirmName: "Own Valheim" });

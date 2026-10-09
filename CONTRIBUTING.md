@@ -33,7 +33,7 @@ panel (see the note in the README under Development).
 ## Tests
 
 ```powershell
-npm test               # unit + API tests, about 10 seconds
+npm test               # unit + API tests, about 3-4 minutes (4 files at a time, to leave the machine usable)
 npm run test:desktop   # real processes and windows, about 2 minutes
 ```
 

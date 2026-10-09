@@ -5,7 +5,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { killFakeGames } from "../helpers/fakeGame.js";
+import { copyNodeWithoutConsole, killFakeGames } from "../helpers/fakeGame.js";
 
 // resources/scripts/apply-update.ps1, the part of the updater that swaps files while the app is closed. It is run here
 // against a stand-in "app" (a renamed node.exe whose resources/main.js says which version it is, and reports that it is
@@ -53,7 +53,7 @@ describe("apply-update.ps1", () => {
 		fs.mkdirSync(path.join(appDir, "data", "servers"), { recursive: true });
 		fs.mkdirSync(stageDir, { recursive: true });
 		const exe = path.join(appDir, "fakeapp.exe");
-		fs.copyFileSync(process.execPath, exe);
+		copyNodeWithoutConsole(exe);
 		fs.writeFileSync(path.join(appDir, "resources", "main.js"), main("1.0.0"));
 		fs.writeFileSync(path.join(appDir, "resources", "old-only.txt"), "only the old version has this");
 		fs.writeFileSync(path.join(appDir, "stale.txt"), "left over from the old version");
@@ -68,7 +68,7 @@ describe("apply-update.ps1", () => {
 		fs.mkdirSync(path.dirname(files.healthFile), { recursive: true });
 		const env = { ...process.env, HEALTH: files.healthFile };
 		// The old version, running. Its own report of being up stands in for an earlier boot.
-		const old = spawn(exe, [path.join("resources", "main.js")], { cwd: appDir, env, stdio: "ignore" });
+		const old = spawn(exe, [path.join("resources", "main.js")], { cwd: appDir, env, stdio: "ignore", windowsHide: true });
 		// Until it has said it is up, so a slow machine doesn't have the script start before there is anything to replace.
 		for (let i = 0; i < 100 && !fs.existsSync(files.healthFile); i += 1) await wait(200);
 		const plan = {
@@ -186,7 +186,7 @@ describe("apply-update.ps1", () => {
 			stage: (dir) => {
 				fs.mkdirSync(path.join(dir, "resources"), { recursive: true });
 				fs.writeFileSync(path.join(dir, "resources", "main.js"), main("2.0.0"));
-				fs.copyFileSync(process.execPath, path.join(dir, "fakeapp.exe"));
+				copyNodeWithoutConsole(path.join(dir, "fakeapp.exe"));
 				fs.writeFileSync(path.join(dir, "brand-new.txt"), "new in this version");
 				fs.mkdirSync(path.join(dir, "data"), { recursive: true });
 				fs.writeFileSync(path.join(dir, "data", "portable.txt"), "must not overwrite the real data folder");

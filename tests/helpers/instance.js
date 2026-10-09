@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { sweepProcessesUnder } from "./fakeGame.js";
 import fs from "node:fs";
 import net from "node:net";
 import os from "node:os";
@@ -14,6 +15,20 @@ export const ADMIN = { username: "admin", password: "TestAdmin!2345" };
 export const GUEST = { username: "viewer", password: "TestGuest!2345" };
 
 export const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Wait until `check()` returns something truthy, and return it; the last answer if it never does within `timeoutMs`.
+ * Prefer this to a fixed sleep: a pause long enough on an idle machine is too short on a busy one (the tests run many at a time).
+ */
+export async function until(check, { timeoutMs = 90_000, everyMs = 250 } = {}) {
+	const deadline = Date.now() + timeoutMs;
+	while (Date.now() < deadline) {
+		const value = await check();
+		if (value) return value;
+		await sleep(everyMs);
+	}
+	return check();
+}
 
 export function tempDir(label) {
 	return fs.mkdtempSync(path.join(os.tmpdir(), `gp-test-${label}-`));
@@ -190,6 +205,11 @@ export async function startInstance({ servers = [], config = {}, admin = true, p
 			child.kill();
 			await new Promise((resolve) => (child.exitCode !== null ? resolve() : child.once("exit", resolve)));
 			fs.closeSync(logFd);
+			// Whatever the test started from this folder (stand-in games and the like) goes with it, whatever order its own cleanup ran in.
+			if (sweepProcessesUnder(dir) > 0) {
+				await sleep(700);
+				sweepProcessesUnder(dir);
+			}
 			removeDir(dir);
 		},
 	};

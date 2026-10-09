@@ -25,9 +25,9 @@
 		"start": "node scripts/dev.mjs",
 		"dev": "npm run build:ui && node scripts/dev.mjs",
 		"dev:ui": "npm --prefix ui start",
-		"test": "node --test \"tests/unit/**/*.test.js\" \"tests/api/**/*.test.js\"",
+		"test": "node --test --test-concurrency=4 \"tests/unit/**/*.test.js\" \"tests/api/**/*.test.js\"",
 		"test:desktop": "node --test \"tests/desktop/**/*.test.js\"",
-		"test:all": "node --test \"tests/**/*.test.js\"",
+		"test:all": "node --test --test-concurrency=4 \"tests/**/*.test.js\"",
 		"package": "npm run build:ui && electron-builder",
 		"package:update": "node scripts/make-update-payload.mjs"
 	},

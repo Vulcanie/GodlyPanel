@@ -1,7 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import request from "supertest";
-import { Api, ADMIN, GUEST, ROOT, tempDir, removeDir, freePort } from "./instance.js";
+import { Api, ADMIN, GUEST, ROOT, tempDir, removeDir, freePort, sleep } from "./instance.js";
+import { sweepProcessesUnder } from "./fakeGame.js";
 
 // The panel's real routes, in the test's own process: the Express app from src/server/app.js, driven with supertest. No
 // child process, no port of ours to pick, no waiting for a server to boot (supertest listens on a throw-away loopback
@@ -129,6 +130,11 @@ export async function startInProcess({ servers = [], config = {}, admin = true, 
 		api,
 		messages: [],
 		async stop() {
+			// A test that started a game through the app leaves it running; it lives in this folder, so end it with the folder.
+			if (sweepProcessesUnder(dir) > 0) {
+				await sleep(700);
+				sweepProcessesUnder(dir);
+			}
 			removeDir(dir);
 		},
 	};

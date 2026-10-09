@@ -136,6 +136,18 @@ export function makeFakeGame(folder, { name, rconPort, exe = "fakegame.exe", pas
 	};
 }
 
+/**
+ * A copy of node.exe that is a Windows GUI program (the PE subsystem byte flipped from console to GUI). It runs the same
+ * but never gets a console window, so a test that starts it through something it can't tell to hide the window (the update
+ * script's Start-Process, a start script) doesn't leave a terminal open on screen for every run.
+ */
+export function copyNodeWithoutConsole(dest) {
+	const exe = fs.readFileSync(process.execPath);
+	const pe = exe.readUInt32LE(0x3c); // where the PE header starts
+	exe.writeUInt16LE(2, pe + 24 + 68); // optional header's Subsystem field: 2 = windows GUI (3 = console)
+	fs.writeFileSync(dest, exe);
+}
+
 /** Kill any fake game running from `folder`, whatever the test did. */
 export function killFakeGames(folder) {
 	try {
@@ -150,6 +162,29 @@ export function killFakeGames(folder) {
 		);
 	} catch {
 		// Nothing running.
+	}
+}
+
+/**
+ * Kill every process running from inside `folder`, and say how many there were. For cleaning up after a test: whatever it started
+ * (a stand-in game, a start script's child) lives in the test's own folder, so this finds them all without knowing their names.
+ * Done after the panel has stopped, so nothing can start them again; the caller looks twice, because a start script that was
+ * already running can still launch a program a moment later.
+ */
+export function sweepProcessesUnder(folder) {
+	try {
+		const out = execFileSync(
+			"powershell",
+			[
+				"-NoProfile",
+				"-Command",
+				`$p = @(Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -like '${folder.replaceAll("'", "''")}\*' }); $p | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }; $p.Count`,
+			],
+			{ encoding: "utf8" },
+		);
+		return Number(out.trim()) || 0;
+	} catch {
+		return 0;
 	}
 }
 

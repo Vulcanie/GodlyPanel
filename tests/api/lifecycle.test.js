@@ -151,8 +151,7 @@ describe("stopping a server that is still starting", () => {
 
 	it("is allowed, instead of being refused for the minutes the wait for it lasts", async () => {
 		assert.equal((await api.post("/api/control/Fake%20Silent/start")).status, 200);
-		await sleep(3000);
-		assert.equal((await api.get("/api/operations")).json["Fake Silent"].op, "starting");
+		assert.equal(await until(async () => (await api.get("/api/operations")).json["Fake Silent"]?.op === "starting", { timeoutMs: 30_000 }), true, "it is waiting for the server to answer");
 		const t0 = Date.now();
 		const r = await api.post("/api/control/Fake%20Silent/stop");
 		assert.equal(r.status, 200, JSON.stringify(r.json));
