@@ -21,7 +21,7 @@ Press **Update now** and the panel does the rest. You don't download a package o
 - **Your game servers keep running.** They are separate programs. The panel itself is unavailable for the half minute, so
   nothing is watching them (a crashed server isn't restarted until it is back), and anyone using the panel is
   disconnected.
-- **Your `data` folder** (settings, accounts, backups, the servers themselves) is never part of an update.
+- **Your `data` folder** (settings, accounts, backups, the servers themselves) and the hidden `.godlypanel-secrets` folder beside it are never part of an update.
 
 ## When it won't update, and why
 

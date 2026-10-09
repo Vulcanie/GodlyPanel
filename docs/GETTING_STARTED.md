@@ -97,6 +97,8 @@ Before anything else goes wrong:
 Everything the panel owns lives in the `data` folder next to the app. Back that folder up
 and you've backed up your accounts, settings and server list. Delete it and you have a
 fresh install. The folder holds passwords and keys, so the panel limits it to your Windows
-account; don't copy it to a place other people can read.
+account; don't copy it to a place other people can read. The panel's keys and cloud/Discord secrets are
+kept apart from it, in a hidden `.godlypanel-secrets` folder beside `data`; copy that as well when you
+move the panel to another PC, or you'll need to enter them again.
 
 Next: [Accounts and roles](ACCOUNTS_AND_ROLES.md) · [Ports and firewall](PORTS_AND_FIREWALL.md) · [Managing servers](MANAGING_SERVERS.md)

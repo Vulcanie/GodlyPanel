@@ -38,6 +38,22 @@ export function lockArguments(dir, sid) {
 }
 
 /**
+ * Make a folder hidden and private to this account, SYSTEM and Administrators (the secrets folder). Unlike the data folder it
+ * is tiny, so this is simply done on every start. Never throws.
+ * @returns {Promise<{ locked: boolean, skipped?: string, error?: string }>}
+ */
+export async function lockDownPrivateDir(dir) {
+	if (process.platform !== "win32") return { locked: false, skipped: "not Windows" };
+	try {
+		await run("icacls.exe", lockArguments(dir, await currentUserSid()));
+		await run("attrib.exe", ["+H", dir]);
+		return { locked: true };
+	} catch (err) {
+		return { locked: false, error: err.message };
+	}
+}
+
+/**
  * Restrict the data folder. Never throws: a panel that can't change permissions (a network drive, a
  * non-Windows system) still works, and the reason is returned for the log.
  * @returns {Promise<{ locked: boolean, skipped?: string, error?: string }>}

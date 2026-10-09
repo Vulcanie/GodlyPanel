@@ -11,8 +11,14 @@ const FALLBACK_DATA_DIR = path.resolve(process.cwd(), "data");
 
 export const dataDir = process.env.GHP_DATA_DIR || FALLBACK_DATA_DIR;
 
+// Where secrets.json lives. The app hands down a hidden folder beside the data folder (GHP_SECRETS_DIR), so a copy or backup of
+// `data` doesn't carry the signing key, RCON passwords and cloud/Discord secrets with it. Without it (tests, a bare `node`
+// run) it stays in the data folder, as it was before.
+export const secretsDir = process.env.GHP_SECRETS_DIR ? path.resolve(process.env.GHP_SECRETS_DIR) : dataDir;
+
 export const paths = {
 	dataDir,
+	secretsDir,
 	// Only read now, by the one-time migration in secretsStore — the server
 	// list itself moved to servers.json and credentials to secrets.json.
 	legacyServersFile: path.join(dataDir, "servers.js"),

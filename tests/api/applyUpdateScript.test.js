@@ -192,8 +192,12 @@ describe("apply-update.ps1", () => {
 				fs.writeFileSync(path.join(dir, "data", "portable.txt"), "must not overwrite the real data folder");
 			},
 		});
+		// The panel's secrets live beside `data`, in the app folder, and an update must never swap them out.
+		fs.mkdirSync(path.join(s.appDir, ".godlypanel-secrets"));
+		fs.writeFileSync(path.join(s.appDir, ".godlypanel-secrets", "secrets.json"), '{"jwtSecret":"keep me"}');
 		const code = await apply(s);
 		assert.equal(code, 0, fs.existsSync(s.files.logFile) ? read(s.files.logFile) : "no log");
+		assert.equal(read(s.appDir, ".godlypanel-secrets", "secrets.json"), '{"jwtSecret":"keep me"}', "the secrets folder is untouched");
 		assert.match(read(s.appDir, "resources", "main.js"), /2\.0\.0/);
 		assert.equal(fs.existsSync(path.join(s.appDir, "brand-new.txt")), true);
 		assert.equal(fs.existsSync(path.join(s.appDir, "stale.txt")), false, "a file only the old version had is gone");

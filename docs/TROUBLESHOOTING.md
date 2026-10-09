@@ -177,7 +177,7 @@ When you ask for help, it saves time to include:
 - the exact **message** you saw (a screenshot is fine);
 - the server's last few lines from **Logs**, and anything in **Activity** around that time.
 
-`config.json` is safe to share. **Never share `secrets.json`**, and check a log for passwords before posting it (the
+`config.json` is safe to share. **Never share `secrets.json`** (it's in the hidden `.godlypanel-secrets` folder beside `data`), and check a log for passwords before posting it (the
 panel masks them in what it shows, but not in files you copy by hand).
 
 Ask in an [issue](https://github.com/Vulcanie/GodlyPanel/issues). For something that looks like a security hole, use

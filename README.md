@@ -241,12 +241,14 @@ any game server, and is up to you.
 ## Where your data lives
 
 Everything is in the `data` folder next to the app, so moving or backing up the folder
-moves or backs up everything.
+moves or backs up everything except the secrets: those are kept apart, in the hidden
+`.godlypanel-secrets` folder beside `data` (see below), so a copy of `data` doesn't carry
+your keys with it.
 
 | Path | Contents |
 |---|---|
 | `config.json` | Your settings. Safe to paste into a support thread. |
-| `secrets.json` | Login signing key, Discord webhooks, CurseForge key. **Never share this.** |
+| `...godlypanel-secretssecrets.json` | Beside `data`, not in it, in a hidden folder. Login signing key, Discord webhooks, cloud-storage and tunnel keys, CurseForge key. **Never share this.** Updates leave it alone. To move the panel to another PC, copy this folder along with `data`, or you'll have to enter these again. |
 | `users.json` | Accounts (passwords are bcrypt hashes). |
 | `servers.json` | The servers the panel manages. |
 | `servers\` | Servers created by the panel (unless you chose another folder). |

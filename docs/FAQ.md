@@ -18,7 +18,7 @@ settings. The panel checks the ports don't clash.
 "Installed in" at the top. The *Server install folder* setting above that list only decides where **new** servers go.
 
 **Where is my data?**
-In the `data` folder next to the app. Back that folder up to back up your accounts, settings and server list. Your worlds
+In the `data` folder next to the app. Back that folder up to back up your accounts, settings and server list. Your keys and cloud/Discord secrets are kept apart, in the hidden `.godlypanel-secrets` folder beside `data`; copy that too when you move to another PC. Your worlds
 are backed up separately, from each server's **Backups** tab.
 
 **Can I move it to another PC?**

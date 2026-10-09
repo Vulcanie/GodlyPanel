@@ -5,7 +5,7 @@
 #   appDir, exePath, exeArgs[]   the installed app and how to start it again
 #   stageDir                     the verified new files, unpacked (a `resources` folder for an app-only update, the
 #                                whole app for a full one)
-#   mode                         "app" replaces only `resources`; "full" replaces everything but `data`
+#   mode                         "app" replaces only `resources`; "full" replaces everything but `data` and `.godlypanel-secrets`
 #   version, oldVersion          what is being installed, and what was running
 #   parentPid                    the app's main process, which has to exit first
 #   dataDir, logFile, resultFile, healthFile
@@ -13,7 +13,7 @@
 #   healthTimeoutSec             how long the new version gets to say it is up
 #
 # Game servers are separate programs and are never touched: only processes whose program is this app's own exe are closed,
-# and only the top level of the app folder is changed (never `data`, where the servers' files live).
+# and only the top level of the app folder is changed (never `data`, where the servers' files live, or `.godlypanel-secrets`).
 param([Parameter(Mandatory = $true)][string]$PlanFile)
 
 $ErrorActionPreference = "Stop"
@@ -77,7 +77,7 @@ function Start-App {
 
 $appDir = [string]$plan.appDir
 $backup = Join-Path $appDir ".update-backup"
-$never = @("data", ".update-backup", ".update-write-test")
+$never = @("data", ".godlypanel-secrets", ".update-backup", ".update-write-test")
 $moved = New-Object System.Collections.ArrayList
 $placed = New-Object System.Collections.ArrayList
 $script:undoFailed = $false

@@ -50,10 +50,12 @@ RCON is the remote console. With its password, anyone who can reach the port can
 
 - [ ] **Windows is up to date**, and it's a Windows account only you (and people you trust) use. The
       panel runs as that account, and so do your game servers.
-- [ ] **The `data` folder stays private.** It holds password hashes, the key that signs sign-ins, RCON
-      passwords and your Discord, cloud-storage and tunnel secrets. The panel limits it to your Windows
-      account, SYSTEM and Administrators. Don't copy `secrets.json` into a support thread or onto a
-      shared drive, and remember a backup of `data` contains those secrets.
+- [ ] **The `data` folder and the hidden `.godlypanel-secrets` folder beside it stay private.** `data` holds
+      password hashes and every server's RCON password; `.godlypanel-secrets` holds the key that signs
+      sign-ins and your Discord, cloud-storage and tunnel secrets, and is kept out of `data` so a copy of
+      `data` doesn't include them. The panel limits both to your Windows account, SYSTEM and Administrators.
+      Don't put `secrets.json` in a support thread or on a shared drive, and remember a backup of `data`
+      still contains the password hashes and RCON passwords.
 - [ ] **Backups to cloud storage use a key limited to one bucket**, not your main account key.
 - [ ] You haven't clicked **Allow access** for programs you don't recognise. Windows adds firewall
       rules when you do, and they stay. Look through *Windows Security → Firewall & network
@@ -138,7 +140,7 @@ Do these in this order. None of them takes long.
 3. **Change the RCON passwords** of every server (stopped servers first; restart the running ones when you can).
 4. Look at **Activity** (top right) for sign-ins and actions you don't recognise.
 5. Revoke the **Discord bot token** and **webhooks**, regenerate **cloud-storage keys** and the **tunnel token**
-   if the `data` folder or `secrets.json` may have been seen. Put the new ones in `Settings`.
+   if the `data` folder or `.godlypanel-secretssecrets.json` may have been seen. Put the new ones in `Settings`.
 6. Check your router's **port forwards** and Windows Firewall rules for entries you didn't make.
 
 ## Reporting a problem in GodlyPanel itself

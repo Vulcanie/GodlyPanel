@@ -39,7 +39,8 @@ Against that model it does the following:
   manages, identifies uploaded images by their bytes, and never puts a command
   from a config file through a shell;
 - keeps API keys and webhooks in a separate file from ordinary settings, so a
-  settings file is safe to paste into a support thread.
+  settings file is safe to paste into a support thread, and keeps that file in a hidden,
+  private folder outside the data folder, so copying or backing up `data` doesn't copy it.
 
 ### The newer surfaces
 

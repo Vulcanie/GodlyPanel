@@ -2,7 +2,7 @@ const { app, dialog, ipcMain, shell, BrowserWindow, Menu, Notification } = requi
 const path = require("node:path");
 const fs = require("node:fs");
 const { ApiSupervisor } = require("./apiSupervisor.cjs");
-const { resolveDataDir, resolveResourceRoot } = require("./paths.cjs");
+const { resolveDataDir, resolveResourceRoot, resolveSecretsDir } = require("./paths.cjs");
 const { createMainWindow } = require("./windows.cjs");
 const { createTray } = require("./tray.cjs");
 const { launchUpdate } = require("./updater.cjs");
@@ -22,7 +22,8 @@ function readConfiguredPort(dir) {
 	}
 }
 
-const { dataDir, portable, fellBack } = resolveDataDir();
+const { dataDir, portable, fellBack, explicit } = resolveDataDir();
+const secretsDir = resolveSecretsDir(dataDir, explicit);
 const resourceRoot = resolveResourceRoot();
 
 // Must happen before whenReady() so Electron's own caches land in our data dir
@@ -56,6 +57,7 @@ const supervisor = new ApiSupervisor({
 	getPort: () => readConfiguredPort(dataDir),
 	env: {
 		GHP_APP_VERSION: app.getVersion(),
+		GHP_SECRETS_DIR: secretsDir ?? "",
 		// What lets the panel offer "Update now": only the packaged app, which knows where it is installed.
 		GHP_SELF_UPDATE: app.isPackaged ? "1" : "",
 		GHP_APP_DIR: path.dirname(process.execPath),

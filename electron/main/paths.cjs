@@ -51,13 +51,14 @@ function isWritable(dir) {
 function resolveDataDir() {
 	const fromFlag = argValue("data-dir");
 	if (fromFlag) {
-		return { dataDir: path.resolve(fromFlag), portable: false, fellBack: false };
+		return { dataDir: path.resolve(fromFlag), portable: false, fellBack: false, explicit: true };
 	}
 	if (process.env.GHP_DATA_DIR) {
 		return {
 			dataDir: path.resolve(process.env.GHP_DATA_DIR),
 			portable: false,
 			fellBack: false,
+			explicit: true,
 		};
 	}
 
@@ -70,14 +71,31 @@ function resolveDataDir() {
 	const wantsPortable = fs.existsSync(beside) || fs.existsSync(portableMarker);
 
 	if (wantsPortable && isWritable(beside)) {
-		return { dataDir: beside, portable: true, fellBack: false };
+		return { dataDir: beside, portable: true, fellBack: false, explicit: false };
 	}
 
 	return {
 		dataDir: path.join(app.getPath("appData"), "GodlyPanel"),
 		portable: false,
 		fellBack: wantsPortable,
+		explicit: false,
 	};
 }
 
-module.exports = { resolveResourceRoot, resolveDataDir };
+/**
+ * Where secrets.json goes: a hidden folder beside the data folder (so beside the .exe in the portable layout), out of the way of
+ * anything that copies or backs up `data`. Null leaves it in the data folder, as before. That is the case when the data folder was
+ * chosen by hand (a flag or GHP_DATA_DIR: a test, a second copy, and "beside" it could be a shared temp folder), and when the
+ * folder can't be made. An existing one is always used: once secrets have moved there, falling back would start over with new keys.
+ * @param {string} dataDir
+ * @param {boolean} explicit
+ * @returns {string | null}
+ */
+function resolveSecretsDir(dataDir, explicit) {
+	if (explicit) return null;
+	const dir = path.join(path.dirname(dataDir), ".godlypanel-secrets");
+	if (fs.existsSync(dir)) return dir;
+	return isWritable(dir) ? dir : null;
+}
+
+module.exports = { resolveResourceRoot, resolveDataDir, resolveSecretsDir };

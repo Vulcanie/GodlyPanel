@@ -5,3 +5,6 @@ ui/build/
 # User data — never commit. Keep the portable marker itself.
 data/*
 !data/portable.txt
+
+# The panel's secrets (signing key, RCON/Discord/cloud secrets) when run from the repo.
+.godlypanel-secrets/

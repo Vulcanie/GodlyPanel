@@ -3,11 +3,17 @@ import fs from "node:fs";
 import path from "node:path";
 import { paths } from "../paths.js";
 import { writeJsonAtomic, readJson, createWriteQueue } from "../util/atomicJson.js";
+import { lockDownPrivateDir } from "../util/lockDownDataDir.js";
 
 // Secrets live in their own file rather than config.json for one practical
 // reason: people paste config.json into support threads. Keeping webhooks,
 // API keys and password hashes out of it makes that safe by default.
-const SECRETS_PATH = path.join(paths.dataDir, "secrets.json");
+//
+// It also lives outside the data folder, in a hidden folder beside it (see paths.secretsDir), so copying or backing up `data`
+// doesn't copy the signing key and every secret with it.
+const SECRETS_PATH = path.join(paths.secretsDir, "secrets.json");
+const LEGACY_PATH = path.join(paths.dataDir, "secrets.json");
+const moved = () => path.resolve(paths.secretsDir) !== path.resolve(paths.dataDir);
 const enqueue = createWriteQueue();
 
 const EMPTY = {
@@ -59,7 +65,33 @@ function readLegacyEnvFile() {
 	};
 }
 
+/**
+ * Older versions kept secrets.json in the data folder. Copy it to the secrets folder, check the copy, then remove the original
+ * (and the .bak and .tmp beside it, which hold the same secrets). Anything unexpected leaves the original where it was.
+ */
+async function moveOutOfDataDir() {
+	await fs.promises.mkdir(paths.secretsDir, { recursive: true });
+	const locked = await lockDownPrivateDir(paths.secretsDir);
+	if (locked.error) console.warn(`[secrets] Couldn't make the secrets folder private: ${locked.error}`);
+
+	const old = await readJson(LEGACY_PATH, null, { strict: true });
+	if (!old) return;
+	if (fs.existsSync(SECRETS_PATH)) {
+		console.warn(`[secrets] ${LEGACY_PATH} is left over from an older version and is no longer used. Delete it once you've checked nothing in it is needed.`);
+		return;
+	}
+	await writeJsonAtomic(SECRETS_PATH, old);
+	const copy = await readJson(SECRETS_PATH, null, { strict: true });
+	if (JSON.stringify(copy) !== JSON.stringify(old)) {
+		await fs.promises.rm(SECRETS_PATH, { force: true });
+		throw new Error(`GodlyPanel couldn't copy its secrets to ${paths.secretsDir} correctly, so nothing was moved. Check the folder is writable.`);
+	}
+	for (const leftover of [LEGACY_PATH, `${LEGACY_PATH}.bak`, `${LEGACY_PATH}.tmp`]) await fs.promises.rm(leftover, { force: true });
+	console.log("[secrets] Moved secrets.json out of the data folder.");
+}
+
 export async function initSecrets() {
+	if (moved()) await moveOutOfDataDir();
 	const stored = await readJson(SECRETS_PATH, null, { strict: true });
 
 	if (stored) {
