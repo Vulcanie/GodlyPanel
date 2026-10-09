@@ -1,0 +1,28 @@
+name: Dependency audit
+
+# Is anything the panel ships (its runtime dependencies) known to be vulnerable? Reads package-lock.json only, so it needs no install
+# and takes seconds. It is a check of its own and does not hold up the tests or a release; it also runs weekly, because a new advisory
+# can appear against a lock file that hasn't changed.
+#
+# Only what ships is checked. The interface's build tooling (react-scripts) has ~100 advisories of its own, but it runs on the
+# developer's machine to produce static files and is not part of the app.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - run: npm audit --package-lock-only --omit=dev --audit-level=high

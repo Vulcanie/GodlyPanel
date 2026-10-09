@@ -6,6 +6,11 @@ on:
   pull_request:
   # The release workflow runs the same tests, in parallel with building the zip.
   workflow_call:
+    inputs:
+      ui:
+        description: 'Also run the browser tests. A release passes "false": the commit it is built from went through them when it was pushed, and they would only make the release wait.'
+        type: string
+        default: "true"
 
 jobs:
   # The suite is split into four parts that run on four machines at the same time
@@ -38,15 +43,94 @@ jobs:
       # (The flag has to come before the file patterns, so this is `npm test` written out.)
       - run: node --test --test-shard=${{ matrix.shard }}/4 "tests/unit/**/*.test.js" "tests/api/**/*.test.js"
 
+  # The interface is built once and shared, so each browser-test machine only has to install
+  # the panel, not rebuild the interface.
+  ui-build:
+    if: ${{ inputs.ui != 'false' }}
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+
+      - run: npm --prefix ui ci
+
+      - run: npm run build:ui
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ui-build
+          path: ui/build
+          retention-days: 1
+
+  # The interface in a real browser (the Chrome that comes with the runner), as an administrator and as a
+  # moderator: every server tab, settings, sign-in, the update card, creating servers. Three machines at once.
+  ui:
+    name: browser tests (${{ matrix.name }})
+    needs: ui-build
+    runs-on: windows-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: settings and navigation
+            suites: "sections appearance navigation passwords"
+          - name: servers
+            suites: "workspace create-ports create-every-game"
+          - name: community and updates
+            suites: "community-view community-join panel-update"
+    env:
+      ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+      GP_CHROME: C:\Program Files\Google\Chrome\Application\chrome.exe
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: ui-build
+          path: ui/build
+
+      - name: Run the browser tests
+        run: |
+          $failed = @()
+          foreach ($suite in "${{ matrix.suites }}".Split(" ")) {
+            Write-Host "::group::$suite"
+            node "tests/ui/$suite.mjs"
+            if ($LASTEXITCODE -ne 0) { $failed += $suite }
+            Write-Host "::endgroup::"
+          }
+          if ($failed.Count -gt 0) {
+            Write-Host "::error::These browser tests failed: $($failed -join ', ')"
+            exit 1
+          }
+
   # One result for the whole suite. This is the check the main branch requires, so the
   # number of parts can change without touching the repository settings.
   test:
-    needs: shards
+    needs: [shards, ui]
     if: ${{ always() }}
     runs-on: ubuntu-latest
     steps:
       - run: |
           if [ "${{ needs.shards.result }}" != "success" ]; then
             echo "At least one part of the test suite failed or didn't run."
+            exit 1
+          fi
+          # "skipped" is how a release, which doesn't run them, looks.
+          if [ "${{ needs.ui.result }}" != "success" ] && [ "${{ needs.ui.result }}" != "skipped" ]; then
+            echo "At least one browser test failed or didn't run."
             exit 1
           fi

@@ -17,6 +17,9 @@ permissions:
 jobs:
   tests:
     uses: ./.github/workflows/test.yml
+    with:
+      # The browser tests ran when this commit was pushed to main; running them again would only hold the release up.
+      ui: "false"
 
   package:
     runs-on: windows-latest
