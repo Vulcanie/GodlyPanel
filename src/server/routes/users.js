@@ -10,12 +10,30 @@ import {
 	getById,
 } from "../data/userStore.js";
 import { dropSessionsFor } from "../services/sseHub.js";
+import { listSessions, revokeSession, revokeUserSessions } from "../services/sessionStore.js";
+import { present } from "./sessions.js";
 import { inviteStatus, updateInvite } from "../services/communityInvite.js";
 
 const router = express.Router();
 
 router.get("/", (req, res) => {
 	res.json(list());
+});
+
+// Everyone who is signed in, and a way to end any of it: a lost phone, an account that should be shut out now.
+router.get("/sessions", (req, res) => {
+	res.json({ sessions: listSessions({ getUser: getById }).map((s) => present(s, req.sid)) });
+});
+router.delete("/sessions/:id", (req, res) => {
+	const s = listSessions({ getUser: getById }).find((x) => x.id === req.params.id);
+	if (!s) return res.status(404).json({ error: "That sign-in doesn't exist any more.", code: "not_found" });
+	revokeSession(s.id);
+	res.json({ success: true });
+});
+// Sign someone out everywhere. They can sign in again with their password; to stop that, suspend the account.
+router.delete("/:id/sessions", (req, res) => {
+	if (!getById(req.params.id)) return res.status(404).json({ error: "That account doesn't exist.", code: "not_found" });
+	res.json({ revoked: revokeUserSessions(req.params.id, req.params.id === req.user.id ? req.sid : null) });
 });
 
 // The community code (administrators only): see it, switch it on or off, set its limits, replace it.

@@ -34,7 +34,9 @@ Against that model it does the following:
   a role or password changes;
 - hashes passwords with bcrypt, rate-limits sign-in per account and per address,
   and takes the same time to answer for unknown and known usernames;
-- keeps sessions in HttpOnly, SameSite=Strict cookies, and rejects unsigned tokens;
+- keeps sessions in HttpOnly, SameSite=Strict cookies, and rejects unsigned tokens; each sign-in is also a
+  record the panel keeps (when, from where, on what), so a person can see theirs and end any of them, an
+  administrator can end anyone's, and signing out really ends it rather than only forgetting the cookie;
 - keeps file access, config editing and uploads within the server folders it
   manages, identifies uploaded images by their bytes, and never puts a command
   from a config file through a shell;

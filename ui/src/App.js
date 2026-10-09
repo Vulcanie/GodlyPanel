@@ -20,6 +20,7 @@ import DashboardPage from "./components/DashboardPage";
 import ServerWorkspace from "./components/ServerWorkspace";
 import ActivityPanel from "./components/ActivityPanel";
 import ChangePasswordDialog from "./components/ChangePasswordDialog";
+import SessionsDialog from "./components/SessionsDialog";
 import UpdateBanner from "./components/UpdateBanner";
 import { OperationsProvider } from "./OperationsContext";
 import { emitLive } from "./liveEvents";
@@ -46,6 +47,7 @@ function Panel() {
 	const [loading, setLoading] = React.useState(true);
 	const [showActivity, setShowActivity] = React.useState(false);
 	const [showPassword, setShowPassword] = React.useState(false);
+	const [showSessions, setShowSessions] = React.useState(false);
 	const [allowedServers, setAllowedServers] = React.useState(null);
 
 	const signedIn = status === "signedIn";
@@ -326,6 +328,9 @@ function Panel() {
 						<Button variant="text" size="small" onClick={() => setShowPassword(true)}>
 							Password
 						</Button>
+						<Button variant="text" size="small" onClick={() => setShowSessions(true)}>
+							Sessions
+						</Button>
 					<Button variant="outlined" size="small" onClick={logout}>
 						Sign out
 					</Button>
@@ -369,6 +374,7 @@ function Panel() {
 			) : null}
 
 			<ChangePasswordDialog open={showPassword} onClose={() => setShowPassword(false)} />
+			<SessionsDialog open={showSessions} onClose={() => setShowSessions(false)} isAdmin={isAdmin} onSignedOut={logout} />
 			<Dialog open={showActivity} onClose={() => setShowActivity(false)} fullWidth maxWidth="md">
 				<DialogTitle>Activity</DialogTitle>
 				<DialogContent>

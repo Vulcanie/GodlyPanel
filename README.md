@@ -90,6 +90,8 @@ commit messages describe the problem each change solved.
 - **Tells you when something needs attention:** a Windows notification, a webhook
   (Discord, Slack and similar) and email, for crashes, failed backups or restarts, backups that never reach their off-site
   destination, low disk space and new versions. You choose which events.
+- **Shows where you are signed in.** A Sessions list per account: end any sign-in you don't recognise, or sign out
+  everywhere else; administrators can do it for anyone.
 - **Has three kinds of people.** Viewers look; **moderators** run servers (start, stop,
   restart, update, back up, logs, console) but can't see passwords or settings, delete,
   or restore, and can be limited to particular servers; administrators do everything.

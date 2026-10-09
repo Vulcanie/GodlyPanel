@@ -75,8 +75,10 @@ export class InProcessApi extends Api {
 		return { status: res.status, json: /(^|[/+])json$/.test(res.type ?? "") ? res.body : res.text };
 	}
 
-	async cookieFor({ username, password }) {
-		const res = await request(this.app).post("/api/auth/login").send({ username, password });
+	async cookieFor({ username, password }, headers = {}) {
+		let req = request(this.app).post("/api/auth/login");
+		for (const [name, value] of Object.entries(headers)) req = req.set(name, value);
+		const res = await req.send({ username, password });
 		return res.headers["set-cookie"]?.[0]?.split(";")[0] ?? "";
 	}
 }

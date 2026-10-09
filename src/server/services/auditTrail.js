@@ -20,7 +20,7 @@ const NOT_CHANGES = [
 	/\/panel\/(check|update-result\/dismiss)$/,
 	/\/storage\/rescan$/,
 	/\/notifications\/(test|check-disks)$/,
-	/^\/auth\//, // sign-in and out are recorded by their own events
+	/^\/auth\/(login|join|logout|change-password)$/, // sign-in and out are recorded by their own events
 	/^\/setup\//,
 ];
 
@@ -73,6 +73,10 @@ export function describe(method, route, p = {}, body = {}) {
 		[/^PUT \/users\/:id\/disabled$/, () => `${body?.disabled ? "disabled" : "enabled"} the account ${nameOf(p.id)}`],
 		[/^PUT \/users\/:id\/password$/, () => `set a new password for ${nameOf(p.id)}`],
 		[/^DELETE \/users\/:id$/, () => `deleted the account ${nameOf(p.id)}`],
+		[/^DELETE \/users\/:id\/sessions$/, () => `signed ${nameOf(p.id)} out everywhere`],
+		[/^DELETE \/users\/sessions\/:id$/, () => "ended someone's sign-in"],
+		[/^DELETE \/auth\/sessions\/:id$/, () => "ended one of their own sign-ins"],
+		[/^POST \/auth\/sessions\/revoke-others$/, () => "signed out everywhere else"],
 		[/^PUT \/users\/invite$/, () => "changed the community access code"],
 		[/^POST \/updates\/panel\/install$/, () => "installed a GodlyPanel update"],
 		[/^POST \/schedules$/, () => "added a scheduled task"],

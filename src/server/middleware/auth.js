@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import { getSecrets } from "../config/secretsStore.js";
 import { getById } from "../data/userStore.js";
+import { createSession, findSession, touchSession, revokeSession } from "../services/sessionStore.js";
 
 const COOKIE_NAME = "gp_session";
 const TOKEN_TTL_SECONDS = 7 * 24 * 60 * 60;
@@ -44,18 +45,38 @@ function readSessionCookie(req) {
 	return null;
 }
 
-export function issueSession(res, user, { secure = false } = {}) {
-	const token = jwt.sign(
-		{ sub: user.id, u: user.username, role: user.role, sv: user.sessionVersion },
-		getSecrets().jwtSecret,
-		{ expiresIn: TOKEN_TTL_SECONDS, algorithm: "HS256" },
-	);
+/** Whether this request came in over https (through the tunnel), so the cookie can be marked Secure. */
+export const isSecureRequest = (req) => req.headers["x-forwarded-proto"] === "https" || Boolean(req.headers["cf-ray"]);
+
+/**
+ * Sign someone in: make the record of it and hand the browser a token that points at the record.
+ * `req` is what the record says about where from; `via` says which door.
+ */
+export function issueSession(res, user, { secure = false, req = null, via = "panel" } = {}) {
+	const expiresAt = Date.now() + TOKEN_TTL_SECONDS * 1000;
+	const sid = createSession({
+		user,
+		ip: req ? clientAddress(req) : "",
+		userAgent: req?.headers?.["user-agent"] ?? "",
+		via,
+		expiresAt,
+	});
+	const token = jwt.sign({ sub: user.id, u: user.username, role: user.role, sv: user.sessionVersion, sid }, getSecrets().jwtSecret, {
+		expiresIn: TOKEN_TTL_SECONDS,
+		algorithm: "HS256",
+	});
 	res.cookie(COOKIE_NAME, token, cookieOptions({ secure }));
 	return token;
 }
 
 export function clearSession(res) {
 	res.clearCookie(COOKIE_NAME, { path: "/" });
+}
+
+/** Sign out: end this browser's sign-in (the record, and its live streams), and forget the cookie. */
+export function endSession(req, res) {
+	if (req.sid) revokeSession(req.sid);
+	clearSession(res);
 }
 
 /**
@@ -85,6 +106,28 @@ export function attachUser(req, res, next) {
 		return next();
 	}
 
+	let sid = payload.sid;
+	if (sid) {
+		// A sign-in that has been ended from the Sessions list, or by signing out everywhere, stops working at once.
+		const record = findSession(sid);
+		if (!record || record.userId !== user.id) {
+			clearSession(res);
+			return next();
+		}
+		touchSession(record, clientAddress(req));
+	} else {
+		// Signed in before sessions existed: give that sign-in a record, and the browser a token that points at it, for the rest of
+		// the time it had left. Nobody is signed out by the upgrade.
+		const expiresAt = payload.exp * 1000;
+		sid = createSession({ user, ip: clientAddress(req), userAgent: req.headers["user-agent"] ?? "", via: "panel", expiresAt });
+		const upgraded = jwt.sign({ sub: user.id, u: user.username, role: user.role, sv: user.sessionVersion, sid }, getSecrets().jwtSecret, {
+			expiresIn: Math.max(60, payload.exp - Math.floor(Date.now() / 1000)),
+			algorithm: "HS256",
+		});
+		res.cookie(COOKIE_NAME, upgraded, { ...cookieOptions({ secure: isSecureRequest(req) }), maxAge: Math.max(60, expiresAt - Date.now()) });
+	}
+
+	req.sid = sid;
 	req.user = { id: user.id, username: user.username, role: user.role, servers: user.servers ?? null };
 	next();
 }

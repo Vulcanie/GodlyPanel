@@ -24,6 +24,7 @@ import {
 	Block as BlockIcon,
 	CheckCircle as CheckCircleIcon,
 	Edit as EditIcon,
+	Logout as LogoutIcon,
 } from "@mui/icons-material";
 import { api } from "../api/client";
 import { ROLE_LABELS } from "../permissions";
@@ -199,6 +200,13 @@ function UsersPage({ onBack, currentUser }) {
 											) : (
 												<BlockIcon fontSize="small" />
 											)}
+										</IconButton>
+									</span>
+								</Tooltip>
+								<Tooltip title="Sign out everywhere">
+									<span>
+										<IconButton size="small" disabled={busy || isSelf} onClick={() => run(() => api.del(`/api/users/${u.id}/sessions`))}>
+											<LogoutIcon fontSize="small" />
 										</IconButton>
 									</span>
 								</Tooltip>

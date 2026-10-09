@@ -58,6 +58,7 @@ export function addSseClient(req, res, user, { group = null, maxGroup = MAX_CLIE
 	const client = {
 		res,
 		userId: user?.id ?? null,
+		sid: req.sid ?? null, // the sign-in this stream belongs to, so ending that sign-in ends the stream
 		role: user?.role ?? null,
 		group,
 		address,
@@ -80,6 +81,13 @@ export function addSseClient(req, res, user, { group = null, maxGroup = MAX_CLIE
 export function dropSessionsFor(userId) {
 	for (const client of [...clients]) {
 		if (client.userId === userId) drop(client);
+	}
+}
+
+/** Ends the live streams of one sign-in (it was ended, or replaced). */
+export function dropStreamsForSession(sid) {
+	for (const client of [...clients]) {
+		if (client.sid === sid) drop(client);
 	}
 }
 

@@ -6,7 +6,9 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { verifyCredentials, getById, needsSetup, setPassword } from "../data/userStore.js";
 import { auditActions, auditSignInFailed, auditSignedOut, auditPasswordChanged } from "./auditTrail.js";
-import { attachUser, issueSession, clearSession, requireRole, clientAddress } from "../middleware/auth.js";
+import sessionRoutes from "../routes/sessions.js";
+import { revokeUserSessions } from "./sessionStore.js";
+import { attachUser, endSession, issueSession, requireRole, clientAddress } from "../middleware/auth.js";
 import { createLoginLimiter } from "../middleware/loginLimiter.js";
 import { securityHeaders } from "../middleware/securityHeaders.js";
 import { sameOriginOnly } from "../middleware/sameOrigin.js";
@@ -150,16 +152,18 @@ export function createCommunityApp({ hostRule, uiDir, staffSignIn = () => false 
 			});
 		}
 		limiter().clearLoginFailures(req);
-		issueSession(res, user, { secure: secure(req) });
+		issueSession(res, user, { secure: secure(req), req, via: "community" });
 		if (isStaff(user)) logActivity({ type: "community.staff-signin", message: `${user.username} (${user.role}) signed in from outside the home network.`, data: { ip: req.communityClientIp } });
 		res.json({ user: { username: user.username, role: user.role } });
 	});
 
 	app.post("/api/auth/logout", (req, res) => {
 		auditSignedOut(req);
-		clearSession(res);
+		endSession(req, res);
 		res.json({ success: true });
 	});
+
+	app.use("/api/auth/sessions", requireRole("admin", "moderator", "guest"), sessionRoutes);
 
 	app.get("/api/auth/me", (req, res) => {
 		if (!req.user) return res.status(401).json({ error: "Not signed in.", code: "unauthenticated", setupRequired: false });
@@ -172,7 +176,7 @@ export function createCommunityApp({ hostRule, uiDir, staffSignIn = () => false 
 		if (!code || !username || !password) return res.status(400).json({ error: "A code, a username and a password are all needed." });
 		try {
 			const user = await joinWithCode({ code, username, password }, req.communityClientIp);
-			issueSession(res, getById(user.id), { secure: secure(req) });
+			issueSession(res, getById(user.id), { secure: secure(req), req, via: "community" });
 			res.json({ user: { username: user.username, role: user.role } });
 		} catch (e) {
 			if (e instanceof JoinError) {
@@ -193,7 +197,8 @@ export function createCommunityApp({ hostRule, uiDir, staffSignIn = () => false 
 		} catch (e) {
 			return res.status(400).json({ error: e.message });
 		}
-		issueSession(res, getById(user.id), { secure: secure(req) });
+		revokeUserSessions(user.id);
+		issueSession(res, getById(user.id), { secure: secure(req), req, via: "community" });
 		auditPasswordChanged(req);
 		res.json({ success: true });
 	});

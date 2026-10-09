@@ -27,6 +27,7 @@ Most of this page is about the three things you might choose to turn on.
 - [ ] **Few administrators.** Most helpers need *Moderator*, not *Administrator*. An administrator can
       make a server run any program, which in effect means using your PC.
 - [ ] **Suspend or delete accounts people don't use any more** (`People`).
+- [ ] **Look at `Sessions` now and then**, and end any sign-in you don't recognise.
 - [ ] After someone leaves your community, change the **community code** (`People → Community access`).
 
 ### Ports and the router
@@ -128,6 +129,11 @@ started, stopped or restored a server, who made or removed an account, and *whic
 were changed (never their values). A request someone wasn't allowed to make is listed too, marked
 "refused".
 
+- **Sessions** (top right) lists every place you are signed in: the browser, roughly where from, when you
+  signed in and when it was last used. End any of them, or **Sign out everywhere else**. Administrators also
+  see everyone else's, and on **People** can sign a person out everywhere (it doesn't stop them signing in
+  again with their password; suspend the account for that). Signing out, changing your password and ending a
+  session all take effect at once, including for a copy of the sign-in cookie.
 - **Export** (administrators, at the bottom of Activity) saves the whole log, not just what is on screen,
   as a CSV file for a spreadsheet or as JSON Lines for anything that reads logs.
 - **Audit webhook** (in `Settings`, with the other webhooks) posts each of those entries to a Discord channel as it happens.

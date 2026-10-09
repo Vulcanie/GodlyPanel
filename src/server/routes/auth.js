@@ -5,7 +5,9 @@ import {
 	setPassword,
 	getById,
 } from "../data/userStore.js";
-import { issueSession, clearSession, requireRole } from "../middleware/auth.js";
+import { issueSession, endSession, requireRole } from "../middleware/auth.js";
+import { revokeUserSessions } from "../services/sessionStore.js";
+import sessionRoutes from "./sessions.js";
 import { auditSignedIn, auditSignInFailed, auditSignedOut, auditPasswordChanged } from "../services/auditTrail.js";
 import { loginGuard, recordLoginFailure, clearLoginFailures } from "../middleware/loginLimiter.js";
 import { joiningIsOpen, joinWithCode, JoinError } from "../services/communityInvite.js";
@@ -31,7 +33,7 @@ router.post("/login", loginGuard, async (req, res) => {
 	}
 
 	clearLoginFailures(req);
-	issueSession(res, user);
+	issueSession(res, user, { req });
 	auditSignedIn(req, user);
 	res.json({ user: { username: user.username, role: user.role } });
 });
@@ -48,7 +50,7 @@ router.post("/join", async (req, res) => {
 	if (!code || !username || !password) return res.status(400).json({ error: "A code, a username and a password are all needed." });
 	try {
 		const user = await joinWithCode({ code, username, password }, normaliseIp(req.socket.remoteAddress));
-		issueSession(res, getById(user.id));
+		issueSession(res, getById(user.id), { req });
 		res.json({ user: { username: user.username, role: user.role } });
 	} catch (e) {
 		if (e instanceof JoinError) {
@@ -61,7 +63,7 @@ router.post("/join", async (req, res) => {
 
 router.post("/logout", (req, res) => {
 	auditSignedOut(req);
-	clearSession(res);
+	endSession(req, res);
 	res.json({ success: true });
 });
 
@@ -69,6 +71,8 @@ router.post("/logout", (req, res) => {
 // stored in localStorage at login, which meant editing one string in devtools
 // unlocked the admin UI. (The server still refused the writes, but the app
 // shouldn't have been presenting them.)
+router.use("/sessions", requireRole("admin", "moderator", "guest"), sessionRoutes);
+
 router.get("/me", (req, res) => {
 	if (!req.user) {
 		return res.status(401).json({
@@ -96,7 +100,9 @@ router.post("/change-password", requireRole("admin", "guest"), async (req, res) 
 
 	// Changing the password bumps sessionVersion, which invalidates this
 	// session too — so issue a fresh one rather than silently logging them out.
-	issueSession(res, getById(user.id));
+	// Every other sign-in is already refused (the password changed); this ends their records and live streams too.
+	revokeUserSessions(user.id);
+	issueSession(res, getById(user.id), { req });
 	auditPasswordChanged(req);
 	res.json({ success: true });
 });

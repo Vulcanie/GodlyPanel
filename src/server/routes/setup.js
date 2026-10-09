@@ -41,7 +41,7 @@ router.post("/admin", loopbackOnly, async (req, res) => {
 		}
 		const user = await createUser({ username, password, role: "admin" });
 		if (chosen) await patchConfig({ paths: { serversRoot: chosen } });
-		issueSession(res, getByUsername(user.username));
+		issueSession(res, getByUsername(user.username), { req });
 		res.json({ success: true, user: { username: user.username, role: user.role } });
 	} catch (e) {
 		res.status(400).json({ error: e.message });

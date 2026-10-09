@@ -12,6 +12,7 @@ import { createLanOnly } from "./middleware/lanOnly.js";
 import { securityHeaders } from "./middleware/securityHeaders.js";
 import { sameOriginOnly } from "./middleware/sameOrigin.js";
 import { initUserStore, needsSetup } from "./data/userStore.js";
+import { initSessions } from "./services/sessionStore.js";
 import { initPollingState } from "./services/pollingService.js";
 import { initPanelUpdate } from "./services/panelUpdate.js";
 import { initSelfUpdate } from "./services/selfUpdate.js";
@@ -44,6 +45,7 @@ export async function loadStores() {
 	const config = await initConfig();
 	await initSecrets();
 	await initUserStore();
+	await initSessions();
 	await initCommunityInvite();
 	await initCommunityView();
 	await initServerStore();
