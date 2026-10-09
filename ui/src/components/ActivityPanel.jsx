@@ -31,6 +31,16 @@ const TYPE_LABELS = {
 	"mods.removed": "Mods",
 	"preset.saved": "Preset",
 	"preset.applied": "Preset",
+	"admin.action": "Change",
+	"auth.signed_in": "Signed in",
+	"auth.signed_out": "Signed out",
+	"auth.failed": "Sign-in failed",
+	"auth.password_changed": "Password",
+	"community.staff-signin": "Staff sign-in",
+	"backup.copy_failed": "Copy failed",
+	"backup.copied": "Copied",
+	"backup.destination_stale": "Copy overdue",
+	"backup.destination_recovered": "Copies caught up",
 };
 
 const label = (type) => TYPE_LABELS[type] ?? type;

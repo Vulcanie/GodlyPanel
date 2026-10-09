@@ -8,6 +8,7 @@ import {
 	Chip,
 	CircularProgress,
 	Dialog,
+	DialogActions,
 	DialogContent,
 	DialogTitle,
 	alpha,
@@ -373,6 +374,21 @@ function Panel() {
 				<DialogContent>
 					<ActivityPanel limit={150} />
 				</DialogContent>
+				{isAdmin && (
+					<DialogActions sx={{ px: 3, pb: 2, justifyContent: "space-between" }}>
+						<Typography variant="caption" sx={{ color: "text.secondary" }}>
+							The whole log, not just what is shown: every sign-in and every change anyone made.
+						</Typography>
+						<Box sx={{ display: "flex", gap: 1 }}>
+							<Button size="small" href="/api/activity/export?format=csv" download>
+								Export CSV
+							</Button>
+							<Button size="small" href="/api/activity/export?format=jsonl" download>
+								Export JSON Lines
+							</Button>
+						</Box>
+					</DialogActions>
+				)}
 			</Dialog>
 		</Container>
 	);

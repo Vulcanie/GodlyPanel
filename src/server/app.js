@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import authRoutes from "./routes/auth.js";
 import setupRoutes from "./routes/setup.js";
 import { attachUser } from "./middleware/auth.js";
+import { auditActions } from "./services/auditTrail.js";
 import { createPanelRouter } from "./routes/panelRoutes.js";
 import { providePanelApi } from "./services/communityListener.js";
 import { createLanOnly } from "./middleware/lanOnly.js";
@@ -96,6 +97,7 @@ export function buildApp({ quiet = false, serveUi = true } = {}) {
 	app.use(express.urlencoded({ extended: true }));
 
 	app.use(attachUser);
+	app.use(auditActions);
 
 	app.use("/api/setup", setupRoutes);
 	app.use("/api/auth", authRoutes);

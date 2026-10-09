@@ -46,7 +46,7 @@ export class InProcessApi extends Api {
 		if (set && cookie === undefined) this.cookie = set.split(";")[0];
 		const out = new Headers();
 		for (const [name, value] of Object.entries(res.headers)) for (const v of [].concat(value)) out.append(name, v);
-		const isJson = /json/.test(res.type ?? "");
+		const isJson = /(^|[/+])json$/.test(res.type ?? "");
 		return { status: res.status, json: isJson ? res.body : res.text, headers: out };
 	}
 
@@ -72,7 +72,7 @@ export class InProcessApi extends Api {
 		let req = request(this.app).post(url).attach(field, Buffer.from(bytes), filename);
 		if (this.cookie) req = req.set("Cookie", this.cookie);
 		const res = await req;
-		return { status: res.status, json: /json/.test(res.type ?? "") ? res.body : res.text };
+		return { status: res.status, json: /(^|[/+])json$/.test(res.type ?? "") ? res.body : res.text };
 	}
 
 	async cookieFor({ username, password }) {

@@ -81,6 +81,7 @@ router.put("/secrets", async (req, res) => {
 		"curseForgeApiKey",
 		"fixedRconPassword",
 		"alertWebhookUrl",
+		"auditWebhookUrl",
 		"smtpPassword",
 		"discordBotToken",
 	];

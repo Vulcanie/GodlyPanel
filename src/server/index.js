@@ -22,6 +22,7 @@ import { sweepPartialBackups, onBackupFinished } from "./services/backupService.
 import { applyBotSettings, stopBot } from "./services/discordBot.js";
 import { replicateBackup, retryReplication, checkDestinations } from "./services/backupDestinations.js";
 import { startNotifier, checkDisks } from "./services/notifier.js";
+import { startAuditFeed } from "./services/auditFeed.js";
 import { sampleOnce } from "./services/metricsSampler.js";
 import { rescan } from "./services/storageService.js";
 import { registerTimer, scheduleAll, rescheduleAll, stopAll } from "./timerManager.js";
@@ -167,6 +168,7 @@ const server = app.listen(PORT, HOST, () => {
 	sweepPartialBackups().catch(() => {});
 	applyBotSettings();
 	startNotifier();
+	startAuditFeed();
 	if (getConfig().updates.check) setTimeout(() => checkForPanelUpdate().catch(() => {}), 60_000);
 	setTimeout(() => checkDisks().catch(() => {}), 30_000);
 	setTimeout(() => checkDestinations(), 90_000);

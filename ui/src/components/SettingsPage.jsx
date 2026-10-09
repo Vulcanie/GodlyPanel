@@ -95,6 +95,7 @@ const SECRET_FIELDS = [
 	{ key: "curseForgeApiKey", label: "CurseForge API key" },
 	{ key: "fixedRconPassword", label: "Fixed RCON password" },
 	{ key: "alertWebhookUrl", label: "Alert webhook (Discord, Slack, ...)" },
+	{ key: "auditWebhookUrl", label: "Audit webhook (every sign-in and change, for a private Discord channel)" },
 	{ key: "smtpPassword", label: "Mail account password" },
 ];
 

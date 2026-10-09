@@ -26,6 +26,8 @@ const EMPTY = {
 	fixedRconPassword: "",
 	// Where alerts are posted (Discord, Slack and similar), and the mail account's password.
 	alertWebhookUrl: "",
+	// Where every administrator and moderator action is posted as it happens (a Discord channel only the owner reads).
+	auditWebhookUrl: "",
 	smtpPassword: "",
 	discordBotToken: "",
 	// The token of a tunnel made in the Cloudflare dashboard, for the community view.

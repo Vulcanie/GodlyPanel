@@ -6,6 +6,7 @@ import {
 	getById,
 } from "../data/userStore.js";
 import { issueSession, clearSession, requireRole } from "../middleware/auth.js";
+import { auditSignedIn, auditSignInFailed, auditSignedOut, auditPasswordChanged } from "../services/auditTrail.js";
 import { loginGuard, recordLoginFailure, clearLoginFailures } from "../middleware/loginLimiter.js";
 import { joiningIsOpen, joinWithCode, JoinError } from "../services/communityInvite.js";
 import { normaliseIp } from "../middleware/auth.js";
@@ -24,12 +25,14 @@ router.post("/login", loginGuard, async (req, res) => {
 	const user = await verifyCredentials(username, password);
 	if (!user) {
 		recordLoginFailure(req);
+		auditSignInFailed(req, username);
 		// Deliberately not saying which half was wrong.
 		return res.status(401).json({ error: "Incorrect username or password." });
 	}
 
 	clearLoginFailures(req);
 	issueSession(res, user);
+	auditSignedIn(req, user);
 	res.json({ user: { username: user.username, role: user.role } });
 });
 
@@ -57,6 +60,7 @@ router.post("/join", async (req, res) => {
 });
 
 router.post("/logout", (req, res) => {
+	auditSignedOut(req);
 	clearSession(res);
 	res.json({ success: true });
 });
@@ -93,6 +97,7 @@ router.post("/change-password", requireRole("admin", "guest"), async (req, res) 
 	// Changing the password bumps sessionVersion, which invalidates this
 	// session too — so issue a fresh one rather than silently logging them out.
 	issueSession(res, getById(user.id));
+	auditPasswordChanged(req);
 	res.json({ success: true });
 });
 

@@ -38,6 +38,9 @@ Against that model it does the following:
 - keeps file access, config editing and uploads within the server folders it
   manages, identifies uploaded images by their bytes, and never puts a command
   from a config file through a shell;
+- records who did what (sign-ins, failed sign-ins, every change, and what a role refused) in the activity
+  log, without request bodies, passwords or the values of settings; an administrator can export it, and an
+  audit webhook can post each entry to a channel outside this PC as it happens;
 - keeps API keys and webhooks in a separate file from ordinary settings, so a
   settings file is safe to paste into a support thread, and keeps that file in a hidden,
   private folder outside the data folder, so copying or backing up `data` doesn't copy it.

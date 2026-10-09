@@ -8,7 +8,8 @@ import { getOptions, setOptions } from "../data/serverOptions.js";
 import { requirePermission, canAccessServer, can } from "../middleware/permissions.js";
 import { listTasks, addTask, updateTask, removeTask, runTask } from "../services/scheduler.js";
 import { recoveryState } from "../services/crashWatcher.js";
-import { recentActivity, logActivity } from "../services/activityLog.js";
+import { recentActivity, logActivity, allActivity, formatActivity } from "../services/activityLog.js";
+import { requireRole } from "../middleware/auth.js";
 import { listLogs, readLog, searchLog } from "../services/logService.js";
 import { playersFor } from "../services/playerTracker.js";
 import { firewallReport, lanAddresses, ruleCommands, runElevated, forgetFirewallCache } from "../services/firewallCheck.js";
@@ -389,6 +390,18 @@ router.get("/activity", requirePermission("activity.view"), (req, res) => {
 		return res.status(403).json({ error: "You don't have access to that server.", code: "forbidden_server" });
 	}
 	res.json(recentActivity({ server, types, limit }).filter((e) => !e.server || canAccessServer(req.user, e.server)));
+});
+
+// The whole log as a file, for keeping elsewhere or handing to someone: CSV opens in a spreadsheet, JSON Lines in anything that reads
+// logs. Administrators only, because it spans every server and every account's actions.
+router.get("/activity/export", requireRole("admin"), (req, res) => {
+	const format = req.query.format === "jsonl" ? "jsonl" : "csv";
+	const date = (value) => (typeof value === "string" && value && Number.isFinite(Date.parse(value)) ? value : null);
+	const types = typeof req.query.types === "string" && req.query.types ? req.query.types.split(",") : null;
+	const events = allActivity({ from: date(req.query.from), to: date(req.query.to), types, server: typeof req.query.server === "string" && req.query.server ? req.query.server : null });
+	res.setHeader("Content-Type", format === "jsonl" ? "application/x-ndjson; charset=utf-8" : "text/csv; charset=utf-8");
+	res.setHeader("Content-Disposition", `attachment; filename="godlypanel-activity-${new Date().toISOString().slice(0, 10)}.${format}"`);
+	res.send((format === "csv" ? "﻿" : "") + formatActivity(events, format));
 });
 
 // ---- a server as a moderator may see it -------------------------------------

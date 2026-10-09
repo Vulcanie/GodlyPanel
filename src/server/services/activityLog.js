@@ -91,4 +91,52 @@ export function recentActivity({ server = null, types = null, limit = 100 } = {}
 		.slice(0, Math.min(Math.max(1, limit), 500));
 }
 
+/**
+ * Everything the log still holds (both files, not just the recent tail), oldest first, for exporting.
+ * @param {{ from?: string|number|Date, to?: string|number|Date, types?: string[]|null, server?: string|null }} [filter]
+ */
+export function allActivity({ from = null, to = null, types = null, server = null } = {}) {
+	const read = (file) => {
+		try {
+			return fs.readFileSync(file, "utf8");
+		} catch {
+			return "";
+		}
+	};
+	const start = from == null ? -Infinity : new Date(from).getTime();
+	const end = to == null ? Infinity : new Date(to).getTime();
+	const events = [];
+	for (const line of `${read(`${FILE}.1`)}\n${read(FILE)}`.split("\n")) {
+		if (!line.trim()) continue;
+		let e;
+		try {
+			e = JSON.parse(line);
+		} catch {
+			continue;
+		}
+		const t = Date.parse(e.t);
+		if (t < start || t > end) continue;
+		if (server && e.server !== server) continue;
+		if (types && !types.some((p) => String(e.type).startsWith(p))) continue;
+		events.push(e);
+	}
+	return events.sort((a, b) => (a.t < b.t ? -1 : a.t > b.t ? 1 : 0));
+}
+
+const CSV_COLUMNS = ["time", "level", "type", "server", "message", "details"];
+
+// A cell that starts with = + - @ is run as a formula by spreadsheet programs, and the message holds names people typed.
+const csvCell = (value) => {
+	let text = String(value ?? "");
+	if (/^[=+\-@\t\r]/.test(text)) text = `'${text}`;
+	return /[",\r\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
+};
+
+/** Events as a CSV file (with a header row) or as JSON Lines, one event per line. */
+export function formatActivity(events, format) {
+	if (format === "jsonl") return events.map((e) => JSON.stringify(e)).join("\n") + (events.length ? "\n" : "");
+	const rows = events.map((e) => [e.t, e.level, e.type, e.server, e.message, e.data ? JSON.stringify(e.data) : ""]);
+	return [CSV_COLUMNS, ...rows].map((r) => r.map(csvCell).join(",")).join("\r\n") + "\r\n";
+}
+
 export const activityFile = FILE;

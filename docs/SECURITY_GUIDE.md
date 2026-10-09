@@ -120,6 +120,22 @@ Viewers can't read passwords or settings. Anyone with the **community code** can
 Don't. If you do anyway, the panel still refuses connections from outside your network, but that wall is the
 only thing between the internet and an administrator login, and it isn't designed to be the only one.
 
+## Keeping a record
+
+**Activity** (top right) lists every sign-in by an administrator or moderator, every sign-in that failed
+(the name tried and the address it came from, never the password), and every change anyone made: who
+started, stopped or restored a server, who made or removed an account, and *which* settings and secrets
+were changed (never their values). A request someone wasn't allowed to make is listed too, marked
+"refused".
+
+- **Export** (administrators, at the bottom of Activity) saves the whole log, not just what is on screen,
+  as a CSV file for a spreadsheet or as JSON Lines for anything that reads logs.
+- **Audit webhook** (in `Settings`, with the other webhooks) posts each of those entries to a Discord channel as it happens.
+  Make the channel one only you can read. A copy that lives on another service is one that somebody who
+  got into this PC can't quietly edit. Nothing is posted about what viewers do.
+
+The log is kept to roughly the last 4 MB; export it now and then if you want a longer history.
+
 ## Limits worth knowing about
 
 - **The panel is served over plain HTTP** on your network, as home networks can't easily get a certificate

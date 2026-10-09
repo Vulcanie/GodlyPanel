@@ -5,6 +5,7 @@ import net from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { verifyCredentials, getById, needsSetup, setPassword } from "../data/userStore.js";
+import { auditActions, auditSignInFailed, auditSignedOut, auditPasswordChanged } from "./auditTrail.js";
 import { attachUser, issueSession, clearSession, requireRole, clientAddress } from "../middleware/auth.js";
 import { createLoginLimiter } from "../middleware/loginLimiter.js";
 import { securityHeaders } from "../middleware/securityHeaders.js";
@@ -106,6 +107,7 @@ export function createCommunityApp({ hostRule, uiDir, staffSignIn = () => false 
 	});
 
 	app.use(attachUser);
+	app.use(auditActions);
 	// Only guests exist here, unless staff sign-in is on. A session belonging to anyone else is
 	// treated as no session at all.
 	app.use((req, res, next) => {
@@ -134,6 +136,7 @@ export function createCommunityApp({ hostRule, uiDir, staffSignIn = () => false 
 		// be used to find out which names exist.
 		if (!user) {
 			limiter().recordLoginFailure(req);
+			auditSignInFailed(req, username, "from outside the home network");
 			return res.status(401).json({ error: "Incorrect username or password." });
 		}
 		// The right password for an administrator or moderator, while staff sign-in is off. Saying "incorrect
@@ -153,6 +156,7 @@ export function createCommunityApp({ hostRule, uiDir, staffSignIn = () => false 
 	});
 
 	app.post("/api/auth/logout", (req, res) => {
+		auditSignedOut(req);
 		clearSession(res);
 		res.json({ success: true });
 	});
@@ -190,6 +194,7 @@ export function createCommunityApp({ hostRule, uiDir, staffSignIn = () => false 
 			return res.status(400).json({ error: e.message });
 		}
 		issueSession(res, getById(user.id), { secure: secure(req) });
+		auditPasswordChanged(req);
 		res.json({ success: true });
 	});
 

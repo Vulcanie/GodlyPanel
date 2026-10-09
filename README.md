@@ -84,7 +84,7 @@ commit messages describe the problem each change solved.
   in the game), game updates and console commands, daily, on chosen days, every few
   hours, or once.
 - **Shows what's going on.** Per-server logs you can follow live and search, who is on
-  and who has been (joins, leaves, time played), and an activity log of everything the
+  and who has been (joins, leaves, time played), and an activity log (with who did what, exportable as CSV or JSON Lines, and an optional audit webhook) of everything the
   panel did and everything that happened. Passwords in logs are masked for anyone but an
   administrator.
 - **Tells you when something needs attention:** a Windows notification, a webhook
