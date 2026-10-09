@@ -88,8 +88,8 @@ commit messages describe the problem each change solved.
   panel did and everything that happened. Passwords in logs are masked for anyone but an
   administrator.
 - **Tells you when something needs attention:** a Windows notification, a webhook
-  (Discord, Slack and similar) and email, for crashes, failed backups or restarts, low
-  disk space and new versions. You choose which events.
+  (Discord, Slack and similar) and email, for crashes, failed backups or restarts, backups that never reach their off-site
+  destination, low disk space and new versions. You choose which events.
 - **Has three kinds of people.** Viewers look; **moderators** run servers (start, stop,
   restart, update, back up, logs, console) but can't see passwords or settings, delete,
   or restore, and can be limited to particular servers; administrators do everything.

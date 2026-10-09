@@ -68,8 +68,11 @@ Open the **Backups** tab.
   - Moderators can take backups but not restore them.
 - **Copies off this PC** (same tab) copy every backup to another drive, a network share, a
   cloud-sync folder (OneDrive, Dropbox, Google Drive) or S3-compatible storage (Backblaze B2,
-  Wasabi, Cloudflare R2, MinIO, Amazon S3). Failed copies are shown and retried. A backup on a
-  drive that has died can be fetched back and restored.
+  Wasabi, Cloudflare R2, MinIO, Amazon S3). Failed copies are shown and retried. If a backup is
+  still not there a day later (the drive is unplugged, the share is full, the cloud key was revoked), you get
+  a notification naming the place and the last error, a reminder daily while it lasts, and another when it
+  has caught up. The time is `Settings → Notifications`, *Warn when a backup hasn't reached its off-site
+  destination*; 0 turns it off. A backup on a drive that has died can be fetched back and restored.
 
 A backup is only worth something once you've restored from one. Try it once on a quiet day.
 

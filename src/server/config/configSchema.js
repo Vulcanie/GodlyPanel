@@ -117,6 +117,8 @@ export const DEFAULTS = {
 			"panel.update_failed",
 		],
 		diskLowGB: 10,
+		// Warn when a backup is this many hours old and still hasn't reached an off-site destination (0 = never).
+		destinationStaleHours: 24,
 		email: {
 			enabled: false,
 			host: "",
@@ -480,6 +482,15 @@ export const FIELD_SPECS = [
 		restart: false,
 		label: "Events to tell you about",
 		help: "Event names, one per line. See the list on this page for what is available.",
+	},
+	{
+		path: "notifications.destinationStaleHours",
+		type: "int",
+		min: 0,
+		max: 8760,
+		restart: false,
+		label: "Warn when a backup hasn't reached its off-site destination after (hours, 0 = never)",
+		help: "A backup this old that still isn't copied to a destination (it is unreachable, full, or its key was revoked) triggers a warning, repeated once a day, and another when it catches up.",
 	},
 	{
 		path: "notifications.diskLowGB",

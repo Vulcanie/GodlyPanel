@@ -23,6 +23,9 @@ import { all as allServers } from "../data/serverStore.js";
 
 const DESTINATIONS_FILE = path.join(paths.dataDir, "state", "backup-destinations.json");
 const STATUS_FILE = path.join(paths.dataDir, "state", "replication.json");
+// Which destinations the panel has already warned about being behind, and when, so a warning isn't repeated on every check.
+const ALERTS_FILE = path.join(paths.dataDir, "state", "backup-destination-alerts.json");
+const REMIND_MS = 24 * 3600_000;
 const enqueue = createWriteQueue();
 const SAFE_ID = /^[A-Za-z0-9._-]+$/;
 const TYPES = ["folder", "s3"];
@@ -328,6 +331,70 @@ export async function retryReplication() {
 	}
 	if (tried) await enqueue(saveStatuses);
 	return { tried, copied };
+}
+
+/**
+ * Is each enabled destination getting the backups? A destination is behind when a backup older than `staleHours` (and made after the
+ * destination was set up) still hasn't been copied there: it is failing, unreachable, out of space, or its key was revoked. The panel
+ * says so once, reminds once a day while it lasts, and says when it is caught up again. A destination that is simply waiting for the
+ * next backup is not behind. Never throws.
+ * @param {{ now?: number, staleHours?: number }} [options]
+ * @returns {Promise<{ destination: string, behind: number, oldestHours: number, error: string|null }[]>}  those behind right now
+ */
+export async function checkDestinations({ now = Date.now(), staleHours = getConfig().notifications.destinationStaleHours } = {}) {
+	try {
+		await load();
+		const alerts = await readJson(ALERTS_FILE, {});
+		const before = JSON.stringify(alerts);
+		const behindNow = [];
+		const staleMs = staleHours * 3600_000;
+		const active = staleHours > 0 ? destinations.filter((d) => d.enabled) : [];
+
+		for (const d of active) {
+			let behind = 0;
+			let oldest = 0;
+			let error = null;
+			for (const server of allServers()) {
+				for (const backup of await listBackups(server)) {
+					const status = statuses[d.id]?.[statusKey(server, backup.id)];
+					if (status?.status === "ok") continue;
+					const created = Date.parse(backup.createdAt);
+					if (!status && created < d.since) continue; // older than the destination, and nobody asked for it
+					if (!Number.isFinite(created) || now - created < staleMs) continue;
+					behind += 1;
+					oldest = Math.max(oldest, now - created);
+					error = status?.error ?? error;
+				}
+			}
+			if (!behind) continue;
+			const oldestHours = Math.floor(oldest / 3600_000);
+			behindNow.push({ destination: d.name, behind, oldestHours, error });
+			if (alerts[d.id] && now - alerts[d.id].at < REMIND_MS) continue;
+			alerts[d.id] = { at: now };
+			const what = behind === 1 ? "1 backup hasn't" : `${behind} backups haven't`;
+			logActivity({
+				type: "backup.destination_stale",
+				level: "warn",
+				message: `${what} reached ${d.name}; the oldest was made ${oldestHours} hours ago.${error ? ` Last error: ${error}` : ""} Check that it is reachable and has room. The panel keeps trying.`,
+				data: { destination: d.name, behind, oldestHours },
+			});
+		}
+
+		const stillBehind = new Set(behindNow.map((b) => b.destination));
+		for (const id of Object.keys(alerts)) {
+			const d = destinations.find((x) => x.id === id);
+			if (d && d.enabled && staleHours > 0 && stillBehind.has(d.name)) continue;
+			if (d && d.enabled && staleHours > 0) {
+				logActivity({ type: "backup.destination_recovered", level: "info", message: `${d.name} has caught up: every backup has been copied there.`, data: { destination: d.name } });
+			}
+			delete alerts[id];
+		}
+		if (JSON.stringify(alerts) !== before) await writeJsonAtomic(ALERTS_FILE, alerts);
+		return behindNow;
+	} catch (err) {
+		console.warn("[backup] Checking the destinations failed:", err.message);
+		return [];
+	}
 }
 
 /** Copy everything that exists now, including backups older than the destination. */

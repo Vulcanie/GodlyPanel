@@ -29,6 +29,10 @@ export const EVENT_LABELS = {
 	"panel.update_failed": "An update of GodlyPanel didn't work",
 };
 
+// Sent whenever destinationStaleHours is above 0, rather than being picked from the list of events: they were added after people
+// had saved their choice of events, and a list that is saved as it was would never have them.
+const BACKUP_DESTINATION_EVENTS = new Set(["backup.destination_stale", "backup.destination_recovered"]);
+
 const GIB = 1024 ** 3;
 const THROTTLE_MS = 10 * 60_000;
 const recent = new Map(); // "type|server" -> last sent ms
@@ -108,8 +112,10 @@ async function deliver(title, body, event) {
 // ---- events -----------------------------------------------------------------
 
 export function handleEvent(event) {
-	if (!enabledEvents().has(event.type)) return;
-	const key = `${event.type}|${event.server ?? ""}`;
+	const wanted = enabledEvents().has(event.type) || (BACKUP_DESTINATION_EVENTS.has(event.type) && getConfig().notifications.destinationStaleHours > 0);
+	if (!wanted) return;
+	// Per destination as well as per server: two destinations behind at once are two warnings.
+	const key = `${event.type}|${event.server ?? ""}|${event.data?.destination ?? ""}`;
 	const now = Date.now();
 	if (now - (recent.get(key) ?? 0) < THROTTLE_MS) return;
 	recent.set(key, now);

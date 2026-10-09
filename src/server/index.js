@@ -20,7 +20,7 @@ import { tickScheduler } from "./services/scheduler.js";
 import { checkServersOnce, startAutoStartServers } from "./services/crashWatcher.js";
 import { sweepPartialBackups, onBackupFinished } from "./services/backupService.js";
 import { applyBotSettings, stopBot } from "./services/discordBot.js";
-import { replicateBackup, retryReplication } from "./services/backupDestinations.js";
+import { replicateBackup, retryReplication, checkDestinations } from "./services/backupDestinations.js";
 import { startNotifier, checkDisks } from "./services/notifier.js";
 import { sampleOnce } from "./services/metricsSampler.js";
 import { rescan } from "./services/storageService.js";
@@ -124,6 +124,7 @@ registerTimer(
 registerTimer("metrics", () => sampleOnce().catch((err) => console.error("[metrics]", err)), (c) => c.metrics.sampleSec * 1000, (c) => c.metrics.enabled);
 onBackupFinished((server, id) => replicateBackup(server, id));
 registerTimer("offsite-retry", () => retryReplication().catch((err) => console.error("[offsite]", err)), () => 10 * 60_000);
+registerTimer("offsite-watch", () => checkDestinations(), () => 30 * 60_000);
 // Keeps this PC's Tailscale name current, so the panel opens by that name as well as by address.
 tailscaleStatus().catch(() => {});
 registerTimer("tailscale-names", () => tailscaleStatus({ force: true }).catch(() => {}), () => 5 * 60_000);
@@ -168,6 +169,7 @@ const server = app.listen(PORT, HOST, () => {
 	startNotifier();
 	if (getConfig().updates.check) setTimeout(() => checkForPanelUpdate().catch(() => {}), 60_000);
 	setTimeout(() => checkDisks().catch(() => {}), 30_000);
+	setTimeout(() => checkDestinations(), 90_000);
 
 	// Deferred: the first poll matters more than the disk figure, and a walk
 	// of every game install is heavy enough not to want it competing.

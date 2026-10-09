@@ -19,7 +19,7 @@ import { panelChecklist, summarise } from "../services/setupChecklist.js";
 import { applyBotSettings, botState } from "../services/discordBot.js";
 import { lanAddresses } from "../services/firewallCheck.js";
 import { tailscaleStatus } from "../services/tailscale.js";
-import { listDestinations, saveDestination, removeDestination, testDestination, retryReplication } from "../services/backupDestinations.js";
+import { listDestinations, saveDestination, removeDestination, testDestination, retryReplication, checkDestinations } from "../services/backupDestinations.js";
 
 const router = express.Router();
 
@@ -144,6 +144,8 @@ router.post("/backup-destinations/test", async (req, res) => {
 });
 
 router.post("/backup-destinations/retry", async (req, res) => res.json(await retryReplication()));
+// Which destinations are behind right now (and warns, if it hasn't yet).
+router.post("/backup-destinations/check", async (req, res) => res.json({ behind: await checkDestinations() }));
 
 router.put("/backup-destinations/:id", async (req, res) => {
 	try {
