@@ -7,7 +7,7 @@ import { get as getServerEntry } from "../data/serverStore.js";
 import { noteServerCameOnline } from "./serverWindows.js";
 import { checkPort } from "./portCheck.js";
 import { checkProcess } from "./processCheck.js";
-import { findServerProcesses } from "./serverProcesses.js";
+import { findServerProcesses, ownedProgramRunning } from "./serverProcesses.js";
 import { latestServerStats } from "./serverResourceStats.js";
 import { latestStats } from "./systemStats.js";
 import { getConfig } from "../config/configStore.js";
@@ -222,7 +222,8 @@ async function pollGamedig(server, base) {
 async function pollProcess(server, base) {
 	let running = await checkProcess(server.processName);
 	// Another server running the same program isn't this one: look at where it runs from.
-	if (running) running = (await findServerProcesses(server)).owned.length > 0;
+	// If that lookup fails, the program was found by name a moment ago, so it stays up rather than flickering to offline.
+	if (running) running = ownedProgramRunning(await findServerProcesses(server));
 	return { ...base, online: running, playerCount: 0, playerList: [] };
 }
 

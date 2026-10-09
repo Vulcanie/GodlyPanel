@@ -34,7 +34,11 @@ export function classify(server, running) {
 	return { owned, foreign, hasRoots: true };
 }
 
-/** Every running process with this image name and where it runs from. Never throws. */
+/**
+ * Every running process with this image name and where it runs from. Never throws.
+ * Resolves to null when it could not be found out (the lookup failed or timed out, as it can on a PC that is struggling), which is
+ * not the same as [] ("nothing is running"): a caller that took one for the other would think a running game had stopped.
+ */
 export function listByName(imageName) {
 	return new Promise((resolve) => {
 		if (!SAFE_NAME.test(String(imageName ?? ""))) return resolve([]);
@@ -48,7 +52,7 @@ export function listByName(imageName) {
 			],
 			{ windowsHide: true, timeout: 15000 },
 			(error, stdout) => {
-				if (error) return resolve([]);
+				if (error) return resolve(null);
 				resolve(
 					String(stdout)
 						.split(/\r?\n/)
@@ -64,8 +68,25 @@ export function listByName(imageName) {
 	});
 }
 
-/** The server's own running programs, and any others that merely share the name. */
-export async function findServerProcesses(server) {
-	if (!server.processName) return { owned: [], foreign: [], hasRoots: false };
-	return classify(server, await listByName(server.processName));
+/**
+ * The server's own running programs, and any others that merely share the name. `unknown` is true when the lookup couldn't be
+ * done: then `owned` and `foreign` are empty, and mean nothing. Use ownedProgramRunning / ownedProgramGone to decide.
+ * @param {object} server
+ * @param {{ list?: (imageName: string) => Promise<{pid:number,path:string|null}[]|null> }} [options]  how to look (a test passes its own)
+ */
+export async function findServerProcesses(server, { list = listByName } = {}) {
+	if (!server.processName) return { owned: [], foreign: [], hasRoots: false, unknown: false };
+	const running = await list(server.processName);
+	if (running === null) return { owned: [], foreign: [], hasRoots: false, unknown: true };
+	return { ...classify(server, running), unknown: false };
 }
+
+/**
+ * Is the server's own program running, as far as can be told? When the lookup failed this says yes: it is the safe answer for
+ * everything that asks (refusing a second start, a backup or restore of live files, a delete), and a wrong "yes" costs a retry
+ * where a wrong "no" costs a second copy of the game or a restore over a running one.
+ */
+export const ownedProgramRunning = (found) => found.unknown === true || found.owned.length > 0;
+
+/** Has the server's own program definitely gone? Not when the lookup failed: unknown is not "gone". */
+export const ownedProgramGone = (found) => found.unknown !== true && found.owned.length === 0;

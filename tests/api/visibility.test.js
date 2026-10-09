@@ -189,7 +189,8 @@ describe("logs, players and notifications", () => {
 
 		it("tells you when a server crashes, and only about the things you chose", async () => {
 			await api.put(`${base}/options`, { autoRestart: true });
-			await sleep(6000); // let the watcher see it up
+			// Until the watcher has seen it come online, or a crash isn't one it would notice.
+			assert.equal(await until(async () => (await api.get(`${base}/options`)).json.recovery.seenUp, { timeoutMs: 60_000 }), true);
 			received.length = 0;
 			await api.post(`/api/control/${encodeURIComponent(NAME)}/rcon`, { command: "crash" }).catch(() => {});
 			assert.equal(await until(() => received.some((m) => m.event === "server.crashed"), { timeoutMs: 60_000 }), true);

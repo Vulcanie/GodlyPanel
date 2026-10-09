@@ -26,8 +26,9 @@ const cfg = () => {
 /** What the watcher currently thinks of a server, for the UI. */
 export function recoveryState(name) {
 	const s = states.get(name)?.policy;
-	if (!s) return { gaveUp: false, restartsInWindow: 0, unresponsive: false };
-	return { gaveUp: s.gaveUp, restartsInWindow: s.restarts.length, unresponsive: s.unresponsive };
+	if (!s) return { gaveUp: false, restartsInWindow: 0, unresponsive: false, seenUp: false };
+	// seenUp: the watcher has watched it come online, so from now on its going down counts as a crash.
+	return { gaveUp: s.gaveUp, restartsInWindow: s.restarts.length, unresponsive: s.unresponsive, seenUp: s.up };
 }
 
 /** Forget a server's history, so a manual start gives it a fresh set of tries. */

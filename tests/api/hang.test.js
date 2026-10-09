@@ -64,7 +64,10 @@ describe("a hung server", () => {
 			assert.equal(await until(() => online(name)), true);
 			await until(() => idle(name));
 		}
-		await sleep(7000);
+		// Until the watcher has seen both come online: a hang is only judged for a server it has watched come up.
+		for (const name of ["Hang Restart", "Hang Leave"]) {
+			assert.equal(await until(async () => (await api.get(`/api/server/${enc(name)}/options`)).json.recovery.seenUp, { timeoutMs: 60_000 }), true, `${name} was seen online`);
+		}
 		for (const name of ["Hang Restart", "Hang Leave"]) await api.post(`/api/control/${enc(name)}/rcon`, { command: "hang" }).catch(() => {});
 
 		assert.equal(await until(async () => (await events("Hang Restart", "server.unresponsive")).length > 0, { timeoutMs: 60_000 }), true, "it is said to be unresponsive");

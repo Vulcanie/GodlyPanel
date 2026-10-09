@@ -50,7 +50,8 @@ describe("two servers running the same program", () => {
 		api = panel.api;
 		// Another server with the very same program name, started outside the panel.
 		other = spawn(path.join(theirs, IMAGE), ["fakegame.cjs", "--rcon", String(ports[1]), "--password", "pw", "--home", theirs], { cwd: theirs, stdio: "ignore", windowsHide: true });
-		await sleep(1500);
+		// Until the unmanaged copy really is running (starting a copy of node.exe takes longer on a busy machine).
+		await until(() => alive(theirs), { timeoutMs: 60_000 });
 	});
 	after(async () => {
 		other?.kill();
@@ -63,7 +64,8 @@ describe("two servers running the same program", () => {
 		assert.equal(alive(theirs), true);
 		const r = await api.post("/api/control/Same%20Program/stop");
 		// Nothing of this server's own was running, so there was nothing to stop.
-		assert.ok([200, 409, 500].includes(r.status));
+		// Whatever it answers (503: it couldn't check what was running, on a PC too busy to look), it must not have touched the other one.
+		assert.ok([200, 409, 500, 503].includes(r.status), String(r.status));
 		await sleep(3000);
 		assert.equal(alive(theirs), true, "the other server was not touched");
 	});
@@ -72,7 +74,7 @@ describe("two servers running the same program", () => {
 		await until(async () => !(await api.get("/api/operations")).json["Same Program"]);
 		assert.equal((await api.post("/api/control/Same%20Program/start")).status, 200);
 		assert.equal(await until(() => alive(mine)), true);
-		await sleep(2000);
+		await until(async () => (await api.get("/api/status")).json["Same Program"]?.online === true, { timeoutMs: 60_000 });
 		await until(async () => !(await api.get("/api/operations")).json["Same Program"], { timeoutMs: 60_000 });
 
 		const stop = await api.post("/api/control/Same%20Program/stop");

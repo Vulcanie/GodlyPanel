@@ -2,7 +2,7 @@ import { execFile, spawn } from "child_process";
 import net from "net";
 import { withRcon } from "./rconClient.js";
 import { sleep } from "../util/async.js";
-import { findServerProcesses } from "./serverProcesses.js";
+import { findServerProcesses, ownedProgramGone } from "./serverProcesses.js";
 import { resolveResource } from "../../shared/resources.js";
 import { effectiveWindowMode, hideWindows, markHidingStarted } from "./serverWindows.js";
 import { launchWindowless, getRecordedPid, forgetPid } from "./windowlessLauncher.js";
@@ -276,10 +276,17 @@ function killPid(pid, { force = false } = {}) {
 // Valheim server stopped all of them. A same-named program from somewhere else is left
 // alone, and if that is all there is, Stop says so instead of acting on it.
 async function gracefulThenForceKill(server, graceMs = 15000, pollMs = 2000) {
-	const { owned, foreign } = await findServerProcesses(server);
+	const found = await findServerProcesses(server);
+	const { owned, foreign } = found;
 	if (owned.length === 0) {
 		const pid = await getRecordedPid(server);
 		if (pid) return stopByPid(server, pid, graceMs, pollMs);
+		if (found.unknown) {
+			// Not "it wasn't running": the lookup failed, and nothing is known about what is.
+			const err = new Error(`Couldn't check what is running just now (the PC may be very busy), so nothing was stopped. Try again in a moment.`);
+			err.status = 503;
+			throw err;
+		}
 		if (foreign.length > 0) {
 			const err = new Error(
 				`${server.processName} is running, but not from ${server.name}'s folder, so it is another server's and was left alone. Nothing was stopped.`,
@@ -295,12 +302,18 @@ async function gracefulThenForceKill(server, graceMs = 15000, pollMs = 2000) {
 	const deadline = Date.now() + graceMs;
 	while (Date.now() < deadline) {
 		await sleep(pollMs);
-		if ((await findServerProcesses(server)).owned.length === 0) {
+		if (ownedProgramGone(await findServerProcesses(server))) {
 			return { success: true, message: `${server.name} closed gracefully.` };
 		}
 	}
 
-	for (const p of (await findServerProcesses(server)).owned) await killPid(p.pid, { force: true });
+	const last = await findServerProcesses(server);
+	if (last.unknown) {
+		const err = new Error(`${server.name} was asked to close, but the PC is too busy to check whether it did. Look at its status and press Stop again if it is still running.`);
+		err.status = 503;
+		throw err;
+	}
+	for (const p of last.owned) await killPid(p.pid, { force: true });
 	return {
 		success: true,
 		message: `${server.name} didn't close on its own within ${Math.round(graceMs / 1000)}s — force-stopped.`,

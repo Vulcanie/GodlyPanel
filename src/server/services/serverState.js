@@ -1,6 +1,6 @@
 import { serverStatus, pollServerNow } from "./pollingService.js";
 import { checkProcess } from "./processCheck.js";
-import { findServerProcesses } from "./serverProcesses.js";
+import { findServerProcesses, ownedProgramRunning, ownedProgramGone } from "./serverProcesses.js";
 import { getRecordedPid } from "./windowlessLauncher.js";
 
 // Every Minecraft server is "java.exe", so the image name says nothing about
@@ -14,7 +14,8 @@ const SHARED_PROGRAM = /^javaw?(\.exe)?$/i;
 export async function isProgramAlive(server) {
 	if (!server.processName || SHARED_PROGRAM.test(server.processName)) return null;
 	// Its own program, not another server's that happens to share the name.
-	return (await findServerProcesses(server)).owned.length > 0;
+	const found = await findServerProcesses(server);
+	return found.unknown ? null : found.owned.length > 0; // null: the lookup failed, so it can't be told
 }
 
 /**
@@ -29,7 +30,8 @@ export async function isProgramAlive(server) {
 export async function isServerRunning(server) {
 	let running = Boolean(serverStatus[server.name]?.online);
 	if (running && server.method === "process") {
-		running = (await checkProcess(server.processName, { fresh: true })) && (await findServerProcesses(server)).owned.length > 0;
+		// If looking at where it runs from fails, it counts as running: see ownedProgramRunning.
+		running = (await checkProcess(server.processName, { fresh: true })) && ownedProgramRunning(await findServerProcesses(server));
 	}
 	if (!running) running = Boolean(await getRecordedPid(server));
 	return running;
@@ -45,7 +47,7 @@ export async function isServerRunning(server) {
 export async function isFullyStopped(server) {
 	if (await getRecordedPid(server)) return false;
 	if (server.processName && !SHARED_PROGRAM.test(server.processName)) {
-		return (await findServerProcesses(server)).owned.length === 0;
+		return ownedProgramGone(await findServerProcesses(server)); // a failed lookup is not "gone"
 	}
 	const status = await pollServerNow(server.name);
 	return !status?.online;
