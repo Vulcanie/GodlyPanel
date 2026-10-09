@@ -226,7 +226,7 @@ try {
 	fs.writeFileSync(path.join(dataDir, "canary.txt"), "my data");
 
 	step("Starting the packaged app");
-	const env = { ...process.env, GHP_UPDATE_API: `http://127.0.0.1:${GH_PORT}` };
+	const env = { ...process.env, GHP_UPDATE_API: `http://127.0.0.1:${GH_PORT}`, GHP_UPDATE_UNSIGNED_OK: "1" };
 	delete env.ELECTRON_RUN_AS_NODE;
 	spawn(exe, ["--hidden"], { cwd: appDir, env, detached: true, stdio: "ignore" }).unref();
 	await until(up, { timeoutMs: 90_000, label: "the panel to answer" });

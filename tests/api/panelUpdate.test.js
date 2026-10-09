@@ -80,7 +80,7 @@ describe("checking for and fetching a new version", () => {
 		await new Promise((r) => github.listen(port, "127.0.0.1", r));
 
 		panel = await startInProcess({
-			env: { GHP_UPDATE_API: url, GHP_APP_VERSION: "0.1.0-alpha.2" },
+			env: { GHP_UPDATE_API: url, GHP_UPDATE_UNSIGNED_OK: "1", GHP_APP_VERSION: "0.1.0-alpha.2" },
 			config: { updates: { check: false } },
 		});
 		api = panel.api;

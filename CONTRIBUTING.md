@@ -46,6 +46,19 @@ project's real bugs only surfaced because a test existed to be surprised by them
 Tests boot the real API against a throwaway folder (`tests/helpers/instance.js`), so
 they exercise what a user gets rather than mocks.
 
+## Publishing a release (for the maintainer)
+
+Releases are signed, and the app refuses to install one that isn't (see [SECURITY.md](SECURITY.md#updating)).
+
+- **Once:** `node scripts/make-update-key.mjs` makes the key pair. Put the private key file's contents in the repository secret
+  `UPDATE_SIGNING_KEY` (Settings → Secrets and variables → Actions), keep a private backup of the file (if it is lost, installed
+  copies will refuse updates signed by a new key until they are reinstalled by hand), and make sure the printed public key is in
+  `src/shared/updateKey.js`.
+- **Each release:** push the version tag as before. The workflow signs `update-manifest.json` and attaches `update-manifest.json.sig`;
+  with no secret that step fails and nothing is published. For a release made on this PC, `node scripts/sign-update.mjs dist --key <file>`.
+- **Replacing the key:** add the new public key to `UPDATE_PUBLIC_KEYS` next to the old one, release signed with the old key, then
+  switch signing to the new key in a later release, and drop the old public key after that.
+
 ## Pull requests
 
 - Keep them focused: one change, with a sentence on **why**.

@@ -220,9 +220,18 @@ function PanelUpdateCard() {
 						</Alert>
 					)}
 					{selfUpdate?.support?.ok && !selfUpdate.plan && (
-						<Alert severity="info" sx={{ mt: 1 }}>
-							This release doesn't publish a checksum the panel can verify, so it won't install it by itself. Download the package and unzip it instead.
+						<Alert severity={selfUpdate.signature === "invalid" ? "error" : "info"} sx={{ mt: 1 }} data-testid="update-unsigned">
+							{selfUpdate.signature === "invalid"
+								? "This release's signature doesn't match, so the panel won't install it. It may have been changed after it was published. Don't use it, and tell the project."
+								: selfUpdate.signature === "missing"
+									? "This release isn't signed by the project, so the panel won't install it by itself. Download it from the releases page only if you trust where it came from."
+									: "This release doesn't publish a checksum the panel can verify, so it won't install it by itself. Download the package and unzip it instead."}
 						</Alert>
+					)}
+					{selfUpdate?.plan && selfUpdate.signature === "valid" && (
+						<Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 0.5 }} data-testid="update-signed">
+							Signed by the project: the panel checked this update's signature before offering it.
+						</Typography>
 					)}
 
 					{dl?.status === "downloading" && (
@@ -241,7 +250,7 @@ function PanelUpdateCard() {
 					{dl?.status === "done" && (
 						<Alert severity={dl.verified ? "success" : "warning"} sx={{ mt: 1 }}>
 							Downloaded {dl.name} to {status.downloadFolder}.{" "}
-							{dl.verified ? "It matches the checksum in the release notes." : "The release notes gave no checksum to compare it with, so it is unverified."} To update by hand: quit GodlyPanel, unzip it over the old folder (keeping your <code>data</code> folder), and start it again.
+							{dl.verified ? (dl.signed ? "It matches the checksum in the project's signed manifest." : "It matches the checksum in the release notes.") : "The release notes gave no checksum to compare it with, so it is unverified."} To update by hand: quit GodlyPanel, unzip it over the old folder (keeping your <code>data</code> folder), and start it again.
 							{native()?.openFolder && (
 								<Button size="small" sx={{ ml: 1 }} onClick={() => native().openFolder(status.downloadFolder)}>
 									Show the file

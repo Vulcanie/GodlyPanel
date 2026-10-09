@@ -67,7 +67,9 @@ RCON is the remote console. With its password, anyone who can reach the port can
 - [ ] Download only from the project's own [Releases page](https://github.com/Vulcanie/GodlyPanel/releases).
 - [ ] **Compare the checksum.** Each release lists a SHA-256. In PowerShell:
       `Get-FileHash .\GodlyPanel-*-win.zip -Algorithm SHA256` should print the same value. The panel's
-      own update download does this check for you.
+      own update does this check for you, and also checks the project's signature on the release, so it
+      refuses a release that was altered or put there by someone else. (A checksum shown beside a download is
+      only as good as the page it is on; the signature is not.)
 - [ ] The app isn't code-signed yet, so Windows will warn on first run. Unblock the zip before
       unzipping (see [Getting started](GETTING_STARTED.md)). The warning isn't a sign anything is wrong, but
       the checksum is how you know the file is the real one.

@@ -9,6 +9,8 @@ import { broadcastSseEvent } from "./sseHub.js";
 import { readJson, writeJsonAtomic } from "../util/atomicJson.js";
 import { downloadVerified } from "../util/downloadVerified.js";
 import { compareVersions, checksumFromNotes } from "../util/releaseVersions.js";
+import { SIGNATURE_ASSET, verifyManifest } from "../util/updateSignature.js";
+import { trustedUpdateKeys, signatureRequired } from "../../shared/updateKey.js";
 
 // Re-exported: callers (and tests) have always imported these from here.
 export { compareVersions, checksumFromNotes };
@@ -58,9 +60,11 @@ function describeRelease(release) {
 			: null,
 		// Everything attached to the release that the updater may ask for (by name, from the manifest).
 		assets: (release.assets ?? [])
-			.filter((a) => PAYLOAD_NAME.test(a.name) || a.name === MANIFEST_ASSET)
+			.filter((a) => PAYLOAD_NAME.test(a.name) || a.name === MANIFEST_ASSET || a.name === SIGNATURE_ASSET)
 			.map((a) => ({ name: a.name, size: a.size, url: a.browser_download_url })),
 		manifest: null,
+		// "valid" | "missing" | "invalid" | "not-checked": whether the maker of this release vouches for its manifest, and so its downloads.
+		signature: "not-checked",
 	};
 }
 
@@ -88,16 +92,36 @@ export function readManifest(release, text) {
 	}
 }
 
+async function fetchText(asset, limit) {
+	const res = await fetch(asset.url, { headers: { "User-Agent": "GodlyPanel" }, redirect: "follow", signal: AbortSignal.timeout(15_000) });
+	if (!res.ok || !trusted(res.url || asset.url)) return null;
+	const text = await res.text();
+	return text.length < limit ? text : null;
+}
+
+/**
+ * The release's manifest and whether it is signed. When the app has a public key to check against, the manifest is used only if
+ * the signature next to it verifies (unless a test has said otherwise): a release someone edited, or one published without the
+ * maker's key, ends up with no manifest, and so nothing the panel will install by itself.
+ * @returns {Promise<{ manifest: object|null, signature: "valid"|"missing"|"invalid"|"not-checked" }>}
+ */
 async function loadManifest(release) {
 	const asset = release.assets.find((a) => a.name === MANIFEST_ASSET);
-	if (!asset || !trusted(asset.url)) return null;
+	if (!asset || !trusted(asset.url)) return { manifest: null, signature: "not-checked" };
 	try {
-		const res = await fetch(asset.url, { headers: { "User-Agent": "GodlyPanel" }, redirect: "follow", signal: AbortSignal.timeout(15_000) });
-		if (!res.ok || !trusted(res.url || asset.url)) return null;
-		const text = await res.text();
-		return text.length < 64 * 1024 ? readManifest(release, text) : null;
+		const text = await fetchText(asset, 64 * 1024);
+		if (text === null) return { manifest: null, signature: "not-checked" };
+
+		let signature = "not-checked";
+		if (trustedUpdateKeys().length > 0) {
+			const sigAsset = release.assets.find((a) => a.name === SIGNATURE_ASSET);
+			const sigText = sigAsset && trusted(sigAsset.url) ? await fetchText(sigAsset, 1024) : null;
+			signature = sigText === null ? "missing" : verifyManifest(text, sigText, trustedUpdateKeys()) ? "valid" : "invalid";
+		}
+		if (signature !== "valid" && signatureRequired()) return { manifest: null, signature };
+		return { manifest: readManifest(release, text), signature };
 	} catch {
-		return null;
+		return { manifest: null, signature: "not-checked" };
 	}
 }
 
@@ -136,7 +160,7 @@ export async function checkForPanelUpdate() {
 			.filter((r) => r.tag_name)
 			.map(describeRelease)
 			.sort((a, b) => compareVersions(b.version, a.version))[0];
-		if (newest) newest.manifest = await loadManifest(newest);
+		if (newest) Object.assign(newest, await loadManifest(newest));
 		state = { ...state, checkedAt: new Date().toISOString(), latest: newest ?? null, error: null };
 	} catch (err) {
 		state = { ...state, checkedAt: new Date().toISOString(), error: err.message };
@@ -178,7 +202,9 @@ export function downloadState() {
 
 export async function downloadPanelUpdate() {
 	if (downloading?.status === "downloading") throw Object.assign(new Error("A download is already running."), { status: 409 });
-	const asset = state.latest?.asset;
+	// The signed manifest's checksum when the release has one that verified; the release notes' otherwise.
+	const signed = state.latest?.signature === "valid" && state.latest.manifest?.full;
+	const asset = signed ? { ...state.latest.manifest.full } : state.latest?.asset;
 	if (!asset) throw Object.assign(new Error("There is no update to download. Check for updates first."), { status: 400 });
 	if (!ASSET_NAME.test(asset.name) || !trusted(asset.url)) {
 		throw Object.assign(new Error("That download isn't from a place the panel trusts, so it was not fetched."), { status: 400 });
@@ -186,7 +212,7 @@ export async function downloadPanelUpdate() {
 
 	await fsp.mkdir(DOWNLOAD_DIR, { recursive: true });
 	const file = path.join(DOWNLOAD_DIR, asset.name);
-	downloading = { status: "downloading", name: asset.name, received: 0, total: asset.size, file, verified: null, error: null };
+	downloading = { status: "downloading", name: asset.name, received: 0, total: asset.size, file, verified: null, signed: Boolean(signed), error: null };
 
 	(async () => {
 		try {

@@ -11,6 +11,7 @@ import { hasActiveJobs } from "./processRegistry.js";
 import { logActivity } from "./activityLog.js";
 import { broadcastSseEvent } from "./sseHub.js";
 import crypto from "node:crypto";
+import { signatureRequired } from "../../shared/updateKey.js";
 
 // "Update now": download the new version, check it, and have the desktop app swap it in and restart itself.
 //
@@ -73,15 +74,21 @@ export function selfUpdateSupport() {
 
 /**
  * The download that updates this install: the small app-only one when the release was built on the Electron that is
- * running here, otherwise the whole package. A release without a manifest (anything before this feature) can only be
- * the whole package, and only when its notes give a checksum. Null when there is nothing the panel may install.
+ * running here, otherwise the whole package. When the app has a public key to check against, only a manifest the maker of
+ * the release has signed is believed: the checksum in the release notes, which anyone able to edit the release can change
+ * along with the zip, is not enough to install something by itself. Without a key, a release with no manifest (anything
+ * before this feature) can only be the whole package, and only when its notes give a checksum. Null when there is nothing
+ * the panel may install.
  * @returns {{ kind: "app"|"full", name: string, size: number, sha256: string, url: string, checksumSource: string } | null}
  */
 export function choosePayload(latest, electron = runningElectron()) {
 	if (!latest) return null;
+	const required = signatureRequired();
+	if (required && latest.signature !== "valid") return null;
 	const m = latest.manifest;
 	if (m?.app && electron && m.electron === electron) return { kind: "app", ...m.app, checksumSource: "release's update manifest" };
 	if (m?.full) return { kind: "full", ...m.full, checksumSource: "release's update manifest" };
+	if (required) return null;
 	if (latest.asset?.sha256) return { kind: "full", name: latest.asset.name, size: latest.asset.size, sha256: latest.asset.sha256, url: latest.asset.url, checksumSource: "release notes" };
 	return null;
 }
@@ -108,6 +115,9 @@ export async function selfUpdateInfo() {
 	return {
 		support: support.ok ? { ok: true } : { ok: false, reason: support.reason },
 		plan: payload ? { kind: payload.kind, name: payload.name, size: payload.size } : null,
+		// Whether the maker of the newest release vouches for it: "valid", "missing" (it has no signature), "invalid" (it has one
+		// that doesn't verify), or "not-checked" (this copy has no key to check with).
+		signature: latestRelease()?.signature ?? "not-checked",
 		install: installState(),
 		lastUpdate: remembered.lastUpdate,
 	};
@@ -225,7 +235,16 @@ export function startInstall({ fromOutside = false } = {}) {
 	if (!status.available) throw refuse("There is no newer version to install. Check for updates first.");
 	const latest = latestRelease();
 	const payload = choosePayload(latest);
-	if (!payload) throw refuse("This release gives no checksum the panel can verify, so it won't install it by itself. Download the package and unzip it instead.");
+	if (!payload) {
+		if (signatureRequired() && latest.signature !== "valid") {
+			throw refuse(
+				latest.signature === "invalid"
+					? "This release's signature doesn't match, so the panel won't install it. It may have been changed after it was published. Don't use it; tell the project."
+					: "This release isn't signed by the project, so the panel won't install it by itself. Download it from the releases page only if you trust where it came from.",
+			);
+		}
+		throw refuse("This release gives no checksum the panel can verify, so it won't install it by itself. Download the package and unzip it instead.");
+	}
 	if (!payload.url || !trustedUrl(payload.url)) throw refuse("That download isn't from a place the panel trusts, so it was not fetched.");
 	const busy = busyWith();
 	if (busy.length > 0) throw refuse(busyMessage(busy), 409);

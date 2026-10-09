@@ -8,8 +8,11 @@ Press **Update now** and the panel does the rest. You don't download a package o
 1. **It downloads only what changed.** Almost every release changes the app's own files, a few megabytes, and leaves the
    Electron program that runs them (about 250 MB) as it is. Only the few megabytes are downloaded. When a release moves to a
    newer Electron, the card says so and downloads the whole package instead (around 130 MB).
-2. **It checks what it downloaded.** The download has to match the SHA-256 the release publishes, and then every file inside
-   has to match the list that comes with it. Anything that doesn't match is thrown away, and nothing is changed.
+2. **It checks the release is the project's, and what it downloaded.** The release's `update-manifest.json` has to carry a
+   signature (`update-manifest.json.sig`) made with the project's private key, which only the project's release process has; the
+   matching public key is built into the app. Then the download has to match the SHA-256 in that signed manifest, and every file
+   inside has to match the list that comes with it. Anything that doesn't match is thrown away, and nothing is changed. A release
+   that someone edited on GitHub after it was published, or published without the project's key, fails the first check.
 3. **GodlyPanel closes, swaps its files, and starts the new version.** This takes about half a minute. The page shows
    "Updating GodlyPanel" and reloads by itself when the panel is back.
 4. **If the new version doesn't start, the old one is put back.** The update waits for the new version to say it is running.
@@ -30,6 +33,8 @@ Press **Update now** and the panel does the rest. You don't download a package o
 | *This copy of GodlyPanel isn't the installed app (it is running from source)* | You started the panel from the source code, not the packaged app. Update with `git pull`, or download the package. |
 | *This Windows account can't change the files in …* | The app is in a folder you can't write to (for example Program Files). Run it from a folder you own, or unzip the package yourself. |
 | *Wait until … have finished, then update* | A backup, restore, game update or install is running. Restarting would cut it off. Try again when it's done. |
+| *This release isn't signed by the project* | The release has no signature. Releases from before signing started don't, and neither would one published by someone without the project's key. The panel won't install it by itself; download it from the releases page only if you trust where it came from. |
+| *This release's signature doesn't match* | The release has a signature, but not one the project's key made, or the manifest was changed after it was signed. Don't use it, and [tell the project](../SECURITY.md). |
 | *This release gives no checksum the panel can verify* | Releases from before this feature don't. The panel never installs something it can't verify by itself; download the package and unzip it instead. |
 | *Updating GodlyPanel has to be done from this PC or your home network* | You pressed it through the public address ([Remote access](REMOTE_ACCESS.md)). Do it from home. |
 
@@ -45,10 +50,10 @@ notes. Quit GodlyPanel, unzip it over the old folder (leave `data` alone), and s
 
 ## For the curious: how the files are laid out
 
-Each release carries three downloads: `GodlyPanel-<version>-win.zip` (the whole package), `GodlyPanel-<version>-app.zip`
+Each release carries four files: `GodlyPanel-<version>-win.zip` (the whole package), `GodlyPanel-<version>-app.zip`
 (just the app's own files, with a list of every file and its checksum), and `update-manifest.json`, which names both, gives
 their sizes and checksums, and says which Electron the app files were built on. The release workflow writes the manifest
 from the final files, so its checksums are of exactly what is attached. The panel only downloads files named in that
-manifest, and only from GitHub. [SECURITY.md](../SECURITY.md#updating) says what that does and doesn't protect against.
+manifest, and only from GitHub. The fourth, `update-manifest.json.sig`, is the project's signature on the manifest's exact bytes (Ed25519). [SECURITY.md](../SECURITY.md#updating) says what that does and doesn't protect against.
 
 Everything about an update is written to `data\logs\update.log`, and the result is in **Activity**.

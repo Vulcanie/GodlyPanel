@@ -43,8 +43,11 @@ describe("CPU, memory and player history", () => {
 
 	it("records how many players were on, and how much the game used, while it runs", async () => {
 		await api.post(`/api/control/${encodeURIComponent(NAME)}/start`);
-		assert.equal(await until(async () => (await series()).points.some((p) => p.players >= 3)), true, JSON.stringify(await series()));
-		const point = (await series()).points.find((p) => p.players >= 3);
+		// A sample with the players AND the memory reading: on a busy machine the lookup of the game's memory can miss for one
+		// sample, which is recorded as 0, so the first sample with players is not necessarily a complete one.
+		const complete = (p) => p.players >= 3 && p.ramMB > 10;
+		assert.equal(await until(async () => (await series()).points.some(complete)), true, JSON.stringify(await series()));
+		const point = (await series()).points.find(complete);
 		assert.equal(point.playersMax >= 3, true);
 		assert.ok(point.ramMB > 10, `the stand-in game uses some memory: ${point.ramMB}`);
 		assert.ok("cpu" in point);

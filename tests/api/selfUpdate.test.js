@@ -135,6 +135,7 @@ describe("installing an update from inside the app", () => {
 			config: { updates: { check: false, includePrereleases: true, repo: "test/repo" } },
 			env: {
 				GHP_UPDATE_API: base,
+				GHP_UPDATE_UNSIGNED_OK: "1", // the stand-in release isn't signed; signedUpdates.test.js is about that
 				GHP_APP_VERSION: OLD,
 				GHP_SELF_UPDATE: "1",
 				GHP_APP_DIR: appDir,
@@ -288,7 +289,7 @@ describe("installing an update from inside the app", () => {
 			ipc: true,
 			servers: (dir) => [makeFakeGame(path.join(dir, "fake-busy"), { name: "Fake Busy", rconPort, exe: "gp-fake-busy.exe" })],
 			config: { updates: { check: false, includePrereleases: true, repo: "test/repo" } },
-			env: { GHP_UPDATE_API: base, GHP_APP_VERSION: OLD, GHP_SELF_UPDATE: "1", GHP_APP_DIR: appDir, GHP_APP_EXE: path.join(appDir, "GodlyPanel.exe"), GHP_ELECTRON_VERSION: ELECTRON },
+			env: { GHP_UPDATE_API: base, GHP_UPDATE_UNSIGNED_OK: "1", GHP_APP_VERSION: OLD, GHP_SELF_UPDATE: "1", GHP_APP_DIR: appDir, GHP_APP_EXE: path.join(appDir, "GodlyPanel.exe"), GHP_ELECTRON_VERSION: ELECTRON },
 		});
 		try {
 			serve({ app: await appZip() });

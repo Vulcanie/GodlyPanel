@@ -146,7 +146,12 @@ held to the following.
 - **Only GitHub, only the release's own files.** The panel fetches an update from GitHub over HTTPS, by the file names the
   release's `update-manifest.json` gives, and follows no redirect off GitHub's download hosts. It only ever moves to a
   *newer* version.
-- **Checked twice before anything is replaced.** The download must match the SHA-256 the release publishes (and its size),
+- **Signed by the project.** The release's `update-manifest.json` has to carry an Ed25519 signature (`update-manifest.json.sig`)
+  that verifies against a public key built into the app (`src/shared/updateKey.js`). The private key is only a secret of the
+  release workflow, never in the repository, so editing a release on GitHub, or publishing one without the key, produces
+  something the app refuses. An unsigned release is never installed by itself, and neither is one whose only checksum is in
+  its release notes.
+- **Checked twice before anything is replaced.** The download must match the SHA-256 in that signed manifest (and its size),
   and, once unpacked, every file must match the list inside the archive. A release that publishes no checksum is never
   installed by itself. An archive with an entry outside its own folder, a link, or (for the small update) anything but
   the app's own files is refused.
@@ -158,10 +163,12 @@ held to the following.
   is started again.
 - **Game servers and the `data` folder are never touched.**
 
-What this does not do: **it can't protect you from someone who controls the project's GitHub releases.** The checksum is
-published in the same place as the files, so it proves the download is the one that was published (not corrupted, not
-swapped in transit), not that the publisher is honest. The program isn't code-signed yet ([plan](docs/CODE_SIGNING.md)), so
-Windows can't vouch for it either. If that matters to you, leave **Update now** alone and verify releases yourself.
+What this does not do: **it can't protect you from someone who holds the project's signing key,** which is also what the
+release workflow signs with, so a compromise of the workflow's secrets (or of the maintainer's PC, where the key was made)
+would let a malicious update through. It also can't help a copy installed before signing began: the first signed release
+has to be installed by an app that has the key, so that update, and any made by hand, rest on the checksum and on
+where you downloaded it. The program isn't Windows code-signed yet ([plan](docs/CODE_SIGNING.md)), so Windows can't vouch
+for it either. If that matters to you, leave **Update now** alone and verify releases yourself.
 
 ## What it does not protect against
 

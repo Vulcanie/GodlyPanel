@@ -74,7 +74,7 @@ async function boot({ ipc, selfUpdate, result = null }) {
 	fs.writeFileSync(path.join(root, "config.json"), JSON.stringify({ http: { port: PORT, bindAll: false }, polling: { serversMs: 3000, enableServerStats: false }, updates: { check: false, includePrereleases: true, repo: "test/repo" } }));
 	const messages = [];
 	const api = spawn(process.execPath, [path.join(repo, "src/server/index.js")], {
-		env: { ...process.env, ELECTRON_RUN_AS_NODE: "", GHP_DATA_DIR: root, GHP_PORT: String(PORT), GHP_RESOURCE_ROOT: path.join(repo, "resources"), GHP_UPDATE_API: `http://127.0.0.1:${ghPort}`, GHP_APP_VERSION: OLD, GHP_ELECTRON_VERSION: ELECTRON, ...(selfUpdate ? { GHP_SELF_UPDATE: "1", GHP_APP_DIR: appDir, GHP_APP_EXE: path.join(appDir, "GodlyPanel.exe") } : {}) },
+		env: { ...process.env, ELECTRON_RUN_AS_NODE: "", GHP_DATA_DIR: root, GHP_PORT: String(PORT), GHP_RESOURCE_ROOT: path.join(repo, "resources"), GHP_UPDATE_API: `http://127.0.0.1:${ghPort}`, GHP_UPDATE_UNSIGNED_OK: "1", GHP_APP_VERSION: OLD, GHP_ELECTRON_VERSION: ELECTRON, ...(selfUpdate ? { GHP_SELF_UPDATE: "1", GHP_APP_DIR: appDir, GHP_APP_EXE: path.join(appDir, "GodlyPanel.exe") } : {}) },
 		stdio: ipc ? ["ignore", "ignore", "ignore", "ipc"] : "ignore",
 	});
 	if (ipc) api.on("message", (m) => messages.push(m));
