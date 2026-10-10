@@ -115,7 +115,9 @@ export async function handleInteraction(interaction, { guildId = null } = {}) {
 	if (command === "status") return reply(describe(server.name, status, { detail: true }));
 	if (command === "players") {
 		if (!status?.online) return reply(`**${server.name}** is offline.`);
-		const list = status.playerList ?? [];
+		const list = (status.playerList ?? []).filter((p) => typeof p === "string" && p.trim() !== "");
+		const unnamed = (status.playerCount ?? 0) - list.length;
+		if (list.length === 0 && unnamed > 0) return reply(`**${server.name}** has ${unnamed} player${unnamed === 1 ? "" : "s"} on, but the game doesn't say who.`);
 		return reply(list.length === 0 ? `Nobody is on **${server.name}** right now.` : `On **${server.name}** (${list.length}): ${list.map((p) => `\`${String(p).replace(/`/g, "")}\``).join(", ")}`);
 	}
 

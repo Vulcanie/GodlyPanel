@@ -12,6 +12,7 @@ import { recentActivity, logActivity, allActivity, formatActivity } from "../ser
 import { requireRole } from "../middleware/auth.js";
 import { listLogs, readLog, searchLog } from "../services/logService.js";
 import { playersFor } from "../services/playerTracker.js";
+import { serverStatus } from "../services/pollingService.js";
 import { firewallReport, lanAddresses, ruleCommands, runElevated, forgetFirewallCache } from "../services/firewallCheck.js";
 import { serverChecklist, summarise } from "../services/setupChecklist.js";
 import { PlayerAdminError, capabilities, readLists, kickPlayer, banPlayer, unbanPlayer, addToList, removeFromList } from "../services/playerAdmin.js";
@@ -255,7 +256,10 @@ router.get("/server/:serverName/logs/:id", requirePermission("server.logs"), asy
 });
 
 router.get("/server/:serverName/players", requirePermission("server.players"), (req, res) => {
-	res.json(playersFor(req.server.name));
+	const data = playersFor(req.server.name);
+	// The game says how many are on but not who (Valheim without a log file to read): shown as a count rather than as nobody.
+	const unnamed = serverStatus[req.server.name]?.online ? Math.max(0, (serverStatus[req.server.name].playerCount ?? 0) - data.online.length) : 0;
+	res.json({ ...data, unnamed });
 });
 
 // ---- kicking, banning and the lists ---------------------------------------------

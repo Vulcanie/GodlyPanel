@@ -43,7 +43,9 @@ function PlayersPanel({ serverName }) {
 				</Typography>
 				{data.online.length === 0 ? (
 					<Typography variant="body2" sx={{ color: "text.secondary" }}>
-						Nobody right now. (Only games that report their players can be tracked.)
+						{data.unnamed > 0
+							? `${data.unnamed} player${data.unnamed === 1 ? " is" : "s are"} on, but this game doesn't say who. (Valheim only gives names through its log file: the Launch options on the Config tab can switch -logFile on.)`
+							: "Nobody right now. (Only games that report their players can be tracked.)"}
 					</Typography>
 				) : (
 					<Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>

@@ -62,7 +62,8 @@ export function noteServerPlayers(name, status, now = Date.now()) {
 	}
 	state.misses = 0;
 
-	const current = new Set((status.playerList ?? []).filter(Boolean).map(String));
+	// Names only. (An entry that wasn't a name used to be turned into "[object Object]", and every nameless player became that one.)
+	const current = new Set((status.playerList ?? []).filter((p) => typeof p === "string" && p.trim() !== ""));
 	const events = [];
 	for (const player of current) {
 		if (!state.players.has(player)) {
@@ -87,7 +88,13 @@ export function forgetPlayers(name) {
 
 function readEvents(name) {
 	try {
-		return fs.readFileSync(fileFor(name), "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l));
+		// Without what older versions recorded for a player the game didn't name.
+		return fs
+			.readFileSync(fileFor(name), "utf8")
+			.split("\n")
+			.filter(Boolean)
+			.map((l) => JSON.parse(l))
+			.filter((e) => e.name !== "[object Object]");
 	} catch {
 		return [];
 	}

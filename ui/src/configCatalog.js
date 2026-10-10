@@ -506,6 +506,34 @@ const minecraftSettings = rows([
 	["initial-disabled-packs", "Initially Disabled Data Packs", "Comma-separated data packs disabled when the world is first created.", "Resource Pack"],
 ]);
 
+// ───────────────────────── Valheim ─────────────────────────
+// Keyed by the setting's name; the group is where it appears. Changes apply the next time the server is started.
+const valheimLaunchSettings = {
+	name: { label: "Server name", description: "The name shown in the server list (-name). The password can't be part of it.", group: "Server" },
+	port: { label: "Game port", description: "The UDP port players connect to (-port). The game also uses the next two ports. Change it under the server's ports so the panel can check for clashes.", group: "Server" },
+	world: { label: "World name", description: "Which world file to load or create (-world). A new name makes a new world; the old one is kept.", group: "Server" },
+	password: { label: "Password", description: "What players type to join (-password). At least 5 characters, and it can't be part of the server name. Leave empty for none, which Valheim refuses for a public server.", group: "Server" },
+	public: { label: "Listed publicly (1 = yes, 0 = no)", description: "Whether the server appears in Valheim's server browser (-public). Without it the default is 1.", group: "Server" },
+	crossplay: { label: "Crossplay", description: "Lets Xbox and Microsoft Store players join through PlayFab (-crossplay). Changes which ports are used for joining.", group: "Server" },
+	savedir: { label: "Save folder", description: "Where worlds and the admin, ban and permitted lists are kept (-savedir). Without it they go in the Windows user's profile, shared with every other Valheim server on this PC.", group: "Saves and logs" },
+	logFile: { label: "Log file", description: "Where the server writes its log (-logFile). The Logs tab reads this file.", group: "Saves and logs" },
+	saveinterval: { label: "Save every (seconds)", description: "How often the world is saved (-saveinterval). The default is 1800.", group: "Saves and logs" },
+	backups: { label: "Automatic backups to keep", description: "How many automatic backups Valheim keeps (-backups). The default is 4.", group: "Saves and logs" },
+	backupshort: { label: "First backup after (seconds)", description: "Time before the first automatic backup (-backupshort). The default is 7200.", group: "Saves and logs" },
+	backuplong: { label: "Then a backup every (seconds)", description: "Time between later automatic backups (-backuplong). The default is 43200.", group: "Saves and logs" },
+	instanceid: { label: "Instance ID", description: "Tells two servers that share a save folder apart (-instanceid).", group: "Saves and logs" },
+	preset: { label: "Difficulty preset", description: "Applies a whole set of world modifiers at once (-preset): normal, casual, easy, hard, hardcore, immersive or hammer. Individual modifiers below are applied after it.", group: "World modifiers" },
+	combat: { label: "Combat", description: "veryeasy, easy, hard or veryhard (-modifier combat). Empty keeps the default.", group: "World modifiers" },
+	deathpenalty: { label: "Death penalty", description: "casual, veryeasy, easy, hard or hardcore (-modifier deathpenalty). Empty keeps the default.", group: "World modifiers" },
+	resources: { label: "Resources", description: "muchless, less, more, muchmore or most (-modifier resources). Empty keeps the default.", group: "World modifiers" },
+	raids: { label: "Raids", description: "none, muchless, less, more or muchmore (-modifier raids). Empty keeps the default.", group: "World modifiers" },
+	portals: { label: "Portals", description: "casual or hard (-modifier portals): hard stops ores and metal passing through. Empty keeps the default.", group: "World modifiers" },
+	"setkey nobuildcost": { label: "No build cost", description: "Building is free (-setkey nobuildcost).", group: "World modifiers" },
+	"setkey playerevents": { label: "Player-based events", description: "Raids depend on what players have done (-setkey playerevents).", group: "World modifiers" },
+	"setkey passivemobs": { label: "Passive creatures", description: "Creatures don't attack (-setkey passivemobs).", group: "World modifiers" },
+	"setkey nomap": { label: "No map", description: "The map doesn't show where you have been (-setkey nomap).", group: "World modifiers" },
+};
+
 // ───────────────────────── Enshrouded ─────────────────────────
 
 const enshroudedTop = rows([
@@ -787,6 +815,17 @@ export const CONFIG_CATALOG = {
 				settings: {
 					...prefixJson("ServerDescription_Persistent", windroseSettings),
 				},
+			},
+		},
+	},
+	// Valheim has no settings file: the server is set up by the arguments on the line of its start script that launches it.
+	valheim: {
+		files: {
+			"Launch options": {
+				parser: "valheimLaunch",
+				excludeSections: [],
+				sectionLabels: {},
+				settings: { ...valheimLaunchSettings },
 			},
 		},
 	},

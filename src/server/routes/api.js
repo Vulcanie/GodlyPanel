@@ -46,8 +46,22 @@ router.param("serverName", (req, res, next, name) => {
 // Window mode, launch details and console output for one server.
 router.use("/server/:serverName", serverWindowRoutes);
 
+// Valheim has no settings file; it is set up by the arguments on the line of its start script that launches it. That script is
+// its settings file, shown as "Launch options" (the interface reads the arguments out of it and writes edits back).
+const VALHEIM_FILE = "Launch options";
+const ownsNoConfig = (server) => !server.configPaths && !server.configPath;
+const valheimLaunchFile = (server) => (server.type === "valheim" && ownsNoConfig(server) && server.startScriptPath ? server.startScriptPath : null);
+
+/** The names of a server's settings files, as the interface lists them. */
+export function configNamesOf(server) {
+	if (server.configPaths) return Object.keys(server.configPaths);
+	if (server.configPath) return ["config"];
+	return valheimLaunchFile(server) ? [VALHEIM_FILE] : [];
+}
+
 /** Which file a config request means: a named one, or the server's single file. */
 function configPathFor(server, name) {
+	if (valheimLaunchFile(server)) return name === VALHEIM_FILE ? valheimLaunchFile(server) : undefined;
 	return server.configPaths ? server.configPaths[name] : server.configPath;
 }
 
@@ -57,11 +71,7 @@ router.get("/server/:serverName", async (req, res) => {
 	res.json({
 		name: server.name,
 		type: server.type,
-		configNames: server.configPaths
-			? Object.keys(server.configPaths)
-			: server.configPath
-				? ["config"]
-				: [],
+		configNames: configNamesOf(server),
 		hasUpdate: Boolean(server.updateAppId),
 		hasRcon: Boolean(server.rconPort && server.rconPassword),
 		hasAutoUpdate: Boolean(server.updateAppId),
@@ -172,7 +182,9 @@ function historyFiles(server) {
 		: server.configPath
 			? [{ key: "config", file: server.configPath }]
 			: [];
-	if (server.startScriptPath) files.push({ key: "start script", file: server.startScriptPath });
+	// Valheim's settings file is its start script: listed once, under the name the settings page uses.
+	if (valheimLaunchFile(server)) files.push({ key: VALHEIM_FILE, file: valheimLaunchFile(server) });
+	else if (server.startScriptPath) files.push({ key: "start script", file: server.startScriptPath });
 	return files;
 }
 

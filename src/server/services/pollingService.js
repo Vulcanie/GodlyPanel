@@ -6,6 +6,7 @@ import { withTimeout } from "../util/async.js";
 import { get as getServerEntry } from "../data/serverStore.js";
 import { noteServerCameOnline } from "./serverWindows.js";
 import { checkPort } from "./portCheck.js";
+import { valheimNamesFromLog } from "./valheimPlayers.js";
 import { checkProcess } from "./processCheck.js";
 import { findServerProcesses, ownedProgramRunning } from "./serverProcesses.js";
 import { latestServerStats } from "./serverResourceStats.js";
@@ -189,6 +190,14 @@ async function pollRcon(server, base) {
 	return { ...base, online: true, playerCount: players.length, playerList: players, ping };
 }
 
+/**
+ * The names in a query's player list. A game may report a player with no name (Valheim does: it says how many are on, with every
+ * name blank), and the entry is then an object; only real names are kept, never the object itself.
+ */
+export function playerNames(players) {
+	return (players ?? []).map((p) => (typeof p === "string" ? p : p?.name)).filter((n) => typeof n === "string" && n.trim() !== "");
+}
+
 // Loaded on first use: a setup with no gamedig-polled servers never pays for
 // the library's hundred-odd protocol modules at startup.
 let gamedig = null;
@@ -206,13 +215,17 @@ async function pollGamedig(server, base) {
 		6000,
 		"gamedig query",
 	);
+	const count = state.players.length;
+	let names = playerNames(state.players);
+	// Valheim counts its players but doesn't name them in the query: its log does.
+	if (server.type === "valheim" && count > 0 && names.length < count) names = await valheimNamesFromLog(server, { max: count });
 	return {
 		...base,
 		online: true,
 		sessionName: base.sessionName || state.name,
-		playerCount: state.players.length,
+		playerCount: count,
 		maxplayers: state.maxplayers,
-		playerList: state.players.map((p) => p.name || p),
+		playerList: names,
 		ping: state.ping,
 	};
 }

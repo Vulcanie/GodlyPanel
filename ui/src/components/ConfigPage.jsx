@@ -34,6 +34,7 @@ import {
 	flattenJsonEntries,
 } from "../configParsers/json";
 import { parsePalworldStruct, serializePalworldStruct } from "../configParsers/palworldStruct";
+import { parseValheimLaunch, serializeValheimLaunch, valheimLaunchEntries } from "../configParsers/valheimLaunch";
 import { annotateEntries, getFileParser, getStructuredPaths } from "../configCatalog";
 import { detectSettingType } from "../utils/settingType";
 
@@ -55,6 +56,7 @@ const PARSERS = {
 		getEntries: (p, structuredPaths) =>
 			flattenJsonEntries(p, new Set(structuredPaths)),
 	},
+	valheimLaunch: { parse: parseValheimLaunch, serialize: serializeValheimLaunch, getEntries: valheimLaunchEntries },
 	palworld: {
 		parse: parsePalworldStruct,
 		serialize: serializePalworldStruct,
