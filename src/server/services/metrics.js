@@ -24,12 +24,14 @@ const minuteAcc = new Map(); // key -> accumulator for the minute being filled
 const hourAcc = new Map(); // key -> accumulator for the hour being filled
 const writes = new Map();
 
-const newAcc = (slot) => ({ slot, n: 0, sum: {}, max: {} });
+// `count` is per field: a reading that couldn't be taken is left out, and must not pull the average of the ones that could down.
+const newAcc = (slot) => ({ slot, n: 0, count: {}, sum: {}, max: {} });
 
 function add(acc, values) {
 	acc.n += 1;
 	for (const [name, value] of Object.entries(values)) {
 		if (!Number.isFinite(value)) continue;
+		acc.count[name] = (acc.count[name] ?? 0) + 1;
 		acc.sum[name] = (acc.sum[name] ?? 0) + value;
 		acc.max[name] = Math.max(acc.max[name] ?? -Infinity, value);
 	}
@@ -37,7 +39,7 @@ function add(acc, values) {
 
 function toPoint(acc, slotMs) {
 	const point = { t: acc.slot * slotMs };
-	for (const [name, total] of Object.entries(acc.sum)) point[name] = Math.round((total / acc.n) * 10) / 10;
+	for (const [name, total] of Object.entries(acc.sum)) point[name] = Math.round((total / acc.count[name]) * 10) / 10;
 	// Players matter at their peak, not just their average.
 	if (acc.max.players !== undefined) point.playersMax = acc.max.players;
 	return point;

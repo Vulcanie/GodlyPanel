@@ -29,6 +29,21 @@ describe("keeping a history of how busy things are", () => {
 		assert.equal(minutes[1].cpu, 50);
 	});
 
+	it("leaves out a reading that couldn't be taken, instead of averaging it in as zero", async () => {
+		// The memory lookup failed for the middle sample (a busy PC); players were still known.
+		await addSample("server:C", { cpu: 10, ramMB: 1000, players: 2 }, at(0, 1000));
+		await addSample("server:C", { players: 4 }, at(0, 21_000));
+		await addSample("server:C", { cpu: 30, ramMB: 3000, players: 6 }, at(0, 41_000));
+		// A minute with no memory reading at all has none in its point, rather than 0.
+		await addSample("server:C", { players: 3 }, at(1, 1000));
+		await addSample("server:C", { cpu: 1 }, at(2));
+		await flushAll();
+		const [first, second] = await readMinutes("server:C", 4 * 3_600_000);
+		assert.deepEqual(first, { t: at(0), cpu: 20, ramMB: 2000, players: 4, playersMax: 6 }, "two memory readings average to 2000, not 1333");
+		assert.equal("ramMB" in second, false);
+		assert.equal(second.players, 3);
+	});
+
 	it("reads a series back in time order, for a range", async () => {
 		for (let m = 2; m < 130; m += 1) await addSample("server:B", { cpu: m % 10, players: m % 4 }, at(m));
 		const r = await readSeries("server:B", "24h");

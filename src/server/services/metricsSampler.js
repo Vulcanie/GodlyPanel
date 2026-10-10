@@ -17,21 +17,26 @@ export async function sampleOnce() {
 		// A missed reading is a gap in a chart, nothing more.
 	}
 
-	let stats = [];
+	// null: the lookup failed (it can, on a PC that is struggling). That is not the same as "nothing is using any memory", so the
+	// readings are left out of that sample rather than recorded as 0, which would put a false dip in the chart.
+	let stats = null;
 	try {
 		stats = await getServerStatsIfStale(Math.max(1000, cfg.sampleSec * 1000 - 2000));
 	} catch {
 		// Same.
 	}
-	const byName = new Map(stats.map((s) => [s.name, s]));
+	const byName = new Map((stats ?? []).map((s) => [s.name, s]));
 	for (const server of allServers()) {
 		const status = serverStatus[server.name];
 		const stat = byName.get(server.name);
+		const online = Boolean(status?.online);
+		// Use is known when the lookup worked and found the game, or worked and found it isn't running. A game that is up but wasn't
+		// found among the processes is unknown too.
+		const known = stats !== null && (stat !== undefined || !online);
 		await addSample(`server:${server.name}`, {
-			cpu: stat?.cpuPercent ?? 0,
-			ramMB: stat?.ramMB ?? 0,
-			players: status?.online ? (status.playerCount ?? 0) : 0,
-			up: status?.online ? 1 : 0,
+			...(known ? { cpu: stat?.cpuPercent ?? 0, ramMB: stat?.ramMB ?? 0 } : {}),
+			players: online ? (status.playerCount ?? 0) : 0,
+			up: online ? 1 : 0,
 		});
 	}
 }
