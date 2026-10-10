@@ -8,7 +8,7 @@ import { getOptions, setOptions } from "../data/serverOptions.js";
 import { requirePermission, canAccessServer, can } from "../middleware/permissions.js";
 import { listTasks, addTask, updateTask, removeTask, runTask } from "../services/scheduler.js";
 import { recoveryState } from "../services/crashWatcher.js";
-import { recentActivity, logActivity, allActivity, formatActivity } from "../services/activityLog.js";
+import { recentActivity, logActivity, allActivity, formatActivity, searchActivity } from "../services/activityLog.js";
 import { requireRole } from "../middleware/auth.js";
 import { listLogs, readLog, searchLog } from "../services/logService.js";
 import { playersFor } from "../services/playerTracker.js";
@@ -404,6 +404,31 @@ router.get("/activity", requirePermission("activity.view"), (req, res) => {
 		return res.status(403).json({ error: "You don't have access to that server.", code: "forbidden_server" });
 	}
 	res.json(recentActivity({ server, types, limit }).filter((e) => !e.server || canAccessServer(req.user, e.server)));
+});
+
+// Search, filter and sort the whole log, a page at a time. Also says which servers and kinds of event the log holds, for the
+// filter menus. A limited moderator only sees events for their servers, as in the plain list above.
+router.get("/activity/search", requirePermission("activity.view"), (req, res) => {
+	const list = (value) => (typeof value === "string" && value ? value.split(",").map((v) => v.trim()).filter(Boolean) : null);
+	const date = (value) => (typeof value === "string" && value && Number.isFinite(Date.parse(value)) ? value : null);
+	const server = typeof req.query.server === "string" && req.query.server ? req.query.server : null;
+	if (server && !canAccessServer(req.user, server)) {
+		return res.status(403).json({ error: "You don't have access to that server.", code: "forbidden_server" });
+	}
+	res.json(
+		searchActivity({
+			q: typeof req.query.q === "string" ? req.query.q.slice(0, 200) : "",
+			types: list(req.query.types),
+			levels: list(req.query.level),
+			server,
+			from: date(req.query.from),
+			to: date(req.query.to),
+			order: req.query.order === "asc" ? "asc" : "desc",
+			limit: req.query.limit,
+			offset: req.query.offset,
+			canSee: (name) => canAccessServer(req.user, name),
+		}),
+	);
 });
 
 // The whole log as a file, for keeping elsewhere or handing to someone: CSV opens in a spreadsheet, JSON Lines in anything that reads

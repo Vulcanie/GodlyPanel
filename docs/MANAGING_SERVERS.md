@@ -199,7 +199,8 @@ keeps the ports it started with. For which ports to open on your router, see
   **stopped**, because a running Minecraft server keeps its operator list in memory and would lose the change; adding one at
   the default level works either way.
 - **Activity** is the running record of what the panel did and what happened to the server: crashes,
-  restarts, backups, updates, kicks, who changed what.
+  restarts, backups, updates, kicks, who changed what. It can be **searched** (the whole log, not only what is on screen),
+  narrowed by kind, level, server and time, and sorted either way; "Show more" loads older entries.
 - **Stats** charts CPU, memory and player counts over time.
 
 ## Settings files, and getting changes back

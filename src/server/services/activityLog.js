@@ -123,6 +123,31 @@ export function allActivity({ from = null, to = null, types = null, server = nul
 	return events.sort((a, b) => (a.t < b.t ? -1 : a.t > b.t ? 1 : 0));
 }
 
+/**
+ * Search the whole log: by text, type prefix, level, server and time, in either order, a page at a time. `canSee(serverName)`
+ * leaves out the servers the caller may not look at (events about no server in particular always stay). The lists of servers and
+ * types it also returns are for the filter menus, so they cover everything the caller may see, not just this page.
+ */
+export function searchActivity({ q = "", types = null, levels = null, server = null, from = null, to = null, order = "desc", limit = 150, offset = 0, canSee = null } = {}) {
+	const visible = allActivity({ from, to }).filter((e) => !e.server || !canSee || canSee(e.server));
+	const servers = [...new Set(visible.map((e) => e.server).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+	const typeCounts = {};
+	for (const e of visible) typeCounts[e.type] = (typeCounts[e.type] ?? 0) + 1;
+
+	const needle = String(q).trim().toLowerCase();
+	const haystack = (e) => `${e.message} ${e.type} ${e.server ?? ""} ${e.data ? JSON.stringify(e.data) : ""}`.toLowerCase();
+	const matches = visible.filter(
+		(e) =>
+			(!server || e.server === server) &&
+			(!types || types.some((p) => String(e.type).startsWith(p))) &&
+			(!levels || levels.includes(e.level)) &&
+			(!needle || haystack(e).includes(needle)),
+	);
+	if (order !== "asc") matches.reverse();
+	const start = Math.max(0, Number(offset) || 0);
+	return { total: matches.length, events: matches.slice(start, start + Math.min(Math.max(1, Number(limit) || 150), 500)), servers, types: typeCounts };
+}
+
 const CSV_COLUMNS = ["time", "level", "type", "server", "message", "details"];
 
 // A cell that starts with = + - @ is run as a formula by spreadsheet programs, and the message holds names people typed.
