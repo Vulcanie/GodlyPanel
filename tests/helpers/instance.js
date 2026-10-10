@@ -46,15 +46,25 @@ export function removeDir(dir) {
 	}
 }
 
-export function freePort() {
-	return new Promise((resolve, reject) => {
+// A port nobody is using right now. Asking the OS for one (listen on 0) and releasing it is a race when test files run side by side:
+// Windows may hand the same just-released port to another file's probe before the first has used it, and a test then fails with
+// the port taken. So each test process takes ports from a slice of the range of its own, found by trying to bind them.
+const SLICE = 200;
+let nextPort = 20000 + (process.pid % 150) * SLICE + Math.floor(Math.random() * 20);
+const canBind = (port) =>
+	new Promise((resolve) => {
 		const probe = net.createServer();
-		probe.once("error", reject);
-		probe.listen(0, "127.0.0.1", () => {
-			const { port } = probe.address();
-			probe.close(() => resolve(port));
-		});
+		probe.once("error", () => resolve(false));
+		probe.listen(port, "127.0.0.1", () => probe.close(() => resolve(true)));
 	});
+
+export async function freePort() {
+	for (let tries = 0; tries < 500; tries += 1) {
+		const port = nextPort;
+		nextPort = nextPort >= 49000 ? 20000 : nextPort + 1;
+		if (await canBind(port)) return port;
+	}
+	throw new Error("no free port found");
 }
 
 /** Cookie-keeping HTTP client for the panel's API. */
