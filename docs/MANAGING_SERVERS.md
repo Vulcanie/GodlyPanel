@@ -192,6 +192,12 @@ keeps the ports it started with. For which ports to open on your router, see
   the game and shows its reply.
 - **Players** shows who is on and who has been. For the games that support it you can **kick**,
   **ban**, and edit whitelist and admin lists. Every one of these is recorded in **Activity**.
+  On Minecraft, **operators have levels** (1 can build in the spawn area; 2 can use cheats like `/gamemode` and `/tp`;
+  3 manages players with `/op`, `/kick` and `/ban`; 4 can do everything, including `/stop`). The list shows each operator's
+  level, and a new one gets the level in `op-permission-level` in `server.properties` (4 if it isn't set) unless you pick
+  another. Choosing a different level, changing someone's level, or removing an operator is done with the server
+  **stopped**, because a running Minecraft server keeps its operator list in memory and would lose the change; adding one at
+  the default level works either way.
 - **Activity** is the running record of what the panel did and what happened to the server: crashes,
   restarts, backups, updates, kicks, who changed what.
 - **Stats** charts CPU, memory and player counts over time.

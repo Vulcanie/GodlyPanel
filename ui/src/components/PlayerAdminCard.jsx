@@ -1,5 +1,5 @@
 import React from "react";
-import { Alert, Box, Button, Chip, CircularProgress, Paper, TextField, Tooltip, Typography } from "@mui/material";
+import { Alert, Box, Button, Chip, CircularProgress, Menu, MenuItem, Paper, Select, TextField, Tooltip, Typography } from "@mui/material";
 import { Close as CloseIcon } from "@mui/icons-material";
 import { api } from "../api/client";
 
@@ -17,6 +17,8 @@ function PlayerAdminCard({ serverName, online = [] }) {
 	const [reason, setReason] = React.useState("");
 	const [busy, setBusy] = React.useState(false);
 	const [addTo, setAddTo] = React.useState({});
+	const [addLevel, setAddLevel] = React.useState(""); // "" = the server's default
+	const [levelMenu, setLevelMenu] = React.useState(null); // { anchor, name, level }
 
 	const load = React.useCallback(async () => {
 		try {
@@ -54,8 +56,9 @@ function PlayerAdminCard({ serverName, online = [] }) {
 	const add = (list) => {
 		const name = (addTo[list] ?? "").trim();
 		if (!name) return;
-		act(api.post(`${base}/player-lists/${list}`, { player: name }), (r) => r.message || `Added ${name}.`).then(() => setAddTo((a) => ({ ...a, [list]: "" })));
+		act(api.post(`${base}/player-lists/${list}`, { player: name, ...(list === "admins" && addLevel !== "" ? { level: Number(addLevel) } : {}) }), (r) => r.message || `Added ${name}.`).then(() => setAddTo((a) => ({ ...a, [list]: "" })));
 	};
+	const setLevel = (name, level) => act(api.put(`${base}/player-lists/admins/${encodeURIComponent(name)}/level`, { level }), (r) => r.message || `Set ${name} to level ${level}.`);
 	const remove = (list, name) => act(api.del(`${base}/player-lists/${list}/${encodeURIComponent(name)}`), (r) => r.message || `Removed ${name}.`);
 
 	if (!info) return error ? <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert> : <CircularProgress size={20} />;
@@ -132,6 +135,12 @@ function PlayerAdminCard({ serverName, online = [] }) {
 					<Typography variant="body2" sx={{ fontWeight: 500 }}>
 						{list.label} ({list.entries.length})
 					</Typography>
+					{list.levels && (
+						<Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
+							{list.levels.map((l) => `${l.level} ${l.name}: ${l.description}`).join(" ")} New operators get level {list.defaultLevel} unless you choose another.
+							{info.running ? " The server is running, so levels can't be changed until it is stopped." : ""}
+						</Typography>
+					)}
 					<Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap", my: 0.75 }}>
 						{list.entries.length === 0 && (
 							<Typography variant="caption" sx={{ color: "text.secondary" }}>
@@ -143,7 +152,8 @@ function PlayerAdminCard({ serverName, online = [] }) {
 								key={e.id}
 								size="small"
 								variant="outlined"
-								label={e.name && e.name !== e.id ? `${e.name}${e.reason ? ` · ${e.reason}` : ""}` : e.id}
+								label={`${e.name && e.name !== e.id ? `${e.name}${e.reason ? ` · ${e.reason}` : ""}` : e.id}${list.levels && e.level ? ` · Level ${e.level}` : ""}`}
+								onClick={list.levels && info.canBan ? (ev) => setLevelMenu({ anchor: ev.currentTarget, name: e.name ?? e.id, level: e.level }) : undefined}
 								onDelete={info.canBan ? () => (list.readOnly && list.id === "bans" ? unban(e.id) : remove(list.id, e.id)) : undefined}
 								deleteIcon={
 									<Tooltip title={list.id === "bans" ? "Unban" : "Remove"}>
@@ -156,6 +166,20 @@ function PlayerAdminCard({ serverName, online = [] }) {
 					{info.canBan && !list.readOnly && (
 						<Box sx={{ display: "flex", gap: 1 }}>
 							<TextField size="small" placeholder={info.who.hint} value={addTo[list.id] ?? ""} onChange={(e) => setAddTo((a) => ({ ...a, [list.id]: e.target.value }))} onKeyDown={(e) => e.key === "Enter" && add(list.id)} />
+							{list.levels && (
+								<Tooltip title={info.running ? "A running server can only add at its default level. Stop it to choose." : ""}>
+									<span>
+										<Select size="small" displayEmpty disabled={info.running} value={info.running ? "" : addLevel} onChange={(e) => setAddLevel(e.target.value)} sx={{ minWidth: 190 }}>
+											<MenuItem value="">Server default (level {list.defaultLevel})</MenuItem>
+											{list.levels.map((l) => (
+												<MenuItem key={l.level} value={l.level}>
+													Level {l.level} · {l.name}
+												</MenuItem>
+											))}
+										</Select>
+									</span>
+								</Tooltip>
+							)}
 							<Button size="small" disabled={busy || !(addTo[list.id] ?? "").trim()} onClick={() => add(list.id)}>
 								Add
 							</Button>
@@ -163,6 +187,23 @@ function PlayerAdminCard({ serverName, online = [] }) {
 					)}
 				</Box>
 			))}
+			<Menu anchorEl={levelMenu?.anchor} open={Boolean(levelMenu)} onClose={() => setLevelMenu(null)}>
+				{(info.lists.find((l) => l.levels)?.levels ?? []).map((l) => (
+					<MenuItem
+						key={l.level}
+						selected={levelMenu?.level === l.level}
+						disabled={info.running}
+						onClick={() => {
+							const name = levelMenu.name;
+							setLevelMenu(null);
+							setLevel(name, l.level);
+						}}
+					>
+						Level {l.level} · {l.name}
+					</MenuItem>
+				))}
+				{info.running && <MenuItem disabled>Stop the server to change levels</MenuItem>}
+			</Menu>
 		</Paper>
 	);
 }

@@ -1,4 +1,5 @@
 import { promises as fs } from "node:fs";
+import crypto from "node:crypto";
 import path from "node:path";
 import { sendRconCommand } from "./serverControl.js";
 import { sendTelnetCommand, cleanTelnetOutput } from "./telnetClient.js";
@@ -245,10 +246,71 @@ function parseLines(text) {
 		.map((id) => ({ id }));
 }
 
+// ---- Minecraft's operator levels ---------------------------------------------------
+// An operator has a level from 1 to 4 (ops.json), and each level can do what the ones below it can.
+
+export const MC_OP_LEVELS = [
+	{ level: 1, name: "Moderator", description: "Can build inside the spawn protection area. Nothing else." },
+	{ level: 2, name: "Gamemaster", description: "Cheats: /gamemode, /give, /tp, /effect, /gamerule, /summon, command blocks." },
+	{ level: 3, name: "Admin", description: "Manages players: /op, /deop, /kick, /ban, /pardon, /whitelist." },
+	{ level: 4, name: "Owner", description: "Everything, including /stop and /save-all." },
+];
+const MC_DEFAULT_OP_LEVEL = 4;
+
+/** The level `op` gives, and the one this panel's "Add" uses when no level is chosen: op-permission-level in server.properties. */
+async function defaultOpLevel(server) {
+	try {
+		const text = await fs.readFile(path.join(server.workingDir || server.installDir, "server.properties"), "utf8");
+		const m = /^\s*op-permission-level\s*=\s*(\d)/m.exec(text);
+		if (m && Number(m[1]) >= 1 && Number(m[1]) <= 4) return Number(m[1]);
+	} catch {
+		// No file yet: the game's own default.
+	}
+	return MC_DEFAULT_OP_LEVEL;
+}
+
+const levelOf = (value) => {
+	const n = Number(value);
+	if (!Number.isInteger(n) || n < 1 || n > 4) throw new PlayerAdminError("An operator level is 1, 2, 3 or 4.", "bad_level");
+	return n;
+};
+
+/** The UUID Minecraft knows a name by. Offline servers derive it from the name; online ones ask Mojang. `fetchProfile` is for tests. */
+export const deps = { fetchProfile: (name) => defaultProfileLookup(name) };
+export async function minecraftUuid(server, name, { fetchProfile = deps.fetchProfile } = {}) {
+	let onlineMode = true;
+	try {
+		const text = await fs.readFile(path.join(server.workingDir || server.installDir, "server.properties"), "utf8");
+		if (/^\s*online-mode\s*=\s*false\s*$/im.test(text)) onlineMode = false;
+	} catch {
+		// Assume the default, online.
+	}
+	let hex;
+	if (!onlineMode) {
+		const bytes = crypto.createHash("md5").update(`OfflinePlayer:${name}`).digest();
+		bytes[6] = (bytes[6] & 0x0f) | 0x30;
+		bytes[8] = (bytes[8] & 0x3f) | 0x80;
+		hex = bytes.toString("hex");
+	} else {
+		hex = await fetchProfile(name);
+		if (!/^[0-9a-f]{32}$/i.test(hex ?? "")) throw new PlayerAdminError(`Couldn't find a Minecraft account called ${name}. Check the spelling, or start the server and add them from there.`, "no_profile", 404);
+	}
+	return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`.toLowerCase();
+}
+
+async function defaultProfileLookup(name) {
+	try {
+		const res = await fetch(`https://api.mojang.com/users/profiles/minecraft/${encodeURIComponent(name)}`, { signal: AbortSignal.timeout(8000) });
+		return res.ok ? (await res.json()).id : null;
+	} catch {
+		return null;
+	}
+}
+
 function parseMcJson(text) {
 	try {
 		const data = JSON.parse(text);
-		return Array.isArray(data) ? data.map((e) => ({ id: e.name ?? e.uuid, name: e.name, uuid: e.uuid, reason: e.reason, level: e.level })) : [];
+		return Array.isArray(data) ? data.map((e) => ({ id: e.name ?? e.uuid, name: e.name, uuid: e.uuid, reason: e.reason, level: e.level, bypassesPlayerLimit: e.bypassesPlayerLimit })) : [];
 	} catch {
 		return [];
 	}
@@ -272,7 +334,9 @@ export async function readLists(server) {
 	const out = [];
 	for (const [id, list] of Object.entries(game.lists)) {
 		const { file, entries } = await readList(folder, list);
-		out.push({ id, label: list.label, kind: list.kind, readOnly: Boolean(list.readOnly), file, entries });
+		// Minecraft's operators have levels; the interface offers them (and what each can do) with the list.
+		const tiers = server.type === "minecraft" && id === "admins" ? { levels: MC_OP_LEVELS, defaultLevel: await defaultOpLevel(server) } : {};
+		out.push({ id, label: list.label, kind: list.kind, readOnly: Boolean(list.readOnly), file, entries, ...tiers });
 	}
 	return out;
 }
@@ -291,11 +355,60 @@ async function writeList(file, text, source) {
 	await fs.writeFile(file, text, "utf8");
 }
 
-export async function addToList(server, listId, who, actor = null) {
+const isMcOps = (server, listId) => server.type === "minecraft" && listId === "admins";
+
+/** Write ops.json with this operator at this level, adding them (with their UUID) if they aren't there. Server must be stopped. */
+async function writeOperator(server, target, level, actor, { fetchProfile } = {}) {
+	const folder = await listFolder(server, gameOf(server));
+	const list = gameOf(server).lists.admins;
+	const { file, text } = await readList(folder, list);
+	let data = [];
+	try {
+		data = text.trim() ? JSON.parse(text) : [];
+	} catch {
+		throw new PlayerAdminError("ops.json can't be read (it isn't valid JSON), so it was not changed.", "bad_file", 409);
+	}
+	if (!Array.isArray(data)) throw new PlayerAdminError("ops.json isn't a list, so it was not changed.", "bad_file", 409);
+	const existing = data.find((e) => String(e.name).toLowerCase() === target.toLowerCase());
+	const added = !existing;
+	if (existing) existing.level = level;
+	else data.push({ uuid: await minecraftUuid(server, target, fetchProfile ? { fetchProfile } : undefined), name: target, level, bypassesPlayerLimit: false });
+	await writeList(file, JSON.stringify(data, null, 2) + "\n", list.label + " (" + (added ? "added " : "changed ") + target + ")");
+	audit(server, actor, added ? "player.list_added" : "player.op_level", (added ? "Made " : "Set ") + target + (added ? " an operator at" : " to") + " level " + level + " on " + server.name + ".", { list: "admins", player: target, level });
+	return { ok: true, changed: true, message: target + " is " + (added ? "now an operator at" : "now") + " level " + level + ". The server reads this list when it starts." };
+}
+
+const mustBeStopped = (what) =>
+	new PlayerAdminError("Stop the server first: a running Minecraft server keeps its operator list in memory, so " + what + " would be lost or ignored.", "server_running", 409);
+
+/** Change an existing operator's level (Minecraft). The server must be stopped; the new level applies when it starts. */
+export async function setOpLevel(server, who, level, actor = null) {
+	if (!isMcOps(server, "admins")) throw new PlayerAdminError("Only Minecraft operators have levels.", "unsupported", 409);
+	const target = requireName(who, gameOf(server).who.pattern, gameOf(server).who.label);
+	const chosen = levelOf(level);
+	if (await isServerRunning(server)) throw mustBeStopped("a changed level");
+	const { entries } = await readList(await listFolder(server, gameOf(server)), gameOf(server).lists.admins);
+	if (!entries.some((e) => String(e.name).toLowerCase() === target.toLowerCase())) throw new PlayerAdminError(target + " isn't an operator.", "not_found", 404);
+	return writeOperator(server, target, chosen, actor);
+}
+
+export async function addToList(server, listId, who, actor = null, { level, fetchProfile } = {}) {
 	const game = gameOf(server);
 	const list = game?.lists?.[listId];
 	if (!list) throw new PlayerAdminError("That list doesn't exist for this game.", "bad_list", 404);
 	const target = requireName(who, game.who.pattern, game.who.label);
+
+	// A Minecraft operator can be given a level. A running server only does that at its own default (the op command); a stopped
+	// one is edited in ops.json, which is the only place a different level can be set.
+	if (isMcOps(server, listId)) {
+		const chosen = level === undefined || level === null || level === "" ? null : levelOf(level);
+		const running = await isServerRunning(server);
+		const def = await defaultOpLevel(server);
+		if (running && chosen !== null && chosen !== def) {
+			throw new PlayerAdminError("A running server can only make someone an operator at its default level (" + def + "). Stop the server to choose level " + chosen + ", or add them now and change the level after stopping it.", "server_running", 409);
+		}
+		if (!running) return writeOperator(server, target, chosen ?? def, actor, { fetchProfile });
+	}
 
 	if (list.kind === "lines" && !list.add) {
 		const { file, text, entries } = await readList(await listFolder(server, game), list);
@@ -318,6 +431,22 @@ export async function removeFromList(server, listId, who, actor = null) {
 	const list = game?.lists?.[listId];
 	if (!list) throw new PlayerAdminError("That list doesn't exist for this game.", "bad_list", 404);
 	const target = requireName(who, game.who.pattern, game.who.label);
+
+	// A stopped Minecraft server has no console to deop from: take them out of ops.json.
+	if (isMcOps(server, listId) && !(await isServerRunning(server))) {
+		const { file, text } = await readList(await listFolder(server, game), list);
+		let data = [];
+		try {
+			data = text.trim() ? JSON.parse(text) : [];
+		} catch {
+			throw new PlayerAdminError("ops.json can't be read (it isn't valid JSON), so it was not changed.", "bad_file", 409);
+		}
+		const kept = data.filter((e) => String(e.name).toLowerCase() !== target.toLowerCase());
+		if (kept.length === data.length) return { ok: true, changed: false, message: target + " isn't an operator." };
+		await writeList(file, JSON.stringify(kept, null, 2) + "\n", list.label + " (removed " + target + ")");
+		audit(server, actor, "player.list_removed", "Removed " + target + " from " + server.name + "'s operators.", { list: listId, player: target });
+		return { ok: true, changed: true, message: "Removed " + target + ". The server reads this list when it starts." };
+	}
 
 	if (list.kind === "lines" && !list.add) {
 		const { file, text, entries } = await readList(await listFolder(server, game), list);

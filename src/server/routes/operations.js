@@ -15,10 +15,11 @@ import { playersFor } from "../services/playerTracker.js";
 import { serverStatus } from "../services/pollingService.js";
 import { firewallReport, lanAddresses, ruleCommands, runElevated, forgetFirewallCache } from "../services/firewallCheck.js";
 import { serverChecklist, summarise } from "../services/setupChecklist.js";
-import { PlayerAdminError, capabilities, readLists, kickPlayer, banPlayer, unbanPlayer, addToList, removeFromList } from "../services/playerAdmin.js";
+import { PlayerAdminError, capabilities, readLists, kickPlayer, banPlayer, unbanPlayer, addToList, removeFromList, setOpLevel } from "../services/playerAdmin.js";
 import { readSeries, RANGES } from "../services/metrics.js";
 import { statsFor } from "../services/playerStats.js";
 import { runDetached } from "../services/serverOps.js";
+import { isServerRunning } from "../services/serverState.js";
 import {
 	BackupError,
 	backupOverview,
@@ -282,7 +283,7 @@ router.get("/server/:serverName/player-admin", requirePermission("server.players
 			listError = err.message;
 		}
 	}
-	res.json({ ...caps, lists, listError, canBan: can(req.user, "players.ban"), canKick: can(req.user, "players.kick") });
+	res.json({ ...caps, lists, listError, running: lists.some((l) => l.levels) ? await isServerRunning(req.server) : false, canBan: can(req.user, "players.ban"), canKick: can(req.user, "players.kick") });
 });
 
 const actorOf = (req) => req.user?.username ?? null;
@@ -313,9 +314,18 @@ router.post("/server/:serverName/players/unban", requirePermission("players.ban"
 
 router.post("/server/:serverName/player-lists/:list", requirePermission("players.ban"), async (req, res) => {
 	try {
-		res.json(await addToList(req.server, req.params.list, req.body?.player, actorOf(req)));
+		res.json(await addToList(req.server, req.params.list, req.body?.player, actorOf(req), { level: req.body?.level }));
 	} catch (err) {
 		adminFail(res, err, "Adding to the list");
+	}
+});
+
+// A Minecraft operator's level (1 to 4).
+router.put("/server/:serverName/player-lists/admins/:player/level", requirePermission("players.ban"), async (req, res) => {
+	try {
+		res.json(await setOpLevel(req.server, req.params.player, req.body?.level, actorOf(req)));
+	} catch (err) {
+		adminFail(res, err, "Changing the level");
 	}
 });
 
