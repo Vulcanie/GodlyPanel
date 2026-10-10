@@ -1,5 +1,7 @@
 import express from "express";
 import {
+	getPreferences,
+	setPreferences,
 	verifyCredentials,
 	needsSetup,
 	setPassword,
@@ -72,6 +74,18 @@ router.post("/logout", (req, res) => {
 // unlocked the admin UI. (The server still refused the writes, but the app
 // shouldn't have been presenting them.)
 router.use("/sessions", requireRole("admin", "moderator", "guest"), sessionRoutes);
+
+// What this person has chosen to hide or dismiss, kept with their account (see userStore.js).
+router.get("/preferences", requireRole("admin", "moderator", "guest"), (req, res) => {
+	res.json({ prefs: getPreferences(req.user.id) });
+});
+router.put("/preferences", requireRole("admin", "moderator", "guest"), async (req, res) => {
+	try {
+		res.json({ prefs: await setPreferences(req.user.id, req.body) });
+	} catch (e) {
+		res.status(400).json({ error: e.message });
+	}
+});
 
 router.get("/me", (req, res) => {
 	if (!req.user) {

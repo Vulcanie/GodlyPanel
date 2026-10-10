@@ -21,6 +21,7 @@ const NOT_CHANGES = [
 	/\/storage\/rescan$/,
 	/\/notifications\/(test|check-disks)$/,
 	/^\/auth\/(login|join|logout|change-password)$/, // sign-in and out are recorded by their own events
+	/^\/auth\/preferences$/, // hiding a banner isn't a change to the panel
 	/^\/setup\//,
 ];
 

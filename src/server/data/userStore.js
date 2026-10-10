@@ -183,6 +183,36 @@ async function mutate(id, patch, { bumpSession = false } = {}) {
 	return publicView(updated);
 }
 
+// ---- preferences -------------------------------------------------------------------------------
+// Small things a person has chosen for themselves ("don't show this again"), kept on their account rather than in the browser,
+// so they hold on every browser, address and device instead of coming back whenever local storage is a different one. Only the
+// keys listed here are accepted, and each has a shape; anything else is refused.
+
+const PREFERENCES = {
+	checklistDismissed: (v) => typeof v === "boolean",
+	// The version of the panel whose "update available" banner was closed; the next version shows it again.
+	updateBannerDismissed: (v) => v === null || (typeof v === "string" && v.length > 0 && v.length <= 64),
+};
+
+export function getPreferences(id) {
+	return { ...(getById(id)?.prefs ?? {}) };
+}
+
+export async function setPreferences(id, patch) {
+	return enqueue(async () => {
+		if (!getById(id)) throw new Error("No such user.");
+		const clean = {};
+		for (const [key, value] of Object.entries(patch ?? {})) {
+			if (!Object.hasOwn(PREFERENCES, key) || !PREFERENCES[key](value)) throw new Error("Not a setting that can be kept: " + key);
+			clean[key] = value;
+		}
+		const next = { ...(getById(id).prefs ?? {}), ...clean };
+		for (const key of Object.keys(next)) if (next[key] === null || next[key] === false) delete next[key];
+		await mutate(id, { prefs: next });
+		return getPreferences(id);
+	});
+}
+
 export async function setPassword(id, password) {
 	return enqueue(async () => {
 		const user = getById(id);

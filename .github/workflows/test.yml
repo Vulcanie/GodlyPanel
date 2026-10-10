@@ -80,7 +80,7 @@ jobs:
       matrix:
         include:
           - name: settings and navigation
-            suites: "sections appearance navigation passwords"
+            suites: "sections appearance navigation passwords dismissals"
           - name: servers
             suites: "workspace create-ports create-every-game"
           - name: community and updates

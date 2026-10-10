@@ -1,34 +1,24 @@
 import React from "react";
 import { Alert, Box, Button, Chip, Collapse, LinearProgress, Paper, Typography } from "@mui/material";
 import { api } from "../api/client";
+import { usePreferences } from "../utils/preferences";
 
-const DISMISS = "gp.checklistDismissed";
+// Older versions remembered this in the browser; it is carried onto the account the first time.
+const LEGACY = [{ storageKey: "gp.checklistDismissed", pref: "checklistDismissed", read: (v) => (v === "1" ? true : undefined) }];
 
 /** A short list of what is worth doing for the panel as a whole, on the dashboard. Administrators only. */
 function SetupChecklist({ onOpenSettings, onCreateServer }) {
 	const [data, setData] = React.useState(null);
-	const [dismissed, setDismissed] = React.useState(() => {
-		try {
-			return localStorage.getItem(DISMISS) === "1";
-		} catch {
-			return false;
-		}
-	});
+	// Kept with the account, so "Don't show again" holds in every browser and at every address.
+	const [prefs, savePref] = usePreferences(LEGACY);
 	const [open, setOpen] = React.useState(false);
 
 	React.useEffect(() => {
 		api.get("/api/settings/checklist").then(setData).catch(() => {});
 	}, []);
-	if (!data || data.done === data.total || dismissed) return null;
+	if (!data || !prefs || data.done === data.total || prefs.checklistDismissed) return null;
 
-	const dismiss = () => {
-		setDismissed(true);
-		try {
-			localStorage.setItem(DISMISS, "1");
-		} catch {
-			// It just comes back next time.
-		}
-	};
+	const dismiss = () => savePref({ checklistDismissed: true });
 
 	const go = (fix) => (fix?.to === "create" ? onCreateServer?.() : fix?.to === "settings" ? onOpenSettings?.() : undefined);
 

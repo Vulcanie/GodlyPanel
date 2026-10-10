@@ -3,6 +3,7 @@ import { Alert, Button, IconButton } from "@mui/material";
 import { Close as CloseIcon } from "@mui/icons-material";
 import { api } from "../api/client";
 import { onLive } from "../liveEvents";
+import { usePreferences } from "../utils/preferences";
 
 // Shown to administrators on the dashboard: how the last update went (it is the first thing seen after the page reloads
 // when the panel comes back as the new version), and when a newer GodlyPanel exists. A dismissed version stays dismissed;
@@ -26,13 +27,8 @@ function Actions({ onClose, children }) {
 	);
 }
 
-function readDismissed() {
-	try {
-		return localStorage.getItem(DISMISSED);
-	} catch {
-		return null;
-	}
-}
+// Older versions remembered this in the browser; it is carried onto the account the first time.
+const LEGACY = [{ storageKey: DISMISSED, pref: "updateBannerDismissed", read: (v) => (v ? v : undefined) }];
 
 const expectedSince = () => {
 	try {
@@ -52,7 +48,8 @@ const stopExpecting = () => {
 
 function UpdateBanner({ onOpenSettings }) {
 	const [status, setStatus] = React.useState(null);
-	const [dismissed, setDismissed] = React.useState(readDismissed());
+	const [prefs, savePref] = usePreferences(LEGACY);
+	const dismissed = prefs?.updateBannerDismissed ?? null;
 
 	const load = React.useCallback(() => api.get("/api/updates/panel").then(setStatus).catch(() => {}), []);
 
@@ -79,17 +76,10 @@ function UpdateBanner({ onOpenSettings }) {
 	}, []);
 
 	const last = status?.selfUpdate?.lastUpdate;
-	const available = status?.available && dismissed !== status.latest.version;
+	const available = prefs !== null && status?.available && dismissed !== status.latest.version;
 	if (!last && !available) return null;
 
-	const dismissVersion = () => {
-		try {
-			localStorage.setItem(DISMISSED, status.latest.version);
-		} catch {
-			// Remembering is a convenience.
-		}
-		setDismissed(status.latest.version);
-	};
+	const dismissVersion = () => savePref({ updateBannerDismissed: status.latest.version });
 	const dismissResult = async () => {
 		stopExpecting();
 		await api.post("/api/updates/panel/update-result/dismiss", {}).catch(() => {});
