@@ -51,6 +51,8 @@ describe("changing a server's ports", () => {
 					serverEntry(d, { ...made, name: "ArkB", type: "ark", rconPort: 9210, method: "rcon", processName: undefined, startScriptPath: path.join(d, "Start_B.bat") }),
 					serverEntry(d, { name: "Imported", type: "custom", source: "imported", installDir: d, workingDir: d, port: 9300, queryPort: 9302, processName: "nope-i.exe", startScriptPath: path.join(d, "imported.bat") }),
 					serverEntry(d, { ...made, name: "Mc", type: "minecraft", method: "gamedig", port: 9400, rconPort: 9401, startScriptPath: path.join(d, "run.bat"), configPath: path.join(d, "server.properties") }),
+					// Shares Mc's RCON port, as two servers set up by hand might without knowing.
+					serverEntry(d, { ...made, name: "Twin", type: "custom", port: 9401, processName: "nope-t.exe", startScriptPath: path.join(d, "twin.bat") }),
 					serverEntry(d, { ...made, name: "Running", type: "custom", port: 9500, processName: runningImage, startScriptPath: path.join(d, "run.bat") }),
 				];
 			},
@@ -130,9 +132,10 @@ describe("changing a server's ports", () => {
 		it("another server's ports, including the ones it takes for itself", async () => {
 			const explicit = (await check("Conan", { queryPort: 9102 })).json;
 			assert.equal(explicit.ok, false);
-			assert.match(explicit.errors.join(" "), /already used by another server/);
+			assert.match(explicit.errors.join(" "), /already used by "Other Conan" \(query port\)/, "it says which server has the port, and as what");
 			const raw = (await check("Conan", { queryPort: 9101 })).json; // Other Conan's raw port
 			assert.equal(raw.ok, false, "9101 is Other Conan's game port + 1");
+			assert.match(raw.errors.join(" "), /"Other Conan"/);
 			const impliedOfMine = (await check("Conan", { port: 9099 })).json; // my raw 9100 = Other Conan's game port
 			assert.equal(impliedOfMine.ok, false);
 		});
@@ -140,7 +143,7 @@ describe("changing a server's ports", () => {
 		it("a sibling's ports on a shared install, which are only in its script", async () => {
 			const r = (await check("ArkA", { queryPort: 9212 })).json;
 			assert.equal(r.ok, false);
-			assert.match(r.errors.join(" "), /already used by another server/);
+			assert.match(r.errors.join(" "), /already used by "ArkB" \(.*query port\)/, "a sibling's script-only ports are named too");
 		});
 
 		it("a port on Settings' reserved list", async () => {
@@ -167,6 +170,38 @@ describe("changing a server's ports", () => {
 			assert.equal(ok.ok, true);
 			assert.deepEqual(ok.changes, { port: { from: 9000, to: 9010 }, queryPort: { from: 9002, to: 9012 } });
 			assert.deepEqual((await check("Conan", { port: 9000 })).json.changes, {});
+		});
+	});
+
+	describe("the list of who has which port", () => {
+		const overview = async (cookie) => (await api.get("/api/ports", cookie === undefined ? undefined : { cookie }));
+
+		it("lists every server with its ports, and the ports its game keeps for itself", async () => {
+			const r = await overview();
+			assert.equal(r.status, 200, JSON.stringify(r.json));
+			const conan = r.json.servers.find((s) => s.name === "Conan");
+			assert.ok(conan.ports.some((p) => p.port === 9000 && p.label === "Game port" && p.kind === "own"));
+			assert.ok(conan.ports.some((p) => p.port === 9002 && p.label === "Query port"));
+			assert.ok(conan.ports.some((p) => p.port === 9001 && p.kind !== "own"), "Conan's raw socket, next to the game port");
+			assert.ok(r.json.servers.length >= 7);
+			assert.equal(r.json.panelPort, panel.port);
+			assert.deepEqual(r.json.servers.map((s) => s.name), [...r.json.servers.map((s) => s.name)].sort((a, b) => a.localeCompare(b)));
+		});
+
+		it("includes the ports an ARK map only has in its start script", async () => {
+			const arkA = (await overview()).json.servers.find((s) => s.name === "ArkA");
+			assert.ok(arkA.ports.some((p) => p.port === 9201), JSON.stringify(arkA.ports));
+		});
+
+		it("marks a port another server also claims, and who", async () => {
+			const r = (await overview()).json;
+			assert.deepEqual(r.servers.find((s) => s.name === "Mc").ports.find((p) => p.port === 9401).sharedWith, ["Twin"]);
+			assert.deepEqual(r.servers.find((s) => s.name === "Twin").ports.find((p) => p.port === 9401).sharedWith, ["Mc"]);
+			assert.equal(r.servers.find((s) => s.name === "Conan").ports.some((p) => p.sharedWith), false, "and nothing is marked where nothing clashes");
+		});
+
+		it("is for administrators only", async () => {
+			assert.equal((await overview(guestCookie)).status, 403);
 		});
 	});
 

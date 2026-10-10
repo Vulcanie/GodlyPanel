@@ -107,28 +107,50 @@ export function impliedPortsFor(template, ports) {
 
 // Every -Port=/-QueryPort=/-RCONPort= in a start script. ARK: Survival Evolved
 // Every game port also keeps the port after it free (see portRules.js).
-function addScriptPorts(used, content) {
+const SCRIPT_PORT_NAMES = { port: "game port", queryport: "query port", rconport: "RCON port" };
+function addScriptPorts(add, content, owner) {
 	for (const m of content.matchAll(/-(Port|QueryPort|RCONPort)=(\d+)/gi)) {
-		used.add(Number(m[2]));
-		if (m[1].toLowerCase() === "port") used.add(Number(m[2]) + 1);
+		add(Number(m[2]), owner, SCRIPT_PORT_NAMES[m[1].toLowerCase()]);
+		if (m[1].toLowerCase() === "port") add(Number(m[2]) + 1, owner, "kept free next to its game port");
 	}
 }
 
-// `exclude` leaves one server's own ports out, for checking a change to them.
-export async function usedPorts(extraScanDir, { excludeName, excludeScript } = {}) {
-	const used = new Set();
+const ENTRY_PORT_NAMES = { port: "game port", queryPort: "query port", rconPort: "RCON port" };
+
+/** "\"Valheim\" (game port)" / "\"A\" (game port) and \"B\" (query port)": who holds a port, and as what. */
+export function describeOwners(list) {
+	const byServer = new Map();
+	for (const { server, what } of list ?? []) byServer.set(server, [...(byServer.get(server) ?? []), what]);
+	return [...byServer].map(([server, uses]) => `"${server}" (${uses.join(", ")})`).join(" and ") || "another server";
+}
+
+/**
+ * Who has each port: a map from port number to [{ server, what }], where `what` says how that server uses it. Everything that
+ * counts as taken is in it: the ports written in a server's entry, the ones its game takes for itself next to the game port, and
+ * (for ARK, whose entries don't record them) the ones in its start script. `excludeName` leaves one server's own out, for
+ * checking a change to them.
+ */
+export async function portOwners(extraScanDir, { excludeName, excludeScript } = {}) {
+	const owners = new Map();
+	const add = (port, server, what) => {
+		const list = owners.get(port) ?? [];
+		if (!list.some((o) => o.server === server && o.what === what)) list.push({ server, what });
+		owners.set(port, list);
+	};
 	for (const s of allServers()) {
 		if (s.name === excludeName) continue;
 		for (const key of ["port", "queryPort", "rconPort"]) {
-			if (s[key]) used.add(s[key]);
+			if (s[key]) add(s[key], s.name, ENTRY_PORT_NAMES[key]);
 		}
 		// A server's implied ports are as taken as the ones written in its entry.
-		for (const { port } of impliedPortsFor(templateOfServer(s), s)) used.add(port);
+		for (const { port, label, precaution } of impliedPortsFor(templateOfServer(s), s)) {
+			add(port, s.name, precaution ? "kept free next to its game port" : label);
+		}
 		// ARK entries don't record their game or query port, only the start script
 		// does; read it so a sibling's ports (and its raw socket) are counted too.
 		if (s.type === "ark" && s.startScriptPath && s.startScriptPath !== excludeScript) {
 			try {
-				addScriptPorts(used, await fs.readFile(s.startScriptPath, "utf8"));
+				addScriptPorts(add, await fs.readFile(s.startScriptPath, "utf8"), s.name);
 			} catch {
 				// No script to read.
 			}
@@ -147,15 +169,22 @@ export async function usedPorts(extraScanDir, { excludeName, excludeScript } = {
 			for (const file of files) {
 				if (!/^Start_.*\.bat$/i.test(file)) continue;
 				if (excludeScript && path.win32.join(extraScanDir, file).toLowerCase() === String(excludeScript).toLowerCase()) continue;
-				const content = await fs.readFile(path.win32.join(extraScanDir, file), "utf8");
-				addScriptPorts(used, content);
+				const full = path.win32.join(extraScanDir, file);
+				const content = await fs.readFile(full, "utf8");
+				const owner = allServers().find((x) => String(x.startScriptPath).toLowerCase() === full.toLowerCase())?.name ?? file;
+				addScriptPorts(add, content, owner);
 			}
 		} catch {
 			// Directory doesn't exist yet (no shared install) — nothing to scan.
 		}
 	}
 
-	return used;
+	return owners;
+}
+
+// Every port taken, as a set. `exclude` leaves one server's own ports out, for checking a change to them.
+export async function usedPorts(extraScanDir, options = {}) {
+	return new Set((await portOwners(extraScanDir, options)).keys());
 }
 
 // Steps a port up until it's free. The stride and any explicitly reserved
@@ -230,7 +259,8 @@ export async function validateNewServer(template, name, ports, sharedInstallDir)
 		seen.set(value, key);
 	}
 
-	const used = await usedPorts(sharedInstallDir);
+	const owners = await portOwners(sharedInstallDir);
+	const used = new Set(owners.keys());
 
 	// Ports the game takes for itself next to the game port. Choosing one of them
 	// for something else is what makes a server that starts but can't be reached.
@@ -247,15 +277,15 @@ export async function validateNewServer(template, name, ports, sharedInstallDir)
 		if (used.has(port)) {
 			throw new Error(
 				item.precaution
-					? `${template.displayName} keeps port ${port} free next to the game port (game port + ${offset}), and another server is already using it. Choose a different game port.`
-					: `${template.displayName} also needs port ${port} (game port + ${offset}, for ${label}), and another server is already using it. Choose a different game port.`,
+					? `${template.displayName} keeps port ${port} free next to the game port (game port + ${offset}), and ${describeOwners(owners.get(port))} is already using it. Choose a different game port.`
+					: `${template.displayName} also needs port ${port} (game port + ${offset}, for ${label}), and ${describeOwners(owners.get(port))} is already using it. Choose a different game port.`,
 			);
 		}
 	}
 
 	for (const [key, value] of entries) {
 		if (used.has(value)) {
-			throw new Error(`Port ${value} (${labelOf(key)}) is already used by another server.`);
+			throw new Error(`Port ${value} (${labelOf(key)}) is already used by ${describeOwners(owners.get(value))}.`);
 		}
 	}
 }

@@ -29,6 +29,7 @@ import DiscordBotCard from "./DiscordBotCard";
 import RemoteAccessCard from "./RemoteAccessCard";
 import CommunityAccessCard from "./CommunityAccessCard";
 import CommunityViewCard from "./CommunityViewCard";
+import PortListDialog from "./PortListDialog";
 import { formatBytes } from "../utils/format";
 
 // The form is generated from the schema the server sends, so it can't drift
@@ -98,6 +99,19 @@ const SECRET_FIELDS = [
 	{ key: "auditWebhookUrl", label: "Audit webhook (every sign-in and change, for a private Discord channel)" },
 	{ key: "smtpPassword", label: "Mail account password" },
 ];
+
+/** The button under Settings → Ports that opens the list of which server uses which port. */
+function ServerPortListButton() {
+	const [open, setOpen] = React.useState(false);
+	return (
+		<Box sx={{ mt: 2 }}>
+			<Button size="small" variant="outlined" onClick={() => setOpen(true)}>
+				Show server port list
+			</Button>
+			<PortListDialog open={open} onClose={() => setOpen(false)} />
+		</Box>
+	);
+}
 
 function valueAt(obj, dotted) {
 	return dotted.split(".").reduce((o, k) => (o == null ? undefined : o[k]), obj);
@@ -294,6 +308,7 @@ function SettingsPage({ onBack }) {
 						))}
 					</Box>
 					{group === "paths" && <ServerLocations />}
+					{group === "portAllocation" && <ServerPortListButton />}
 				</Paper>
 			),
 			specs.map((spec) => ({ key: spec.path, text: `${spec.label} ${spec.help ?? ""} ${spec.path}`, item: spec })),

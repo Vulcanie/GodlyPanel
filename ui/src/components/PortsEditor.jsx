@@ -13,6 +13,7 @@ import {
 import { ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
 import { api } from "../api/client";
 import PortsToOpen from "./PortsToOpen";
+import PortListDialog from "./PortListDialog";
 import { cardAccordionSx } from "./cardStyles";
 
 const LABELS = {
@@ -37,6 +38,7 @@ function PortsEditor({ serverName }) {
 	const [busy, setBusy] = React.useState(false);
 	const [error, setError] = React.useState(null);
 	const [saved, setSaved] = React.useState(null);
+	const [showList, setShowList] = React.useState(false);
 	const latest = React.useRef(0);
 
 	const load = React.useCallback(async () => {
@@ -180,12 +182,16 @@ function PortsEditor({ serverName }) {
 						<Button variant="contained" size="small" disabled={!changed || blocked || busy || info.running} onClick={save}>
 							{busy ? "Saving..." : "Save ports"}
 						</Button>
+						<Button size="small" onClick={() => setShowList(true)}>
+							Show server port list
+						</Button>
 						<Button size="small" disabled={!changed || busy} onClick={() => setValues(Object.fromEntries(Object.entries(info.current).map(([k, v]) => [k, String(v)])))}>
 							Reset
 						</Button>
 					</Box>
 				</Box>
 			</AccordionDetails>
+			<PortListDialog open={showList} onClose={() => setShowList(false)} highlight={serverName} />
 		</Accordion>
 	);
 }

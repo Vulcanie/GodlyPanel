@@ -5,8 +5,11 @@ import net from "node:net";
 import { update as updateServer } from "../data/serverStore.js";
 import { getConfig } from "../config/configStore.js";
 import { readManagedFile, writeManagedFile } from "../util/managedFiles.js";
-import { usedPorts, impliedPortsFor, templateOfServer } from "./serverCreationService.js";
+import { portOwners, describeOwners, impliedPortsFor, templateOfServer } from "./serverCreationService.js";
 import { implicitPortsOf, usageOf } from "../data/portRules.js";
+import { all as allServers } from "../data/serverStore.js";
+import { serverStatus } from "./pollingService.js";
+
 
 // Changing a server's ports means changing them everywhere the server has them,
 // together, or it ends up half-moved: the panel's record (which it polls), the
@@ -180,13 +183,13 @@ export async function checkPorts(server, proposed) {
 	}
 
 	// Every other server, including the ports they take for themselves.
-	const used = await usedPorts(template?.sharedInstall ? server.installDir?.replace(/\\$/, "") : undefined, {
+	const owners = await portOwners(template?.sharedInstall ? server.installDir?.replace(/\\$/, "") : undefined, {
 		excludeName: server.name,
 		excludeScript: server.startScriptPath,
 	});
 	const claimed = [...Object.entries(changes).map(([k, c]) => [PORT_LABELS[k], c.to]), ...(changes.port ? implied.map((i) => [`${gameName}'s ${i.precaution ? "companion port" : i.label}`, i.port]) : [])];
 	for (const [what, value] of claimed) {
-		if (used.has(value)) errors.push(`${what} ${value} is already used by another server.`);
+		if (owners.has(value)) errors.push(`${what} ${value} is already used by ${describeOwners(owners.get(value))}.`);
 	}
 
 	const reserved = new Set(getConfig().portAllocation.reservedPorts);
@@ -297,4 +300,33 @@ export async function applyPorts(server, proposed) {
 	if (Object.keys(patch).length > 0) await updateServer(server.name, patch);
 
 	return { changes, filesChanged, warnings };
+}
+
+/**
+ * Every server and the ports it uses, for the "who has which port" list: the ports it has, the ones its game keeps next to the
+ * game port, and which of them another server also claims. Includes the panel's own port and the ones reserved in Settings.
+ */
+export async function portsOverview() {
+	const servers = [];
+	const claims = new Map(); // port -> Set of server names
+	for (const server of allServers()) {
+		const { current, gameName } = await describePorts(server);
+		const ports = Object.entries(current).map(([key, port]) => ({ label: PORT_LABELS[key], port, kind: "own" }));
+		for (const { port, label, precaution } of impliedPortsFor(templateFor(server), current)) {
+			ports.push({ label: precaution ? "Kept free next to the game port" : label, port, kind: precaution ? "kept-free" : "game-takes" });
+		}
+		for (const { port } of ports) claims.set(port, (claims.get(port) ?? new Set()).add(server.name));
+		servers.push({ name: server.name, game: gameName ?? server.type, online: Boolean(serverStatus[server.name]?.online), ports: ports.sort((a, b) => a.port - b.port) });
+	}
+	for (const s of servers) {
+		for (const p of s.ports) {
+			const others = [...(claims.get(p.port) ?? [])].filter((n) => n !== s.name);
+			if (others.length > 0) p.sharedWith = others;
+		}
+	}
+	return {
+		servers: servers.sort((a, b) => a.name.localeCompare(b.name)),
+		panelPort: Number(process.env.GHP_PORT) || getConfig().http.port,
+		reserved: [...getConfig().portAllocation.reservedPorts].sort((a, b) => a - b),
+	};
 }

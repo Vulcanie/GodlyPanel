@@ -8,7 +8,7 @@ import { readManagedFile, writeManagedFile, sendFileError } from "../util/manage
 import { singleFile } from "../middleware/uploadErrors.js";
 import serverWindowRoutes from "./serverWindowRoutes.js";
 import { isServerRunning } from "../services/serverState.js";
-import { describePorts, checkPorts, applyPorts } from "../services/serverPorts.js";
+import { describePorts, checkPorts, applyPorts, portsOverview } from "../services/serverPorts.js";
 import { planRemoval, removeServerCompletely } from "../services/serverRemoval.js";
 import { forgetServerInSchedules } from "../services/scheduler.js";
 import { forgetPlayers } from "../services/playerTracker.js";
@@ -119,6 +119,9 @@ router.put("/server/:serverName/tags", async (req, res) => {
 });
 
 // --- Ports ---
+
+// Every server and the ports it uses (administrators): the list behind "Show server port list".
+router.get("/ports", async (req, res) => res.json(await portsOverview()));
 
 router.get("/server/:serverName/ports", async (req, res) => {
 	res.json({ ...(await describePorts(req.server)), running: await isServerRunning(req.server) });

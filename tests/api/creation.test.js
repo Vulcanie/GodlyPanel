@@ -72,7 +72,7 @@ describe("creating a server", () => {
 			// Existing Conan is on 9000, so 9001 is spoken for.
 			const asQuery = await create("conan", { name: "T4", port: 8892, queryPort: 9001, rconPort: 8895 });
 			assert.equal(asQuery.status, 400);
-			assert.match(asQuery.json.error, /already used by another server/);
+			assert.match(asQuery.json.error, /already used by "Existing Conan"/);
 			// And a new game port right below it would put the new raw port on 9000.
 			const rawOnGame = await create("conan", { name: "T5", port: 8999, queryPort: 8994, rconPort: 8995 });
 			assert.equal(rawOnGame.status, 400);
