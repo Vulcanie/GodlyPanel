@@ -444,13 +444,19 @@ Where a bug can be reproduced without a real game server, it gets a test. Some f
 
 ## Roadmap
 
-Roughly in this order:
+**Done**, and checked: all seventeen games against real installs (backup locations, mods, logs: [Game support](docs/GAME_SUPPORT.md)),
+"No window" mode game by game, RCON password rotation for imported servers, backups to a second place (another drive, a
+share, or S3-compatible cloud storage), signed updates, a record of who did what, and a list of where you're signed in.
 
-1. Checking the new features game by game (backup locations, mods, logs) against real installs.
-2. Verifying "No window" mode game by game.
-3. Rotating RCON passwords for imported servers.
-4. Backups to a second place (another drive, or cloud storage).
-5. More games, and whichever needs come up from people actually using it.
+**Next**, roughly in this order:
+
+1. Windows code signing, so Windows stops warning on first run. It's prepared ([plan](docs/CODE_SIGNING.md)) but needs the
+   repository public and an approved SignPath application.
+2. Trying the Discord bot and the cloud-storage destinations against the real services (Discord, Backblaze, Wasabi,
+   Cloudflare R2, Amazon). They're tested against stand-ins, not the real thing.
+3. Re-running the real-install checks as games update, since a game update can change what a template assumes.
+4. More games, and whichever needs come up from people actually using it. Don't Starve Together needs a Klei server token
+   before it will start, so it can't be installed and checked unattended.
 
 ---
 
