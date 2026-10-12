@@ -33,7 +33,12 @@ export const DEFAULTS = {
 	},
 
 	portAllocation: {
-		step: 10,
+		// New servers' game ports (game, game + 1, query) are handed out as one run, from gameStart moving by gameStep.
+		gameStart: 8000,
+		gameStep: 3,
+		// Their RCON/telnet ports come one at a time from rconStart; a negative step counts down.
+		rconStart: 26000,
+		rconStep: -1,
 		reservedPorts: [],
 	},
 
@@ -215,13 +220,40 @@ export const FIELD_SPECS = [
 	},
 
 	{
-		path: "portAllocation.step",
+		path: "portAllocation.gameStart",
 		type: "int",
-		min: 1,
+		min: 1024,
+		max: 65535,
+		restart: false,
+		label: "Game ports start at",
+		help: "A new server's game port, the port after it and its query port are kept together, starting here. Only affects servers created from now on.",
+	},
+	{
+		path: "portAllocation.gameStep",
+		type: "int",
+		min: -1000,
 		max: 1000,
 		restart: false,
-		label: "Port spacing",
-		help: "How far apart suggested ports are when creating servers.",
+		label: "Game ports move by",
+		help: "How far the next server's game ports are from the last one. Use a negative number to count down. 0 is treated as 1.",
+	},
+	{
+		path: "portAllocation.rconStart",
+		type: "int",
+		min: 1024,
+		max: 65535,
+		restart: false,
+		label: "RCON ports start at",
+		help: "A new server's RCON (and telnet) port starts here.",
+	},
+	{
+		path: "portAllocation.rconStep",
+		type: "int",
+		min: -1000,
+		max: 1000,
+		restart: false,
+		label: "RCON ports move by",
+		help: "How far the next RCON port is from the last one. Use a negative number to count down. 0 is treated as 1.",
 	},
 	{
 		path: "portAllocation.reservedPorts",

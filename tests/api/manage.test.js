@@ -189,7 +189,7 @@ describe("presets and cloning", () => {
 			const entry = (await api.get("/api/settings/servers")).json.find((s) => s.name === "Clone Two");
 			assert.equal(entry.source, "created");
 			assert.ok(entry.installDir.toLowerCase().startsWith(copy.toLowerCase()));
-			assert.ok(entry.port > 8892 && entry.port !== 9731);
+			assert.ok(entry.port >= 8000 && entry.port !== 9731, "from the panel's default game range, not the original's");
 			assert.equal(entry.rconPassword, /RconPassword=(.+)/.exec(copyIni)[1].trim());
 			assert.equal((await api.get(`/api/settings/servers`)).json.find((s) => s.name === NAMES.c).port, 9731, "the original is untouched");
 		});

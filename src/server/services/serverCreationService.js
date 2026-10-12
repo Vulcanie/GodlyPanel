@@ -15,7 +15,7 @@ import { inspectFolder } from "./folderCheck.js";
 import { resolveResource } from "../../shared/resources.js";
 import { deriveLaunch } from "./batchLaunch.js";
 import { writeMarker } from "./serverRemoval.js";
-import { implicitPortsOf, usageOf, firstSafePort } from "../data/portRules.js";
+import { implicitPortsOf, usageOf, firstSafePort, blockLayout, firstFreeRun } from "../data/portRules.js";
 import { portBusy } from "../util/portProbe.js";
 import {
 	trackSteamCmd,
@@ -187,19 +187,33 @@ export async function usedPorts(extraScanDir, options = {}) {
 	return new Set((await portOwners(extraScanDir, options)).keys());
 }
 
-// Steps a port up until it's free. The stride and any explicitly reserved
-// ports are configurable, since what's free depends on the machine.
-async function nextFreePort(preferred, extraScanDir) {
+// Where a new server's ports go: its game ports (game, what the game keeps beside it, query) as one run of consecutive ports
+// counted up from Settings' game start, and its RCON/telnet ports one at a time from the RCON start. Each pool moves by its own
+// step, which can be negative. Skipped: ports other servers hold, reserved ports, and any port something on this PC is holding
+// right now (a server the panel doesn't manage, or another program).
+async function suggestPorts(template, extraScanDir) {
 	const { portAllocation } = getConfig();
-	const used = await usedPorts(extraScanDir);
-	const reserved = new Set(portAllocation.reservedPorts);
-	const step = Math.max(1, portAllocation.step);
+	const taken = new Set([...(await usedPorts(extraScanDir)), ...portAllocation.reservedPorts]);
+	const isTaken = async (port) => taken.has(port) || (await portBusy(port));
+	const claim = async (pool, start, step, width) => {
+		const base = await firstFreeRun({ start, step, width, isTaken });
+		if (base === null) throw new Error(`There is no free ${pool} port left going from ${start} by ${step}. Change the starting port or step in Settings.`);
+		for (let port = base; port < base + width; port++) taken.add(port);
+		return base;
+	};
 
-	let port = preferred;
-	// Also skipped: a port something on this PC is holding right now (a server the
-	// panel doesn't manage, or another program), so a new server isn't placed on top of it.
-	while ((used.has(port) || reserved.has(port) || (await portBusy(port))) && port <= 65535) port += step;
-	return port;
+	const game = {};
+	if (template.ports.some((p) => p.key === "port")) {
+		const { queryOffset, size } = blockLayout(template);
+		game.port = await claim("game", portAllocation.gameStart, portAllocation.gameStep, size);
+		if (queryOffset !== null) game.queryPort = game.port + queryOffset;
+	}
+
+	const ports = {};
+	for (const p of template.ports) {
+		ports[p.key] = game[p.key] ?? (await claim("RCON", portAllocation.rconStart, portAllocation.rconStep, 1));
+	}
+	return ports;
 }
 
 /**
@@ -228,13 +242,8 @@ export async function suggestParams(templateId) {
 		sharedInstallDir = sibling?.installDir?.replace(/\\$/, "") ?? null;
 	}
 
-	const ports = {};
-	for (const p of template.ports) {
-		ports[p.key] = await nextFreePort(p.default, sharedInstallDir);
-	}
-
 	return {
-		ports,
+		ports: await suggestPorts(template, sharedInstallDir),
 		sharedInstallDir,
 		rconPassword: suggestRconPassword(),
 		// Shown as the form's default so it's clear where this will go.

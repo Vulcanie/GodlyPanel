@@ -24,3 +24,27 @@ export function usageOf(gameName, implicit) {
 export function firstSafePort(gamePort, implicit) {
 	return gamePort + Math.max(...implicit.map((i) => i.offset)) + 1;
 }
+
+/**
+ * The run of consecutive ports a game takes, counted from its game port: the game port, what it keeps beside it, and (if it has
+ * one) the query port straight after those. Most games come to three: game, game + 1, query = game + 2.
+ */
+export function blockLayout(template) {
+	const afterHeld = firstSafePort(0, implicitPortsOf(template));
+	const hasQuery = Boolean(template?.ports?.some((p) => p.key === "queryPort"));
+	return { queryOffset: hasQuery ? afterHeld : null, size: hasQuery ? afterHeld + 1 : afterHeld };
+}
+
+/**
+ * The first base port, starting at `start` and moving by `step` (negative counts down) until `width` consecutive ports from it
+ * are all free. `isTaken` says whether one port is spoken for. Null when the range runs out first.
+ */
+export async function firstFreeRun({ start, step, width = 1, isTaken }) {
+	const stride = Math.trunc(step) || 1;
+	for (let base = start; base >= 1024 && base + width - 1 <= 65535; base += stride) {
+		let clear = true;
+		for (let port = base; port < base + width && clear; port++) clear = !(await isTaken(port));
+		if (clear) return base;
+	}
+	return null;
+}

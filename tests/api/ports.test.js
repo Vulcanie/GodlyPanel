@@ -26,7 +26,7 @@ describe("changing a server's ports", () => {
 
 	before(async () => {
 		panel = await startInstance({
-			config: { portAllocation: { step: 10, reservedPorts: [9999] } },
+			config: { portAllocation: { reservedPorts: [9999] } },
 			prepare: (folder) => {
 				dir = path.join(folder, "srv");
 				fs.mkdirSync(dir, { recursive: true });

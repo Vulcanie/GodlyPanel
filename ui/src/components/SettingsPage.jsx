@@ -76,7 +76,7 @@ const GROUP_WORDS = {
 	http: "web port address lan network access listen computer",
 	network: "allow vpn tailscale cidr host name dns",
 	paths: "folder directory install steamcmd jcmd location where live path drive disk size server folders existing current",
-	portAllocation: "port spacing reserved",
+	portAllocation: "port start range increment decrement rcon query reserved",
 	polling: "interval refresh rate speed cpu memory ram stats steam update check",
 	storage: "disk space limit quota size warn",
 	servers: "rcon password window mode default hidden minimized",
@@ -596,7 +596,8 @@ function Field({ spec, value, onChange, events }) {
 			helperText={help}
 			value={value ?? ""}
 			onChange={(e) =>
-				onChange(spec.type === "int" ? Number(e.target.value) : e.target.value)
+				// An empty box stays empty rather than becoming 0, or a minus sign typed first would be wiped.
+				onChange(spec.type === "int" && e.target.value !== "" ? Number(e.target.value) : e.target.value)
 			}
 		/>
 	);
