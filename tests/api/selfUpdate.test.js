@@ -380,8 +380,9 @@ describe("what the panel says after an update", () => {
 			const health = JSON.parse(fs.readFileSync(path.join(panel.dir, "state", "update-health.json"), "utf8"));
 			assert.equal(health.version, NEW, "the marker the update script waits for");
 			assert.equal(fs.existsSync(path.join(panel.dir, "state", "update-result.json")), false, "the result file is consumed");
-			assert.equal(fs.existsSync(path.join(panel.dir, "updates", "stage-0.0.1")), false, "and what an earlier update left is tidied away");
-			assert.equal(fs.existsSync(path.join(panel.dir, "updates", "GodlyPanel-0.0.1-app.zip.partial")), false);
+			// The panel tidies these in the background just after it starts, so wait for it rather than look the moment it first answers.
+			const leftovers = () => fs.existsSync(path.join(panel.dir, "updates", "stage-0.0.1")) || fs.existsSync(path.join(panel.dir, "updates", "GodlyPanel-0.0.1-app.zip.partial"));
+			assert.equal(await until(() => !leftovers()), true, "and what an earlier update left is tidied away");
 			assert.equal((await panel.api.post("/api/updates/panel/update-result/dismiss", {})).status, 200);
 			assert.equal((await panel.api.get("/api/updates/panel")).json.selfUpdate.lastUpdate, null, "and can be dismissed");
 		} finally {
