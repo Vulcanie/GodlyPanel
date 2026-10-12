@@ -39,13 +39,6 @@ export function StatusDot({ online }) {
 // narrow viewport instead of clipping or needing horizontal scroll.
 function ServerTile({ srv, stats, clickable, onClick }) {
 	const operation = useOperation(srv.name);
-	// Data-driven, not a per-game special case: for Minecraft, sessionName
-	// and joinAddress are literally the same "ip:port" string, so showing
-	// both is just duplicated data. Other game types (e.g. ARK's human
-	// session names) genuinely differ and keep both chips.
-	const sameAddress =
-		srv.sessionName && srv.joinAddress && srv.sessionName === srv.joinAddress;
-
 	return (
 		<Box
 			onClick={onClick}
@@ -78,32 +71,17 @@ function ServerTile({ srv, stats, clickable, onClick }) {
 			</Box>
 
 			<Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, flex: 1 }}>
-				{sameAddress ? (
-					<StatChip
-						icon={<DnsIcon sx={{ fontSize: 14 }} />}
-						label="Address"
-						value={srv.sessionName}
-						copyable
-					/>
-				) : (
+				{srv.session ? (
 					<>
-						{srv.sessionName && (
-							<StatChip
-								icon={<DnsIcon sx={{ fontSize: 14 }} />}
-								label="Session"
-								value={srv.sessionName}
-							/>
+						<StatChip icon={<DnsIcon sx={{ fontSize: 14 }} />} label="Session" value={srv.session} copyable />
+						{srv.joinAddress && srv.joinAddress !== srv.session && (
+							<StatChip icon={<DnsIcon sx={{ fontSize: 14 }} />} label="Address" value={srv.joinAddress} copyable />
 						)}
-						{srv.joinAddress && (
-							<StatChip
-								icon={<DnsIcon sx={{ fontSize: 14 }} />}
-								label="Address"
-								value={srv.joinAddress}
-								copyable
-							/>
+						{srv.sessionName && srv.sessionName !== srv.session && srv.sessionName !== srv.joinAddress && (
+							<StatChip icon={<DnsIcon sx={{ fontSize: 14 }} />} label="Name" value={srv.sessionName} />
 						)}
 					</>
-				)}
+				) : null}
 
 				{srv.port && (
 					<StatChip

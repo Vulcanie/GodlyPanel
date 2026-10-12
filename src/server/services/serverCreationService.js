@@ -556,6 +556,9 @@ async function runJob(jobId, template, params) {
 		}
 
 		const entry = template.buildServerEntry(p);
+		// The text shown as the server's Session, when one was typed on the form; blank leaves it automatic (the public address and port).
+		const label = typeof p.sessionLabel === "string" ? p.sessionLabel.replace(/\s+/g, " ").trim().slice(0, 100) : "";
+		if (label) entry.sessionLabel = label;
 
 		// Read the direct launch out of the script just written, so "no window"
 		// is available for this server from the start. Not every game's script

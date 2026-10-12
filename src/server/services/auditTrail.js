@@ -60,6 +60,7 @@ export function describe(method, route, p = {}, body = {}) {
 		[/^POST \/server\/:serverName\/backups\/:id\/restore$/, () => `restored backup ${oneLine(p.id, 40)} of ${s}`],
 		[/^POST \/server\/:serverName\/rcon-password\/rotate$/, () => `changed the RCON password of ${s}`],
 		[/^POST \/server\/:serverName\/players\/(kick|ban|unban)$/, () => `${PLAYER_ACTION[at.split("/").pop()]} a player on ${s}`],
+		[/^PUT \/server\/:serverName\/session$/, () => `changed the session text of ${s}`],
 		[/^DELETE \/server\/:serverName$/, () => `deleted the server ${s}`],
 		[/^POST \/server\/:serverName\/clone$/, () => `cloned ${s}`],
 		[/^POST \/servers$/, () => `created a server${body?.name ? ` (${oneLine(body.name)})` : ""}`],

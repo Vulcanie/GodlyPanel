@@ -56,7 +56,18 @@ try {
 
 	await choose("Valheim");
 	const name = page.getByLabel(/^Server \/ Session Name/);
-	check("Valheim's session field is its server name, and is left blank for the person to name", (await name.inputValue()) === "", await name.inputValue());
+	check("Valheim's own name field is left blank for the person to name (it is the name in the game)", (await name.inputValue()) === "", await name.inputValue());
+	const label = page.getByLabel("Session shown on the dashboard and in Discord");
+	const vPort = await page.getByLabel("Game Port").inputValue();
+	check("every other game gets a Session field, starting as the public address and the game port", (await label.inputValue()) === `203.0.113.9:${vPort}`, await label.inputValue());
+	await page.getByLabel("Game Port").fill("8222");
+	await settle();
+	check("which follows the game port", (await label.inputValue()) === "203.0.113.9:8222", await label.inputValue());
+	await label.fill("Godly Heroes vanilla");
+	await page.getByLabel("Game Port").fill("8223");
+	await settle();
+	check("until it is typed in, then it stays as typed", (await label.inputValue()) === "Godly Heroes vanilla", await label.inputValue());
+	check("and says it is a label only", await page.getByText(/Your own text/).isVisible());
 
 	check("no script errors", errors.length === 0, errors.join(" | "));
 } finally {

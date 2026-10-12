@@ -19,22 +19,23 @@ describe("addresses in Discord and on the create form", () => {
 
 	const on = (extra) => ({ online: true, playerCount: 2, serverPassword: "pw", ...extra });
 
-	it("shows the address on its own line beside a session name", () => {
-		const text = buildServerDashboard({ "Ark-Ragnarok": on({ sessionName: "GodlyRagnarok", joinAddress: "50.82.40.142:7790" }) });
-		assert.match(text, /• Session: `GodlyRagnarok`/);
-		assert.match(text, /• Address: `50\.82\.40\.142:7790`/);
+	it("shows the session, which is the address unless one was set", () => {
+		const text = buildServerDashboard({ BMC6: on({ sessionName: "", joinAddress: "50.82.40.142:8030", session: "50.82.40.142:8030" }) });
+		assert.match(text, /• Session: `50.82.40.142:8030`/);
+		assert.doesNotMatch(text, /Address:/, "not said twice");
 	});
 
-	it("shows only the address for a server whose session was just the address (Minecraft)", () => {
-		const text = buildServerDashboard({ BMC6: on({ sessionName: "", joinAddress: "50.82.40.142:8030" }) });
-		assert.match(text, /• Address: `50\.82\.40\.142:8030`/);
-		assert.doesNotMatch(text, /Session: `N\/A`/);
+	it("shows a session that was set, with the address on its own line", () => {
+		const text = buildServerDashboard({ "Ark-Ragnarok": on({ sessionName: "GodlyRagnarok", joinAddress: "50.82.40.142:7790", session: "Ragnarok, PvE" }) });
+		assert.match(text, /• Session: `Ragnarok, PvE`/);
+		assert.match(text, /• Address: `50.82.40.142:7790`/);
 	});
 
-	it("still says N/A when a server has neither, as before", () => {
-		const text = buildServerDashboard({ Plain: on({}) });
-		assert.match(text, /• Session: `N\/A`/);
-		assert.doesNotMatch(text, /Address:/);
+	it("falls back on the game's name for a server with no address, and then N/A, as before", () => {
+		assert.match(buildServerDashboard({ A: on({ sessionName: "Just A Name" }) }), /• Session: `Just A Name`/);
+		const none = buildServerDashboard({ Plain: on({}) });
+		assert.match(none, /• Session: `N\/A`/);
+		assert.doesNotMatch(none, /Address:/);
 	});
 
 	it("does not show an offline server's address (it is listed as offline, as before)", () => {

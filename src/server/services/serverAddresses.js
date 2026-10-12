@@ -12,6 +12,14 @@ export function joinAddressFor(server, port, publicAddress = getConfig().network
 	return server.joinAddress;
 }
 
+/**
+ * What the dashboard and Discord show as a server's "Session": the text set for it in the server's own page, or else its address
+ * (the public address and game port), or else the name the game was given, as before.
+ */
+export function sessionFor(server, joinAddress) {
+	return String(server.sessionLabel ?? "").trim() || joinAddress || server.sessionName;
+}
+
 // An IPv4 address or a dotted name, then a port: "50.82.40.142:25569", "play.example.com:7777".
 const ADDRESS = String.raw`(?:\d{1,3}(?:\.\d{1,3}){3}|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+):\d{1,5}`;
 const WHOLE = new RegExp(`^\\s*${ADDRESS}\\s*$`);

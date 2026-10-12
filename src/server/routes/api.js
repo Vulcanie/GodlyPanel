@@ -118,6 +118,18 @@ router.put("/server/:serverName/tags", async (req, res) => {
 	res.json({ tags: updated.tags });
 });
 
+// What the dashboard and Discord show as this server's Session. Blank means "automatic": the public address and the game port.
+// It is a label only: it does not rename the server inside the game.
+router.put("/server/:serverName/session", async (req, res) => {
+	const raw = req.body?.sessionLabel;
+	if (typeof raw !== "string") return res.status(400).json({ error: "sessionLabel must be text (blank for automatic).", code: "bad_session" });
+	const label = raw.replace(/\s+/g, " ").trim();
+	if (label.length > 100) return res.status(400).json({ error: "Keep it to 100 characters or fewer.", code: "bad_session" });
+	const updated = await updateServer(req.server.name, { sessionLabel: label });
+	pollServers().catch(() => {});
+	res.json({ sessionLabel: updated.sessionLabel ?? "" });
+});
+
 // --- Ports ---
 
 // Every server and the ports it uses (administrators): the list behind "Show server port list".

@@ -13,6 +13,7 @@ const GUEST_FIELDS = [
 	"ping",
 	"sessionName",
 	"joinAddress",
+	"session",
 	"port",
 	"tags",
 ];

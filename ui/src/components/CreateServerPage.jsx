@@ -84,6 +84,9 @@ function CreateServerPage({ onBack, userRole }) {
 				// Where it is the address players join by, it starts as the public address and the game port, and follows the port.
 				sessionName: template.sessionIsAddress && data.publicAddress ? `${data.publicAddress}:${data.ports.port}` : "",
 				sessionAuto: Boolean(template.sessionIsAddress && data.publicAddress),
+				// What the dashboard and Discord show as the Session, for every other game: automatic until typed in.
+				sessionLabel: !template.sessionIsAddress && data.publicAddress ? `${data.publicAddress}:${data.ports.port}` : "",
+				labelAuto: Boolean(!template.sessionIsAddress && data.publicAddress),
 				maxPlayers: "",
 				mapCode: template.mapChoices?.[0]?.code || "",
 				clusterId: "MyCluster",
@@ -107,7 +110,9 @@ function CreateServerPage({ onBack, userRole }) {
 			const next = { ...prev, [key]: value };
 			// Typing in the session field takes it off auto; until then it follows the game port.
 			if (key === "sessionName") next.sessionAuto = false;
+			if (key === "sessionLabel") next.labelAuto = false;
 			if (key === "port" && prev.sessionAuto && suggested?.publicAddress) next.sessionName = `${suggested.publicAddress}:${value}`;
+			if (key === "port" && prev.labelAuto && suggested?.publicAddress) next.sessionLabel = `${suggested.publicAddress}:${value}`;
 			return next;
 		});
 
@@ -116,7 +121,9 @@ function CreateServerPage({ onBack, userRole }) {
 		setSubmitting(true);
 		setSubmitError(null);
 		try {
-			const { sessionAuto, ...fields } = form;
+			const { sessionAuto, labelAuto, ...fields } = form;
+			// Left automatic, the label is not stored, so it keeps following the port.
+			if (labelAuto) delete fields.sessionLabel;
 			const body = {
 				templateId: selected.id,
 				...fields,
@@ -334,6 +341,18 @@ function CreateServerPage({ onBack, userRole }) {
 								/>
 							);
 						})}
+
+					{!selected.sessionIsAddress && (
+						<TextField
+							fullWidth
+							label="Session shown on the dashboard and in Discord"
+							sx={{ my: 1 }}
+							value={form.sessionLabel ?? ""}
+							onChange={(e) => setField("sessionLabel", e.target.value)}
+							placeholder={suggested?.publicAddress ? "" : "Automatic once the public address is set (Settings → Network)"}
+							helperText={suggested?.publicAddress ? (form.labelAuto ? "Automatic: the public address and the game port, following the port. A label only; the name players see in the game is the one above. Type here to use your own text." : "Your own text. Clear it to go back to automatic.") : "A label only; it doesn't rename the server in the game."}
+						/>
+					)}
 
 					<TextField
 						fullWidth

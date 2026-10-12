@@ -92,13 +92,18 @@ same network, join with the PC's network address instead (`192.168.1.20:8892`).
 
 ## The address to give your players
 
-Put your public IP address (or a domain name that points at it) in `Settings → Network → Public address of this PC`. Each
-server's **Address** on the dashboard (and in Discord, and for viewers) is then that plus the server's game port, for example
-`203.0.113.9:7777`, and it follows by itself when you change a port. The Discord status post shows it too, and when you create a Minecraft server its address field starts as this plus the game
-port (and follows the port until you type in it). Other games' session fields are the game's own server name, so they are
-left for you to name. Setting it also removes any address that was typed into a
-server's session name or join address by hand, since those copies go out of date. Your public IP is shown by sites such as
-"what is my IP"; if your provider changes it now and then, use a dynamic-DNS name instead.
+Put your public IP address (or a domain name that points at it) in `Settings → Network → Public address of this PC`. Every
+server's **Session** on the dashboard (and in Discord, and for viewers) is then that plus the server's game port, for example
+`203.0.113.9:7777`, and it follows by itself when you change a port. It is the same for every game.
+
+- **To use your own text instead,** type it in the **Session** box at the top of the server's page (or on the create form). Clear
+  it, or press *Use automatic*, to go back. It is a label only: it doesn't rename the server inside the game, whose own name stays
+  as it was (the dashboard shows it beside the Session as *Name*).
+- **Minecraft** is the exception on the create form, where the first field is the address players join by (and the server list's
+  message of the day): it starts as this address and the port, and follows the port until you type in it.
+- Setting the public address also removes any address that was typed into a server's session name or join address by hand, since
+  those copies go out of date. Your public IP is shown by sites such as "what is my IP"; if your provider changes it now and then,
+  use a dynamic-DNS name instead.
 
 ## Checking that it works
 

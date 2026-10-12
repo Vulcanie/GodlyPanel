@@ -7,7 +7,7 @@ import { get as getServerEntry } from "../data/serverStore.js";
 import { noteServerCameOnline } from "./serverWindows.js";
 import { checkPort } from "./portCheck.js";
 import { valheimNamesFromLog } from "./valheimPlayers.js";
-import { joinAddressFor } from "./serverAddresses.js";
+import { joinAddressFor, sessionFor } from "./serverAddresses.js";
 import { checkProcess } from "./processCheck.js";
 import { findServerProcesses, ownedProgramRunning } from "./serverProcesses.js";
 import { latestServerStats } from "./serverResourceStats.js";
@@ -64,6 +64,8 @@ export function syncServerStatusKeys() {
 				sessionName: s.sessionName,
 				serverPassword: s.serverPassword,
 				joinAddress: joinAddressFor(s, s.port),
+				session: sessionFor(s, joinAddressFor(s, s.port)),
+				sessionLabel: s.sessionLabel,
 				port: s.port,
 				tags: s.tags ?? [],
 				// Not yet checked. This used to default to `true`, which meant
@@ -134,6 +136,7 @@ function diffAndBroadcast(current, previous) {
 			cur.playerCount !== prev.playerCount ||
 			cur.sessionName !== prev.sessionName ||
 			cur.joinAddress !== prev.joinAddress ||
+			cur.session !== prev.session ||
 			!samePlayers(cur.playerList, prev.playerList);
 
 		if (changed) {
@@ -272,6 +275,8 @@ async function pollOne(server) {
 		sessionName: server.sessionName,
 		serverPassword: server.serverPassword,
 		joinAddress: joinAddressFor(server, port),
+		session: sessionFor(server, joinAddressFor(server, port)),
+		sessionLabel: server.sessionLabel,
 		port,
 		tags: server.tags ?? [],
 		type: server.type,
@@ -341,8 +346,9 @@ export function buildServerDashboard(status) {
 	for (const [name, s] of onlineEntries) {
 		msg += `🟢 **${name}**\n`;
 		// The session name is the game's own name for the server; the address is the public address and game port (Settings -> Network).
-		if (s.sessionName || !s.joinAddress) msg += `• Session: \`${s.sessionName || "N/A"}\`\n`;
-		if (s.joinAddress) msg += `• Address: \`${s.joinAddress}\`\n`;
+		msg += `• Session: \`${s.session || s.sessionName || "N/A"}\`\n`;
+		// The address on its own line only when the session was set to something else.
+		if (s.joinAddress && s.session && s.session !== s.joinAddress) msg += `• Address: \`${s.joinAddress}\`\n`;
 		msg += `• Password: \`${s.serverPassword || "None"}\`\n`;
 
 		const stat = statsByName[name];

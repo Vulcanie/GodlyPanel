@@ -82,7 +82,7 @@ jobs:
           - name: settings and navigation
             suites: "sections appearance navigation passwords dismissals"
           - name: servers
-            suites: "workspace create-ports create-every-game create-address"
+            suites: "workspace create-ports create-every-game create-address session-box"
           - name: community and updates
             suites: "community-view community-join panel-update"
     env:
