@@ -8,7 +8,7 @@ import {
 	getById,
 } from "../data/userStore.js";
 import { issueSession, endSession, requireRole } from "../middleware/auth.js";
-import { revokeUserSessions } from "../services/sessionStore.js";
+import { revokeUserSessions, revokeSession } from "../services/sessionStore.js";
 import sessionRoutes from "./sessions.js";
 import { auditSignedIn, auditSignInFailed, auditSignedOut, auditPasswordChanged } from "../services/auditTrail.js";
 import { loginGuard, recordLoginFailure, clearLoginFailures } from "../middleware/loginLimiter.js";
@@ -114,10 +114,14 @@ router.post("/change-password", requireRole("admin", "guest"), async (req, res) 
 
 	// Changing the password bumps sessionVersion, which invalidates this
 	// session too — so issue a fresh one rather than silently logging them out.
-	// Every other sign-in is already refused (the password changed); this ends their records and live streams too.
-	revokeUserSessions(user.id);
+	// Every other sign-in is already refused (the password changed); this ends their records and live streams too. This browser's own
+	// old one is ended only once the response with its new cookie has gone out: closing its live stream sooner makes the page reconnect
+	// with the old cookie and sign itself out in the middle of the change.
+	const oldSid = req.sid;
+	revokeUserSessions(user.id, oldSid);
 	issueSession(res, getById(user.id), { req });
 	auditPasswordChanged(req);
+	res.once("finish", () => revokeSession(oldSid));
 	res.json({ success: true });
 });
 

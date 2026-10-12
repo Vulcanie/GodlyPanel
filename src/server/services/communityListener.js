@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 import { verifyCredentials, getById, needsSetup, setPassword } from "../data/userStore.js";
 import { auditActions, auditSignInFailed, auditSignedOut, auditPasswordChanged } from "./auditTrail.js";
 import sessionRoutes from "../routes/sessions.js";
-import { revokeUserSessions } from "./sessionStore.js";
+import { revokeUserSessions, revokeSession } from "./sessionStore.js";
 import { attachUser, endSession, issueSession, requireRole, clientAddress } from "../middleware/auth.js";
 import { createLoginLimiter } from "../middleware/loginLimiter.js";
 import { securityHeaders } from "../middleware/securityHeaders.js";
@@ -197,9 +197,12 @@ export function createCommunityApp({ hostRule, uiDir, staffSignIn = () => false 
 		} catch (e) {
 			return res.status(400).json({ error: e.message });
 		}
-		revokeUserSessions(user.id);
+		// This browser's own old session is ended once the response with its new cookie has gone out (see routes/auth.js).
+		const oldSid = req.sid;
+		revokeUserSessions(user.id, oldSid);
 		issueSession(res, getById(user.id), { secure: secure(req), req, via: "community" });
 		auditPasswordChanged(req);
+		res.once("finish", () => revokeSession(oldSid));
 		res.json({ success: true });
 	});
 
