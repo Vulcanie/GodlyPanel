@@ -7,6 +7,8 @@
 // it. A config file full of settings that silently do nothing is worse than a
 // short one, so later stages grow this rather than it shipping half-dead.
 
+import { normalisePublicAddress } from "../util/publicAddress.js";
+
 export const CURRENT_SCHEMA_VERSION = 1;
 
 export const DEFAULTS = {
@@ -18,6 +20,9 @@ export const DEFAULTS = {
 	},
 
 	network: {
+		// The address people outside use to reach this PC's game servers (a public IP address or a domain name). Each server's join
+		// address is this plus its game port.
+		publicAddress: "",
 		allowCgnat: true,
 		allowLinkLocal: true,
 		extraAllowedCidrs: [],
@@ -168,6 +173,14 @@ export const FIELD_SPECS = [
 		help: "Off means only this computer can open the panel.",
 	},
 
+	{
+		path: "network.publicAddress",
+		type: "string",
+		normalize: normalisePublicAddress,
+		restart: false,
+		label: "Public address of this PC",
+		help: "Your public IP address (or a domain name that points at it). Each server's address is shown as this plus its game port, for example 203.0.113.9:7777, on the dashboard and in Discord. Leave blank to show nothing of the kind.",
+	},
 	{
 		path: "network.allowCgnat",
 		type: "bool",
@@ -658,9 +671,20 @@ export function coerceConfig(raw) {
 			case "bool":
 				setAt(config, spec.path, Boolean(value));
 				break;
-			case "string":
+			case "string": {
+				if (spec.normalize) {
+					const cleaned = spec.normalize(value);
+					if (cleaned === null) {
+						issues.push(`${spec.path}: "${value}" is not a valid address — using ${JSON.stringify(fallback)}.`);
+						setAt(config, spec.path, fallback);
+						break;
+					}
+					setAt(config, spec.path, cleaned);
+					break;
+				}
 				setAt(config, spec.path, String(value));
 				break;
+			}
 			case "enum":
 				if (!spec.values.includes(value)) {
 					issues.push(

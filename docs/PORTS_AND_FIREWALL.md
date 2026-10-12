@@ -90,6 +90,14 @@ dynamic-DNS name (DuckDNS, No-IP) gives you a name that follows it.
 That is normal for many routers (they won't loop traffic back inside). When *you* play from the
 same network, join with the PC's network address instead (`192.168.1.20:8892`).
 
+## The address to give your players
+
+Put your public IP address (or a domain name that points at it) in `Settings → Network → Public address of this PC`. Each
+server's **Address** on the dashboard (and in Discord, and for viewers) is then that plus the server's game port, for example
+`203.0.113.9:7777`, and it follows by itself when you change a port. Setting it also removes any address that was typed into a
+server's session name or join address by hand, since those copies go out of date. Your public IP is shown by sites such as
+"what is my IP"; if your provider changes it now and then, use a dynamic-DNS name instead.
+
 ## Checking that it works
 
 - The panel's **Network** tab confirms the Windows Firewall part.

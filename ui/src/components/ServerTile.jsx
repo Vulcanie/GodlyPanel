@@ -7,6 +7,7 @@ import {
 	Lock as LockIcon,
 	Memory as MemoryIcon,
 	Dns as DnsIcon,
+	SettingsEthernet as PortIcon,
 } from "@mui/icons-material";
 import StatChip from "./StatChip";
 import HeapBar from "./HeapBar";
@@ -102,6 +103,15 @@ function ServerTile({ srv, stats, clickable, onClick }) {
 							/>
 						)}
 					</>
+				)}
+
+				{srv.port && (
+					<StatChip
+						icon={<PortIcon sx={{ fontSize: 14 }} />}
+						label="Port"
+						value={String(srv.port)}
+						copyable
+					/>
 				)}
 
 				<StatChip

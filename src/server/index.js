@@ -23,6 +23,7 @@ import { applyBotSettings, stopBot } from "./services/discordBot.js";
 import { replicateBackup, retryReplication, checkDestinations } from "./services/backupDestinations.js";
 import { startNotifier, checkDisks } from "./services/notifier.js";
 import { startAuditFeed } from "./services/auditFeed.js";
+import { tidyStoredAddresses } from "./services/serverAddresses.js";
 import { sampleOnce } from "./services/metricsSampler.js";
 import { rescan } from "./services/storageService.js";
 import { registerTimer, scheduleAll, rescheduleAll, stopAll } from "./timerManager.js";
@@ -169,6 +170,7 @@ const server = app.listen(PORT, HOST, () => {
 	applyBotSettings();
 	startNotifier();
 	startAuditFeed();
+	tidyStoredAddresses().catch((err) => console.error("[addresses]", err));
 	if (getConfig().updates.check) setTimeout(() => checkForPanelUpdate().catch(() => {}), 60_000);
 	setTimeout(() => checkDisks().catch(() => {}), 30_000);
 	setTimeout(() => checkDestinations(), 90_000);
@@ -188,6 +190,7 @@ function sendStartupSettings(config) {
 }
 
 onConfigChange((next, changed) => {
+	if (changed.includes("network.publicAddress")) tidyStoredAddresses().then(() => pollServers()).catch((err) => console.error("[addresses]", err));
 	if (changed.some((p) => p.startsWith("polling."))) rescheduleAll(next);
 	if (changed.some((p) => p.startsWith("startup."))) sendStartupSettings(next);
 });

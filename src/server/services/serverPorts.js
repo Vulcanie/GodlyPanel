@@ -7,6 +7,7 @@ import { getConfig } from "../config/configStore.js";
 import { readManagedFile, writeManagedFile } from "../util/managedFiles.js";
 import { portOwners, describeOwners, impliedPortsFor, templateOfServer } from "./serverCreationService.js";
 import { implicitPortsOf, usageOf } from "../data/portRules.js";
+import { SCRIPT_FLAGS, detectFromScript } from "../util/scriptPorts.js";
 import { all as allServers } from "../data/serverStore.js";
 import { serverStatus } from "./pollingService.js";
 
@@ -25,26 +26,8 @@ export const PORT_LABELS = {
 };
 const KEYS = Object.keys(PORT_LABELS);
 
-// The launch-line flags that carry each port. -publicport follows the game port
-// (Palworld passes the same number twice).
-const SCRIPT_FLAGS = {
-	port: ["port", "publicport", "serverport"],
-	queryPort: ["queryport", "reliableport"],
-	rconPort: ["rconport"],
-};
-
 const flagPattern = (key, value) =>
 	new RegExp(`((?:(?:^|\\s)-|\\?)(?:${SCRIPT_FLAGS[key].join("|")})(?:=|\\s+))${value}(?!\\d)`, "gim");
-
-/** Ports a start script sets, for the games whose entry doesn't record them (ARK). */
-function detectFromScript(text) {
-	const found = {};
-	for (const key of Object.keys(SCRIPT_FLAGS)) {
-		const match = text.match(new RegExp(`(?:(?:^|\\s)-|\\?)(?:${SCRIPT_FLAGS[key].join("|")})(?:=|\\s+)(\\d+)`, "im"));
-		if (match) found[key] = Number(match[1]);
-	}
-	return found;
-}
 
 // Where else, besides the launch line, a game keeps its ports. The value found
 // must match the old port for it to be replaced, so an unexpected file is left alone.

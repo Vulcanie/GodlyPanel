@@ -7,6 +7,7 @@ import { get as getServerEntry } from "../data/serverStore.js";
 import { noteServerCameOnline } from "./serverWindows.js";
 import { checkPort } from "./portCheck.js";
 import { valheimNamesFromLog } from "./valheimPlayers.js";
+import { joinAddressFor } from "./serverAddresses.js";
 import { checkProcess } from "./processCheck.js";
 import { findServerProcesses, ownedProgramRunning } from "./serverProcesses.js";
 import { latestServerStats } from "./serverResourceStats.js";
@@ -15,6 +16,26 @@ import { getConfig } from "../config/configStore.js";
 import { sanitizeServerStatus } from "../data/sanitize.js";
 import { noteServerPlayers } from "./playerTracker.js";
 import { roleMention } from "../util/discordRole.js";
+import { detectFromScript } from "../util/scriptPorts.js";
+import { promises as fsp } from "node:fs";
+
+// The port players connect to. Most entries record it; ARK's don't, so it is read from the start script (re-read only when
+// the script changes).
+const scriptPortCache = new Map(); // server name -> { mtimeMs, port }
+async function connectPortOf(server) {
+	if (Number.isInteger(server.port)) return server.port;
+	if (!server.startScriptPath) return undefined;
+	try {
+		const { mtimeMs } = await fsp.stat(server.startScriptPath);
+		const cached = scriptPortCache.get(server.name);
+		if (cached?.mtimeMs === mtimeMs) return cached.port;
+		const port = detectFromScript(await fsp.readFile(server.startScriptPath, "utf8")).port;
+		scriptPortCache.set(server.name, { mtimeMs, port });
+		return port;
+	} catch {
+		return undefined;
+	}
+}
 
 // Holds the latest known status
 export let serverStatus = {};
@@ -42,7 +63,8 @@ export function syncServerStatusKeys() {
 				type: s.type,
 				sessionName: s.sessionName,
 				serverPassword: s.serverPassword,
-				joinAddress: s.joinAddress,
+				joinAddress: joinAddressFor(s, s.port),
+				port: s.port,
 				tags: s.tags ?? [],
 				// Not yet checked. This used to default to `true`, which meant
 				// anything the panel hadn't successfully polled — a server
@@ -244,10 +266,12 @@ const POLLERS = { rcon: pollRcon, gamedig: pollGamedig, process: pollProcess };
 
 async function pollOne(server) {
 	const name = server.name;
+	const port = await connectPortOf(server);
 	const base = {
 		sessionName: server.sessionName,
 		serverPassword: server.serverPassword,
-		joinAddress: server.joinAddress,
+		joinAddress: joinAddressFor(server, port),
+		port,
 		tags: server.tags ?? [],
 		type: server.type,
 	};
