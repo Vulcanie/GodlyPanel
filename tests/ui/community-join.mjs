@@ -43,7 +43,8 @@ try {
 	await owner.getByRole("button", { name: /sign in/i }).click();
 	await owner.getByRole("button", { name: "Settings" }).click();
 	await owner.getByRole("button", { name: "Open all sections" }).click();
-	await owner.getByText("Community access").waitFor({ timeout: 30_000 });
+	// The section's title and its card's heading both read "Community access", so wait for the control that is used next.
+	await owner.getByLabel("Community code is off").waitFor({ timeout: 30_000 });
 	check("Settings explains Tailscale isn't installed here (or shows it connected)", (await owner.getByText(/Tailscale/).count()) > 0);
 	await owner.getByLabel("Community code is off").click();
 	const codeEl = owner.getByTestId("community-code");
