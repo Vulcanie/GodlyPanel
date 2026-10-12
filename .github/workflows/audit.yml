@@ -25,4 +25,6 @@ jobs:
         with:
           node-version: 22
 
-      - run: npm audit --package-lock-only --omit=dev --audit-level=high
+      # Fails on a high or critical advisory in what ships, except the ones in .github/audit-allowlist.json (each with a reason and an
+      # expiry date, so it is looked at again). See scripts/audit-prod.mjs.
+      - run: node scripts/audit-prod.mjs
