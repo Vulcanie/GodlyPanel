@@ -873,6 +873,9 @@ export const GAME_TEMPLATES = [
 		type: "minecraft",
 		method: "gamedig",
 		sharedInstall: false,
+		// The session field is the address players join by (it is also the server list's message of the day), so it is filled in from
+		// the public address and the game port.
+		sessionIsAddress: true,
 		requiresEula: true,
 		fields: [
 			"sessionName",

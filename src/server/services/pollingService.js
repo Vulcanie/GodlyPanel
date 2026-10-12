@@ -133,6 +133,7 @@ function diffAndBroadcast(current, previous) {
 			cur.online !== prev.online ||
 			cur.playerCount !== prev.playerCount ||
 			cur.sessionName !== prev.sessionName ||
+			cur.joinAddress !== prev.joinAddress ||
 			!samePlayers(cur.playerList, prev.playerList);
 
 		if (changed) {
@@ -313,7 +314,7 @@ function textBar(percent, length = 10) {
 	return "█".repeat(filled) + "░".repeat(length - filled);
 }
 
-function buildServerDashboard(status) {
+export function buildServerDashboard(status) {
 	const adminRoleId = getConfig().discord.adminRoleId;
 
 	let msg = `**Server Status Dashboard**\n\n`;
@@ -339,7 +340,9 @@ function buildServerDashboard(status) {
 	}
 	for (const [name, s] of onlineEntries) {
 		msg += `🟢 **${name}**\n`;
-		msg += `• Session: \`${s.sessionName || "N/A"}\`\n`;
+		// The session name is the game's own name for the server; the address is the public address and game port (Settings -> Network).
+		if (s.sessionName || !s.joinAddress) msg += `• Session: \`${s.sessionName || "N/A"}\`\n`;
+		if (s.joinAddress) msg += `• Address: \`${s.joinAddress}\`\n`;
 		msg += `• Password: \`${s.serverPassword || "None"}\`\n`;
 
 		const stat = statsByName[name];

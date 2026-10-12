@@ -68,6 +68,7 @@ export function listTemplates() {
 		mapChoices: t.mapChoices ?? null,
 		fieldMeta: t.fieldMeta ?? null,
 		requiresEula: Boolean(t.requiresEula),
+		sessionIsAddress: Boolean(t.sessionIsAddress),
 	}));
 }
 
@@ -246,6 +247,8 @@ export async function suggestParams(templateId) {
 		ports: await suggestPorts(template, sharedInstallDir),
 		sharedInstallDir,
 		rconPassword: suggestRconPassword(),
+		// What the session field is filled in from, for the games where it is the address players join by.
+		publicAddress: getConfig().network.publicAddress,
 		// Shown as the form's default so it's clear where this will go.
 		defaultInstallParent: inspectFolder(getConfig().paths.serversRoot).resolved,
 	};
@@ -679,8 +682,11 @@ export async function createServer(templateId, rawParams) {
 	// the first (see the "Writing start script" bug this caught).
 	const instanceSlug = slugify(rawParams.name);
 
+	// Where the session field is the address players join by, a blank one is the public address and the game port.
+	const autoSession = template.sessionIsAddress && !String(rawParams.sessionName ?? "").trim() && getConfig().network.publicAddress && ports.port;
 	const params = {
 		...rawParams,
+		...(autoSession ? { sessionName: `${getConfig().network.publicAddress}:${ports.port}` } : {}),
 		...ports,
 		slug,
 		instanceSlug,

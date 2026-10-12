@@ -81,7 +81,9 @@ function CreateServerPage({ onBack, userRole }) {
 				rconPassword: data.rconPassword ?? "",
 				serverPassword: randomJoinPassword(),
 				adminPassword: randomJoinPassword(10),
-				sessionName: "",
+				// Where it is the address players join by, it starts as the public address and the game port, and follows the port.
+				sessionName: template.sessionIsAddress && data.publicAddress ? `${data.publicAddress}:${data.ports.port}` : "",
+				sessionAuto: Boolean(template.sessionIsAddress && data.publicAddress),
 				maxPlayers: "",
 				mapCode: template.mapChoices?.[0]?.code || "",
 				clusterId: "MyCluster",
@@ -100,16 +102,24 @@ function CreateServerPage({ onBack, userRole }) {
 		}
 	};
 
-	const setField = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
+	const setField = (key, value) =>
+		setForm((prev) => {
+			const next = { ...prev, [key]: value };
+			// Typing in the session field takes it off auto; until then it follows the game port.
+			if (key === "sessionName") next.sessionAuto = false;
+			if (key === "port" && prev.sessionAuto && suggested?.publicAddress) next.sessionName = `${suggested.publicAddress}:${value}`;
+			return next;
+		});
 
 	const submit = async (acceptSteamCmdDownload = false) => {
 		setAskSteamCmd(false);
 		setSubmitting(true);
 		setSubmitError(null);
 		try {
+			const { sessionAuto, ...fields } = form;
 			const body = {
 				templateId: selected.id,
-				...form,
+				...fields,
 				...(acceptSteamCmdDownload ? { acceptSteamCmdDownload: true } : {}),
 			};
 			for (const p of selected.ports) {
@@ -320,6 +330,7 @@ function CreateServerPage({ onBack, userRole }) {
 									sx={{ my: 1 }}
 									value={form[f] ?? ""}
 									onChange={(e) => setField(f, e.target.value)}
+									helperText={f === "sessionName" && selected.sessionIsAddress ? (suggested?.publicAddress ? (form.sessionAuto ? "Filled in from the public address (Settings → Network) and the game port; it follows the port until you type here." : "") : "Set the public address under Settings → Network and this fills in by itself.") : undefined}
 								/>
 							);
 						})}
