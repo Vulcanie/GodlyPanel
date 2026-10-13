@@ -10,10 +10,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-const browsers = path.join(os.homedir(), "AppData/Local/ms-playwright");
-const EXE =
-	process.env.GP_CHROME ||
-	fs.readdirSync(browsers).filter((d) => d.startsWith("chromium-")).map((d) => path.join(browsers, d, "chrome-win64/chrome.exe")).find((p) => fs.existsSync(p));
+import { EXE } from "./_chrome.mjs";
 const freePort = () => new Promise((resolve) => { const s = net.createServer(); s.listen(0, "127.0.0.1", () => { const { port } = s.address(); s.close(() => resolve(port)); }); });
 
 const root = fs.mkdtempSync(path.join(os.tmpdir(), "gp-pw-"));

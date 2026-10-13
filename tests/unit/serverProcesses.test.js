@@ -1,5 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import path from "node:path";
 import { check, fc } from "../helpers/fc.js";
 import { classify, findServerProcesses, ownedProgramRunning, ownedProgramGone } from "../../src/server/services/serverProcesses.js";
 
@@ -7,9 +8,13 @@ import { classify, findServerProcesses, ownedProgramRunning, ownedProgramGone } 
 // that is struggling, and an answer of "none" in that case would say a running game had stopped: a second copy gets started, or a
 // backup or restore goes ahead on files the game still has open. Not knowing has to count as "still running".
 
-const server = { name: "Valheim", processName: "valheim_server.exe", installDir: "C:\\Servers\\Valheim", workingDir: "C:\\Servers\\Valheim" };
-const mine = { pid: 10, path: "C:\\Servers\\Valheim\\valheim_server.exe" };
-const theirs = { pid: 11, path: "D:\\Other\\valheim_server.exe" };
+// Paths are built with the platform's own separator: the code under test compares them with the path module, and a Windows-style
+// path means nothing to it on another system. (`ROOT` is absolute on both: C:\ on Windows, / elsewhere.)
+const ROOT = path.parse(process.cwd()).root;
+const at = (...parts) => path.join(ROOT, ...parts);
+const server = { name: "Valheim", processName: "valheim_server.exe", installDir: at("Servers", "Valheim"), workingDir: at("Servers", "Valheim") };
+const mine = { pid: 10, path: at("Servers", "Valheim", "valheim_server.exe") };
+const theirs = { pid: 11, path: at("Other", "valheim_server.exe") };
 
 describe("finding a server's own programs", () => {
 	it("splits the programs with its name into its own and others', and says the lookup worked", async () => {
@@ -65,8 +70,8 @@ describe("splitting running programs by where they run from", () => {
 	it("calls a program the server's own only when it runs from inside the server's folder", () => {
 		check(
 			fc.property(fc.stringMatching(/^[a-z]{1,8}$/), fc.stringMatching(/^[a-z]{1,8}$/), (a, b) => {
-				const own = { pid: 1, path: `C:\\Servers\\Valheim\\${a}\\game.exe` };
-				const sibling = { pid: 2, path: `C:\\Servers\\ValheimX\\${b}\\game.exe` };
+				const own = { pid: 1, path: at("Servers", "Valheim", a, "game.exe") };
+				const sibling = { pid: 2, path: at("Servers", "ValheimX", b, "game.exe") };
 				const { owned, foreign } = classify(server, [own, sibling]);
 				assert.deepEqual(owned, [own]);
 				assert.deepEqual(foreign, [sibling], "a folder whose name merely starts with the server's is somebody else's");

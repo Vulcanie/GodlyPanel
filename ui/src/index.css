@@ -1,13 +1,44 @@
+/*
+ * Only what has to be in place before the theme loads. Fonts, colours and the rest come from the theme (theme.js), which also
+ * sets the page background; having a second set of fonts here only made the two fight.
+ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  /* The page's own colour for the instant before the app draws, so a dark theme does not start with a white flash. */
+  background: #f2f5fb;
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]) {
+    background: #0a0f1c;
+  }
+}
+
+html[data-theme="dark"] {
+  background: #0a0f1c;
+}
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+img,
+svg {
+  max-width: 100%;
+}
+
+/* Long unbroken words (a path, an address) wrap instead of pushing a phone's screen sideways. */
+#root {
+  overflow-wrap: break-word;
 }

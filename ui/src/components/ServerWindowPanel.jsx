@@ -1,95 +1,69 @@
 import React from "react";
-import {
-	Accordion,
-	AccordionDetails,
-	AccordionSummary,
-	Alert,
-	Box,
-	Button,
-	Chip,
-	CircularProgress,
-	FormControlLabel,
-	MenuItem,
-	Radio,
-	RadioGroup,
-	TextField,
-	Typography,
-} from "@mui/material";
-import { ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
+import { Alert, Box, Button, CircularProgress, MenuItem, TextField, Typography } from "@mui/material";
 import { api } from "../api/client";
+import { useToast } from "../ToastContext";
 import ServerConsole from "./ServerConsole";
-import { cardAccordionSx } from "./cardStyles";
+import InfoTip from "./InfoTip";
+import TipRow from "./TipRow";
 
+// What each mode is for is explained by the (i) beside the choice (server.window.mode), not printed under it.
 const MODES = {
-	minimized: {
-		label: "Minimized",
-		help: "Runs in a minimized window that stays on your taskbar. Best when you want to watch the console yourself.",
-	},
-	hidden: {
-		label: "Hidden",
-		help: "Runs in a window that's hidden as soon as it opens, so nothing sits on your taskbar. Works with any start script. There can be a brief flash at launch.",
-	},
-	windowless: {
-		label: "No window",
-		help: "GodlyPanel starts the game program itself, so no window exists at all, and shows its live output below. It skips anything else your start script does, such as a SteamCMD update check — use the Update button or auto-update instead.",
-	},
+	minimized: { label: "Minimized" },
+	hidden: { label: "Hidden" },
+	windowless: { label: "No window" },
 };
 
 // Minecraft's start chain is already fully hidden, so it has no window to
 // minimize or hide: the real choice is its script, or a direct launch.
 const MINECRAFT_MODES = {
-	hidden: {
-		label: "Standard",
-		help: "Started by its own start script, which already runs without any window. This is how it works today.",
-	},
-	windowless: {
-		label: "No window",
-		help: "GodlyPanel starts Java itself instead of going through the start script, shows the server's live console output below, and tracks the exact process. It skips what the script does on each start — installing or updating the loader, rewriting settings files from variables.txt — so keep using the script for those.",
-	},
+	hidden: { label: "Standard" },
+	windowless: { label: "No window" },
 };
 
 const PRIORITIES = [
 	["", "Normal"],
+	["low", "Low"],
 	["belowNormal", "Below normal"],
 	["aboveNormal", "Above normal"],
 	["high", "High"],
 ];
 
+const BLANK_FORM = { exe: "", args: "", cwd: "", priority: "" };
+
+// "normal" is the same as leaving it unset, and the list shows that as one choice.
+const priorityOf = (launch) => (launch?.priority && launch.priority !== "normal" ? launch.priority : "");
+
 /**
  * How this server's window behaves, and (for "No window") what it runs and
- * what it prints. Sits on the server's page, next to the RCON console.
+ * what it prints. Shown on the server's Advanced tab, inside a card the page
+ * provides, so it draws no frame or heading of its own.
  */
 function ServerWindowPanel({ serverName }) {
 	const base = `/api/server/${encodeURIComponent(serverName)}`;
+	const toast = useToast();
 	const [win, setWin] = React.useState(null);
-	const [open, setOpen] = React.useState(false);
 	const [busy, setBusy] = React.useState(false);
 	const [error, setError] = React.useState(null);
-	const [notice, setNotice] = React.useState(null);
 	const [detected, setDetected] = React.useState(null);
 	const [captureNotes, setCaptureNotes] = React.useState([]);
 	const [editing, setEditing] = React.useState(false);
-	const [form, setForm] = React.useState({
-		exe: "",
-		args: "",
-		cwd: "",
-		priority: "",
-	});
+	const [form, setForm] = React.useState(BLANK_FORM);
+	// A reply that arrives after the person has moved to another server must not be shown on that server's page.
+	const current = React.useRef(base);
+	current.current = base;
 
 	const load = React.useCallback(async () => {
 		try {
 			const data = await api.get(`${base}/window`);
+			if (current.current !== base) return;
 			setWin(data);
-			if (data.launch) {
-				setForm({
-					exe: data.launch.exe ?? "",
-					args: data.launch.args ?? "",
-					cwd: data.launch.cwd ?? "",
-					priority: data.launch.priority ?? "",
-				});
-			}
+			setForm(
+				data.launch
+					? { exe: data.launch.exe ?? "", args: data.launch.args ?? "", cwd: data.launch.cwd ?? "", priority: priorityOf(data.launch) }
+					: BLANK_FORM,
+			);
 		} catch (e) {
-			setError(e.message);
+			if (current.current === base) setError(e.message);
 		}
 	}, [base]);
 
@@ -99,14 +73,13 @@ function ServerWindowPanel({ serverName }) {
 		setCaptureNotes([]);
 		setEditing(false);
 		setError(null);
-		setNotice(null);
+		setForm(BLANK_FORM);
 		load();
 	}, [load]);
 
 	const run = async (work) => {
 		setBusy(true);
 		setError(null);
-		setNotice(null);
 		try {
 			await work();
 		} catch (e) {
@@ -120,10 +93,10 @@ function ServerWindowPanel({ serverName }) {
 
 	const fillForm = (launch) =>
 		setForm({
-			exe: launch.exe,
-			args: launch.args,
-			cwd: launch.cwd,
-			priority: launch.priority ?? "",
+			exe: launch.exe ?? "",
+			args: launch.args ?? "",
+			cwd: launch.cwd ?? "",
+			priority: priorityOf(launch),
 		});
 
 	const choose = (mode) =>
@@ -131,13 +104,11 @@ function ServerWindowPanel({ serverName }) {
 			const data = await api.put(`${base}/window-mode`, { mode });
 			setWin(data);
 			if (data.skipped?.length) {
-				setNotice(
-					`Skipped from your start script: ${data.skipped.join(", ")}.`,
-				);
+				toast(`Skipped from your start script: ${data.skipped.join(", ")}.`, "info");
 			} else if (data.appliedNow) {
-				setNotice("Applied to the running server.");
+				toast("Applied to the running server.");
 			} else if (mode !== "default") {
-				setNotice("Takes effect the next time this server starts.");
+				toast("Takes effect the next time this server starts.", "info");
 			}
 		}).then((err) => {
 			// A script that can't be read: let them fill the details in by hand.
@@ -173,279 +144,139 @@ function ServerWindowPanel({ serverName }) {
 			await load();
 			setEditing(false);
 			setCaptureNotes([]);
-			setNotice("Launch details saved.");
+			toast("Launch details saved.");
 		});
 
 	const windowsNow = (action) =>
 		run(async () => {
 			const res = await api.post(`${base}/windows/${action}`);
-			setNotice(
-				action === "show"
-					? `Restored ${res.restored ?? 0} window(s).`
-					: "Hiding this server's windows.",
-			);
+			toast(action === "show" ? `Restored ${res.restored ?? 0} window(s).` : "Hiding this server's windows.", "info");
 		});
 
 	if (!win) {
-		return error ? (
-			<Alert severity="error">{error}</Alert>
-		) : (
-			<CircularProgress size={20} />
+		return (
+			<Box sx={{ p: 2.5 }}>
+				{error ? <Alert severity="error">{error}</Alert> : <CircularProgress size={20} />}
+			</Box>
 		);
 	}
 
 	const modes = win.hasWindows ? MODES : MINECRAFT_MODES;
-	const defaultLabel = (
-		modes[win.defaultMode] ?? modes.hidden
-	).label.toLowerCase();
+	const defaultLabel = (modes[win.defaultMode] ?? modes.hidden).label.toLowerCase();
 	const selected = win.requested ?? "default";
 	const showsConsole = win.effective === "windowless" || win.hasLog;
+	// A priority stored by something other than this form (for example "realtime") still has to show as itself.
+	const priorities = PRIORITIES.some(([value]) => value === form.priority) ? PRIORITIES : [...PRIORITIES, [form.priority, form.priority]];
 
 	return (
-		<Box sx={{ mt: 3 }}>
-			<Accordion
-				expanded={open}
-				onChange={(_, v) => setOpen(v)}
-				disableGutters
-				sx={cardAccordionSx}
-			>
-				<AccordionSummary expandIcon={<ExpandMoreIcon />}>
-					<Box
-						sx={{
-							display: "flex",
-							alignItems: "center",
-							gap: 1.5,
-							flexWrap: "wrap",
-						}}
-					>
-						<Typography variant="subtitle1">
-							{win.hasWindows ? "Window & console" : "Launch & console"}
-						</Typography>
-						<Chip
-							size="small"
-							label={(modes[win.effective] ?? modes.hidden).label}
-						/>
-						{win.requested === null && (
-							<Chip
-								size="small"
-								variant="outlined"
-								label="panel default"
-							/>
-						)}
-					</Box>
-				</AccordionSummary>
-				<AccordionDetails>
-					<Box
-						sx={{
-							display: "flex",
-							flexDirection: "column",
-							gap: 2,
-						}}
-					>
-						{error && (
-							<Alert severity="error" onClose={() => setError(null)}>
-								{error}
-							</Alert>
-						)}
-						{notice && (
-							<Alert severity="info" onClose={() => setNotice(null)}>
-								{notice}
-							</Alert>
-						)}
+		<Box sx={{ p: 2.5, display: "flex", flexDirection: "column", gap: 2 }}>
+			{error && (
+				<Alert severity="error" onClose={() => setError(null)}>
+					{error}
+				</Alert>
+			)}
 
-						<RadioGroup
-							value={selected}
-							onChange={(e) => choose(e.target.value)}
-						>
-							<FormControlLabel
-								value="default"
-								disabled={busy}
-								control={<Radio />}
-								label={
-									<Typography variant="body2">
-										Use the panel default ({defaultLabel})
-									</Typography>
-								}
-							/>
-							{Object.entries(modes).map(([value, mode]) => (
-								<FormControlLabel
-									key={value}
-									value={value}
-									disabled={busy}
-									control={<Radio />}
-									sx={{ alignItems: "flex-start", mt: 0.5 }}
-									label={
-										<Box sx={{ pt: 0.75 }}>
-											<Typography variant="body2">
-												{mode.label}
-											</Typography>
-											<Typography
-												variant="caption"
-												sx={{ color: "text.secondary" }}
-											>
-												{mode.help}
-											</Typography>
-										</Box>
-									}
-								/>
-							))}
-						</RadioGroup>
+			<TipRow id="server.window.mode" sx={{ maxWidth: 460 }}>
+				<TextField select fullWidth size="small" label="Window mode" value={selected} disabled={busy} onChange={(e) => choose(e.target.value)}>
+					<MenuItem value="default">Use the panel default ({defaultLabel})</MenuItem>
+					{Object.entries(modes).map(([value, mode]) => (
+						<MenuItem key={value} value={value}>
+							{mode.label}
+						</MenuItem>
+					))}
+				</TextField>
+			</TipRow>
 
-						{win.requested === "windowless" &&
-							win.effective !== "windowless" && (
-								<Alert severity="warning">
-									No launch details are saved yet, so this{" "}
-									{win.hasWindows
-										? "runs hidden"
-										: "starts the normal way"}{" "}
-									until they are. Fill them in below.
-								</Alert>
-							)}
-						{win.launchProblem && (
-							<Alert severity="warning">{win.launchProblem}</Alert>
-						)}
+			{win.requested === "windowless" && win.effective !== "windowless" && (
+				<Alert severity="warning">
+					No launch details are saved yet, so this {win.hasWindows ? "runs hidden" : "starts the normal way"} until they are. Fill them in below.
+				</Alert>
+			)}
+			{win.launchProblem && <Alert severity="warning">{win.launchProblem}</Alert>}
 
+			<Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", alignItems: "center" }}>
+				{win.hasWindows && (
+					<TipRow id="server.window.hide">
 						<Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-							{win.hasWindows && (
-								<>
-									<Button
-										size="small"
-										variant="outlined"
-										disabled={busy}
-										onClick={() => windowsNow("hide")}
-									>
-										Hide windows now
-									</Button>
-									<Button
-										size="small"
-										variant="outlined"
-										disabled={busy}
-										onClick={() => windowsNow("show")}
-									>
-										Show windows
-									</Button>
-								</>
-							)}
-							{win.hasScript && (
-								<Button size="small" disabled={busy} onClick={detect}>
-									Read launch details from the start script
-								</Button>
-							)}
-							<Button size="small" disabled={busy} onClick={capture}>
-								Copy from the running server
+							<Button size="small" variant="outlined" disabled={busy} onClick={() => windowsNow("hide")}>
+								Hide windows now
 							</Button>
-							{!editing && (
-								<Button
-									size="small"
-									disabled={busy}
-									onClick={() => setEditing(true)}
-								>
-									{win.launch
-										? "Edit launch details"
-										: "Enter launch details"}
-								</Button>
-							)}
+							<Button size="small" variant="outlined" disabled={busy} onClick={() => windowsNow("show")}>
+								Show windows
+							</Button>
 						</Box>
-
-						{detected?.ok && detected.skipped?.length > 0 && (
-							<Alert severity="warning">
-								Reading your start script found{" "}
-								{detected.skipped.join(", ")}. "No window" mode
-								skips that — GodlyPanel's own Update button and
-								auto-update cover it.
-							</Alert>
+					</TipRow>
+				)}
+				<TipRow id="server.launch.detect">
+					<Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+						{win.hasScript && (
+							<Button size="small" disabled={busy} onClick={detect}>
+								Read launch details from the start script
+							</Button>
 						)}
-						{captureNotes.map((note) => (
-							<Alert key={note} severity="info">
-								{note}
-							</Alert>
-						))}
-
-						{editing && (
-							<Box
-								sx={{
-									display: "flex",
-									flexDirection: "column",
-									gap: 1.5,
-								}}
-							>
-								<TextField
-									size="small"
-									label="Program"
-									value={form.exe}
-									onChange={(e) =>
-										setForm({ ...form, exe: e.target.value })
-									}
-									helperText="Full path to the server's .exe."
-								/>
-								<TextField
-									size="small"
-									label="Arguments"
-									value={form.args}
-									onChange={(e) =>
-										setForm({ ...form, args: e.target.value })
-									}
-									helperText="Exactly what follows the program on the launch line."
-								/>
-								<TextField
-									size="small"
-									label="Start in folder"
-									value={form.cwd}
-									onChange={(e) =>
-										setForm({ ...form, cwd: e.target.value })
-									}
-									helperText="Leave blank to use the program's own folder. When copied from a running server this is assumed to be the server's folder, since Windows can't say where it was started."
-								/>
-								<TextField
-									select
-									size="small"
-									label="Priority"
-									value={form.priority}
-									onChange={(e) =>
-										setForm({
-											...form,
-											priority: e.target.value,
-										})
-									}
-									sx={{ maxWidth: 220 }}
-								>
-									{PRIORITIES.map(([value, label]) => (
-										<MenuItem key={value} value={value}>
-											{label}
-										</MenuItem>
-									))}
-								</TextField>
-								<Box sx={{ display: "flex", gap: 1 }}>
-									<Button
-										size="small"
-										variant="contained"
-										disabled={busy || !form.exe}
-										onClick={saveLaunch}
-									>
-										Save launch details
-									</Button>
-									<Button
-										size="small"
-										disabled={busy}
-										onClick={() => setEditing(false)}
-									>
-										Cancel
-									</Button>
-								</Box>
-							</Box>
-						)}
-
-						{showsConsole && (
-							<Box>
-								<Typography variant="subtitle2" sx={{ mb: 1 }}>
-									Console output
-								</Typography>
-								<ServerConsole serverName={serverName} active={open} />
-							</Box>
+						<Button size="small" disabled={busy} onClick={capture}>
+							Copy from the running server
+						</Button>
+						{!editing && (
+							<Button size="small" disabled={busy} onClick={() => setEditing(true)}>
+								{win.launch ? "Edit launch details" : "Enter launch details"}
+							</Button>
 						)}
 					</Box>
-				</AccordionDetails>
-			</Accordion>
+				</TipRow>
+			</Box>
+
+			{detected?.ok && detected.skipped?.length > 0 && (
+				<Alert severity="warning">
+					Reading your start script found {detected.skipped.join(", ")}. "No window" mode skips that — GodlyPanel's own Update button and auto-update cover it.
+				</Alert>
+			)}
+			{captureNotes.map((note) => (
+				<Alert key={note} severity="info">
+					{note}
+				</Alert>
+			))}
+
+			{editing && (
+				<Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+					<TipRow id="server.launch.program">
+						<TextField fullWidth size="small" label="Program" value={form.exe} onChange={(e) => setForm({ ...form, exe: e.target.value })} />
+					</TipRow>
+					<TipRow id="server.launch.arguments">
+						<TextField fullWidth size="small" label="Arguments" value={form.args} onChange={(e) => setForm({ ...form, args: e.target.value })} />
+					</TipRow>
+					<TipRow id="server.launch.folder">
+						<TextField fullWidth size="small" label="Start in folder" value={form.cwd} onChange={(e) => setForm({ ...form, cwd: e.target.value })} />
+					</TipRow>
+					<TipRow id="server.launch.priority" sx={{ maxWidth: 260 }}>
+						<TextField select fullWidth size="small" label="Priority" value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })}>
+							{priorities.map(([value, label]) => (
+								<MenuItem key={value} value={value}>
+									{label}
+								</MenuItem>
+							))}
+						</TextField>
+					</TipRow>
+					<Box sx={{ display: "flex", gap: 1 }}>
+						<Button size="small" variant="contained" disabled={busy || !form.exe} onClick={saveLaunch}>
+							Save launch details
+						</Button>
+						<Button size="small" disabled={busy} onClick={() => setEditing(false)}>
+							Cancel
+						</Button>
+					</Box>
+				</Box>
+			)}
+
+			{showsConsole && (
+				<Box>
+					<Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+						<Typography variant="subtitle2">Console output</Typography>
+						<InfoTip id="server.window.console" />
+					</Box>
+					<ServerConsole serverName={serverName} active />
+				</Box>
+			)}
 		</Box>
 	);
 }

@@ -1,26 +1,27 @@
 import React from "react";
-import {
-	Accordion,
-	AccordionDetails,
-	AccordionSummary,
-	Alert,
-	Box,
-	Button,
-	CircularProgress,
-	TextField,
-	Typography,
-} from "@mui/material";
-import { ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
+import { Alert, Box, Button, CircularProgress, TextField } from "@mui/material";
+import { Lan as PortsIcon } from "@mui/icons-material";
 import { api } from "../api/client";
+import { useToast } from "../ToastContext";
 import PortsToOpen from "./PortsToOpen";
 import PortListDialog from "./PortListDialog";
-import { cardAccordionSx } from "./cardStyles";
+import SectionCard from "./ui/SectionCard";
+import InfoTip from "./InfoTip";
+import TipRow from "./TipRow";
 
 const LABELS = {
 	port: "Game port",
 	queryPort: "Query port",
 	rconPort: "RCON port",
 	telnetPort: "Telnet port",
+};
+
+// Each port has its own (i), since what a port is for is not obvious from its name.
+const TIPS = {
+	port: "server.ports.port",
+	queryPort: "server.ports.query",
+	rconPort: "server.ports.rcon",
+	telnetPort: "server.ports.telnet",
 };
 
 /**
@@ -31,30 +32,36 @@ const LABELS = {
  */
 function PortsEditor({ serverName }) {
 	const base = `/api/server/${encodeURIComponent(serverName)}`;
+	const toast = useToast();
 	const [info, setInfo] = React.useState(null);
 	const [values, setValues] = React.useState({});
 	const [check, setCheck] = React.useState(null);
-	const [open, setOpen] = React.useState(false);
 	const [busy, setBusy] = React.useState(false);
 	const [error, setError] = React.useState(null);
-	const [saved, setSaved] = React.useState(null);
+	const [savedWarnings, setSavedWarnings] = React.useState([]);
 	const [showList, setShowList] = React.useState(false);
 	const latest = React.useRef(0);
+	// A reply that arrives after the person has moved to another server must not be shown on that server's page.
+	const current = React.useRef(base);
+	current.current = base;
 
 	const load = React.useCallback(async () => {
 		try {
 			const data = await api.get(`${base}/ports`);
+			if (current.current !== base) return;
 			setInfo(data);
-			setValues(Object.fromEntries(Object.entries(data.current).map(([k, v]) => [k, String(v)])));
+			setValues(Object.fromEntries(Object.entries(data.current ?? {}).map(([k, v]) => [k, String(v)])));
 			setCheck(null);
 		} catch (e) {
-			setError(e.message);
+			if (current.current === base) setError(e.message);
 		}
 	}, [base]);
 
 	React.useEffect(() => {
 		setInfo(null);
-		setSaved(null);
+		setValues({});
+		setCheck(null);
+		setSavedWarnings([]);
 		setError(null);
 		load();
 	}, [load]);
@@ -62,9 +69,9 @@ function PortsEditor({ serverName }) {
 	const proposed = React.useMemo(() => {
 		if (!info) return {};
 		const out = {};
-		for (const [key, current] of Object.entries(info.current)) {
+		for (const [key, now] of Object.entries(info.current)) {
 			const text = values[key];
-			if (text !== undefined && text !== "" && Number(text) !== current) out[key] = text;
+			if (text !== undefined && text !== "" && Number(text) !== now) out[key] = text;
 			else if (text === "") out[key] = "";
 		}
 		return out;
@@ -91,10 +98,11 @@ function PortsEditor({ serverName }) {
 	const save = async () => {
 		setBusy(true);
 		setError(null);
-		setSaved(null);
+		setSavedWarnings([]);
 		try {
 			const result = await api.put(`${base}/ports`, { ports: proposed });
-			setSaved(result);
+			toast(`Ports saved.${result.filesChanged?.length > 0 ? ` Updated ${result.filesChanged.length} file(s), with a .bak of each.` : ""}`);
+			setSavedWarnings(result.warnings ?? []);
 			setInfo(result);
 			setValues(Object.fromEntries(Object.entries(result.current).map(([k, v]) => [k, String(v)])));
 			setCheck(null);
@@ -114,85 +122,79 @@ function PortsEditor({ serverName }) {
 	const shown = { ...info.current, ...Object.fromEntries(Object.entries(values).map(([k, v]) => [k, Number(v)])) };
 
 	return (
-		<Accordion expanded={open} onChange={(_, v) => setOpen(v)} disableGutters sx={cardAccordionSx}>
-			<AccordionSummary expandIcon={<ExpandMoreIcon />}>
-				<Typography variant="subtitle1">Ports</Typography>
-			</AccordionSummary>
-			<AccordionDetails>
-				<Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-					{info.running && (
-						<Alert severity="warning">
-							This server is running. Stop it before changing its ports — a running game keeps the ports it started with.
-						</Alert>
-					)}
-					{!info.canEditFiles && (
-						<Alert severity="info">
-							This server was imported, so changing a port here updates only what GodlyPanel checks. Its own start
-							script and settings aren't rewritten; change the port there too.
-						</Alert>
-					)}
-					{error && <Alert severity="error" onClose={() => setError(null)}>{error}</Alert>}
+		<SectionCard
+			title={
+				<>
+					Ports
+					<InfoTip id="server.ports" />
+				</>
+			}
+			icon={<PortsIcon />}
+		>
+			<Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+				{info.running && (
+					<Alert severity="warning">
+						This server is running. Stop it before changing its ports — a running game keeps the ports it started with.
+					</Alert>
+				)}
+				{!info.canEditFiles && (
+					<Alert severity="info">
+						This server was imported, so changing a port here updates only what GodlyPanel checks. Its own start
+						script and settings aren't rewritten; change the port there too.
+					</Alert>
+				)}
+				{error && <Alert severity="error" onClose={() => setError(null)}>{error}</Alert>}
 
-					<Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
-						{Object.keys(info.current).map((key) => (
+				<Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+					{Object.keys(info.current).map((key) => (
+						<TipRow key={key} id={TIPS[key]}>
 							<TextField
-								key={key}
 								size="small"
 								type="number"
-								label={LABELS[key]}
+								label={LABELS[key] ?? key}
 								disabled={info.running || busy}
 								value={values[key] ?? ""}
 								onChange={(e) => setValues({ ...values, [key]: e.target.value })}
-								sx={{ width: 190 }}
-								error={blocked && check.errors.some((m) => m.toLowerCase().includes(LABELS[key].toLowerCase()) || m.includes(String(proposed[key])))}
+								sx={{ width: 190, maxWidth: "100%" }}
+								error={blocked && (check.errors ?? []).some((m) => m.toLowerCase().includes((LABELS[key] ?? key).toLowerCase()) || m.includes(String(proposed[key])))}
 							/>
-						))}
-					</Box>
-
-					<PortsToOpen
-						game={shown.port}
-						query={shown.queryPort}
-						rcon={shown.rconPort}
-						implicit={info.implicit}
-						gameName={info.gameName}
-						hideClash
-					/>
-
-					{check?.errors.map((message) => (
-						<Alert key={message} severity="error">{message}</Alert>
+						</TipRow>
 					))}
-					{check?.ok && check.warnings.map((message) => (
-						<Alert key={message} severity="warning">{message}</Alert>
-					))}
-					<Typography variant="caption" sx={{ color: "text.secondary" }}>
-						Checked against this server's other ports, the ports its game uses for itself, every other server,
-						and the panel's own port ({info.panelPort}).
-					</Typography>
-
-					{saved && (
-						<Alert severity="success" onClose={() => setSaved(null)}>
-							Ports saved. {saved.filesChanged?.length > 0 ? `Updated ${saved.filesChanged.length} file(s), with a .bak of each. ` : ""}
-							{saved.warnings?.map((w) => (
-								<div key={w}>{w}</div>
-							))}
-						</Alert>
-					)}
-
-					<Box sx={{ display: "flex", gap: 1 }}>
-						<Button variant="contained" size="small" disabled={!changed || blocked || busy || info.running} onClick={save}>
-							{busy ? "Saving..." : "Save ports"}
-						</Button>
-						<Button size="small" onClick={() => setShowList(true)}>
-							Show server port list
-						</Button>
-						<Button size="small" disabled={!changed || busy} onClick={() => setValues(Object.fromEntries(Object.entries(info.current).map(([k, v]) => [k, String(v)])))}>
-							Reset
-						</Button>
-					</Box>
 				</Box>
-			</AccordionDetails>
+
+				<PortsToOpen
+					game={shown.port}
+					query={shown.queryPort}
+					rcon={shown.rconPort}
+					implicit={info.implicit}
+					gameName={info.gameName}
+					hideClash
+				/>
+
+				{(check?.errors ?? []).map((message) => (
+					<Alert key={message} severity="error">{message}</Alert>
+				))}
+				{check?.ok && (check.warnings ?? []).map((message) => (
+					<Alert key={message} severity="warning">{message}</Alert>
+				))}
+				{savedWarnings.map((message) => (
+					<Alert key={message} severity="warning" onClose={() => setSavedWarnings((w) => w.filter((x) => x !== message))}>{message}</Alert>
+				))}
+
+				<Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+					<Button variant="contained" size="small" disabled={!changed || blocked || busy || info.running} onClick={save}>
+						{busy ? "Saving..." : "Save ports"}
+					</Button>
+					<Button size="small" onClick={() => setShowList(true)}>
+						Show server port list
+					</Button>
+					<Button size="small" disabled={!changed || busy} onClick={() => setValues(Object.fromEntries(Object.entries(info.current).map(([k, v]) => [k, String(v)])))}>
+						Reset
+					</Button>
+				</Box>
+			</Box>
 			<PortListDialog open={showList} onClose={() => setShowList(false)} highlight={serverName} />
-		</Accordion>
+		</SectionCard>
 	);
 }
 

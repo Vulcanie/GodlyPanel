@@ -4,6 +4,7 @@ import { ContentCopy as CopyIcon } from "@mui/icons-material";
 import { api } from "../api/client";
 import { formatBytes } from "../utils/format";
 import { copyToClipboard } from "../utils/clipboard";
+import InfoTip from "./InfoTip";
 
 // Where servers' files are now. The "Server install folder" setting only says where servers made from now on will go;
 // servers made earlier, or added by hand, can be anywhere, and this is the place that says where.
@@ -78,7 +79,7 @@ function ServerLocations({ only = null }) {
 				<Typography variant="caption" sx={{ color: "text.secondary" }}>
 					Installed in
 				</Typography>
-				<Typography variant="caption" sx={{ fontFamily: "monospace", wordBreak: "break-all" }} data-testid="server-folder">
+				<Typography variant="caption" sx={{ fontFamily: (t) => t.custom.mono, wordBreak: "break-all" }} data-testid="server-folder">
 					{server.folder}
 				</Typography>
 				<CopyPath path={server.folder} />
@@ -95,13 +96,15 @@ function ServerLocations({ only = null }) {
 	const drives = new Set(data.servers.map((s) => s.drive).filter(Boolean)).size;
 
 	return (
-		<Box sx={{ mt: 3 }} data-testid="server-locations">
-			<Typography variant="subtitle2" sx={{ mb: 0.5 }}>
-				Where your servers are now
-			</Typography>
+		<Box sx={{ mt: 3, pt: 2.5, borderTop: 1, borderColor: "divider" }} data-testid="server-locations">
+			<Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
+				<Typography variant="subtitle2">Where your servers are now</Typography>
+				<InfoTip id="card.serverLocations" />
+			</Box>
 			<Typography variant="body2" sx={{ color: "text.secondary", mb: 1.5 }}>
-				New servers are created in <b style={{ fontFamily: "monospace" }}>{data.newServersFolder}</b>. That setting only affects servers made from now on; the ones you
-				have already stay where they are.{" "}
+				New servers are created in <Box component="span" sx={{ fontFamily: (t) => t.custom.mono, fontSize: 13, color: "text.primary", wordBreak: "break-all" }}>
+					{data.newServersFolder}
+				</Box>.{" "}
 				{data.servers.length === 0
 					? "You have no servers yet."
 					: `${data.servers.length} server${data.servers.length === 1 ? "" : "s"} on ${drives} drive${drives === 1 ? "" : "s"}: ${here} in that folder, ${away} elsewhere.`}
@@ -121,7 +124,7 @@ function ServerLocations({ only = null }) {
 							{data.servers.map((s) => (
 								<TableRow key={s.name} hover>
 									<TableCell sx={{ whiteSpace: "nowrap" }}>{s.name}</TableCell>
-									<TableCell sx={{ fontFamily: "monospace", fontSize: 12, wordBreak: "break-all" }}>
+									<TableCell sx={{ fontFamily: (t) => t.custom.mono, fontSize: 12, wordBreak: "break-all" }}>
 										{s.folder ?? "(none recorded)"}
 										{s.folder && <CopyPath path={s.folder} />}
 									</TableCell>

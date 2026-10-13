@@ -1,8 +1,10 @@
 import React from "react";
-import { Alert, Box, Button, Chip, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, LinearProgress, Paper, Typography } from "@mui/material";
+import { Alert, Box, Button, Chip, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, LinearProgress, Typography } from "@mui/material";
 import { api } from "../api/client";
 import { onLive } from "../liveEvents";
 import { formatBytes } from "../utils/format";
+import InfoTip from "./InfoTip";
+import SectionCard from "./ui/SectionCard";
 
 const native = () => (typeof window !== "undefined" ? window.godlyPanel : undefined);
 
@@ -155,16 +157,21 @@ function PanelUpdateCard() {
 	const last = selfUpdate?.lastUpdate;
 
 	return (
-		<Paper sx={{ p: 2, mb: 2 }}>
-			<Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-				<Typography variant="subtitle2" sx={{ flex: 1 }}>
+		<SectionCard
+			title={
+				<Box component="span" sx={{ display: "inline-flex", alignItems: "center" }}>
 					GodlyPanel version
-				</Typography>
-				<Chip size="small" label={`You have ${status.current}`} />
-				{status.available && <Chip size="small" color="primary" label={`${latest.version} available`} />}
-				{!status.available && status.checkedAt && !status.error && <Chip size="small" color="success" label="Up to date" />}
-			</Box>
-
+					<InfoTip id="card.panelUpdate" />
+				</Box>
+			}
+			actions={
+				<>
+					<Chip size="small" label={`You have ${status.current}`} />
+					{status.available && <Chip size="small" color="primary" label={`${latest.version} available`} />}
+					{!status.available && status.checkedAt && !status.error && <Chip size="small" color="success" label="Up to date" />}
+				</>
+			}
+		>
 			{last && (
 				<Alert severity={last.ok ? "success" : "error"} sx={{ mt: 1 }} onClose={dismissResult} data-testid="update-result">
 					{last.ok ? last.message : `The update to ${last.version} didn't work${last.rolledBack ? " and was undone" : ""}. ${last.message}`}
@@ -181,7 +188,7 @@ function PanelUpdateCard() {
 				</Typography>
 			)}
 			<Typography variant="body2" sx={{ color: "text.secondary", my: 1 }}>
-				{status.checkedAt ? `Last checked ${new Date(status.checkedAt).toLocaleString()}.` : "Not checked yet."} Looks at the public releases on GitHub ({status.repo}); nothing about you or your servers is sent. It never installs anything unless you press Update now.
+				{status.checkedAt ? `Last checked ${new Date(status.checkedAt).toLocaleString()}` : "Not checked yet"} ({status.repo}).
 				{!status.enabled && " Automatic checks are turned off in the settings below."}
 			</Typography>
 
@@ -195,7 +202,7 @@ function PanelUpdateCard() {
 						{showNotes ? "Hide what's new" : "What's new"}
 					</Button>
 					{showNotes && (
-						<Box component="pre" sx={{ whiteSpace: "pre-wrap", fontFamily: "inherit", fontSize: 13, maxHeight: 320, overflow: "auto", bgcolor: "action.hover", p: 1.5, borderRadius: 1, mt: 1 }}>
+						<Box component="pre" sx={{ whiteSpace: "pre-wrap", fontFamily: "inherit", fontSize: 13, maxHeight: 320, overflow: "auto", bgcolor: (t) => t.custom.hover, p: 1.5, borderRadius: 2, mt: 1 }}>
 							{latest.notes}
 						</Box>
 					)}
@@ -304,7 +311,7 @@ function PanelUpdateCard() {
 			)}
 
 			{install?.phase === "restarting" && <UpdatingOverlay onFailed={setStatus} />}
-		</Paper>
+		</SectionCard>
 	);
 }
 

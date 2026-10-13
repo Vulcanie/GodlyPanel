@@ -1,10 +1,14 @@
 import React from "react";
-import { Alert, Box, Button, Chip, CircularProgress, InputAdornment, MenuItem, Paper, Select, TextField, Typography } from "@mui/material";
-import { Search as SearchIcon } from "@mui/icons-material";
+import { Alert, Box, Button, Chip, InputAdornment, MenuItem, Select, Skeleton, TextField, Typography } from "@mui/material";
+import { alpha } from "@mui/material/styles";
+import { Search as SearchIcon, Timeline as ActivityIcon } from "@mui/icons-material";
+import CompactEmpty from "./CompactEmpty";
 import { api } from "../api/client";
 import { onLive } from "../liveEvents";
 
 const COLOURS = { info: "default", warn: "warning", error: "error" };
+// The colour of the stripe down the left of each event, as a theme path.
+const STRIPE = { info: "divider", warn: "warning.main", error: "error.main" };
 
 const TYPE_LABELS = {
 	"server.crashed": "Crashed",
@@ -73,6 +77,23 @@ const PAGE = 100;
 
 const toggle = (list, id) => (list.includes(id) ? list.filter((x) => x !== id) : [...list, id]);
 
+// Messages are text, but an event written by an older version might carry something else; never show it as "[object Object]".
+const text = (value) => (typeof value === "string" ? value : value == null ? "" : typeof value === "object" ? String(value.message ?? JSON.stringify(value)) : String(value));
+
+const WHEN = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
+/** "5 minutes ago" for anything recent, the date and time for the rest. */
+function whenText(iso) {
+	const then = Date.parse(iso);
+	if (!Number.isFinite(then)) return "";
+	const seconds = Math.round((then - Date.now()) / 1000);
+	const abs = Math.abs(seconds);
+	if (abs < 45) return "just now";
+	if (abs < 3600) return WHEN.format(Math.round(seconds / 60), "minute");
+	if (abs < 86400) return WHEN.format(Math.round(seconds / 3600), "hour");
+	if (abs < 7 * 86400) return WHEN.format(Math.round(seconds / 86400), "day");
+	return new Date(then).toLocaleDateString([], { year: "numeric", month: "short", day: "numeric" });
+}
+
 /**
  * What has happened, newest first by default, and updating live. One server, or all of them. It can be searched, narrowed by
  * kind, level, server and time, and sorted either way; the search covers the whole log, not only what is shown.
@@ -98,6 +119,12 @@ function ActivityPanel({ serverName = null, limit = PAGE }) {
 	}, [q]);
 	// A different filter starts again from the first page.
 	React.useEffect(() => setShown(limit), [search, kinds, levels, server, range, order, serverName, limit]);
+	// Another server's page must not show the last one's events while its own are on the way.
+	React.useEffect(() => {
+		setResult(null);
+		setError(null);
+		setFresh(0);
+	}, [serverName]);
 
 	const filtered = Boolean(search || kinds.length || levels.length || server || range || order !== "desc");
 
@@ -114,11 +141,11 @@ function ActivityPanel({ serverName = null, limit = PAGE }) {
 			.get(`/api/activity/search?${params}`)
 			.then((r) => {
 				if (!alive) return;
-				setResult(r);
+				setResult({ ...r, events: Array.isArray(r?.events) ? r.events : [], servers: Array.isArray(r?.servers) ? r.servers : [], total: Number(r?.total) || 0 });
 				setError(null);
 				setFresh(0);
 			})
-			.catch((e) => alive && setError(e.message));
+			.catch((e) => alive && setError(e?.message || "The activity could not be loaded."));
 		return () => {
 			alive = false;
 		};
@@ -127,7 +154,7 @@ function ActivityPanel({ serverName = null, limit = PAGE }) {
 	React.useEffect(
 		() =>
 			onLive("activity", ({ event }) => {
-				if (serverName && event.server !== serverName) return;
+				if (!event || (serverName && event.server !== serverName)) return;
 				// Unfiltered and newest first: it joins the top of the list. Otherwise it may or may not belong, so say there is more.
 				if (!filtered) setResult((prev) => (prev ? { ...prev, total: prev.total + 1, events: [event, ...prev.events].slice(0, shown) } : prev));
 				else setFresh((n) => n + 1);
@@ -135,7 +162,20 @@ function ActivityPanel({ serverName = null, limit = PAGE }) {
 		[serverName, filtered, shown],
 	);
 
-	if (!result) return error ? <Alert severity="error">{error}</Alert> : <CircularProgress size={24} />;
+	if (!result) {
+		return error ? (
+			<Alert severity="error" action={<Button color="inherit" size="small" onClick={() => setReloads((n) => n + 1)}>Try again</Button>}>
+				{error}
+			</Alert>
+		) : (
+			<Box aria-busy="true" aria-label="Loading activity">
+				<Skeleton variant="rounded" height={40} sx={{ mb: 1.5, borderRadius: 3 }} />
+				{[0, 1, 2, 3, 4].map((i) => (
+					<Skeleton key={i} variant="rounded" height={46} sx={{ mb: 0.75, borderRadius: 2 }} />
+				))}
+			</Box>
+		);
+	}
 
 	const reset = () => {
 		setQ("");
@@ -148,6 +188,11 @@ function ActivityPanel({ serverName = null, limit = PAGE }) {
 
 	return (
 		<Box>
+			{error && (
+				<Alert severity="error" sx={{ mb: 1.5 }} action={<Button color="inherit" size="small" onClick={() => setReloads((n) => n + 1)}>Try again</Button>}>
+					{error}
+				</Alert>
+			)}
 			<Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", alignItems: "center", mb: 1 }}>
 				<TextField
 					size="small"
@@ -155,9 +200,9 @@ function ActivityPanel({ serverName = null, limit = PAGE }) {
 					value={q}
 					onChange={(e) => setQ(e.target.value)}
 					sx={{ flex: "1 1 220px" }}
-					slotProps={{ input: { startAdornment: (<InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment>) } }}
+					slotProps={{ htmlInput: { "aria-label": "Search the whole log" }, input: { startAdornment: (<InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment>) } }}
 				/>
-				<Select size="small" value={range} onChange={(e) => setRange(e.target.value)} displayEmpty>
+				<Select size="small" value={range} onChange={(e) => setRange(e.target.value)} displayEmpty inputProps={{ "aria-label": "Time range" }}>
 					{RANGES.map((r) => (
 						<MenuItem key={r.id} value={r.id}>
 							{r.label}
@@ -165,7 +210,7 @@ function ActivityPanel({ serverName = null, limit = PAGE }) {
 					))}
 				</Select>
 				{!serverName && result.servers.length > 0 && (
-					<Select size="small" value={server} onChange={(e) => setServer(e.target.value)} displayEmpty>
+					<Select size="small" value={server} onChange={(e) => setServer(e.target.value)} displayEmpty inputProps={{ "aria-label": "Server" }}>
 						<MenuItem value="">All servers</MenuItem>
 						{result.servers.map((s) => (
 							<MenuItem key={s} value={s}>
@@ -174,7 +219,7 @@ function ActivityPanel({ serverName = null, limit = PAGE }) {
 						))}
 					</Select>
 				)}
-				<Select size="small" value={order} onChange={(e) => setOrder(e.target.value)}>
+				<Select size="small" value={order} onChange={(e) => setOrder(e.target.value)} inputProps={{ "aria-label": "Sort order" }}>
 					<MenuItem value="desc">Newest first</MenuItem>
 					<MenuItem value="asc">Oldest first</MenuItem>
 				</Select>
@@ -193,7 +238,7 @@ function ActivityPanel({ serverName = null, limit = PAGE }) {
 					</Button>
 				)}
 			</Box>
-			<Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 0.5 }}>
+			<Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 0.75 }}>
 				{result.total === 0 ? "Nothing matches." : `Showing ${result.events.length} of ${result.total}${filtered ? " matching" : ""}.`}
 				{fresh > 0 && (
 					<>
@@ -206,28 +251,48 @@ function ActivityPanel({ serverName = null, limit = PAGE }) {
 			</Typography>
 
 			{result.total === 0 && !filtered ? (
-				<Typography variant="body2" sx={{ color: "text.secondary" }}>
-					Nothing has happened yet. Crashes, restarts, backups, updates, sign-ins, changes and scheduled tasks are listed here.
-				</Typography>
+				<CompactEmpty icon={<ActivityIcon />} title="Nothing has happened yet">
+					Crashes, restarts, backups, updates, sign-ins, changes and scheduled tasks are listed here.
+				</CompactEmpty>
+			) : result.events.length === 0 ? (
+				<CompactEmpty icon={<SearchIcon />} title="No events match" action={filtered ? <Button onClick={reset}>Clear filters</Button> : undefined}>
+					Try fewer filters, a different word, or a longer time range.
+				</CompactEmpty>
 			) : (
-				<Paper>
+				<Box sx={{ border: 1, borderColor: "divider", borderRadius: 3, overflow: "hidden", bgcolor: "background.paper" }}>
 					{result.events.map((e, i) => (
-						<Box key={`${e.t}-${i}`} sx={{ display: "flex", gap: 1.5, alignItems: "flex-start", px: 2, py: 1.1, borderTop: i === 0 ? 0 : (t) => `1px solid ${t.palette.divider}` }}>
-							<Typography variant="caption" sx={{ color: "text.secondary", minWidth: 130, pt: 0.3 }}>
-								{new Date(e.t).toLocaleString()}
+						<Box
+							key={`${e.t}-${i}`}
+							sx={{
+								position: "relative",
+								display: "flex",
+								gap: { xs: 0.5, sm: 1.5 },
+								flexDirection: { xs: "column", sm: "row" },
+								alignItems: { xs: "flex-start", sm: "center" },
+								pl: 2.25,
+								pr: 2,
+								py: 1.1,
+								borderTop: i === 0 ? 0 : 1,
+								borderColor: "divider",
+								"&:hover": { bgcolor: (t) => t.custom.hover },
+								"&::before": { content: '""', position: "absolute", left: 0, top: 0, bottom: 0, width: 3, bgcolor: STRIPE[e.level] ?? "divider" },
+							}}
+						>
+							<Typography variant="caption" title={Number.isFinite(Date.parse(e.t)) ? new Date(e.t).toLocaleString() : undefined} sx={{ color: "text.secondary", minWidth: { sm: 130 }, whiteSpace: "nowrap" }}>
+								{whenText(e.t)}
 							</Typography>
-							<Chip size="small" variant="outlined" color={COLOURS[e.level] ?? "default"} label={label(e.type)} sx={{ minWidth: 110 }} />
-							<Typography variant="body2" sx={{ flex: 1 }}>
+							<Chip size="small" variant="outlined" color={COLOURS[e.level] ?? "default"} label={label(e.type)} sx={{ minWidth: 110, bgcolor: (t) => (e.level === "error" || e.level === "warn" ? alpha(t.palette[e.level === "warn" ? "warning" : "error"].main, 0.08) : "transparent") }} />
+							<Typography variant="body2" sx={{ flex: 1, minWidth: 0, overflowWrap: "anywhere" }}>
 								{!serverName && e.server ? <strong>{e.server}: </strong> : null}
-								{e.message}
+								{text(e.message)}
 							</Typography>
 						</Box>
 					))}
-				</Paper>
+				</Box>
 			)}
 			{result.events.length < result.total && (
-				<Box sx={{ textAlign: "center", mt: 1 }}>
-					<Button size="small" onClick={() => setShown((n) => n + PAGE)}>
+				<Box sx={{ textAlign: "center", mt: 1.5 }}>
+					<Button size="small" variant="outlined" onClick={() => setShown((n) => n + PAGE)}>
 						Show {Math.min(PAGE, result.total - result.events.length)} more
 					</Button>
 				</Box>

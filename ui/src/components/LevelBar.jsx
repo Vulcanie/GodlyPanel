@@ -1,27 +1,30 @@
 import React from "react";
 import { LinearProgress } from "@mui/material";
-import { amber, green, red } from "@mui/material/colors";
 
 // One progress bar and one set of "getting full" thresholds for every meter —
 // the system RAM/CPU bar and each server's heap bar used to carry their own
 // copies of both.
+
+/** The theme colour for a meter that is this full: a palette path such as "warning.main", so both themes get their own shade. */
 export function levelColor(percent) {
-	if (percent >= 90) return red[500];
-	if (percent >= 75) return amber[600];
-	return green[500];
+	if (percent >= 90) return "error.main";
+	if (percent >= 75) return "warning.main";
+	return "success.main";
 }
 
 function LevelBar({ percent, height = 8, width }) {
+	const value = Number.isFinite(Number(percent)) ? Math.max(0, Math.min(Number(percent), 100)) : 0;
 	return (
 		<LinearProgress
 			variant="determinate"
-			value={Math.min(percent, 100)}
+			value={value}
+			aria-label={`${Math.round(value)}% full`}
 			sx={{
 				width,
 				height,
 				borderRadius: height / 2,
 				backgroundColor: "action.selected",
-				"& .MuiLinearProgress-bar": { backgroundColor: levelColor(percent) },
+				"& .MuiLinearProgress-bar": { backgroundColor: levelColor(value), borderRadius: height / 2 },
 			}}
 		/>
 	);

@@ -9,13 +9,16 @@ import {
 	Chip,
 	CircularProgress,
 	MenuItem,
-	Paper,
 	TextField,
 	Typography,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
 import { api } from "../api/client";
 import { getGameInfo } from "../gameCatalog";
+import InfoTip from "./InfoTip";
+import TipRow from "./settings/TipRow";
+import SectionCard from "./ui/SectionCard";
 
 // Per-game-type artwork. Grouped by type rather than by server because that's
 // what the dashboard actually draws: every instance of a type shares one card
@@ -34,7 +37,7 @@ function Preview({ type, entry }) {
 			sx={{
 				position: "relative",
 				height: 90,
-				borderRadius: 1,
+				borderRadius: 2.5,
 				overflow: "hidden",
 				backgroundImage: banner ? `url(${banner}), ${gradient}` : gradient,
 				backgroundSize: "cover",
@@ -45,7 +48,8 @@ function Preview({ type, entry }) {
 				sx={{
 					position: "absolute",
 					inset: 0,
-					background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%)",
+					// A dark fade so the game's name can be read over any picture.
+					background: (t) => `linear-gradient(to top, ${alpha(t.palette.common.black, 0.85)} 0%, ${alpha(t.palette.common.black, 0)} 100%)`,
 				}}
 			/>
 			<Typography
@@ -54,9 +58,9 @@ function Preview({ type, entry }) {
 					position: "absolute",
 					left: 12,
 					bottom: 8,
-					color: "white",
+					color: (t) => t.palette.common.white,
 					fontWeight: 600,
-					textShadow: "0 1px 4px rgba(0,0,0,0.6)",
+					textShadow: (t) => `0 1px 4px ${alpha(t.palette.common.black, 0.6)}`,
 				}}
 			>
 				{title}
@@ -109,7 +113,7 @@ function TypeRow({ type, entry, recommended, onChanged }) {
 		});
 
 	return (
-		<Accordion disableGutters>
+		<Accordion disableGutters variant="outlined" sx={{ borderRadius: 3, overflow: "hidden", "&:before": { display: "none" } }}>
 			<AccordionSummary expandIcon={<ExpandMoreIcon />}>
 				<Box sx={{ width: "100%", pr: 2 }}>
 					<Preview type={type} entry={entry} />
@@ -124,53 +128,42 @@ function TypeRow({ type, entry, recommended, onChanged }) {
 						</Alert>
 					)}
 
-					<TextField
-						select
-						size="small"
-						label="Banner"
-						value={mode}
-						disabled={busy}
-						onChange={(e) => patch({ mode: e.target.value })}
-						sx={{ maxWidth: 320 }}
-					>
-						{Object.entries(MODE_LABELS).map(([value, label]) => (
-							<MenuItem key={value} value={value}>
-								{label}
-							</MenuItem>
-						))}
-					</TextField>
+					<TipRow info="appearance.banner" sx={{ maxWidth: 380 }}>
+						<TextField select fullWidth size="small" label="Banner" value={mode} disabled={busy} onChange={(e) => patch({ mode: e.target.value })}>
+							{Object.entries(MODE_LABELS).map(([value, label]) => (
+								<MenuItem key={value} value={value}>
+									{label}
+								</MenuItem>
+							))}
+						</TextField>
+					</TipRow>
 
 					{mode === "auto" && (
 						<Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-							<Typography variant="caption" sx={{ color: "text.secondary" }}>
-								The panel looks for this game on Steam by itself — it reads the app ID out
-								of the server's own install, which works for anything set up through
-								SteamCMD, including servers it has no template for. Games that never came
-								from Steam have no artwork to find; pick a colour or your own image
-								instead.
-							</Typography>
 							<Box sx={{ display: "flex", gap: 1, alignItems: "flex-start", flexWrap: "wrap" }}>
-								<TextField
-									size="small"
-									label="Steam app ID"
-									placeholder="Found automatically"
-									value={appId}
-									disabled={busy}
-									onChange={(e) => setAppId(e.target.value)}
-									onBlur={() => {
-										if ((entry.appId ?? "") !== appId) patch({ appId });
-									}}
-									helperText="Only needed to override what was found — the number in the store page URL."
-									sx={{ minWidth: 260 }}
-								/>
+								<TipRow info="appearance.appId" sx={{ minWidth: 260 }}>
+									<TextField
+										size="small"
+										fullWidth
+										label="Steam app ID"
+										placeholder="Found automatically"
+										value={appId}
+										disabled={busy}
+										onChange={(e) => setAppId(e.target.value)}
+										onBlur={() => {
+											if ((entry.appId ?? "") !== appId) patch({ appId });
+										}}
+									/>
+								</TipRow>
 								<Button
 									size="small"
 									disabled={busy}
+									sx={{ height: 40 }}
 									onClick={() => run(() => api.post(`/api/appearance/${type}/refetch`))}
 								>
 									Fetch again
 								</Button>
-								<Button size="small" disabled={busy} onClick={lookUpCandidates}>
+								<Button size="small" disabled={busy} sx={{ height: 40 }} onClick={lookUpCandidates}>
 									What did it find?
 								</Button>
 							</Box>
@@ -186,35 +179,33 @@ function TypeRow({ type, entry, recommended, onChanged }) {
 
 					{mode === "color" && (
 						<Box sx={{ display: "flex", gap: 2, alignItems: "flex-start", flexWrap: "wrap" }}>
-							<TextField
-								size="small"
-								type="color"
-								label="Colour"
-								value={entry.color ?? "#2f7a3f"}
-								disabled={busy}
-								onChange={(e) => patch({ color: e.target.value })}
-								sx={{ width: 120 }}
-							/>
-							<TextField
-								size="small"
-								type="color"
-								label="Fades to"
-								value={entry.color2 ?? entry.color ?? "#1f4d2c"}
-								disabled={busy}
-								onChange={(e) => patch({ color2: e.target.value })}
-								helperText="Leave both the same for a flat colour."
-								sx={{ width: 140 }}
-							/>
+							<TipRow info="appearance.color" sx={{ width: 150 }}>
+								<TextField
+									fullWidth
+									size="small"
+									type="color"
+									label="Colour"
+									value={entry.color ?? "#2f7a3f"}
+									disabled={busy}
+									onChange={(e) => patch({ color: e.target.value })}
+								/>
+							</TipRow>
+							<TipRow info="appearance.color2" sx={{ width: 150 }}>
+								<TextField
+									fullWidth
+									size="small"
+									type="color"
+									label="Fades to"
+									value={entry.color2 ?? entry.color ?? "#1f4d2c"}
+									disabled={busy}
+									onChange={(e) => patch({ color2: e.target.value })}
+								/>
+							</TipRow>
 						</Box>
 					)}
 
 					{mode === "image" && (
 						<Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-							<Typography variant="caption" sx={{ color: "text.secondary" }}>
-								PNG or JPEG. {recommended.width}x{recommended.height} is ideal — the banner
-								is wide and short, and anything taller gets cropped top and bottom. Stored
-								with your data, not uploaded anywhere.
-							</Typography>
 							<Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap" }}>
 								<Button
 									size="small"
@@ -224,6 +215,8 @@ function TypeRow({ type, entry, recommended, onChanged }) {
 								>
 									{entry.image ? "Replace image" : "Choose image"}
 								</Button>
+								<InfoTip id="appearance.image" sx={{ ml: -0.5 }} />
+								<Chip size="small" variant="outlined" label={`Ideal: ${recommended.width}x${recommended.height}`} />
 								{entry.image && (
 									<>
 										<Chip
@@ -280,15 +273,17 @@ function AppearanceSettings() {
 	const types = Object.keys(data.types);
 
 	return (
-		<Paper sx={{ p: 2, mb: 2 }}>
-			<Typography variant="subtitle2" sx={{ mb: 0.5 }}>
-				Appearance
-			</Typography>
-			<Typography variant="caption" sx={{ color: "text.secondary" }}>
-				One banner per game — every server of the same type shares a card on the dashboard.
-				Changes here apply straight away, for everyone looking, without a save.
-			</Typography>
-			<Box sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 1 }}>
+		<SectionCard
+			title={
+				<Box component="span" sx={{ display: "inline-flex", alignItems: "center" }}>
+					Appearance
+					<InfoTip id="card.appearance" />
+				</Box>
+			}
+			// Unlike the boxes above, nothing here waits for the Save button, so it says so.
+			actions={<Chip size="small" color="success" variant="outlined" label="Applies straight away" />}
+		>
+			<Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
 				{types.length === 0 && (
 					<Typography variant="body2" sx={{ color: "text.secondary" }}>
 						Nothing to style yet — add a server first.
@@ -304,7 +299,7 @@ function AppearanceSettings() {
 					/>
 				))}
 			</Box>
-		</Paper>
+		</SectionCard>
 	);
 }
 

@@ -47,6 +47,8 @@ describe("firewall rule matching", () => {
 	it("understands protocol numbers and environment variables in paths", () => {
 		assert.equal(evaluateFirewall([need(25565, "TCP")], [], [rule({ protocol: "6", localPort: ["25565"] })])[0].open, true);
 		assert.equal(evaluateFirewall([need(1, "UDP")], [], [rule({ protocol: "17" })])[0].open, true);
+		// SystemRoot is set by Windows; elsewhere the test supplies it, as the rule's %SystemRoot% is read from the environment.
+		process.env.SystemRoot ||= "C:\\Windows";
 		const sys = `${process.env.SystemRoot}\\system32\\svchost.exe`;
 		assert.equal(evaluateFirewall([need(7680)], [sys], [rule({ program: "%SystemRoot%\\system32\\svchost.exe", localPort: ["7680"] })])[0].open, true);
 	});

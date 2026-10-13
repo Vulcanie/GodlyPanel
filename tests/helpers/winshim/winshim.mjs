@@ -15,7 +15,8 @@ import { listProcesses, treeOf } from "./procs.mjs";
 //
 // Usage (from the wrappers in ./bin): node winshim.mjs <tool> <arguments...>
 
-const [tool, ...args] = process.argv.slice(2);
+const [rawTool, ...args] = process.argv.slice(2);
+const tool = rawTool.replace(/\.exe$/i, "");
 
 const die = (message, code = 1) => {
 	process.stderr.write(`winshim: ${message}\n`);
@@ -27,11 +28,12 @@ const csv = (...cells) => cells.map((c) => `"${c}"`).join(",");
 // ---- tasklist -----------------------------------------------------------------------------------
 
 function tasklist() {
-	// Only the forms the panel uses: /FO CSV /NH, optionally /FI "PID eq N".
+	// The forms the panel and the tests use: /FO CSV /NH, optionally /FI "PID eq N" or /FI "IMAGENAME eq name".
 	const filter = args.indexOf("/FI") >= 0 ? args[args.indexOf("/FI") + 1] : "";
 	const wantedPid = /^PID eq (\d+)$/i.exec(filter)?.[1];
-	if (filter && wantedPid === undefined) die(`tasklist filter not supported: ${filter}`);
-	const rows = listProcesses().filter((p) => wantedPid === undefined || p.pid === Number(wantedPid));
+	const wantedName = /^IMAGENAME eq (.+)$/i.exec(filter)?.[1];
+	if (filter && wantedPid === undefined && wantedName === undefined) die(`tasklist filter not supported: ${filter}`);
+	const rows = listProcesses().filter((p) => (wantedPid === undefined || p.pid === Number(wantedPid)) && (wantedName === undefined || p.name.toLowerCase() === wantedName.toLowerCase()));
 	if (rows.length === 0) {
 		process.stdout.write("INFO: No tasks are running which match the specified criteria.\r\n");
 		return;
@@ -154,6 +156,12 @@ function powershellCommand(script) {
 			Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 300);
 		} while (Date.now() < deadline);
 		process.exit(1);
+	}
+	if ((m = /Win32_Process -Filter "Name='([^']+)'" \| Where-Object \{ \$_\.ExecutablePath -like '(.*)\*' \} \| Measure-Object\)\.Count/.exec(script))) {
+		// A test counting one program's copies under a folder.
+		const prefix = m[2].replaceAll("''", "'");
+		const count = listProcesses().filter((p) => p.name.toLowerCase() === m[1].toLowerCase() && p.exe?.startsWith(prefix)).length;
+		return process.stdout.write(`${count}\r\n`);
 	}
 	if ((m = /Win32_Process -Filter "Name='([^']+)'" \| ForEach-Object/.exec(script))) {
 		for (const p of listProcesses().filter((x) => x.name.toLowerCase() === m[1].replace(/''/g, "'").toLowerCase())) process.stdout.write(`${p.pid}|${p.exe ?? ""}\r\n`);
