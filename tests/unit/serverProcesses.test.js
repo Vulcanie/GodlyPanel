@@ -2,7 +2,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import path from "node:path";
 import { check, fc } from "../helpers/fc.js";
-import { classify, findServerProcesses, ownedProgramRunning, ownedProgramGone } from "../../src/server/services/serverProcesses.js";
+import { classify, findServerProcesses, ownedProgramRunning, ownedProgramGone, createSharedLister } from "../../src/server/services/serverProcesses.js";
 
 // Telling "nothing is running" from "couldn't find out". The lookup that finds a server's own programs can fail or time out on a PC
 // that is struggling, and an answer of "none" in that case would say a running game had stopped: a second copy gets started, or a
@@ -77,5 +77,49 @@ describe("splitting running programs by where they run from", () => {
 				assert.deepEqual(foreign, [sibling], "a folder whose name merely starts with the server's is somebody else's");
 			}),
 		);
+	});
+});
+
+describe("one listing of the running programs for a whole poll cycle", () => {
+	const listing = [
+		{ pid: 1, name: "valheim_server.exe", path: "D:\\Servers\\A\\valheim_server.exe" },
+		{ pid: 2, name: "Valheim_Server.exe", path: "D:\\Servers\\B\\valheim_server.exe" },
+		{ pid: 3, name: "other.exe", path: null },
+	];
+
+	it("asks Windows once however many servers want to know, and answers each from it", async () => {
+		let asked = 0;
+		const list = createSharedLister({ run: async () => (asked += 1, listing) });
+		const answers = await Promise.all([list("valheim_server.exe"), list("VALHEIM_SERVER.EXE"), list("other.exe"), list("nothing.exe")]);
+		assert.equal(asked, 1);
+		assert.deepEqual(answers[0], [{ pid: 1, path: "D:\\Servers\\A\\valheim_server.exe" }, { pid: 2, path: "D:\\Servers\\B\\valheim_server.exe" }]);
+		assert.deepEqual(answers[0], answers[1], "the name's letter case doesn't matter");
+		assert.deepEqual(answers[2], [{ pid: 3, path: null }]);
+		assert.deepEqual(answers[3], []);
+	});
+
+	it("asks again once the listing is a moment old", async () => {
+		let asked = 0;
+		let clock = 1000;
+		const list = createSharedLister({ run: async () => (asked += 1, listing), ttlMs: 1500, now: () => clock });
+		await list("other.exe");
+		clock += 1000;
+		await list("other.exe");
+		assert.equal(asked, 1);
+		clock += 600;
+		await list("other.exe");
+		assert.equal(asked, 2);
+	});
+
+	it("says 'couldn't tell' (null) rather than 'nothing is running' when the listing failed", async () => {
+		const list = createSharedLister({ run: async () => null });
+		assert.equal(await list("valheim_server.exe"), null);
+		const found = await findServerProcesses({ name: "x", processName: "valheim_server.exe", installDir: "D:\\Servers\\A" }, { list });
+		assert.equal(found.unknown, true);
+	});
+
+	it("does not look up a name that could not be a program's", async () => {
+		const list = createSharedLister({ run: async () => assert.fail("not asked") });
+		assert.deepEqual(await list("a'; Remove-Item *"), []);
 	});
 });

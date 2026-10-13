@@ -133,6 +133,7 @@ function ServerCard({ name, status, stats, appearance, canOpen, canControl, onOp
 
 				<Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }} onClick={(e) => e.stopPropagation()}>
 					{(status?.session || status?.joinAddress) && <CopyChip icon={<AddressIcon />} label="Join" value={status.session || status.joinAddress} testId="chip-session" />}
+					{status?.sessionName && status.sessionName !== status.session && status.sessionName !== status.joinAddress && <CopyChip icon={<AddressIcon />} label="Name" value={status.sessionName} testId="chip-name" />}
 					{status?.serverPassword && <CopyChip icon={<LockIcon />} label="Password" value={status.serverPassword} testId="chip-password" />}
 					{(status?.tags ?? []).map((tag) => (
 						<Chip key={tag} size="small" label={tag} sx={{ bgcolor: (t) => t.custom.hover }} />

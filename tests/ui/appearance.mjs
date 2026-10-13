@@ -52,15 +52,11 @@ const signIn = async (page) => {
 	await page.getByLabel(/username/i).fill("admin");
 	await page.getByLabel(/password/i).fill("TestAdmin!2345");
 	await page.getByRole("button", { name: /sign in|log in/i }).click();
-	await page.getByTestId("user-menu").waitFor({ timeout: 30_000 });
+	await page.getByRole("heading", { name: "Dashboard", level: 1 }).waitFor({ timeout: 30_000 });
 };
+// The server names also appear in the sidebar; "what the dashboard shows" means the page itself.
+const onPage = (page, text) => page.getByRole("main").getByText(text, { exact: false });
 // The sidebar is always there on a wide screen; on a narrow one it is a drawer behind the menu button.
-const goDashboard = async (page) => {
-	const menu = page.getByRole("button", { name: "Open the menu" });
-	if (await menu.isVisible()) await menu.click();
-	await page.getByTestId("nav-dashboard").click();
-	await page.getByTestId("create-server").waitFor();
-};
 // Settings has its groups down the left (or along the top on a phone); each setting lives in one.
 const openSettings = async (page, category) => {
 	const menu = page.getByRole("button", { name: "Open the menu" });
@@ -136,17 +132,17 @@ try {
 		const page = await ctx.newPage();
 		await signIn(page);
 		await settle(page);
-		check("the dashboard lists all three servers", (await page.getByText("Survival Craft").count()) > 0 && (await page.getByText("Friends Conan").count()) > 0 && (await page.getByText("Old Valheim").count()) > 0);
-		check("tags are shown on the servers", (await page.getByText("modded", { exact: true }).count()) > 0);
+		check("the dashboard lists all three servers", (await onPage(page, "Survival Craft").count()) > 0 && (await onPage(page, "Friends Conan").count()) > 0 && (await onPage(page, "Old Valheim").count()) > 0);
+		check("tags are shown on the servers", (await page.getByRole("main").getByText("modded", { exact: true }).count()) > 0);
 
 		const search = page.getByLabel("Search servers");
 		await search.fill("conan");
 		await settle(page, 500);
-		check("search narrows to what matches", (await page.getByText("Friends Conan").count()) > 0 && (await page.getByText("Survival Craft").count()) === 0);
+		check("search narrows to what matches", (await onPage(page, "Friends Conan").count()) > 0 && (await onPage(page, "Survival Craft").count()) === 0);
 		check("and says how many", await visible(page, "Showing 1 of 3"));
 		await search.fill("modded");
 		await settle(page, 500);
-		check("search finds by tag", (await page.getByText("Survival Craft").count()) > 0 && (await page.getByText("Friends Conan").count()) === 0);
+		check("search finds by tag", (await onPage(page, "Survival Craft").count()) > 0 && (await onPage(page, "Friends Conan").count()) === 0);
 		await search.fill("zzz");
 		await settle(page, 500);
 		check("a search with no match says so", await visible(page, "No servers match"));
@@ -155,16 +151,16 @@ try {
 
 		await page.getByRole("button", { name: "friends", exact: true }).click();
 		await settle(page, 500);
-		check("a tag chip filters", (await page.getByText("Old Valheim").count()) === 0 && (await page.getByText("Friends Conan").count()) > 0);
+		check("a tag chip filters", (await onPage(page, "Old Valheim").count()) === 0 && (await onPage(page, "Friends Conan").count()) > 0);
 		// A chip is a toggle: pressing it again clears the filter.
 		await page.getByRole("button", { name: "friends", exact: true }).click();
 		await settle(page, 400);
-		check("pressing the tag chip again clears the filter", (await page.getByText("Old Valheim").count()) > 0);
+		check("pressing the tag chip again clears the filter", (await onPage(page, "Old Valheim").count()) > 0);
 
 		await page.getByLabel("Group by").click();
 		await page.getByRole("option", { name: "Tag" }).click();
 		await settle(page, 600);
-		check("groups by tag", (await page.getByText("friends", { exact: true }).count()) > 0 && (await page.getByText("archive", { exact: true }).count()) > 0);
+		check("groups by tag", (await page.getByRole("main").getByText("friends", { exact: true }).count()) > 0 && (await page.getByRole("main").getByText("archive", { exact: true }).count()) > 0);
 		await shot(page, "03-dashboard-by-tag");
 		await ctx.close();
 	}

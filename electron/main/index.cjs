@@ -72,7 +72,7 @@ function showWindow() {
 		mainWindow.focus();
 		return;
 	}
-	mainWindow = createMainWindow({ port });
+	mainWindow = createMainWindow({ port, getPort: () => port });
 	mainWindow.loadURL(`http://127.0.0.1:${port}/`);
 	mainWindow.on("closed", () => {
 		mainWindow = null;

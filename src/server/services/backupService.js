@@ -13,6 +13,7 @@ import { startServer, sendRconCommand } from "./serverControl.js";
 import { logActivity } from "./activityLog.js";
 import { protectedReason } from "./serverRemoval.js";
 import { broadcastSseEvent } from "./sseHub.js";
+import { canAccessServer } from "../middleware/permissions.js";
 import { createZip, listZip, extractZip, unsafeEntries } from "../util/tarZip.js";
 import { sleep } from "../util/async.js";
 import { flagValue, optionValue, propertyValue } from "../util/launchOptions.js";
@@ -205,7 +206,7 @@ const stamp = (d = new Date()) => {
 function progress(server, phase, detail = null) {
 	broadcastSseEvent(
 		{ type: "backup_progress", serverName: server.name, phase, detail },
-		(client) => client.role === "admin" || client.role === "moderator",
+		(client) => (client.role === "admin" || client.role === "moderator") && canAccessServer(client, server.name),
 	);
 }
 
@@ -263,7 +264,8 @@ export async function deleteBackup(server, id) {
 export async function applyRetention(server) {
 	const config = getConfig().backups;
 	const options = getOptions(server.name).backup;
-	const keepCount = options.keepCount ?? config.keepCount;
+	// At least one: "keep 0" would delete each scheduled backup the moment it is made, leaving nothing to restore from.
+	const keepCount = Math.max(1, options.keepCount ?? config.keepCount);
 	const keepDays = options.keepDays ?? config.keepDays;
 	const all = await listBackups(server);
 	const doomed = new Set();

@@ -9,7 +9,7 @@ import { checkPort } from "./portCheck.js";
 import { valheimNamesFromLog } from "./valheimPlayers.js";
 import { joinAddressFor, sessionFor } from "./serverAddresses.js";
 import { checkProcess } from "./processCheck.js";
-import { findServerProcesses, ownedProgramRunning } from "./serverProcesses.js";
+import { findServerProcesses, ownedProgramRunning, listByNameShared } from "./serverProcesses.js";
 import { latestServerStats } from "./serverResourceStats.js";
 import { latestStats } from "./systemStats.js";
 import { getConfig } from "../config/configStore.js";
@@ -166,13 +166,19 @@ function clearProblem(name) {
 
 const offline = (base) => ({ ...base, online: false, playerCount: 0, playerList: [] });
 
-// ARK's ListPlayers lines look like "0. Name, 76561198000000000".
-function parseRconPlayers(text) {
+// ARK's ListPlayers lines look like "0. Name, 76561198000000000". The id is after the last comma: a player's name can have commas
+// in it, and cutting at the first one showed (and tracked) half a name; a line with no comma at all is just the name.
+export function parseRconPlayers(text) {
 	return text
 		.split("\n")
 		.map((line) => line.trim())
 		.filter((line) => /^\d+\./.test(line))
-		.map((line) => line.substring(line.indexOf(".") + 2, line.indexOf(",")));
+		.map((line) => {
+			const afterNumber = line.slice(line.indexOf(".") + 1).trim();
+			const comma = afterNumber.lastIndexOf(",");
+			return (comma === -1 ? afterNumber : afterNumber.slice(0, comma)).trim();
+		})
+		.filter((name) => name !== "");
 }
 
 // Games whose console lists players in another way than ARK's "0. Name, id" lines.
@@ -262,7 +268,8 @@ async function pollProcess(server, base) {
 	let running = await checkProcess(server.processName);
 	// Another server running the same program isn't this one: look at where it runs from.
 	// If that lookup fails, the program was found by name a moment ago, so it stays up rather than flickering to offline.
-	if (running) running = ownedProgramRunning(await findServerProcesses(server));
+	// (From one listing shared by every server in this cycle, not a PowerShell per server.)
+	if (running) running = ownedProgramRunning(await findServerProcesses(server, { list: listByNameShared }));
 	return { ...base, online: running, playerCount: 0, playerList: [] };
 }
 

@@ -247,15 +247,21 @@ class ApiSupervisor extends EventEmitter {
 	requestActiveJobs({ timeoutMs = 1500 } = {}) {
 		if (!this.child || this.state !== "ready") return Promise.resolve([]);
 		return new Promise((resolve) => {
-			const timer = setTimeout(() => resolve([]), timeoutMs);
-			this.once("active-jobs", (jobs) => {
+			// A listener left behind by a question nobody waited for would take the answer to the next one.
+			const onJobs = (jobs) => {
 				clearTimeout(timer);
 				resolve(Array.isArray(jobs) ? jobs : []);
-			});
+			};
+			const timer = setTimeout(() => {
+				this.off("active-jobs", onJobs);
+				resolve([]);
+			}, timeoutMs);
+			this.once("active-jobs", onJobs);
 			try {
 				this.child.send({ type: "query-active-jobs" });
 			} catch {
 				clearTimeout(timer);
+				this.off("active-jobs", onJobs);
 				resolve([]);
 			}
 		});

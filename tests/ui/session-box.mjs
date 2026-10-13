@@ -36,14 +36,14 @@ try {
 	await page.getByLabel(/username/i).fill("admin");
 	await page.getByLabel(/password/i).fill("TestAdmin!2345");
 	await page.getByRole("button", { name: /sign in|log in/i }).click();
-	await page.getByRole("button", { name: "Expand All" }).waitFor();
-	await page.getByRole("button", { name: "Expand All" }).click();
-	await settle(3500); // a poll has filled the tile in
+	await page.getByTestId("server-card-Session Test").waitFor();
+	await settle(3500); // a poll has filled the card in
 
-	const tile = page.locator("body");
-	check("the dashboard tile shows the address as the Session, with the game's own name beside it", (await tile.innerText()).includes("203.0.113.9:9000") && (await tile.innerText()).includes("GodlyConan"));
+	// (The card no longer prints the game's own session name, GodlyConan, beside the address; the search box still finds it.)
+	const tile = page.getByTestId("server-card-Session Test");
+	check("the dashboard card shows the address as the Session", (await tile.innerText()).includes("203.0.113.9:9000"));
 
-	await page.getByText("Session Test", { exact: true }).first().click();
+	await tile.click();
 	await settle(1500);
 	const box = page.getByLabel("Session", { exact: true });
 	check("the server's page has a Session box, automatic by default", (await box.count()) === 1 && (await box.inputValue()) === "" && ((await box.getAttribute("placeholder")) ?? "").includes("203.0.113.9:9000"));
@@ -52,11 +52,12 @@ try {
 	await box.press("Enter");
 	await settle(1200);
 	check("typing in it keeps it, and offers to go back to automatic", await page.getByRole("button", { name: /Use automatic/ }).isVisible());
+	check("and says it was saved", await page.getByText("Session label saved.").isVisible());
 	await page.reload({ waitUntil: "load" });
-	await page.getByRole("button", { name: "Expand All" }).waitFor();
-	await page.getByRole("button", { name: "Expand All" }).click();
+	await page.getByTestId("server-card-Session Test").waitFor();
 	await settle(2500);
-	await page.getByText("Session Test", { exact: true }).first().click();
+	check("the dashboard card follows what was typed", (await page.getByTestId("server-card-Session Test").innerText()).includes("Godly Conan - PvE"));
+	await page.getByTestId("server-card-Session Test").click();
 	await settle(1500);
 	check("and it is still there after a reload", (await page.getByLabel("Session", { exact: true }).inputValue()) === "Godly Conan - PvE");
 

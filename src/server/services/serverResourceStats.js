@@ -165,7 +165,7 @@ function getHeapInfo(pid) {
 	});
 }
 
-export async function getServerResourceStats() {
+async function sampleServerResources() {
 	const processes = await runSampleScript();
 
 	const stats = await Promise.all(
@@ -203,10 +203,19 @@ export async function getServerResourceStats() {
 // while nobody is looking. A viewer who does show up gets the last reading if
 // it's recent, or a fresh one if it isn't.
 let inFlight = null;
-export function getServerStatsIfStale(maxAgeMs) {
-	if (Date.now() - latestServerStatsAt <= maxAgeMs) return Promise.resolve(latestServerStats);
-	inFlight ??= getServerResourceStats().finally(() => {
+
+/**
+ * A fresh reading. Whoever asks while one is already being taken (the live-update timer, the history sampler and a dashboard that
+ * just opened can all ask in the same second) gets that one, instead of each starting its own PowerShell.
+ */
+export function getServerResourceStats() {
+	inFlight ??= sampleServerResources().finally(() => {
 		inFlight = null;
 	});
 	return inFlight;
+}
+
+export function getServerStatsIfStale(maxAgeMs) {
+	if (Date.now() - latestServerStatsAt <= maxAgeMs) return Promise.resolve(latestServerStats);
+	return getServerResourceStats();
 }

@@ -52,8 +52,9 @@ export async function updateTask(id, input) {
 	const existing = tasks.find((t) => t.id === id);
 	if (!existing) return null;
 	const clean = validateTask({ ...existing, ...input }, allServers().map((s) => s.name));
-	// A changed time counts from now, not from when the task was first made.
-	const rescheduled = JSON.stringify(clean.when) !== JSON.stringify(existing.when);
+	// A changed time counts from now, not from when the task was first made. So does a task switched back on: counted from the
+	// day it was made or last ran, a schedule paused for a few days would look as if it had been missed and be logged as skipped.
+	const rescheduled = JSON.stringify(clean.when) !== JSON.stringify(existing.when) || (existing.enabled === false && clean.enabled === true);
 	const next = { ...existing, ...clean, ...(rescheduled ? { createdAt: new Date().toISOString(), lastRunAt: null } : {}) };
 	tasks = tasks.map((t) => (t.id === id ? next : t));
 	await persist();

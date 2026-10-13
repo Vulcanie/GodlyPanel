@@ -115,6 +115,8 @@ const bump = (key) => {
 	const e = misses.get(key);
 	if (!e || now - e.since > WINDOW_MS) misses.set(key, { count: 1, since: now });
 	else e.count += 1;
+	// Addresses that stopped guessing long ago would otherwise stay in here for as long as the panel runs.
+	if (misses.size > 500) for (const [k, v] of misses) if (now - v.since > WINDOW_MS) misses.delete(k);
 };
 const waitFor = (key, max) => {
 	const e = misses.get(key);

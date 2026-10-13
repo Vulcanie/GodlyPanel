@@ -1,7 +1,9 @@
-import { existsSync, readFileSync } from "fs";
+import { existsSync, readFileSync, createWriteStream } from "fs";
 import { promises as fs } from "fs";
 import path from "path";
 import crypto from "crypto";
+import { Readable } from "node:stream";
+import { pipeline } from "node:stream/promises";
 import AdmZip from "adm-zip";
 import { paths } from "../paths.js";
 import { getSecrets } from "../config/secretsStore.js";
@@ -9,6 +11,25 @@ import { getSecrets } from "../config/secretsStore.js";
 const UPLOADS_DIR = paths.uploadsDir;
 // The environment variable exists so tests can point this at a stand-in; nothing else sets it.
 const CF_API_BASE = process.env.GHP_CURSEFORGE_API || "https://api.curseforge.com/v1";
+const CF_API_OVERRIDDEN = Boolean(process.env.GHP_CURSEFORGE_API);
+// One mod file never needs more than this, and a download that runs on past it is not a mod.
+const MAX_MOD_BYTES = 1024 * 1024 * 1024;
+const MOD_DOWNLOAD_TIMEOUT_MS = 10 * 60_000;
+// A zip is expanded into the uploads folder, so one that claims to hold far more than a modpack ever does (a "zip bomb": a few
+// megabytes that unpack to terabytes) is refused before anything is written.
+const MAX_UNPACKED_BYTES = 8 * 1024 * 1024 * 1024;
+const MAX_ENTRIES = 50_000;
+
+// The ids this module hands out. Anything else coming back from a request (it arrives in the body of "create server") is not
+// one of ours, and must not be joined onto the uploads folder: "..\.." would point at, and cleanup would delete, the folder above it.
+const UPLOAD_ID = /^modpack-\d+-[0-9a-f]{8}$/;
+function uploadDirOf(uploadId) {
+	if (!UPLOAD_ID.test(String(uploadId))) throw new Error("That modpack upload isn't valid. Upload the zip again.");
+	return path.join(UPLOADS_DIR, String(uploadId));
+}
+
+/** One plain file name, as a mod's file is called on disk: never a path. */
+export const isPlainFileName = (name) => typeof name === "string" && name.length > 0 && name.length <= 200 && name !== "." && name !== ".." && !/[\\/:*?"<>|\u0000-\u001f]/.test(name);
 const DOWNLOAD_CONCURRENCY = 5;
 const RESOLVE_CHUNK_SIZE = 50;
 const STALE_UPLOAD_TTL_MS = 24 * 60 * 60 * 1000;
@@ -16,9 +37,15 @@ const STALE_UPLOAD_TTL_MS = 24 * 60 * 60 * 1000;
 // Rejects the whole extraction if ANY entry would resolve outside
 // targetDir (zip-slip) — checked up front, before anything is written to
 // disk, rather than partially extracting and then discovering a bad entry.
-function safeExtractAllTo(zip, targetDir) {
+export function assertSafeEntries(zip, targetDir) {
 	const resolvedTarget = path.resolve(targetDir);
-	for (const entry of zip.getEntries()) {
+	const entries = zip.getEntries();
+	if (entries.length > MAX_ENTRIES) throw new Error(`That zip holds ${entries.length} files, far more than a modpack does, so it was refused.`);
+	// The sizes are the ones the zip's own directory declares, which a forged zip can understate: this stops the ordinary bomb,
+	// not a determined one (an administrator uploads these, so that is the case worth covering).
+	const declared = entries.reduce((sum, e) => sum + (e.header?.size ?? 0), 0);
+	if (declared > MAX_UNPACKED_BYTES) throw new Error("That zip would unpack to far more than a modpack ever does, so it was refused.");
+	for (const entry of entries) {
 		const resolvedEntry = path.resolve(path.join(targetDir, entry.entryName));
 		if (
 			resolvedEntry !== resolvedTarget &&
@@ -27,7 +54,6 @@ function safeExtractAllTo(zip, targetDir) {
 			throw new Error(`Unsafe zip entry path rejected: ${entry.entryName}`);
 		}
 	}
-	zip.extractAllTo(targetDir, true);
 }
 
 // CurseForge's manifest.json format: { minecraft: { version, modLoaders:
@@ -51,38 +77,55 @@ function parseManifest(extractDir) {
 		throw new Error(`Unrecognized modloader id format: "${primaryLoader.id}"`);
 	}
 
+	// Named by the zip's own manifest, so it has to be a folder name and nothing that could point out of the pack.
+	const overrides = manifest.overrides || "overrides";
+	if (!isPlainFileName(overrides)) throw new Error("The modpack's manifest names an overrides folder the panel won't use.");
+
 	return {
 		mcVersion: manifest.minecraft.version,
 		modLoaderFamily: primaryLoader.id.slice(0, dashIdx).toLowerCase(),
 		modLoaderVersion: primaryLoader.id.slice(dashIdx + 1),
 		files: manifest.files || [],
-		overridesFolder: manifest.overrides || "overrides",
+		overridesFolder: overrides,
 		packName: manifest.name || null,
 	};
 }
 
-export async function extractModpackZip(buffer) {
+/**
+ * @param {Buffer|string} source  the zip's bytes, or the path of a file holding it (an upload is kept on disk while it arrives,
+ *   not held whole in memory: a modpack can be several hundred megabytes)
+ */
+export async function extractModpackZip(source) {
 	const uploadId = `modpack-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
 	const uploadDir = path.join(UPLOADS_DIR, uploadId);
 	const extractDir = path.join(uploadDir, "extracted");
 
-	await fs.mkdir(extractDir, { recursive: true });
-	await fs.writeFile(path.join(uploadDir, "original.zip"), buffer);
+	// Looked at before anything is written: a file that isn't a zip, or one that would write outside its folder or unpack to
+	// something absurd, leaves nothing behind.
+	const zip = new AdmZip(source);
+	assertSafeEntries(zip, extractDir);
 
-	const zip = new AdmZip(buffer);
-	safeExtractAllTo(zip, extractDir);
+	try {
+		await fs.mkdir(extractDir, { recursive: true });
+		if (Buffer.isBuffer(source)) await fs.writeFile(path.join(uploadDir, "original.zip"), source);
+		else await fs.copyFile(source, path.join(uploadDir, "original.zip"));
+		zip.extractAllTo(extractDir, true);
 
-	const manifest = parseManifest(extractDir);
-	const hasOverrides = existsSync(path.join(extractDir, manifest.overridesFolder));
-
-	return { uploadId, manifest, hasOverrides };
+		const manifest = parseManifest(extractDir);
+		const hasOverrides = existsSync(path.join(extractDir, manifest.overridesFolder));
+		return { uploadId, manifest, hasOverrides };
+	} catch (err) {
+		// A zip that isn't a modpack export would otherwise sit in the uploads folder until the daily sweep.
+		await cleanupUpload(uploadId);
+		throw err;
+	}
 }
 
 // Re-parses the manifest straight off the saved upload rather than trusting
 // anything the client echoed back in the create-server request — the
 // server-side copy is the only source of truth for what actually gets built.
 export function getUploadManifest(uploadId) {
-	const extractDir = path.join(UPLOADS_DIR, uploadId, "extracted");
+	const extractDir = path.join(uploadDirOf(uploadId), "extracted");
 	if (!existsSync(extractDir)) {
 		throw new Error(`Upload "${uploadId}" not found — it may have expired or already been used.`);
 	}
@@ -90,19 +133,28 @@ export function getUploadManifest(uploadId) {
 }
 
 export async function installOverrides(uploadId, manifest, destDir) {
-	const overridesPath = path.join(UPLOADS_DIR, uploadId, "extracted", manifest.overridesFolder);
+	// The overrides folder's name comes from the zip's manifest: a plain folder name inside the extracted pack, never a path out of it.
+	if (!isPlainFileName(manifest.overridesFolder)) throw new Error("The modpack names an overrides folder the panel won't use.");
+	const overridesPath = path.join(uploadDirOf(uploadId), "extracted", manifest.overridesFolder);
 	if (!existsSync(overridesPath)) return;
 	await fs.cp(overridesPath, destDir, { recursive: true });
 }
 
 export async function cleanupUpload(uploadId) {
-	await fs.rm(path.join(UPLOADS_DIR, uploadId), { recursive: true, force: true }).catch(() => {});
+	if (!UPLOAD_ID.test(String(uploadId))) return;
+	await fs.rm(path.join(UPLOADS_DIR, String(uploadId)), { recursive: true, force: true }).catch(() => {});
 }
 
 export async function cleanupStaleUploads() {
 	try {
 		const entries = await fs.readdir(UPLOADS_DIR).catch(() => []);
 		const now = Date.now();
+		// An upload that was cut off partway (the browser closed, the connection dropped) leaves its file here.
+		const incoming = path.join(UPLOADS_DIR, "incoming");
+		for (const name of await fs.readdir(incoming).catch(() => [])) {
+			const stat = await fs.stat(path.join(incoming, name)).catch(() => null);
+			if (stat && now - stat.mtimeMs > 60 * 60 * 1000) await fs.rm(path.join(incoming, name), { force: true }).catch(() => {});
+		}
 		for (const entry of entries) {
 			const zipPath = path.join(UPLOADS_DIR, entry, "original.zip");
 			try {
@@ -206,13 +258,32 @@ export async function resolveAndDownloadMods(manifest, destModsDir, { onProgress
 			});
 			return;
 		}
+		// The names and addresses come from CurseForge's answer. A file name is only ever a file name, and a download is over https
+		// (a test's stand-in is the one exception), so a wrong answer can't write outside the mods folder or fetch over plain http.
+		if (!isPlainFileName(info.fileName)) {
+			failed.push({ projectID: modFile.projectID, fileID: modFile.fileID, reason: "CurseForge gave this file a name the panel won't use." });
+			return;
+		}
+		const partial = path.join(destModsDir, `${info.fileName}.partial`);
 		try {
-			const res = await fetch(info.downloadUrl);
-			if (!res.ok) throw new Error(`HTTP ${res.status}`);
-			const arrayBuffer = await res.arrayBuffer();
-			await fs.writeFile(path.join(destModsDir, info.fileName), Buffer.from(arrayBuffer));
+			const url = new URL(info.downloadUrl);
+			if (url.protocol !== "https:" && !CF_API_OVERRIDDEN) throw new Error("the download address isn't https");
+			const res = await fetch(url, { signal: AbortSignal.timeout(MOD_DOWNLOAD_TIMEOUT_MS) });
+			if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+			// To disk as it arrives (not held in memory whole) and stopped if it runs past what a mod can be.
+			let received = 0;
+			const limit = async function* (source) {
+				for await (const chunk of source) {
+					received += chunk.length;
+					if (received > MAX_MOD_BYTES) throw new Error("the file is larger than a mod can be");
+					yield chunk;
+				}
+			};
+			await pipeline(Readable.fromWeb(res.body), limit, createWriteStream(partial));
+			await fs.rename(partial, path.join(destModsDir, info.fileName));
 			downloaded.push(info.fileName);
 		} catch (e) {
+			await fs.rm(partial, { force: true }).catch(() => {});
 			failed.push({ projectID: modFile.projectID, fileID: modFile.fileID, reason: e.message });
 		}
 	};

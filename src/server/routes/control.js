@@ -116,9 +116,11 @@ function describeUpdate(server, { groupNames, logPath }, restart) {
 
 // Start, stop, or update a server
 router.post("/control/:serverName/:action", (req, res, next) => {
-	// Which permission an action needs depends on the action, so it is checked here.
-	const needs = { rcon: "server.console", update: "server.update", "update-reboot": "server.update" }[req.params.action] ?? "server.control";
-	return requirePermission(needs)(req, res, next);
+	// Which permission an action needs depends on the action, so it is checked here. Own keys only: "constructor" is on every
+	// object, and would otherwise be taken for a permission name.
+	const special = { rcon: "server.console", update: "server.update", "update-reboot": "server.update" };
+	const permissionNeeded = Object.hasOwn(special, req.params.action) ? special[req.params.action] : "server.control";
+	return requirePermission(permissionNeeded)(req, res, next);
 }, async (req, res) => {
 	const { action } = req.params;
 	const server = req.server;
@@ -137,7 +139,8 @@ router.post("/control/:serverName/:action", (req, res, next) => {
 		return;
 	}
 
-	const run = action === "stopNow" || action === "startNow" ? null : CONTROL_ACTIONS[action];
+	// Own keys only: CONTROL_ACTIONS["constructor"] is Object, which "runs" by handing the server entry (RCON password and all) back.
+	const run = action === "stopNow" || action === "startNow" || !Object.hasOwn(CONTROL_ACTIONS, action) ? null : CONTROL_ACTIONS[action];
 	if (!run) return res.status(400).json({ error: "Invalid action." });
 
 	try {

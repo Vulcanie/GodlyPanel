@@ -2,7 +2,10 @@
 // see live in routes/dashboard.js; everything here either exposes credentials
 // and filesystem paths, or changes something.
 import express from "express";
+import fs from "node:fs";
+import path from "node:path";
 import multer from "multer";
+import { paths } from "../paths.js";
 import { get as getServer, update as updateServer } from "../data/serverStore.js";
 import { readManagedFile, writeManagedFile, sendFileError } from "../util/managedFiles.js";
 import { singleFile } from "../middleware/uploadErrors.js";
@@ -63,7 +66,9 @@ export function configNamesOf(server) {
 /** Which file a config request means: a named one, or the server's single file. */
 function configPathFor(server, name) {
 	if (name === LAUNCH_OPTIONS_FILE) return launchOptionsFile(server) ?? undefined;
-	return server.configPaths ? server.configPaths[name] : server.configPath;
+	// Own names only: "constructor" and the like exist on every object and are not files.
+	if (server.configPaths) return typeof name === "string" && Object.hasOwn(server.configPaths, name) ? server.configPaths[name] : undefined;
+	return server.configPath;
 }
 
 // Basic info about a single server
@@ -364,8 +369,16 @@ router.post("/config/:serverName", async (req, res) => {
 
 // --- Dynamic server creation ---
 
+// On disk while it arrives: held in memory, a 500 MB upload cost the panel 500 MB (and AdmZip then needed as much again).
+const modpackUploadDir = path.join(paths.uploadsDir, "incoming");
 const modpackUpload = multer({
-	storage: multer.memoryStorage(),
+	storage: multer.diskStorage({
+		destination: (req, file, cb) => {
+			fs.mkdirSync(modpackUploadDir, { recursive: true });
+			cb(null, modpackUploadDir);
+		},
+		filename: (req, file, cb) => cb(null, `${Date.now()}-${Math.random().toString(36).slice(2)}.upload`),
+	}),
 	limits: { fileSize: 500 * 1024 * 1024 },
 });
 
@@ -377,26 +390,33 @@ router.post("/uploads/modpack", singleFile(modpackUpload, "modpackZip", "500 MB"
 	if (!req.file) {
 		return res.status(400).json({ error: "A modpackZip file is required." });
 	}
+	let extracted;
+	let failure = null;
 	try {
-		const { uploadId, manifest, hasOverrides } = await extractModpackZip(req.file.buffer);
-		if (!SUPPORTED_MODLOADER_FAMILIES.includes(manifest.modLoaderFamily)) {
-			await cleanupUpload(uploadId);
-			return res.status(400).json({
-				error: `Unsupported modloader "${manifest.modLoaderFamily}" — only NeoForge, Forge, and Fabric modpacks are supported.`,
-			});
-		}
-		res.json({
-			uploadId,
-			mcVersion: manifest.mcVersion,
-			modLoaderFamily: manifest.modLoaderFamily,
-			modLoaderVersion: manifest.modLoaderVersion,
-			modCount: manifest.files.length,
-			hasOverrides,
-			packName: manifest.packName,
-		});
+		extracted = await extractModpackZip(req.file.path);
 	} catch (e) {
-		res.status(400).json({ error: e.message });
+		failure = e;
 	}
+	// The panel keeps its own copy (under the upload's id); this one was only the way in. Removed before answering, so the
+	// answer is never ahead of the tidying.
+	await fs.promises.rm(req.file.path, { force: true }).catch(() => {});
+	if (failure) return res.status(400).json({ error: failure.message });
+	const { uploadId, manifest, hasOverrides } = extracted;
+	if (!SUPPORTED_MODLOADER_FAMILIES.includes(manifest.modLoaderFamily)) {
+		await cleanupUpload(uploadId);
+		return res.status(400).json({
+			error: `Unsupported modloader "${manifest.modLoaderFamily}" — only NeoForge, Forge, and Fabric modpacks are supported.`,
+		});
+	}
+	res.json({
+		uploadId,
+		mcVersion: manifest.mcVersion,
+		modLoaderFamily: manifest.modLoaderFamily,
+		modLoaderVersion: manifest.modLoaderVersion,
+		modCount: manifest.files.length,
+		hasOverrides,
+		packName: manifest.packName,
+	});
 });
 
 // List the one-click game templates available for creation.

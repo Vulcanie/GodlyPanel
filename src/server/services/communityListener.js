@@ -260,13 +260,19 @@ let boundPort = null;
 
 export const listenerPort = () => boundPort;
 
-export function startListener({ port, hostRule, uiDir, staffSignIn }) {
+// How long a request may take to arrive in full, headers and body. Live-update streams are not affected: they are ordinary GETs,
+// complete the moment their headers are in, and the response then runs as long as it likes. This used to be switched off (0) for
+// that reason, which let anyone on the internet hold a connection open for ever by sending a body a byte at a time. Five minutes
+// is Node's own default and the panel's.
+const REQUEST_TIMEOUT_MS = 300_000;
+
+export function startListener({ port, hostRule, uiDir, staffSignIn, requestTimeoutMs = REQUEST_TIMEOUT_MS, checkEveryMs = undefined }) {
 	return new Promise((resolve, reject) => {
 		if (server) return resolve(boundPort);
-		const s = http.createServer(createCommunityApp({ hostRule, uiDir, staffSignIn }));
-		// Slow connections and endless headers are how small servers get tied up.
-		s.headersTimeout = 15_000;
-		s.requestTimeout = 0; // live-update streams are long
+		// Slow connections and endless headers are how small servers get tied up. (`checkEveryMs` is for tests: Node looks for
+		// expired requests only every 30 seconds by default.)
+		const headersTimeout = Math.min(15_000, requestTimeoutMs);
+		const s = http.createServer({ headersTimeout, requestTimeout: requestTimeoutMs, ...(checkEveryMs ? { connectionsCheckingInterval: checkEveryMs } : {}) }, createCommunityApp({ hostRule, uiDir, staffSignIn }));
 		s.keepAliveTimeout = 30_000;
 		s.maxHeadersCount = 40;
 		s.once("error", reject);

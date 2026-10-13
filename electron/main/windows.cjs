@@ -34,7 +34,11 @@ function hardenAllContents() {
 	});
 }
 
-function createMainWindow({ port }) {
+/**
+ * @param {{ port: number, getPort?: () => number }} options  `getPort` is asked each time, because the panel's port can be changed
+ *   in Settings while the window is open; the window then follows it, and must not treat its own new address as a foreign site.
+ */
+function createMainWindow({ port, getPort = () => port }) {
 	hardenAllContents();
 	const win = new BrowserWindow({
 		width: 1440,
@@ -60,7 +64,7 @@ function createMainWindow({ port }) {
 		},
 	});
 
-	const appOrigin = `http://127.0.0.1:${port}`;
+	const appOrigin = () => `http://127.0.0.1:${getPort()}`;
 	denyPermissions(win.webContents.session);
 
 	// Anything that isn't our own UI opens in the real browser instead of
@@ -71,7 +75,7 @@ function createMainWindow({ port }) {
 	});
 
 	const keepInside = (event, url) => {
-		if (isOurOrigin(url, appOrigin)) return;
+		if (isOurOrigin(url, appOrigin())) return;
 		event.preventDefault();
 		openInBrowser(url);
 	};

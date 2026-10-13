@@ -38,12 +38,14 @@ try {
 	await owner.getByLabel(/username/i).fill("admin");
 	await owner.getByLabel(/password/i).fill("TestAdmin!2345");
 	await owner.getByRole("button", { name: /sign in/i }).click();
-	await owner.getByRole("button", { name: "Settings" }).click();
-	await owner.getByRole("button", { name: "Open all sections" }).click();
-	// The section's title and its card's heading both read "Community access", so wait for the control that is used next.
-	await owner.getByLabel("Community code is off").waitFor({ timeout: 30_000 });
+	await owner.getByTestId("nav-settings").click();
+	await owner.getByTestId("settings-category-community").click();
+	// The section's title and its card's heading both read "Community access", so wait for the control that is used next. The
+	// (i) beside each setting is a button of its own, so ask for the switch by its role.
+	const codeSwitch = owner.getByRole("switch", { name: "Community code is off" });
+	await codeSwitch.waitFor({ timeout: 30_000 });
 	check("Settings explains Tailscale isn't installed here (or shows it connected)", (await owner.getByText(/Tailscale/).count()) > 0);
-	await owner.getByLabel("Community code is off").click();
+	await codeSwitch.click();
 	const codeEl = owner.getByTestId("community-code");
 	await codeEl.waitFor({ timeout: 10_000 });
 	const code = (await codeEl.textContent()).trim();
@@ -73,17 +75,24 @@ try {
 	check("a wrong code is refused", await friend.getByText("That code isn't right.").waitFor({ timeout: 10_000 }).then(() => true, () => false));
 	await friend.getByLabel("Community code").fill(code);
 	await friend.getByRole("button", { name: "Create my account" }).click();
-	await friend.getByRole("button", { name: "Sign out" }).waitFor({ timeout: 30_000 });
+	await friend.getByRole("heading", { name: "Dashboard", level: 1 }).waitFor({ timeout: 30_000 });
 	check("the right code signs them in", true);
-	check("they have no owner-only buttons", (await friend.getByRole("button", { name: /^Settings$|^Users$|Create Server/ }).count()) === 0);
+	// On a phone the sidebar is a drawer behind the menu button.
+	await friend.getByRole("button", { name: "Open the menu" }).click();
+	await friend.getByTestId("user-menu").waitFor();
+	check("they have no owner-only buttons", (await friend.getByTestId("nav-settings").count()) === 0 && (await friend.getByTestId("nav-people").count()) === 0 && (await friend.getByTestId("nav-create").count()) === 0 && (await friend.getByTestId("create-server").count()) === 0);
+	await friend.getByTestId("user-menu").click();
+	check("but they can sign out", await friend.getByTestId("sign-out").isVisible());
+	await friend.keyboard.press("Escape");
+	await friend.keyboard.press("Escape");
 	const over = await friend.evaluate(() => ({ scroll: document.documentElement.scrollWidth, view: window.innerWidth }));
 	check("it fits a phone-width screen", over.scroll <= Math.max(over.view, 390) + 1, JSON.stringify(over));
 	await shot(friend, "join-3-friend-dashboard");
 
 	// ---- the owner sees the account, and the count
 	await owner.reload({ waitUntil: "domcontentloaded" });
-	await owner.getByRole("button", { name: "Settings" }).click();
-	await owner.getByRole("button", { name: "Open all sections" }).click();
+	await owner.getByTestId("nav-settings").click();
+	await owner.getByTestId("settings-category-community").click();
 	await owner.getByText(/1 person has joined/).waitFor({ timeout: 20_000 });
 	check("the owner sees one person has joined", true);
 	check("no page errors along the way", errors.length === 0, errors.slice(0, 2).join(" | "));
