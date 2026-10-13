@@ -34,7 +34,7 @@ Some games are set up by the arguments on the command that starts them, not by a
 ARK is set up in two files that both live in `ShooterGame\Saved\Config\WindowsServer\` inside the server's install folder. The panel's Settings tab shows both. The game makes them the first time it runs.
 
 - `GameUserSettings.ini`: The server's name, passwords, player and tribe rules, taming, harvesting, structures, performance and admin options. The settings are in the `[ServerSettings]` section, plus the session name, the message of the day and the player limit.
-- `Game.ini`: The gameplay multipliers (experience, and similar) in the `[/Script/ShooterGame.ShooterGameMode]` section.
+- `Game.ini`: The gameplay multipliers in the `[/Script/ShooterGame.ShooterGameMode]` section: experience, taming, harvesting, PvP and structures.
 - Launch arguments: they are in the start script. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#ark-survival-ascended--evolved).
 
 ARK has far more options than are listed here. In particular `Game.ini` also holds engram, crafting, spawn and level overrides, which are long and specialised. Anything the panel does not have an explanation for is still shown, without one.
@@ -707,7 +707,7 @@ Mods and plugins add settings in files of their own (a `config` folder, a plugin
 
 Enshrouded keeps its settings in `enshrouded_server.json` in the server's install folder.
 
-- `enshrouded_server.json`: The server's name, ports, slot count and the rules of the world (`gameSettings`). The player groups with their passwords (`userGroups`) are edited in their own part of the form.
+- `enshrouded_server.json`: The server's name, ports, slot count and the rules of the world (`gameSettings`). The player groups with their passwords (`userGroups`) are listed separately from these simple settings.
 
 ### Enshrouded: Server Info
 
@@ -1209,7 +1209,7 @@ Rust does not make `server.cfg` until it is asked to (`server.writecfg` in the c
 
 Project Zomboid keeps the server's options in `zomboid\Server\<name>.ini` inside the server's install folder, where `<name>` is the server's settings name (`servertest` by default). The game makes the file the first time the server starts.
 
-- `servertest.ini`: The server's name, passwords, ports, player rules, voice chat, PvP, safehouses and anti-cheat.
+- `servertest.ini`: The server's name, passwords, ports, gameplay rules, loot and building, safehouses, factions, saving, voice chat, Discord, moderation and mods.
 - Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#project-zomboid).
 
 How the world itself plays (zombie numbers, loot, the speed of the seasons) is in `<name>_SandboxVars.lua`, which the Settings tab does not edit. Mods add their own options, which are not explained.
@@ -1436,7 +1436,7 @@ The rules of the world itself (clan size, blood drain, castle rules and similar)
 
 | Setting | Name in the file | What it does |
 | --- | --- | --- |
-| Game rules preset | `GameSettingsPreset` | A named set of world rules from the game, such as StandardPvP. Leave empty to use the game's default. Choices: ``, `StandardPvP`, `StandardPvE`, `Relaxed`, `Hard`, `Casual`. Another value can be typed. |
+| Game rules preset | `GameSettingsPreset` | A named set of world rules from the game, such as StandardPvP. Leave empty to use the game's default. Choices: empty (the game's default), `StandardPvP`, `StandardPvE`, `Relaxed`, `Hard`, `Casual`. Another value can be typed. |
 | Difficulty preset | `GameDifficultyPreset` | A named difficulty from the game. Leave empty for the game's default. Choices: `Difficulty_Easy`, `Difficulty_Normal`, `Difficulty_Brutal`. Another value can be typed. |
 | Debug events: admins only | `AdminOnlyDebugEvents` | Only admins may trigger debug events. |
 | Debug events: off | `DisableDebugEvents` | Turns debug events off for everybody. |

@@ -1,6 +1,9 @@
 import React from "react";
-import { Alert, Box, Button, Chip, FormControlLabel, MenuItem, Paper, Switch, TextField, Typography } from "@mui/material";
+import { Alert, Box, Button, Chip, FormControlLabel, MenuItem, Switch, TextField, Typography } from "@mui/material";
 import { api } from "../api/client";
+import InfoTip from "./InfoTip";
+import TipRow from "./settings/TipRow";
+import SectionCard from "./ui/SectionCard";
 
 const EXPIRY = [
 	{ value: "keep", label: "Keep the current setting" },
@@ -23,6 +26,7 @@ function tailscaleUrl(access) {
 /**
  * Letting the community in: a code people use to make their own guest account, and what to send them.
  * Reaching the panel at all is the network's job (see "Opening the panel from another device").
+ * What each box does is behind its (i).
  */
 function CommunityAccessCard() {
 	const [invite, setInvite] = React.useState(null);
@@ -86,37 +90,42 @@ function CommunityAccessCard() {
 	).join("\n");
 
 	return (
-		<Paper sx={{ p: 2, mb: 2 }}>
-			<Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap", mb: 1 }}>
-				<Typography variant="subtitle2">Community access</Typography>
-				{access?.tailscale &&
-					(!access.tailscale.installed ? (
-						<Chip size="small" label="Tailscale isn't installed on this PC" />
-					) : access.tailscale.running ? (
-						<Chip size="small" color="success" label={`Tailscale connected${access.tailscale.shortName ? ` as ${access.tailscale.shortName}` : ""}`} />
-					) : (
-						<Chip size="small" color="warning" label={access.tailscale.state === "NeedsLogin" ? "Tailscale needs signing in" : "Tailscale isn't connected"} />
-					))}
-			</Box>
-			<Typography variant="body2" sx={{ color: "text.secondary", mb: 1.5 }}>
-				Friends and community members can make their own <b>guest</b> account with a code, so you don't have to invent a password for each. Guests can look at the dashboard (status, players, ports) and cannot change anything. They still need a way to reach the panel: see the Tailscale steps above.
-			</Typography>
-
+		<SectionCard
+			title={
+				<Box component="span" sx={{ display: "inline-flex", alignItems: "center" }}>
+					Community access
+					<InfoTip id="card.communityAccess" />
+				</Box>
+			}
+			actions={
+				access?.tailscale &&
+				(!access.tailscale.installed ? (
+					<Chip size="small" label="Tailscale isn't installed on this PC" />
+				) : access.tailscale.running ? (
+					<Chip size="small" color="success" label={`Tailscale connected${access.tailscale.shortName ? ` as ${access.tailscale.shortName}` : ""}`} />
+				) : (
+					<Chip size="small" color="warning" label={access.tailscale.state === "NeedsLogin" ? "Tailscale needs signing in" : "Tailscale isn't connected"} />
+				))
+			}
+		>
 			{error && (
 				<Alert severity="error" sx={{ mb: 1.5 }}>
 					{error}
 				</Alert>
 			)}
 
-			<FormControlLabel
-				control={<Switch checked={invite.enabled} onChange={(e) => change({ enabled: e.target.checked })} />}
-				label={invite.enabled ? "Anyone with the code can make a guest account" : "Community code is off"}
-			/>
+			<TipRow info="community.codeEnabled" center>
+				<FormControlLabel
+					sx={{ ml: 0, mr: 0 }}
+					control={<Switch checked={invite.enabled} onChange={(e) => change({ enabled: e.target.checked })} />}
+					label={invite.enabled ? "Anyone with the code can make a guest account" : "Community code is off"}
+				/>
+			</TipRow>
 
 			{invite.enabled && (
 				<>
 					<Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap", my: 1.5 }}>
-						<Typography variant="h5" sx={{ fontFamily: "monospace", letterSpacing: 2 }} data-testid="community-code">
+						<Typography variant="h5" sx={{ fontFamily: (t) => t.custom.mono, letterSpacing: 2 }} data-testid="community-code">
 							{invite.code}
 						</Typography>
 						<Button size="small" onClick={() => copy("code", invite.code)}>
@@ -130,37 +139,43 @@ function CommunityAccessCard() {
 						{invite.joins} {invite.joins === 1 ? "person has" : "people have"} joined with this code
 						{invite.expiresAt ? ` · expires ${when(invite.expiresAt)}` : " · never expires"}
 						{invite.maxJoins ? ` · up to ${invite.maxJoins} people` : ""}.
-						{" "}A new code stops the old one working; accounts already made stay (remove them under Users).
 					</Typography>
 					{invite.closedBecause === "expired" && <Alert severity="warning" sx={{ mb: 1.5 }}>This code has expired. Choose a new expiry or make a new code.</Alert>}
 					{invite.closedBecause === "full" && <Alert severity="warning" sx={{ mb: 1.5 }}>The sign-up limit has been reached. Raise it or make a new code.</Alert>}
 
-					<Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 2 }}>
-						<TextField select size="small" label="Expiry" value={expiry} sx={{ minWidth: 230 }} onChange={(e) => {
-							setExpiry(e.target.value);
-							if (e.target.value === "keep") return;
-							change({ expiresInDays: e.target.value === "none" ? null : Number(e.target.value) });
-						}}>
-							{EXPIRY.map((o) => (
-								<MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>
-							))}
-						</TextField>
-						<TextField
-							size="small"
-							label="Most people (blank = no limit)"
-							type="number"
-							value={limit}
-							sx={{ width: 230 }}
-							inputProps={{ min: 1, max: 1000 }}
-							onChange={(e) => setLimit(e.target.value)}
-							onBlur={() => change({ maxJoins: limit === "" ? null : Number(limit) })}
-						/>
+					<Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 2, mb: 2.5 }}>
+						<TipRow info="community.codeExpiry">
+							<TextField select fullWidth size="small" label="Expiry" value={expiry} onChange={(e) => {
+								setExpiry(e.target.value);
+								if (e.target.value === "keep") return;
+								change({ expiresInDays: e.target.value === "none" ? null : Number(e.target.value) });
+							}}>
+								{EXPIRY.map((o) => (
+									<MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>
+								))}
+							</TextField>
+						</TipRow>
+						<TipRow info="community.codeMaxUses">
+							<TextField
+								fullWidth
+								size="small"
+								label="Most people (blank = no limit)"
+								type="number"
+								value={limit}
+								inputProps={{ min: 1, max: 1000 }}
+								onChange={(e) => setLimit(e.target.value)}
+								onBlur={() => change({ maxJoins: limit === "" ? null : Number(limit) })}
+							/>
+						</TipRow>
 					</Box>
 
-					<Typography variant="body2" sx={{ fontWeight: 500, mb: 0.5 }}>
-						Message to send them
-					</Typography>
-					<TextField multiline fullWidth size="small" value={message} InputProps={{ readOnly: true }} sx={{ mb: 1 }} />
+					<Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
+						<Typography variant="body2" sx={{ fontWeight: 600 }}>
+							Message to send them
+						</Typography>
+						<InfoTip id="community.codeMessage" />
+					</Box>
+					<TextField multiline fullWidth size="small" value={message} InputProps={{ readOnly: true }} inputProps={{ "aria-label": "Message to send them" }} sx={{ mb: 1 }} />
 					<Button size="small" variant="outlined" onClick={() => copy("message", message)}>
 						{copied === "message" ? "Copied" : "Copy message"}
 					</Button>
@@ -171,7 +186,7 @@ function CommunityAccessCard() {
 					)}
 				</>
 			)}
-		</Paper>
+		</SectionCard>
 	);
 }
 

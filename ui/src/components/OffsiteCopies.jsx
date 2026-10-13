@@ -1,7 +1,9 @@
 import React from "react";
-import { Alert, Box, Button, Chip, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Paper, Tooltip, Typography } from "@mui/material";
+import { Alert, Box, Button, Chip, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Tooltip, Typography } from "@mui/material";
 import { api } from "../api/client";
 import { formatBytes } from "../utils/format";
+import InfoTip from "./InfoTip";
+import SectionCard from "./ui/SectionCard";
 
 const KIND_LABELS = {
 	manual: "Manual",
@@ -47,8 +49,15 @@ function OffsiteCopies({ base, data, canManage, busy, onError, onChanged }) {
 	};
 
 	return (
-		<Paper sx={{ p: 2, mt: 2 }}>
-			<Typography variant="subtitle1">Copies off this PC</Typography>
+		<SectionCard
+			sx={{ mt: 2 }}
+			title={
+				<Box component="span" sx={{ display: "inline-flex", alignItems: "center" }}>
+					Copies off this PC
+					<InfoTip id="card.backupDestinations" />
+				</Box>
+			}
+		>
 			{message && (
 				<Alert severity="success" onClose={() => setMessage(null)} sx={{ my: 1 }}>
 					{message}
@@ -61,7 +70,7 @@ function OffsiteCopies({ base, data, canManage, busy, onError, onChanged }) {
 			) : (
 				places.map((d) => (
 					<Box key={d.id} sx={{ display: "flex", alignItems: "center", gap: 1.5, py: 0.75, flexWrap: "wrap" }}>
-						<Typography variant="body2" sx={{ flex: 1, minWidth: 160 }}>
+						<Typography variant="body2" sx={{ flex: 1, minWidth: 160, fontWeight: 600 }}>
 							{d.name}
 							{d.enabled ? "" : " (off)"}
 						</Typography>
@@ -77,7 +86,7 @@ function OffsiteCopies({ base, data, canManage, busy, onError, onChanged }) {
 				))
 			)}
 			{browsing && <OffsiteDialog base={base} place={browsing} canManage={canManage} busy={busy} onClose={() => setBrowsing(null)} onError={onError} onFetched={onChanged} />}
-		</Paper>
+		</SectionCard>
 	);
 }
 
@@ -124,7 +133,7 @@ function OffsiteDialog({ base, place, canManage, busy, onClose, onError, onFetch
 				{!items && !problem && <CircularProgress size={20} />}
 				{items?.length === 0 && <Typography variant="body2">Nothing for this server there yet.</Typography>}
 				{items?.map((b) => (
-					<Box key={b.id} sx={{ display: "flex", alignItems: "center", gap: 1.5, py: 0.75, borderTop: "1px solid rgba(128,128,128,0.2)", flexWrap: "wrap" }}>
+					<Box key={b.id} sx={{ display: "flex", alignItems: "center", gap: 1.5, py: 0.75, borderTop: 1, borderColor: "divider", flexWrap: "wrap" }}>
 						<Box sx={{ flex: 1, minWidth: 200 }}>
 							<Typography variant="body2">{when(b.modified)}</Typography>
 							<Typography variant="caption" sx={{ color: "text.secondary" }}>
@@ -142,9 +151,12 @@ function OffsiteDialog({ base, place, canManage, busy, onClose, onError, onFetch
 						)}
 					</Box>
 				))}
-				<Typography variant="caption" sx={{ display: "block", mt: 2, color: "text.secondary" }}>
-					"Bring back" downloads it into this server's backup list. Then restore it from there like any other backup.
-				</Typography>
+				<Box sx={{ display: "flex", alignItems: "center", mt: 2 }}>
+					<Typography variant="caption" sx={{ color: "text.secondary" }}>
+						About "Bring back"
+					</Typography>
+					<InfoTip id="dest.bringBack" />
+				</Box>
 			</DialogContent>
 			<DialogActions>
 				<Button onClick={onClose}>Close</Button>

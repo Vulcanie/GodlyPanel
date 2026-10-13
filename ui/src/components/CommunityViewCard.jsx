@@ -11,7 +11,6 @@ import {
 	DialogTitle,
 	FormControlLabel,
 	Link,
-	Paper,
 	Radio,
 	RadioGroup,
 	Switch,
@@ -23,6 +22,9 @@ import {
 } from "@mui/material";
 import { api } from "../api/client";
 import CommunityGuide from "./CommunityGuide";
+import InfoTip from "./InfoTip";
+import TipRow from "./settings/TipRow";
+import SectionCard from "./ui/SectionCard";
 
 const CHIP = {
 	off: { color: "default", label: "Off" },
@@ -89,19 +91,22 @@ function CommunityViewCard() {
 	};
 
 	return (
-		<Paper sx={{ p: 2, mb: 2 }}>
-			<Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap", mb: 1 }}>
-				<Typography variant="subtitle2">Community view (a public address)</Typography>
-				<Chip size="small" color={CHIP[state].color} label={CHIP[state].label} data-testid="community-view-state" />
-			</Box>
-			<Typography variant="body2" sx={{ color: "text.secondary", mb: 1.5 }}>
-				Gives people outside your home one web address where they sign in as a <b>guest</b> and look at your servers. It goes through a Cloudflare Tunnel, so nothing is opened on your router. By default it is a separate, much smaller page: administrators and moderators can't sign in on it, and nothing can be started, stopped or changed through it.
-			</Typography>
-			<FormControlLabel
-				sx={{ display: "block", mb: 1.5 }}
-				control={<Switch checked={status.staffSignIn} onChange={(e) => (e.target.checked ? setConfirmStaff(true) : setStaff(false))} inputProps={{ "data-testid": "community-staff-switch" }} />}
-				label="Let administrators and moderators sign in here too (for staff who aren't on your network)"
-			/>
+		<SectionCard
+			title={
+				<Box component="span" sx={{ display: "inline-flex", alignItems: "center" }}>
+					Community view (a public address)
+					<InfoTip id="card.communityView" />
+				</Box>
+			}
+			actions={<Chip size="small" color={CHIP[state].color} label={CHIP[state].label} data-testid="community-view-state" />}
+		>
+			<TipRow info="community.staffSignIn" center sx={{ mb: 1.5 }}>
+				<FormControlLabel
+					sx={{ ml: 0, mr: 0 }}
+					control={<Switch checked={status.staffSignIn} onChange={(e) => (e.target.checked ? setConfirmStaff(true) : setStaff(false))} inputProps={{ "data-testid": "community-staff-switch" }} />}
+					label="Let administrators and moderators sign in here too (for staff who aren't on your network)"
+				/>
+			</TipRow>
 			{status.staffSignIn && (
 				<Alert severity="warning" sx={{ mb: 1.5 }}>
 					Staff can use the whole panel through this address, with the same powers as at home. Anyone on the internet can reach its sign-in page, so give staff long, unique passwords. After five wrong guesses the page locks for ten minutes (your own sign-in at home is not affected), and every staff sign-in from outside is recorded in Activity.
@@ -139,7 +144,7 @@ function CommunityViewCard() {
 				<>
 					{status.publicUrl ? (
 						<Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap", mb: 1 }}>
-							<Typography variant="body1" sx={{ fontFamily: "monospace" }} data-testid="community-view-url">
+							<Typography variant="body1" sx={{ fontFamily: (t) => t.custom.mono, wordBreak: "break-all" }} data-testid="community-view-url">
 								{status.publicUrl}
 							</Typography>
 							<Button size="small" onClick={copy}>
@@ -157,9 +162,6 @@ function CommunityViewCard() {
 							This is a temporary address: it changes every time the view starts (and when the panel restarts), and the page refreshes every few seconds instead of live. For a permanent address with live updates, set up your own tunnel.
 						</Typography>
 					)}
-					<Typography variant="body2" sx={{ color: "text.secondary", mb: 1 }}>
-						Turn on the community code below so friends can make their own guest accounts, or create accounts under Users.
-					</Typography>
 					<Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
 						<Button size="small" color="warning" variant="outlined" onClick={() => toggle(false)}>
 							Turn off
@@ -172,7 +174,7 @@ function CommunityViewCard() {
 						</Button>
 					</Box>
 					{showLog && (
-						<Box sx={{ mt: 1.5, p: 1, borderRadius: 1, bgcolor: "action.hover", fontFamily: "monospace", fontSize: 12, maxHeight: 200, overflow: "auto", whiteSpace: "pre-wrap", wordBreak: "break-all" }}>
+						<Box sx={{ mt: 1.5, p: 1.25, borderRadius: 2, bgcolor: (t) => t.custom.hover, fontFamily: (t) => t.custom.mono, fontSize: 12, maxHeight: 200, overflow: "auto", whiteSpace: "pre-wrap", wordBreak: "break-all" }}>
 							{`Small server: 127.0.0.1:${status.listener.port ?? status.port}\nTunnel: ${status.tunnel.status}${status.tunnel.restarts ? `, restarted ${status.tunnel.restarts}×` : ""}\n\n`}
 							{status.tunnel.lines.join("\n")}
 						</Box>
@@ -199,7 +201,7 @@ function CommunityViewCard() {
 				</DialogActions>
 			</Dialog>
 			<CommunityGuide open={guide} onClose={() => setGuide(false)} port={status.port} />
-		</Paper>
+		</SectionCard>
 	);
 }
 
@@ -296,6 +298,12 @@ function SetupDialog({ open, onClose, status, reload, onDone, onGuide }) {
 						<Typography variant="body2" sx={{ mb: 1 }}>
 							{found ? `cloudflared is ready (${status.cloudflared.source === "panel" ? "downloaded by GodlyPanel" : "found on this PC"}).` : ""} How should people find the page?
 						</Typography>
+						<Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
+							<Typography variant="body2" sx={{ fontWeight: 600 }}>
+								Address type
+							</Typography>
+							<InfoTip id="community.mode" />
+						</Box>
 						<RadioGroup value={mode} onChange={(e) => setMode(e.target.value)}>
 							<FormControlLabel
 								value="quick"
@@ -333,15 +341,18 @@ function SetupDialog({ open, onClose, status, reload, onDone, onGuide }) {
 								<Typography variant="body2" sx={{ color: "text.secondary", mb: 1 }}>
 									The panel runs this tunnel with its own settings file pointing at the community view, and doesn't change yours. {detected.hostnames.length > 0 ? "Its address already points at Cloudflare, so you only choose which one to use." : ""} If another program on this PC is already running the same tunnel, stop it first, or visitors will be split between the two.
 								</Typography>
-								<TextField
-									size="small"
-									fullWidth
-									label="Public address"
-									placeholder={detected.hostnames[0] ?? "panel.example.com"}
-									value={hostname}
-									onChange={(e) => setHostname(e.target.value)}
-									helperText={detected.hostnames.length ? `Addresses on this tunnel: ${detected.hostnames.join(", ")}` : "A name already routed to this tunnel in Cloudflare."}
-								/>
+								<TipRow info="community.tunnelHostname">
+									<TextField
+										size="small"
+										fullWidth
+										label="Public address"
+										placeholder={detected.hostnames[0] ?? "panel.example.com"}
+										value={hostname}
+										onChange={(e) => setHostname(e.target.value)}
+										// Which names this tunnel already has is information about this PC, not an explanation of the box.
+										helperText={detected.hostnames.length ? `Addresses on this tunnel: ${detected.hostnames.join(", ")}` : undefined}
+									/>
+								</TipRow>
 								{detected.hostnames[0] && !hostname && (
 									<Button size="small" sx={{ mt: 0.5 }} onClick={() => setHostname(detected.hostnames[0])}>
 										Use {detected.hostnames[0]}
@@ -358,16 +369,20 @@ function SetupDialog({ open, onClose, status, reload, onDone, onGuide }) {
 										Cloudflare's guide
 									</Link>
 								</Typography>
-								<TextField size="small" fullWidth label="Public address" placeholder="panel.example.com" value={hostname} onChange={(e) => setHostname(e.target.value)} sx={{ mb: 1.5 }} />
-								<TextField
-									size="small"
-									fullWidth
-									type="password"
-									autoComplete="off"
-									label={status.tokenSaved ? "Tunnel token (saved; paste to replace)" : "Tunnel token"}
-									value={token}
-									onChange={(e) => setToken(e.target.value)}
-								/>
+								<TipRow info="community.tunnelHostname" sx={{ mb: 1.5 }}>
+									<TextField size="small" fullWidth label="Public address" placeholder="panel.example.com" value={hostname} onChange={(e) => setHostname(e.target.value)} />
+								</TipRow>
+								<TipRow info="community.tunnelToken">
+									<TextField
+										size="small"
+										fullWidth
+										type="password"
+										autoComplete="off"
+										label={status.tokenSaved ? "Tunnel token (saved; paste to replace)" : "Tunnel token"}
+										value={token}
+										onChange={(e) => setToken(e.target.value)}
+									/>
+								</TipRow>
 							</Box>
 						)}
 					</>
