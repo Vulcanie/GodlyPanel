@@ -3,6 +3,7 @@ import { Alert, Box, Button, FormControlLabel, IconButton, InputAdornment, Radio
 import { alpha } from "@mui/material/styles";
 import { Folder as FolderIcon, Visibility as ShowIcon, VisibilityOff as HideIcon } from "@mui/icons-material";
 import FolderField from "./FolderField";
+import { flatWhenDisabled } from "./cardStyles";
 import AuthShell, { Brand } from "./AuthShell";
 import { formatBytes } from "../utils/format";
 import { api } from "../api/client";
@@ -143,7 +144,7 @@ function SetupWizard() {
 					</Box>
 				)}
 
-				<Button fullWidth size="large" variant="contained" sx={{ mt: 3, py: 1.2 }} disabled={!folderReady} onClick={() => setStep(2)}>
+				<Button fullWidth size="large" variant="contained" sx={{ mt: 3, py: 1.2, ...flatWhenDisabled }} disabled={!folderReady} onClick={() => setStep(2)}>
 					Continue
 				</Button>
 			</AuthShell>
@@ -212,7 +213,7 @@ function SetupWizard() {
 				helperText={mismatch ? "Passwords don't match." : " "}
 			/>
 
-			<Button fullWidth size="large" variant="contained" disabled={!canSubmit} onClick={submit} sx={{ py: 1.2 }}>
+			<Button fullWidth size="large" variant="contained" disabled={!canSubmit} onClick={submit} sx={{ py: 1.2, ...flatWhenDisabled }}>
 				{busy ? "Creating..." : "Create account"}
 			</Button>
 			<Button fullWidth sx={{ mt: 1 }} disabled={busy} onClick={() => setStep(1)}>

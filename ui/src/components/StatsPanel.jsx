@@ -1,7 +1,9 @@
 import React from "react";
 import { Alert, Box, Button, MenuItem, Skeleton, TextField, Typography } from "@mui/material";
+import { ShowChart as ChartIcon } from "@mui/icons-material";
 import { api } from "../api/client";
 import { LineChart, HourGrid, BarChart } from "./charts";
+import CompactEmpty from "./CompactEmpty";
 import { formatBytes } from "../utils/format";
 
 const RANGES = [
@@ -137,7 +139,14 @@ function StatsPanel({ serverName }) {
 					{metricsError}
 				</Alert>
 			)}
-			{metrics && (
+			{metrics && pts.length === 0 && (
+				<Frame sx={{ mb: 2 }}>
+					<CompactEmpty icon={<ChartIcon />} title="No readings in this range yet">
+						The panel records CPU, memory and players once a minute while the server runs. Charts appear here after it has been up for a little while.
+					</CompactEmpty>
+				</Frame>
+			)}
+			{metrics && pts.length > 0 && (
 				<>
 					<Frame sx={{ mb: 2 }}>
 						<LineChart title="Players" series={[{ label: "Peak", color: "warning.main", points: line("playersMax") }, { label: "Average", color: "secondary.main", points: line("players") }]} format={(v) => String(Math.round(v))} />

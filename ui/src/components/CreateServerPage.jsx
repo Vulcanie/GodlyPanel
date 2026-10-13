@@ -44,6 +44,7 @@ import PageHeader from "./ui/PageHeader";
 import SectionCard from "./ui/SectionCard";
 import EmptyState from "./ui/EmptyState";
 import { getGameInfo } from "../gameCatalog";
+import { flatWhenDisabled } from "./cardStyles";
 import { useNav } from "../NavContext";
 import { api } from "../api/client";
 
@@ -340,7 +341,8 @@ function CreateServerPage({ onBack, userRole }) {
 			try {
 				const data = await api.get(`/api/servers/create/${job.jobId}`);
 				if (!alive) return;
-				setJob(data);
+				// The server's answer does not repeat the job's id, and without it polling would stop after the first reply.
+				setJob({ ...data, jobId: job.jobId });
 				if (data.status) setStages((seen) => (seen.includes(data.status) ? seen : [...seen, data.status]));
 				if (data.status === "done" || data.status === "error") {
 					setSubmitting(false);
@@ -627,7 +629,7 @@ function CreateServerPage({ onBack, userRole }) {
 						<Button variant="outlined" onClick={chooseAnother} disabled={submitting}>
 							Choose a different game
 						</Button>
-						<Button variant="contained" size="large" onClick={() => submit(false)} disabled={!canCreate}>
+						<Button variant="contained" size="large" onClick={() => submit(false)} disabled={!canCreate} sx={flatWhenDisabled}>
 							{submitting ? "Creating..." : "Create Server"}
 						</Button>
 					</Box>
@@ -709,7 +711,7 @@ function JobProgress({ job, stages, onBack, onOpen, onTryAgain }) {
 							Go back to the form
 						</Button>
 					)}
-					<Button variant={job.status === "done" && onOpen ? "outlined" : "contained"} onClick={onBack}>
+					<Button variant={job.status === "error" || (job.status === "done" && onOpen) ? "outlined" : "contained"} onClick={onBack}>
 						Back to Dashboard
 					</Button>
 				</Box>

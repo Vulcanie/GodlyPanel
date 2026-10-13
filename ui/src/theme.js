@@ -60,7 +60,9 @@ export function buildTheme(mode) {
 			shadow: dark ? "0 10px 30px rgba(0,0,0,0.35)" : "0 10px 30px rgba(18,23,42,0.10)",
 			glow: (color) => `0 0 0 3px ${alpha(color, 0.18)}, 0 0 14px ${alpha(color, 0.55)}`,
 		},
-		shape: { borderRadius: 12 },
+		// The base unit for `borderRadius: n` in sx (n * 4px: 2 is 8px, 3 is 12px, 4 is 16px). Parts of the component library that read the
+		// base directly (Paper, toggle buttons) are given their own radius below.
+		shape: { borderRadius: 4 },
 		typography: {
 			fontFamily: FONT,
 			h4: { fontWeight: 700, letterSpacing: "-0.02em" },
@@ -82,7 +84,9 @@ export function buildTheme(mode) {
 					"@media (prefers-reduced-motion: reduce)": { "*, *::before, *::after": { animationDuration: "0.01ms !important", transitionDuration: "0.01ms !important" } },
 				},
 			},
-			MuiPaper: { styleOverrides: { root: { backgroundImage: "none" } } },
+			MuiPaper: { styleOverrides: { root: { backgroundImage: "none" }, rounded: { borderRadius: 12 } } },
+			MuiToggleButton: { styleOverrides: { root: { borderRadius: 8 } } },
+			MuiMenu: { styleOverrides: { paper: { borderRadius: 12, border: `1px solid ${line}` } } },
 			MuiCard: {
 				styleOverrides: {
 					root: { backgroundImage: "none", border: `1px solid ${line}`, borderRadius: 16, boxShadow: "none" },
@@ -93,7 +97,8 @@ export function buildTheme(mode) {
 				styleOverrides: {
 					root: { borderRadius: 10, transition: "transform .15s ease, box-shadow .15s ease, background-color .15s ease" },
 					contained: { "&:hover": { transform: "translateY(-1px)" } },
-					containedPrimary: { backgroundImage: `linear-gradient(135deg, ${primary} 0%, ${dark ? "#6a8bff" : "#4338ca"} 100%)`, "&:hover": { boxShadow: `0 6px 18px ${alpha(BRAND.violet, 0.4)}` } },
+					// The gradient must not stay behind a disabled button, or its label can't be read.
+					containedPrimary: { backgroundImage: `linear-gradient(135deg, ${primary} 0%, ${dark ? "#6a8bff" : "#4338ca"} 100%)`, "&:hover": { boxShadow: `0 6px 18px ${alpha(BRAND.violet, 0.4)}` }, "&.Mui-disabled": { backgroundImage: "none" } },
 					outlined: { borderColor: line },
 				},
 			},

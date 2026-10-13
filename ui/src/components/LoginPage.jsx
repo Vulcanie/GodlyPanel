@@ -3,6 +3,7 @@ import { Alert, Box, Button, CircularProgress, IconButton, InputAdornment, Link,
 import { Visibility as ShowIcon, VisibilityOff as HideIcon } from "@mui/icons-material";
 import { useSession } from "../SessionContext";
 import { api } from "../api/client";
+import { flatWhenDisabled } from "./cardStyles";
 import AuthShell, { Brand } from "./AuthShell";
 
 function LoginPage() {
@@ -123,7 +124,7 @@ function LoginPage() {
 					}}
 				/>
 
-				<Button fullWidth size="large" variant="contained" onClick={submit} disabled={busy || !ready} sx={{ py: 1.2 }}>
+				<Button fullWidth size="large" variant="contained" onClick={submit} disabled={busy || !ready} sx={{ py: 1.2, ...flatWhenDisabled }}>
 					{busy ? <CircularProgress size={22} color="inherit" /> : joining ? "Create my account" : "Sign in"}
 				</Button>
 			</Box>
