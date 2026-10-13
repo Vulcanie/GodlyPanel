@@ -41,6 +41,17 @@ function snapshot(fresh = false) {
 }
 
 /**
+ * Is `listed` (an image name as `tasklist` printed it) the program called `wanted`? Case does not matter, and a name cut to
+ * 25 characters counts, in case a Windows build cuts them. Shared with everything else that reads tasklist's output, so none of
+ * them compares the full name with a cut one (which never matches for a long name).
+ */
+export function sameImage(listed, wanted) {
+	const a = String(listed ?? "").trim().toLowerCase();
+	const b = String(wanted ?? "").trim().toLowerCase();
+	return a !== "" && (a === b || (b.length > 25 && a === b.slice(0, 25)));
+}
+
+/**
  * True if a process with this image name is running. Never throws.
  * `fresh` skips the shared snapshot, for a decision that mustn't act on
  * a reading up to a couple of seconds old.

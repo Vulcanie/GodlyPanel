@@ -24,7 +24,7 @@ export function Brand({ compact = false }) {
 				alt=""
 				width={compact ? 52 : 64}
 				height={compact ? 52 : 64}
-				sx={{ display: "block", mx: "auto", mb: 1.5, borderRadius: 4, boxShadow: (t) => `0 10px 30px ${alpha(t.palette.brand.violet, 0.45)}, 0 0 0 1px ${alpha("#ffffff", 0.08)}` }}
+				sx={{ display: "block", mx: "auto", mb: 1.5, borderRadius: "16px", boxShadow: (t) => `0 10px 30px ${alpha(t.palette.brand.violet, 0.45)}, 0 0 0 1px ${alpha("#ffffff", 0.08)}` }}
 			/>
 			<Typography component="div" sx={{ ...GRADIENT_TEXT, fontSize: compact ? 26 : 30, fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1.15 }}>
 				GodlyPanel
@@ -87,7 +87,7 @@ function AuthShell({ width = 440, children, footer }) {
 					width: "100%",
 					maxWidth: width,
 					p: { xs: 3, sm: 4 },
-					borderRadius: 5,
+					borderRadius: "24px",
 					border: 1,
 					borderColor: "divider",
 					backgroundColor: (t) => t.custom.glass,
@@ -95,7 +95,7 @@ function AuthShell({ width = 440, children, footer }) {
 					boxShadow: (t) => t.custom.shadow,
 					animation: "gp-rise .35s ease-out",
 					// A hairline of the brand gradient along the top edge.
-					"&::before": { content: '""', position: "absolute", left: 24, right: 24, top: 0, height: 2, borderRadius: 2, background: (t) => t.custom.gradient, opacity: 0.9 },
+					"&::before": { content: '""', position: "absolute", left: 24, right: 24, top: 0, height: 2, borderRadius: "2px", background: (t) => t.custom.gradient, opacity: 0.9 },
 				}}
 			>
 				{children}

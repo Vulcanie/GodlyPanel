@@ -14,7 +14,7 @@ function Steps({ step, total = 2 }) {
 		<Box sx={{ mb: 3 }} role="group" aria-label={`Step ${step} of ${total}`}>
 			<Box sx={{ display: "flex", gap: 0.75, mb: 0.75 }}>
 				{Array.from({ length: total }, (_, i) => (
-					<Box key={i} sx={{ flex: 1, height: 4, borderRadius: 2, background: (t) => (i < step ? t.custom.gradient : t.palette.divider), transition: "background .3s" }} />
+					<Box key={i} sx={{ flex: 1, height: 4, borderRadius: "2px", background: (t) => (i < step ? t.custom.gradient : t.palette.divider), transition: "background .3s" }} />
 				))}
 			</Box>
 			<Typography variant="caption" sx={{ color: "text.secondary" }}>
@@ -31,7 +31,7 @@ function Choice({ value, selected, title, children }) {
 			sx={{
 				border: 1,
 				borderColor: selected ? "primary.main" : "divider",
-				borderRadius: 3,
+				borderRadius: "12px",
 				px: 1.5,
 				py: 0.75,
 				mb: 1.25,

@@ -5,6 +5,7 @@ import { api } from "../api/client";
 import { formatBytes } from "../utils/format";
 import { useOperation, operationLabel } from "../OperationsContext";
 import InfoTip from "./InfoTip";
+import ConfirmDialog from "./ui/ConfirmDialog";
 
 const ACCEPT_HINT = { ".jar": ".jar", ".pak": ".pak", ".dll": ".dll", archive: ".zip" };
 
@@ -16,6 +17,7 @@ function ModsPanel({ serverName, serverStatus }) {
 	const [notice, setNotice] = React.useState(null);
 	const [busy, setBusy] = React.useState(false);
 	const [text, setText] = React.useState("");
+	const [removing, setRemoving] = React.useState(null);
 	const operation = useOperation(serverName);
 	const fileInput = React.useRef(null);
 
@@ -177,7 +179,7 @@ function ModsPanel({ serverName, serverStatus }) {
 							)}
 							<Tooltip title="Remove">
 								<span>
-									<IconButton size="small" disabled={locked} onClick={() => window.confirm(`Remove ${m.name}?`) && run(() => api.post(`${base}/remove`, { id: m.id }), `Removed ${m.name}.`)}>
+									<IconButton size="small" disabled={locked} onClick={() => setRemoving(m)}>
 										<DeleteIcon fontSize="small" />
 									</IconButton>
 								</span>
@@ -186,6 +188,21 @@ function ModsPanel({ serverName, serverStatus }) {
 					))
 				)}
 			</Paper>
+
+			<ConfirmDialog
+				open={Boolean(removing)}
+				title={`Remove ${removing?.name ?? "this mod"}?`}
+				confirmLabel="Remove it"
+				color="error"
+				onClose={() => setRemoving(null)}
+				onConfirm={() => {
+					const mod = removing;
+					setRemoving(null);
+					run(() => api.post(`${base}/remove`, { id: mod.id }), `Removed ${mod.name}.`);
+				}}
+			>
+				It is taken off the server. {removing?.type === "folder" ? "The folder is deleted from disk." : "Its file is deleted from disk."}
+			</ConfirmDialog>
 		</Box>
 	);
 }

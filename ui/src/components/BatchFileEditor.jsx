@@ -163,13 +163,13 @@ export default function BatchFileEditor({ serverName, onBack }) {
 			)}
 
 			{loading ? (
-				<Skeleton variant="rounded" height={380} sx={{ borderRadius: 3 }} />
+				<Skeleton variant="rounded" height={380} sx={{ borderRadius: "12px" }} />
 			) : loadFailed ? null : (
 				<Box
 					sx={{
 						border: 1,
 						borderColor: dirty ? "warning.main" : "divider",
-						borderRadius: 3,
+						borderRadius: "12px",
 						overflow: "hidden",
 						bgcolor: "background.paper",
 						transition: "border-color .2s",

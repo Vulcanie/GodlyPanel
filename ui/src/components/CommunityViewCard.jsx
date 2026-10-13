@@ -1,4 +1,5 @@
 import React from "react";
+import { copyToClipboard } from "../utils/clipboard";
 import {
 	Alert,
 	Box,
@@ -80,15 +81,13 @@ function CommunityViewCard() {
 			setError(e.message);
 		}
 	};
-	const copy = async () => {
-		try {
-			await navigator.clipboard.writeText(status.publicUrl);
-			setCopied(true);
-			setTimeout(() => setCopied(false), 2000);
-		} catch {
-			setError("Couldn't copy to the clipboard. Select the address and copy it yourself.");
-		}
-	};
+	const copy = () =>
+		copyToClipboard(status.publicUrl, (result) => {
+			if (result === "Copied!") {
+				setCopied(true);
+				setTimeout(() => setCopied(false), 2000);
+			} else setError("Couldn't copy to the clipboard. Select the address and copy it yourself.");
+		});
 
 	return (
 		<SectionCard

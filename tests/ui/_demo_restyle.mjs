@@ -74,6 +74,11 @@ try {
 	await page.waitForLoadState("networkidle");
 	await page.waitForTimeout(1500);
 	await shot("dashboard");
+	if (process.env.MOCKJOB) {
+		let n = 0;
+		await page.route("**/api/servers", (route) => route.request().method() === "POST" ? route.fulfill({ json: { success: true, jobId: "j1" } }) : route.continue());
+		await page.route("**/api/servers/create/j1", (route) => { n++; const st = process.env.MOCKJOB === "err" ? (n > 1 ? "error" : "installing") : n > 1 ? "done" : "installing"; route.fulfill({ json: { status: st, serverName: "My New Server", error: st === "error" ? "SteamCMD couldn't install the game: no disk space" : undefined, warnings: [] } }); });
+	}
 	const steps = (process.env.STEPS || "").split(",").filter(Boolean);
 	for (const step of steps) {
 		const [kind, a, b] = step.split(":");
@@ -87,6 +92,7 @@ try {
 		if (kind === "role") { await page.getByRole("button", { name: a.replace(/_/g, " ") }).first().click(); await page.waitForTimeout(1200); await shot(`role-${a}`, true); }
 		if (kind === "type") { await page.getByRole("textbox").first().fill(a.replace(/_/g, " ")); await page.waitForTimeout(500); await shot(`type-${a}`, true); }
 		if (kind === "key") { await page.keyboard.press(a.replace(/_/g, "+")); await page.waitForTimeout(800); await shot(`key-${a}`, true); }
+		if (kind === "name") { await page.getByLabel(/^Server Name/).fill("My New Server"); await page.getByRole("button", { name: /^Create Server$/ }).click(); await page.waitForTimeout(500); await shot("creating"); await page.waitForTimeout(9000); await shot("creating2"); await page.waitForTimeout(5000); await shot("creating3"); }
 		if (kind === "width") { await page.setViewportSize({ width: Number(a), height: 900 }); await page.waitForTimeout(500); await shot(`w${a}`); }
 	}
 } catch (e) { console.log("ERR", e.message); await page.screenshot({ path: path.join(out, "error.png") }); }

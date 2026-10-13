@@ -58,8 +58,8 @@ function PlayersPanel({ serverName }) {
 			</Alert>
 		) : (
 			<Box aria-busy="true" aria-label="Loading players">
-				<Skeleton variant="rounded" height={96} sx={{ mb: 2, borderRadius: 4 }} />
-				<Skeleton variant="rounded" height={220} sx={{ borderRadius: 4 }} />
+				<Skeleton variant="rounded" height={96} sx={{ mb: 2, borderRadius: "16px" }} />
+				<Skeleton variant="rounded" height={220} sx={{ borderRadius: "16px" }} />
 			</Box>
 		);
 	}
@@ -84,7 +84,7 @@ function PlayersPanel({ serverName }) {
 				{online.length === 0 ? (
 					<Typography variant="body2" sx={{ color: "text.secondary" }}>
 						{unnamed > 0
-							? `${unnamed} player${unnamed === 1 ? " is" : "s are"} on, but this game doesn't say who. (Valheim only gives names through its log file: the Launch options on the Config tab can switch -logFile on.)`
+							? `${unnamed} player${unnamed === 1 ? " is" : "s are"} on, but this game doesn't say who. (Valheim only gives names through its log file: the Launch options on the Settings tab can switch -logFile on.)`
 							: "Nobody right now. (Only games that report their players can be tracked.)"}
 					</Typography>
 				) : (

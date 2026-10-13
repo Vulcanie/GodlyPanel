@@ -169,9 +169,9 @@ function ActivityPanel({ serverName = null, limit = PAGE }) {
 			</Alert>
 		) : (
 			<Box aria-busy="true" aria-label="Loading activity">
-				<Skeleton variant="rounded" height={40} sx={{ mb: 1.5, borderRadius: 3 }} />
+				<Skeleton variant="rounded" height={40} sx={{ mb: 1.5, borderRadius: "12px" }} />
 				{[0, 1, 2, 3, 4].map((i) => (
-					<Skeleton key={i} variant="rounded" height={46} sx={{ mb: 0.75, borderRadius: 2 }} />
+					<Skeleton key={i} variant="rounded" height={46} sx={{ mb: 0.75, borderRadius: "8px" }} />
 				))}
 			</Box>
 		);
@@ -259,7 +259,7 @@ function ActivityPanel({ serverName = null, limit = PAGE }) {
 					Try fewer filters, a different word, or a longer time range.
 				</CompactEmpty>
 			) : (
-				<Box sx={{ border: 1, borderColor: "divider", borderRadius: 3, overflow: "hidden", bgcolor: "background.paper" }}>
+				<Box sx={{ border: 1, borderColor: "divider", borderRadius: "12px", overflow: "hidden", bgcolor: "background.paper" }}>
 					{result.events.map((e, i) => (
 						<Box
 							key={`${e.t}-${i}`}

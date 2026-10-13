@@ -195,13 +195,15 @@ function tar() {
 	const require = createRequire(import.meta.url);
 	const AdmZip = require(path.resolve(import.meta.dirname, "..", "..", "..", "node_modules", "adm-zip"));
 	const has = (flag) => args.includes(flag);
-	const file = args[args.indexOf("-f") + 1] ?? args[args.indexOf("-tf") + 1] ?? args[args.indexOf("-xf") + 1];
+	const file = args[0] === "-tf" || args[0] === "-xf" ? args[1] : args[args.indexOf("-f") + 1];
 
 	if (has("-c")) {
 		const zip = new AdmZip();
 		const exclude = [];
 		for (let i = 0; i < args.length; i += 1) if (args[i] === "--exclude") exclude.push(args[i + 1].replaceAll("\\", "/"));
-		const skipped = (name) => exclude.some((e) => name === e || name.startsWith(`${e}/`));
+		// Like bsdtar, a pattern is a wildcard (* matches anything, slashes included) that may match from any folder level.
+		const patterns = exclude.map((e) => new RegExp(`^(.*/)?${e.replace(/[.+^${}()|\\]/g, "\\$&").replaceAll("*", ".*").replaceAll("?", ".")}(/.*)?$`));
+		const skipped = (name) => patterns.some((re) => re.test(name));
 		const add = (full, name) => {
 			if (skipped(name)) return;
 			if (fs.statSync(full).isDirectory()) {

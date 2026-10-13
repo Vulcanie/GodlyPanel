@@ -39,7 +39,7 @@ function SetupChecklist({ onOpenSettings, onCreateServer }) {
 	const go = (fix) => (fix?.to === "create" ? onCreateServer?.() : fix?.to === "settings" ? onOpenSettings?.() : undefined);
 
 	return (
-		<Box sx={{ position: "relative", overflow: "hidden", p: 2, pl: 2.5, mb: 2, borderRadius: 4, border: 1, borderColor: "divider", bgcolor: "background.paper" }}>
+		<Box sx={{ position: "relative", overflow: "hidden", p: 2, pl: 2.5, mb: 2, borderRadius: "16px", border: 1, borderColor: "divider", bgcolor: "background.paper" }}>
 			<Box aria-hidden sx={{ position: "absolute", inset: "0 auto 0 0", width: 3, background: (t) => t.custom.gradient }} />
 			<Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
 				<Box sx={{ display: "flex", alignItems: "center", gap: 1, color: "primary.main" }}>
@@ -48,7 +48,7 @@ function SetupChecklist({ onOpenSettings, onCreateServer }) {
 						Setup: {data.done} of {data.total} done
 					</Typography>
 				</Box>
-				<LinearProgress variant="determinate" value={Math.min(100, (data.done / data.total) * 100)} sx={{ flex: 1, minWidth: 120, height: 6, borderRadius: 3, "& .MuiLinearProgress-bar": { backgroundImage: (t) => t.custom.gradient, borderRadius: 3 } }} />
+				<LinearProgress variant="determinate" value={Math.min(100, (data.done / data.total) * 100)} sx={{ flex: 1, minWidth: 120, height: 6, borderRadius: "3px", "& .MuiLinearProgress-bar": { backgroundImage: (t) => t.custom.gradient, borderRadius: "3px" } }} />
 				<Button size="small" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
 					{open ? "Hide" : "Show"}
 				</Button>

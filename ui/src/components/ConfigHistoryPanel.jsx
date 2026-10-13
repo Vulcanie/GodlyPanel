@@ -145,6 +145,10 @@ function ConfigHistoryPanel({ serverName, serverStatus }) {
 							<Box
 								key={v.id}
 								onClick={() => setPicked(v)}
+								onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), setPicked(v))}
+								role="button"
+								tabIndex={0}
+								aria-pressed={picked?.id === v.id}
 								sx={{
 									px: 2,
 									py: 1,

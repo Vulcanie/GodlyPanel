@@ -117,7 +117,7 @@ export function LineChart({ series, height = 150, unit = "", max = null, title, 
 				</Typography>
 			)}
 			{all.length === 0 ? (
-				<Box sx={{ height, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 2, border: "1px dashed", borderColor: "divider" }}>
+				<Box sx={{ height, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "8px", border: "1px dashed", borderColor: "divider" }}>
 					<Typography variant="caption" sx={{ color: "text.secondary" }}>
 						No readings in this range yet.
 					</Typography>
@@ -182,7 +182,7 @@ export function LineChart({ series, height = 150, unit = "", max = null, title, 
 						boxShadow: (t) => t.custom.shadow,
 						px: 1,
 						py: 0.5,
-						borderRadius: 1.5,
+						borderRadius: "8px",
 						pointerEvents: "none",
 					}}
 				>
