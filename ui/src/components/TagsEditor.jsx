@@ -33,9 +33,7 @@ function TagsEditor({ serverName, tags = [] }) {
 
 	return (
 		<Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, alignItems: "center", mb: 1.5 }}>
-			<Typography variant="caption" sx={{ color: "text.secondary" }}>
-				Tags:
-			</Typography>
+			
 			{current.map((tag) => (
 				<Chip key={tag} size="small" label={tag} onDelete={() => save(current.filter((t) => t !== tag))} />
 			))}

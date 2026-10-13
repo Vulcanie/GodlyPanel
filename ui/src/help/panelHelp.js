@@ -1,0 +1,226 @@
+// The explanations for the panel's own settings and tools (everything except a game's settings, which are explained on the
+// setting itself; see configCatalog.js).
+//
+// One entry per control. `text` is the short version shown when you hover the (i); `details` is the longer "how do I use this?"
+// that goes in the guide the (i) links to. The guides in docs/ are generated from this file (npm run build:guides), so a tooltip
+// and the page it links to can't disagree, and a test fails when a control has no entry or a guide is out of date.
+//
+// [id, section, title, text, details]
+//   id       the setting's path (the panel's Settings page uses the same name as the config file) or a name for a tool's control
+//   section  the heading it is listed under in the guide
+//   title    the heading of its own entry in the guide: also what the link jumps to
+
+/** @type {Record<string, Array<[string, string, string, string, string?]>>} */
+const GUIDE_ENTRIES = {
+	// ─────────────────────────────── Settings → (the panel) ───────────────────────────────
+	settings: [
+		// Access
+		["http.port", "Access", "Web port", "The port the panel is served on. Changing it restarts the panel's background service.", "This is the number after the colon in the address you open, for example the 8765 in `http://192.168.1.20:8765`. Pick a number from 1024 to 65535 that nothing else on this PC uses. After you save, restart the panel from the tray menu (Restart API) and open it at the new address. Bookmarks and any tunnel pointing at the old port need updating."],
+		["http.bindAll", "Access", "Allow access from your network", "Off means only this computer can open the panel.", "With this on, other devices on your home or community network can open the panel at this PC's address, and they still have to sign in. Turn it off if the panel should only ever be used on the PC it runs on. This never exposes the panel to the internet: it refuses addresses that are not local (see the Security guide). Takes effect after a restart."],
+		["network.publicAddress", "Access", "Public address of this PC", "Your public IP address or a domain name that points at it. Each server's join address is shown as this plus its game port.", "Friends outside your home network connect to your public address, not the local one. Put either your public IP (search for \"what is my IP\") or a domain name here, without a port: `203.0.113.9` or `play.example.com`. The dashboard and Discord then show `203.0.113.9:7777` for a server on port 7777. Leave it blank to show nothing of the kind. It does not open any ports: see the Ports and firewall guide for that."],
+		["network.allowCgnat", "Access", "Allow mesh VPN addresses", "Tailscale and ZeroTier use the 100.64.0.0/10 range. Turn off to allow only ordinary local addresses.", "Leave this on if you reach the panel over Tailscale or ZeroTier. Turn it off only if you want the panel to answer nothing but ordinary home-network addresses (192.168.x.x, 10.x.x.x and 172.16-31.x.x)."],
+		["network.allowLinkLocal", "Access", "Allow link-local addresses", "Used when two machines are connected directly with no router.", "Link-local addresses (169.254.x.x) appear when two computers are joined by a cable with no router handing out addresses. Almost nobody needs them; leaving this on is harmless on a normal network."],
+		["network.extraAllowedCidrs", "Access", "Additional allowed networks", "Extra IP ranges to accept, such as 10.8.0.0/24 for a VPN.", "The panel only answers local addresses. If your VPN gives out addresses the panel does not recognise as local, list its range here in CIDR form (`10.8.0.0/24`), separated by commas. Do not list a range you do not control."],
+		["network.extraAllowedHosts", "Access", "Additional allowed names", "Names you type in the address bar to reach the panel, besides its IP address and the computer's own name.", "To protect against a website tricking your browser into talking to the panel, it only answers when opened by an IP address, `localhost` or this PC's own name. If your router gives the PC another name (`gamepc.lan`), add it here, separated by commas."],
+
+		// Folders
+		["paths.serversRoot", "Folders", "Server install folder", "Where new game servers are installed. Blank uses a folder inside your data directory.", "Games are big, so choose a drive with plenty of room (an SSD is best). This only affects servers you create from now on: changing it never moves a server that already exists. Each server gets its own folder inside it."],
+		["paths.steamCmdPath", "Folders", "SteamCMD location", "Blank downloads and manages SteamCMD automatically.", "SteamCMD is Valve's tool for installing and updating game servers. Leave this blank and the panel downloads it for you. Set it only if you already have a copy you want to reuse: give the full path to `steamcmd.exe`."],
+		["paths.jcmdPath", "Folders", "jcmd location", "Part of a JDK; used for Minecraft heap stats. Blank uses jcmd from PATH.", "Only matters for Minecraft servers: the panel runs `jcmd` to read how much of the Java heap the server is using. If you installed a JDK in an unusual place, give the full path to `jcmd.exe`."],
+
+		// Ports
+		["portAllocation.gameStart", "Ports for new servers", "Game ports start at", "A new server's game port, the port after it and its query port are kept together, starting here.", "When you create a server the panel suggests free ports so you do not have to pick them. The game port, the one after it and the query port are handed out as a set. Setting a start of 8000 and a step of 3 gives 8000-8002 to the first server, 8003-8005 to the next, and so on. Only affects servers created from now on."],
+		["portAllocation.gameStep", "Ports for new servers", "Game ports move by", "How far the next server's game ports are from the last one. Negative counts down; 0 is treated as 1.", "Use 3 or more so servers do not overlap (most games use the game port plus one or two more). A negative number counts down instead of up."],
+		["portAllocation.rconStart", "Ports for new servers", "RCON ports start at", "A new server's RCON (and telnet) port starts here.", "RCON is the remote console the panel uses to save and stop games. These ports are only used on this PC, never opened to the internet, so they are kept apart from the game ports."],
+		["portAllocation.rconStep", "Ports for new servers", "RCON ports move by", "How far the next RCON port is from the last one. Negative counts down; 0 is treated as 1.", "The default of -1 counts down from the start (26000, 25999, ...), which keeps these well away from game ports counting up."],
+		["portAllocation.reservedPorts", "Ports for new servers", "Reserved ports", "Ports that should never be suggested for a new server.", "List ports that other programs on this PC use (a web server on 8080, say), separated by commas. The panel skips them when suggesting ports."],
+
+		// Refresh rates
+		["polling.serversMs", "Refresh rates", "Server status interval (ms)", "How often each server is checked for online/offline, player count and ping.", "Milliseconds between checks: 7500 is every 7.5 seconds. Lower is more up to date but asks every game more often; raising it is the first thing to try on a slow PC. Between 2000 and 120000."],
+		["polling.systemStatsMs", "Refresh rates", "System stats interval (ms)", "How often the whole PC's CPU and memory readings are refreshed.", "These readings are cheap. 10000 (10 seconds) is a good balance."],
+		["polling.serverStatsMs", "Refresh rates", "Per-server CPU/RAM interval (ms)", "How often each server's own CPU and memory use is read.", "This asks Windows about every game process, which is heavier than the other checks. 15000 is a good balance; raise it on a low-powered PC."],
+		["polling.buildCheckMs", "Refresh rates", "Steam update check interval (ms)", "How often Steam is asked whether a game has a new version.", "Used only when \"Check Steam for game updates\" is on. 900000 is every 15 minutes."],
+		["polling.uploadSweepMs", "Refresh rates", "Abandoned upload cleanup interval (ms)", "How often leftovers from unfinished uploads (like modpack zips) are removed.", "Uploads that were never used are deleted after a day. 3600000 checks hourly; there is rarely a reason to change this."],
+		["polling.enableServerStats", "Refresh rates", "Collect per-server CPU/RAM", "The heaviest recurring check. Turn off on a low-powered machine.", "Turning this off removes the CPU/RAM figures from the dashboard and the per-server charts, but also stops the panel asking Windows about every game process every few seconds."],
+		["polling.enableHeapStats", "Refresh rates", "Collect Minecraft heap usage", "Needs a JDK installed. Ignored if jcmd isn't available.", "Shows how full a Minecraft server's Java memory is. Without a JDK (not just a JRE) there is nothing to read, so it quietly does nothing."],
+		["polling.enableBuildCheck", "Refresh rates", "Check Steam for game updates", "When on, servers with auto-update enabled will update and restart themselves.", "Off by default because an update stops the server. Turn it on, then switch on auto-update for each server that should follow Steam (on its page). The panel warns players in game before it restarts the server where the game has a way to do so."],
+
+		// Storage
+		["storage.quotaBytes", "Storage", "Storage limit (bytes)", "0 means no limit. Applies to your servers and app data combined.", "A size in bytes: 500 GB is 536870912000. Useful if the drive is shared with other things. With no limit nothing is checked."],
+		["storage.enforce", "Storage", "When the limit is reached", "Off ignores the limit, Warn shows it on the dashboard, Block also refuses new installs. Starting a server is never blocked.", "Pick Warn to be told early and Block to stop new servers from filling the drive. Existing servers keep running either way."],
+		["storage.scanIntervalMs", "Storage", "Storage recheck interval (ms)", "How often the size of every server folder is measured.", "Measuring walks every file, so it runs in the background, hourly by default (3600000). Raise it if you have huge installs on a slow disk."],
+		["storage.scanConcurrency", "Storage", "Folders scanned at once", "How many folders are measured in parallel.", "1 or 2 is gentle on the disk. Higher is faster but can make servers lag while a scan runs."],
+
+		// New servers
+		["servers.defaultRconPasswordMode", "New servers", "RCON password for new servers", "Generate gives each server its own random password; Fixed reuses one you set under Keys and webhooks.", "Generating is safer: one leaked password opens only one server. Choose Fixed only if you have other tools that need the same RCON password everywhere, then set it under Keys and webhooks."],
+		["servers.defaultWindowMode", "New servers", "Server windows", "Minimized keeps a taskbar entry, Hidden hides the window at once, No window starts the game directly with no window at all.", "The default for new servers; each server can override it on its own page. Hidden works with any start script. No window is the tidiest (the panel shows the live console itself) but skips whatever else a start script does, such as a SteamCMD update check."],
+
+		// Discord
+		["discord.enabled", "Discord", "Post status to Discord", "Posts one status message that updates in place, and update announcements.", "Needs the status webhook set under Keys and webhooks. The message lists each server's state, join password, CPU and memory. Because the join password appears in it, only use a private channel."],
+		["discord.adminRoleId", "Discord", "Discord admin role mention", "A role to mention in status posts. Optional.", "Paste the role as `<@&123456789>` or just the number. In Discord, turn on Developer Mode, right-click the role and choose Copy Role ID. The same role is who may start, stop and restart servers through the bot."],
+		["discord.botEnabled", "Discord", "Discord bot (slash commands)", "Lets people in your Discord server see servers with /servers, /status and /players; the admin role can start, stop, restart and back them up.", "You create the bot yourself in Discord's developer portal, then fill in its token (under Keys and webhooks), application ID and your server's ID. Anyone in that Discord server can look; only the admin role can change anything. With no admin role chosen nothing can be changed from Discord."],
+		["discord.botApplicationId", "Discord", "Discord bot application ID", "From the Discord developer portal: your application's General Information page.", "A long number. It is used to register the slash commands and to build the link that invites the bot to your server."],
+		["discord.botGuildId", "Discord", "Discord server (guild) ID", "Turn on Developer Mode in Discord, then right-click your server and choose Copy Server ID. The bot only answers there.", "The bot ignores every other Discord server and all private messages."],
+
+		// Backups
+		["backups.dir", "Backups", "Backup folder", "Where backups are stored. Blank uses a folder inside your data directory. Put it on another drive to survive a disk failure.", "Backups on the same drive as the servers do not help if that drive dies. Pick a folder on a different drive, or add an off-site copy (Copies of backups off this PC). Changing it does not move old backups."],
+		["backups.keepCount", "Backups", "Scheduled backups to keep", "Per server. Older scheduled backups are deleted; ones you made by hand never are.", "10 means the ten newest scheduled backups of each server are kept. A server can override this on its own Backups tab."],
+		["backups.keepDays", "Backups", "Delete scheduled backups older than (days)", "0 keeps them until the count above pushes them out.", "Use this to stop old backups piling up, for example 14 keeps two weeks of scheduled backups."],
+		["backups.minFreeGB", "Backups", "Refuse backups below this much free space (GB)", "A backup that would leave the drive with less than this is not started.", "Stops a backup from filling the drive and taking the servers down with it. The default of 2 GB is a sensible floor."],
+
+		// Startup
+		["startup.openAtLogin", "Starting with Windows", "Start GodlyPanel when I sign in to Windows", "The panel starts by itself when you sign in.", "Combine with each server's \"Start it when GodlyPanel starts\" (Automation tab) to bring your servers up after the PC restarts."],
+		["startup.startHidden", "Starting with Windows", "Start in the tray, without opening the window", "Starts quietly in the system tray instead of opening the panel's window.", "Open it again from the tray icon. Only affects the panel's own window, not your servers."],
+		["startup.autoStartDelaySec", "Starting with Windows", "Delay between starting servers at launch (seconds)", "For servers set to start with the panel. Spaces them apart so they do not all load at once.", "Game servers are heavy to start. 20 seconds between each is gentle on most PCs; use more on a slow disk."],
+
+		// Metrics
+		["metrics.enabled", "Charts and history", "Keep a history of CPU, memory and players", "Stores readings for each server's charts: one point a minute for a week and one an hour for three months.", "It is a few megabytes at most. Turn it off to stop recording; existing history stays until it ages out."],
+		["metrics.sampleSec", "Charts and history", "Seconds between readings", "How often a reading is taken for the charts.", "30 is plenty; shorter intervals do not add much to charts that are averaged per minute."],
+
+		// Updates
+		["updates.check", "Panel updates", "Check for new versions of GodlyPanel", "Asks GitHub's public releases list every few hours. Nothing about you is sent. It never installs anything by itself.", "When a new version exists a banner appears for administrators. Installing is always your choice, from the Panel version and updates section."],
+		["updates.includePrereleases", "Panel updates", "Include pre-release (alpha/beta) versions", "Also offers alpha and beta releases.", "While GodlyPanel itself is in alpha every release is a pre-release, so leave this on unless you want to wait for a stable one."],
+		["updates.repo", "Panel updates", "Where releases are published", "owner/name on GitHub.", "Leave as it is unless you run your own fork. Updates are only installed if their manifest is signed with the key built into the app."],
+
+		// Notifications
+		["notifications.desktop", "Notifications", "Show Windows notifications", "A pop-up on the PC for the events below.", "Webhook (Discord, Slack and similar) and email alerts are set up with their own addresses under Keys and webhooks and Email."],
+		["notifications.events", "Notifications", "Events to tell you about", "Tick the events you want a notification for.", "Applies to every way of being notified (Windows, webhook and email). Crashes, failed backups and low disk space are on by default; \"A backup finished\" is off because it is noisy."],
+		["notifications.destinationStaleHours", "Notifications", "Warn when a backup hasn't reached its off-site destination after (hours, 0 = never)", "A backup this old that still isn't copied to an off-site destination triggers a warning.", "Catches an unplugged drive, a full share or a revoked cloud key. You are reminded daily while it lasts and told when it has caught up."],
+		["notifications.diskLowGB", "Notifications", "Warn when a drive has less free space than (GB)", "0 turns the low-space warning off.", "Applies to every drive that holds a server or backups."],
+		["notifications.email.enabled", "Notifications", "Send email", "Also email the events you picked.", "Fill in the mail server, account and addresses below, and the account password under Keys and webhooks."],
+		["notifications.email.host", "Notifications", "Mail server", "The address of your mail provider's SMTP server.", "For example `smtp.gmail.com` or `smtp.office365.com`. Your provider's help pages list it."],
+		["notifications.email.port", "Notifications", "Mail server port", "587 for most providers (STARTTLS), 465 for TLS from the start.", "If you tick \"Use TLS from the start\" use 465; otherwise 587."],
+		["notifications.email.secure", "Notifications", "Use TLS from the start (port 465)", "Turn on for port 465. Leave off for port 587.", "Wrong combinations show up as a connection error when you send a test."],
+		["notifications.email.user", "Notifications", "Mail account name", "The login for the mail server, usually your full email address.", "Many providers require an app password rather than your normal password."],
+		["notifications.email.from", "Notifications", "Send from", "The sender address on the emails.", "Some providers only allow the account's own address."],
+		["notifications.email.to", "Notifications", "Send to", "Who receives the emails.", "One address, or several separated by commas."],
+
+		// Recovery
+		["recovery.graceSec", "Crash recovery", "Seconds down before it counts as a crash", "A server must stay down this long before the panel treats it as crashed.", "Avoids reacting to a blip such as a server restarting itself on purpose. 45 seconds suits most games."],
+		["recovery.maxRestarts", "Crash recovery", "Automatic restarts before giving up", "Within the window below. Stops a server that crashes every time it starts from restarting forever.", "When it gives up you are notified. The count resets when the window passes or you start the server yourself."],
+		["recovery.windowMin", "Crash recovery", "Window for counting restarts (minutes)", "The period the restart limit applies to.", "With 3 restarts in 15 minutes, a fourth crash inside 15 minutes makes the panel stop trying."],
+		["recovery.startupGraceMin", "Crash recovery", "Minutes a restarted server gets to come online", "A restarted server is given this long to load before it is judged again.", "Big worlds take a while: raise this if a slow game is restarted again before it finishes loading."],
+
+		// Secrets
+		["secret.discordWebhookUrl", "Keys and webhooks", "Discord status webhook", "The webhook address the status message is posted to.", "In Discord: channel settings, Integrations, Webhooks, New Webhook, Copy Webhook URL. Stored apart from the other settings so a settings file is safe to share."],
+		["secret.discordBotToken", "Keys and webhooks", "Discord bot token", "The bot's secret token from the Discord developer portal.", "Anyone with the token controls your bot, so never share it. Leave the box blank to keep the saved one."],
+		["secret.discordUpdateWebhookUrl", "Keys and webhooks", "Discord update webhook", "A webhook where new panel versions are announced.", "Optional. Useful if you want a community channel to see when the panel is updated."],
+		["secret.curseForgeApiKey", "Keys and webhooks", "CurseForge API key", "Needed to download mods when you create a modded Minecraft server.", "Get a free key at console.curseforge.com. It is only used while a modpack is being installed."],
+		["secret.fixedRconPassword", "Keys and webhooks", "Fixed RCON password", "The one RCON password used when new servers are set to Fixed.", "Only used when \"RCON password for new servers\" is Fixed. Pick something long: it opens each server's console."],
+		["secret.alertWebhookUrl", "Keys and webhooks", "Alert webhook (Discord, Slack, ...)", "Where the events you picked are posted.", "Any webhook that accepts a simple JSON message works. Discord and Slack are the usual choices."],
+		["secret.auditWebhookUrl", "Keys and webhooks", "Audit webhook", "Posts every sign-in and change to a private channel outside this PC as it happens.", "Gives you a record that someone with access to this PC cannot quietly erase. Use a private channel: it names who did what."],
+		["secret.smtpPassword", "Keys and webhooks", "Mail account password", "The password (or app password) for the mail account.", "Needed only if Send email is on."],
+
+		// Cards
+		["card.steamcmd", "SteamCMD", "SteamCMD", "Valve's tool for installing and updating game servers.", "It is not bundled with the panel. The button downloads it once from Valve. Without it, creating or updating Steam game servers will not work."],
+		["card.storage", "Storage", "Storage use", "How much disk space your servers use.", "Measured in the background, so a brand-new server says \"not measured yet\" for a while. Recalculate re-measures everything now."],
+		["card.panelUpdate", "Panel updates", "Panel version and updates", "Your version, and whether a newer one exists.", "Downloading checks the file's signature before anything is installed. Your game servers keep running while the panel restarts, and the old version is put back if the new one will not start."],
+		["card.remoteAccess", "Remote access", "Opening the panel from another device", "The addresses other devices can use, including Tailscale and other mesh VPNs.", "On the same network, open the address shown. From elsewhere, a mesh VPN such as Tailscale is the safest option because it opens nothing on your router."],
+		["card.communityView", "Community view", "Community view (a public address)", "A small guest-only page for friends, published through a Cloudflare Tunnel.", "Nothing is opened on your router and friends install nothing. Guests see what is running and how to join; they cannot change anything or see passwords."],
+		["community.staffSignIn", "Community view", "Let administrators and moderators sign in here too", "Lets staff sign in on the public address as well as your network.", "Off by default. Turning it on puts the sign-in for accounts that can control this PC in front of the internet. Use it only for people who are never at home, and prefer a VPN. Every outside staff sign-in is recorded in Activity."],
+		["community.tunnelHostname", "Community view", "Public address", "The name your tunnel answers to, such as panel.example.com.", "It must be routed to this tunnel in Cloudflare. A quick tunnel without your own domain gets a temporary address instead."],
+		["community.tunnelToken", "Community view", "Tunnel token", "The token from your tunnel in Cloudflare's dashboard.", "Stored privately and handed to the tunnel program through its environment, never on a command line."],
+		["card.communityAccess", "Community access", "Community access", "The code friends use to make their own guest account.", "Guests can look but not change anything. The code can be switched off, replaced, set to expire and capped, so you can open signups for a weekend and close them again."],
+		["community.codeEnabled", "Community access", "Anyone with the code can make a guest account", "Turns the community code on or off.", "Off stops new accounts being created; existing guests keep their access."],
+		["community.codeExpiry", "Community access", "Expiry", "When the code stops working.", "Pick a short life for a one-off event. Keep the current setting leaves it as it is."],
+		["community.codeMaxUses", "Community access", "Most people", "How many accounts the code can make. Blank means no limit.", "Handy for a fixed group: a limit of 10 closes signups after ten people have joined."],
+		["card.discordBot", "Discord", "Discord bot", "Slash commands in your Discord server.", "See the Discord settings above for the IDs you need and Keys and webhooks for the token. The card shows whether the bot is connected and gives the invite link."],
+		["card.backupDestinations", "Copies of backups off this PC", "Copies of backups off this PC", "Copy every backup to another drive, a network share, a cloud-sync folder or S3-compatible storage.", "A backup on the same drive as the server is lost with it. Add a destination and each new backup is copied in the background; a failed copy is shown and retried."],
+		["dest.name", "Copies of backups off this PC", "Destination name", "A label for this place, such as NAS or Backblaze.", "Shown beside each backup so you can see where its copies are."],
+		["dest.kind", "Copies of backups off this PC", "Destination kind", "A folder (another drive, a share, a cloud-sync folder) or S3-compatible storage.", "Folder covers USB drives, \\\\nas\\share paths and the folders OneDrive, Dropbox and Google Drive sync. S3 covers Backblaze B2, Wasabi, Cloudflare R2, MinIO and Amazon S3."],
+		["dest.folder", "Copies of backups off this PC", "Destination folder", "Where copies are written.", "A full path such as `D:\\Backups` or `\\\\nas\\share\\backups`. It cannot be inside the local backup folder."],
+		["dest.s3.endpoint", "Copies of backups off this PC", "S3 endpoint", "The service's address.", "Choosing a service fills in a typical address; use the exact endpoint shown on your bucket's page."],
+		["dest.s3.bucket", "Copies of backups off this PC", "S3 bucket", "The bucket that holds the copies.", "Create it in your provider first. Use an access key limited to this one bucket."],
+		["dest.s3.region", "Copies of backups off this PC", "S3 region", "The region the bucket lives in.", "Must match the endpoint. Cloudflare R2 uses `auto`."],
+		["dest.s3.prefix", "Copies of backups off this PC", "Folder inside the bucket", "An optional folder name inside the bucket.", "Lets one bucket serve several things. The panel only lists, uploads, downloads and deletes under its own folders."],
+		["dest.s3.accessKeyId", "Copies of backups off this PC", "Access key ID", "The key's public half.", "Create a key that can only touch this bucket."],
+		["dest.s3.secretAccessKey", "Copies of backups off this PC", "Secret access key", "The key's secret half.", "Stored privately and never shown again. Leave blank when editing to keep the saved one."],
+		["dest.keepCount", "Copies of backups off this PC", "Scheduled backups to keep here", "How many scheduled backups this destination keeps. Blank follows the main setting.", "Lets a cheap big drive keep more history than the local one."],
+		["dest.keepDays", "Copies of backups off this PC", "Delete older than (days)", "Age limit for copies here. Blank follows the main setting.", "Combine with the count: whichever deletes more wins."],
+		["dest.includeExisting", "Copies of backups off this PC", "Also copy the backups that already exist", "Copies old backups too, instead of only new ones.", "Turn on when adding a destination you want to be complete; leave off to start fresh."],
+		["card.appearance", "Appearance", "Appearance", "Artwork, colours and images for your servers' dashboard cards.", "By default each game's artwork is fetched from Steam and cached on this PC. Replace any of it with your own image or a flat colour."],
+		["appearance.banner", "Appearance", "Banner", "Automatic, a colour, or your own image.", "Automatic uses Steam's artwork. Colour paints a gradient. Image lets you upload a picture (identified by its contents, not its name)."],
+		["appearance.appId", "Appearance", "Steam app ID", "Only needed to override which Steam artwork is used.", "It is the number in the game's store page address, for example the 892970 in store.steampowered.com/app/892970."],
+		["appearance.color", "Appearance", "Colour", "The card's colour.", "Pair with \"Fades to\" for a gradient."],
+		["appearance.color2", "Appearance", "Fades to", "The second colour of the gradient.", "Leave both colours the same for a flat colour."],
+	],
+
+	// ─────────────────────────────── A server's tabs ───────────────────────────────
+	server: [
+		// Header
+		["server.session", "Name and tags", "Session label", "What the dashboard and Discord show as this server's session. Blank means the public address and game port.", "A label only: it does not rename the server inside the game (change that in Settings). Handy for a friendly name such as \"Friday ARK\"."],
+		["server.tags", "Name and tags", "Tags", "Free labels for finding and grouping servers on the dashboard.", "Up to 10 per server, 24 characters each, letters, numbers, spaces, dots, dashes and underscores. Use them for things like \"modded\" or \"friends\", then group the dashboard by tag."],
+
+		// Window
+		["server.window.mode", "Window and launch", "Window mode", "How the server's console window behaves: Minimized, Hidden or No window.", "Minimized keeps a taskbar entry. Hidden hides the window the moment it opens and works with any start script. No window starts the game program directly with nothing on screen and shows its live output in the panel, but it skips anything else the start script does (a SteamCMD update check, for example). Use the Update button or auto-update instead."],
+		["server.launch.program", "Window and launch", "Program", "The server's .exe.", "Used by No window. Copy it from a running server or type the full path."],
+		["server.launch.arguments", "Window and launch", "Arguments", "Exactly what follows the program on the launch line.", "The same text that comes after the program name in your start script."],
+		["server.launch.folder", "Window and launch", "Start in folder", "The folder the program starts in. Blank uses the program's own folder.", "Some games look for their files relative to this folder, so set it if the game cannot find its data."],
+		["server.launch.priority", "Window and launch", "Priority", "How much CPU time Windows gives this server compared with other programs.", "Normal is right for most. Raise to above normal for a busy server on a PC that also does other work; lower it for a background server."],
+
+		// Ports
+		["server.ports", "Ports", "Ports", "The ports this server uses. Changes are checked against the server's other ports, the ports its game takes for itself, every other server and the panel.", "Saving updates the start script, the game's own config and the panel's record together, and keeps a .bak of each file. Change ports while the server is stopped. After changing the game port, update your router and firewall (see the Ports and firewall guide)."],
+
+		// Backups
+		["server.backup.mode", "Backups", "While the server is running", "Stop it for the copy, or keep it running.", "Stopping gives a consistent backup and the server comes back by itself (a minute or so). Keeping it running is gentler on players but may produce an inconsistent copy for games that cannot be saved on command; those backups are marked \"copied while running\"."],
+		["server.backup.paths", "Backups", "What is backed up", "The folders and files included in each backup.", "The panel knows each game's save folders. Untick \"Use this game's usual save folders\" to add your own paths (full paths, one per row)."],
+		["server.backup.keepCount", "Backups", "Scheduled backups to keep (this server)", "Overrides the panel-wide number for this server only.", "Leave blank to follow Settings → Backups."],
+		["server.backup.keepDays", "Backups", "Delete older than (days) (this server)", "Overrides the panel-wide age limit for this server only.", "Leave blank to follow Settings → Backups."],
+		["server.backup.restore.safety", "Backups", "Keep a safety backup", "Takes a backup of what is there now before restoring, so the restore can be undone.", "Recommended. It appears in the list as \"Before a restore\". Without it you must type the server's name to confirm, because nothing can bring back what is replaced."],
+		["server.backup.restore.start", "Backups", "Start the server afterwards", "Starts the server again once the restore finishes.", "A server that was running is always restarted by \"Restart and use this backup\"; this box is for a stopped server."],
+		["server.backup.restore.shared", "Backups", "Restore over the shared folder", "Some games keep every server's worlds in one shared folder.", "Valheim and 7 Days to Die (without a custom save folder) share worlds between all servers of that game on this PC. Restoring replaces them all, so you must confirm."],
+
+		// Schedules
+		["server.schedule.kind", "Schedules", "What to do", "Back up, restart, update, announce or send a console command.", "A restart can warn players in game first. An update stops the server, runs the update and starts it again."],
+		["server.schedule.name", "Schedules", "Name", "A label for the schedule. Optional.", "Shown in the list and in the activity log."],
+		["server.schedule.when", "Schedules", "When", "At a time of day, every so many hours, or once.", "Times use this PC's clock. Daily can be limited to chosen days."],
+		["server.schedule.warn", "Schedules", "Warn players this many minutes before", "Minutes before a restart to tell players, such as 10, 5, 1.", "Comma-separated; blank for no warning. Only games with an in-game chat or broadcast command can show warnings."],
+		["server.schedule.messages", "Schedules", "Messages", "The announcements to rotate through, one per line.", "Each time the schedule runs it says the next message, then starts over."],
+		["server.schedule.command", "Schedules", "Console command", "Sent over RCON when the server is running.", "Exactly as you would type it in the game's console."],
+		["server.schedule.servers", "Schedules", "Servers", "Which servers the schedule applies to.", "One schedule can cover several servers, for example a nightly backup of everything."],
+
+		// Automation
+		["server.auto.crash", "Automation", "Restart it if it crashes", "If the program disappears, the panel starts it again.", "It gives up after the number of tries set in Settings → Crash recovery, so a server that crashes at every start does not loop forever. You are notified when it gives up."],
+		["server.auto.hang", "Automation", "Also restart it if it is running but stops answering", "Restarts a server whose program is alive but no longer responds.", "Give it a generous time: a world can look frozen while it saves or loads, and restarting mid-save can damage it."],
+		["server.auto.hangMinutes", "Automation", "After (minutes)", "How long it must be unresponsive before it is restarted.", "10 or more is safer for big worlds."],
+		["server.auto.start", "Automation", "Start it when GodlyPanel starts", "Brings this server up when the panel starts.", "Together with \"Start GodlyPanel when I sign in to Windows\" your servers come up after a reboot, spaced apart by the delay in Settings."],
+		["server.autoUpdate", "Automation", "Auto-update", "Updates this server by itself when Steam has a new version.", "Needs \"Check Steam for game updates\" turned on in Settings → Refresh rates. The server is stopped, updated and started again."],
+		["server.motd", "Automation", "Message of the day", "The message players see when they join.", "Where the game stores it differs; the panel writes it in the right place for each game."],
+		["server.preset.name", "Automation", "Name for these settings", "Saves this server's settings as a preset you can apply to other servers of the same game.", "Good for \"PvE\" or \"hardcore\". Passwords and ports are not applied unless you untick the box below."],
+		["server.preset.keepIdentity", "Automation", "Keep this server's own name, passwords and ports when applying", "Applies a preset without changing who the server is.", "Leave it ticked: you almost never want a preset to overwrite a server's name, passwords or ports."],
+		["server.clone.name", "Automation", "Name for the copy", "Makes a full copy of this server with its own name, ports and RCON password.", "Works for servers the panel created, in a folder of their own, and the original must be stopped. The copy uses as much disk as the original."],
+		["server.clone.session", "Automation", "Session name (optional)", "The in-game name for the copy.", "Blank keeps the original's."],
+		["server.rcon.rotate", "Automation", "Change the RCON password", "Gives the server a new RCON password and updates the panel with it.", "Do this if the password may have leaked. The server must be stopped for the game's config to be rewritten."],
+
+		// Network
+		["server.network.publicToo", "Network", "Also on public networks (less safe)", "Allow the firewall rule on public Wi-Fi profiles as well as private ones.", "Leave off unless this PC's network is classed as Public by Windows. Public profiles cover networks you do not trust."],
+
+		// Logs, players, mods
+		["server.logs.source", "Logs", "Log", "Which log file to read.", "Some games write several. The panel's own captured output is listed first when the server was started without a window."],
+		["server.logs.lines", "Logs", "Lines", "How many of the latest lines to show.", "More lines take longer to load and redraw."],
+		["server.logs.follow", "Logs", "Follow live", "Keeps the view scrolled to the newest lines.", "Turns off while you search. Passwords in logs are masked for everyone except administrators."],
+		["server.logs.search", "Logs", "Search this log", "Finds lines containing your text in the end of the file.", "Case-insensitive. Searches the last part of very large logs rather than the whole file."],
+		["server.players.who", "Players", "Player", "Who to kick, ban or list.", "A name, or the id the game uses (Steam ID, UUID). Names are checked so nothing can end a console command and start another."],
+		["server.players.reason", "Players", "Reason", "Shown to the player where the game supports it and kept in the activity log.", "Optional."],
+		["server.mods.add", "Mods", "Add a mod", "Install a mod by number, package name or file.", "What you enter depends on the game: a Steam Workshop number (Conan Exiles), Owner-Name from Thunderstore (Valheim), a mod number in the start script (ARK) or a file or folder (Minecraft, 7 Days to Die, Palworld). The panel does not explain the settings inside mods."],
+
+		// People
+		["users.role", "People", "Access", "Administrator does everything; Moderator runs servers day to day; Viewer can only look.", "Moderators can start, stop, restart, update, back up, read logs and use the console, kick and ban, but cannot see passwords or settings, delete or restore. A moderator can be limited to chosen servers. Viewers cannot see join passwords, config files or anything that changes state."],
+		["users.servers", "People", "Servers a moderator can use", "Every server, or just the ones you tick.", "Limits what a moderator can open and control. The server checks it on every request."],
+		["users.password", "People", "Password", "At least 8 characters.", "Setting a new password signs that person out everywhere, so tell them the new one."],
+	],
+};
+
+// ───────────────────────────────────────────────────────────────────────────────────
+
+/**
+ * @typedef {{ id: string, guide: string, section: string, title: string, text: string, details?: string }} HelpEntry
+ */
+
+/** Every entry, in the order written. */
+export const HELP_LIST = Object.entries(GUIDE_ENTRIES).flatMap(([guide, rows]) =>
+	rows.map(([id, section, title, text, details]) => ({ id, guide, section, title, text, details })),
+);
+
+/** @type {Record<string, HelpEntry>} */
+export const PANEL_HELP = Object.fromEntries(HELP_LIST.map((entry) => [entry.id, entry]));

@@ -1,8 +1,10 @@
 import React from "react";
-import { Box, Button, Chip, Tab, Tabs, Typography } from "@mui/material";
-import { ArrowBack as ArrowBackIcon } from "@mui/icons-material";
-import ConfigPage from "./ConfigPage";
-import ServerControls from "./ServerControls";
+import { Box, Tab, Tabs } from "@mui/material";
+import ServerHeader from "./ServerHeader";
+import ServerOverview from "./ServerOverview";
+import ServerSettingsTab from "./ServerSettingsTab";
+import ServerNetworkTab from "./ServerNetworkTab";
+import ServerAdvancedTab from "./ServerAdvancedTab";
 import BackupsPanel from "./BackupsPanel";
 import SchedulesPanel from "./SchedulesPanel";
 import LogsPanel from "./LogsPanel";
@@ -10,98 +12,75 @@ import PlayersPanel from "./PlayersPanel";
 import ModsPanel from "./ModsPanel";
 import ActivityPanel from "./ActivityPanel";
 import AutomationPanel from "./AutomationPanel";
-import ConfigHistoryPanel from "./ConfigHistoryPanel";
-import StatsPanel from "./StatsPanel";
-import TagsEditor from "./TagsEditor";
-import SessionEditor from "./SessionEditor";
-import NetworkPanel from "./NetworkPanel";
-import { useOperation, operationLabel } from "../OperationsContext";
+import { serverTabs, DEFAULT_TAB } from "../serverTabs";
+
+const REMEMBER = "gp.serverTab";
 
 /**
- * Everything about one server, in tabs. Administrators get the settings page and
- * the management tabs; a moderator gets the controls and the day-to-day ones.
+ * Everything about one server: its header (status, join details, Start/Stop/Restart) and tabs for each thing you do with it.
+ * Administrators get all of them; a moderator gets the ones they may use.
  */
-function ServerWorkspace({ serverName, serverStatus, servers, userRole, onBack, onEditBatchFiles, onOpenServer }) {
+function ServerWorkspace({ serverName, serverStatus, serverStats, servers, appearance, userRole, tab, onTab, onBack, onEditBatchFiles, onOpenServer, onAction }) {
 	const isAdmin = userRole === "admin";
-	const operation = useOperation(serverName);
+	const tabs = React.useMemo(() => serverTabs(isAdmin), [isAdmin]);
 	const serverNames = React.useMemo(() => Object.keys(servers ?? {}), [servers]);
 
-	const tabs = React.useMemo(
-		() =>
-			[
-				isAdmin ? { key: "settings", label: "Settings" } : { key: "controls", label: "Controls" },
-				{ key: "backups", label: "Backups" },
-				{ key: "schedules", label: "Schedules" },
-				{ key: "logs", label: "Logs" },
-				{ key: "players", label: "Players" },
-				{ key: "stats", label: "Stats" },
-				{ key: "network", label: "Network" },
-				isAdmin && { key: "mods", label: "Mods" },
-				{ key: "activity", label: "Activity" },
-				isAdmin && { key: "history", label: "History" },
-				isAdmin && { key: "automation", label: "Automation" },
-			].filter(Boolean),
-		[isAdmin],
-	);
-
-	const [tab, setTab] = React.useState(() => {
+	// The tab from the address/history, else the one last used this visit, else the first.
+	const remembered = React.useMemo(() => {
 		try {
-			return sessionStorage.getItem("gp.serverTab") || tabs[0].key;
+			return sessionStorage.getItem(REMEMBER);
 		} catch {
-			return tabs[0].key;
+			return null;
 		}
-	});
-	const active = tabs.some((t) => t.key === tab) ? tab : tabs[0].key;
+	}, []);
+	const wanted = tab ?? remembered ?? DEFAULT_TAB;
+	const active = tabs.some((t) => t.key === wanted) ? wanted : tabs[0].key;
+
 	const choose = (key) => {
-		setTab(key);
+		onTab(key);
 		try {
-			sessionStorage.setItem("gp.serverTab", key);
+			sessionStorage.setItem(REMEMBER, key);
 		} catch {
 			// Remembering the tab is a convenience.
 		}
 	};
 
-	const online = Boolean(serverStatus?.online);
-
 	return (
-		<Box sx={{ mt: 2 }}>
-			<Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1, flexWrap: "wrap" }}>
-				<Button startIcon={<ArrowBackIcon />} onClick={onBack}>
-					Back to Dashboard
-				</Button>
-				<Typography variant="h5" sx={{ mr: 1 }}>
-					{serverName}
-				</Typography>
-				<Chip size="small" label={online ? "Online" : "Offline"} color={online ? "success" : "default"} />
-				{operation && <Chip size="small" color="info" variant="outlined" label={operationLabel(operation)} />}
-				{isAdmin && (
-					<Button sx={{ ml: "auto" }} variant="outlined" size="small" color="warning" onClick={onEditBatchFiles}>
-						Edit Batch Files
-					</Button>
-				)}
+		<Box>
+			<ServerHeader serverName={serverName} status={serverStatus} stats={serverStats} appearance={appearance?.[(serverStatus?.type || "").toLowerCase()]} onAction={onAction} canControl isAdmin={isAdmin} />
+
+			<Box
+				sx={{
+					position: "sticky",
+					top: 56,
+					zIndex: (t) => t.zIndex.appBar - 1,
+					mx: { xs: -2, md: -4 },
+					px: { xs: 2, md: 4 },
+					mb: 2.5,
+					backdropFilter: "blur(14px)",
+					backgroundColor: (t) => t.custom.glass,
+					borderBottom: 1,
+					borderColor: "divider",
+				}}
+			>
+				<Tabs value={active} onChange={(_, v) => choose(v)} variant="scrollable" scrollButtons="auto" aria-label="Server pages">
+					{tabs.map((t) => (
+						<Tab key={t.key} value={t.key} label={t.label} data-testid={`tab-${t.key}`} />
+					))}
+				</Tabs>
 			</Box>
 
-			{isAdmin && <SessionEditor serverName={serverName} status={serverStatus} />}
-			{isAdmin && <TagsEditor serverName={serverName} tags={serverStatus?.tags ?? []} />}
-
-			<Tabs value={active} onChange={(_, v) => choose(v)} variant="scrollable" scrollButtons="auto" sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}>
-				{tabs.map((t) => (
-					<Tab key={t.key} value={t.key} label={t.label} />
-				))}
-			</Tabs>
-
-			{active === "settings" && <ConfigPage embedded serverName={serverName} serverStatus={serverStatus} onBack={onBack} userRole={userRole} onEditBatchFiles={onEditBatchFiles} />}
-			{active === "controls" && <ServerControls serverName={serverName} serverStatus={serverStatus} />}
+			{active === "overview" && <ServerOverview serverName={serverName} serverStatus={serverStatus} isAdmin={isAdmin} />}
+			{active === "settings" && <ServerSettingsTab serverName={serverName} serverStatus={serverStatus} onEditBatchFiles={onEditBatchFiles} onAction={onAction} />}
+			{active === "players" && <PlayersPanel serverName={serverName} />}
 			{active === "backups" && <BackupsPanel serverName={serverName} serverStatus={serverStatus} canManage={isAdmin} />}
 			{active === "schedules" && <SchedulesPanel serverName={serverName} serverNames={serverNames} canManage={isAdmin} />}
 			{active === "logs" && <LogsPanel serverName={serverName} />}
-			{active === "players" && <PlayersPanel serverName={serverName} />}
-			{active === "stats" && <StatsPanel serverName={serverName} />}
-			{active === "network" && <NetworkPanel serverName={serverName} canChangeFirewall={isAdmin} />}
+			{active === "network" && <ServerNetworkTab serverName={serverName} isAdmin={isAdmin} />}
 			{active === "mods" && <ModsPanel serverName={serverName} serverStatus={serverStatus} />}
 			{active === "activity" && <ActivityPanel serverName={serverName} />}
-			{active === "history" && <ConfigHistoryPanel serverName={serverName} serverStatus={serverStatus} />}
 			{active === "automation" && <AutomationPanel serverName={serverName} serverStatus={serverStatus} onCloned={onOpenServer} />}
+			{active === "advanced" && <ServerAdvancedTab serverName={serverName} onEditBatchFiles={onEditBatchFiles} onDeleted={onBack} />}
 		</Box>
 	);
 }

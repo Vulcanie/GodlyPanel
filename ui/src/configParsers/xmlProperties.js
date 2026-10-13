@@ -4,6 +4,11 @@
 // section headers for whatever properties follow, e.g. <!-- Networking -->.
 // Serializing only swaps the value="..." attribute on its original line.
 
+// A value is stored with its XML escapes (&amp; for &, and so on). It is shown as typed and escaped again when written, so a name
+// with an ampersand or a quote in it can't break the file.
+const decode = (v) => v.replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
+const encode = (v) => String(v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
 const PROPERTY_RE = /<property\s+name="([^"]*)"\s+value="([^"]*)"/;
 const TRAILING_COMMENT_RE = /<!--(.*?)-->\s*$/;
 const STANDALONE_COMMENT_RE = /^<!--(.*)-->$/;
@@ -22,7 +27,8 @@ export function parseXmlProperties(text) {
 			: null;
 
 		if (propMatch) {
-			const [, key, value] = propMatch;
+			const [, key, rawValue] = propMatch;
+			const value = decode(rawValue);
 			const commentMatch = raw.match(TRAILING_COMMENT_RE);
 			const comment = commentMatch ? commentMatch[1].trim() : null;
 
@@ -68,7 +74,7 @@ export function serializeXmlProperties(parsed, edits) {
 		const raw = lines[entry.lineIndex];
 		lines[entry.lineIndex] = raw.replace(
 			PROPERTY_RE,
-			(full, name) => `<property name="${name}" value="${edits[entry.id]}"`,
+			(full, name) => `<property name="${name}" value="${encode(edits[entry.id])}"`,
 		);
 	}
 	return lines.join("\n");

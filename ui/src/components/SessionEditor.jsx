@@ -37,9 +37,7 @@ function SessionEditor({ serverName, status }) {
 
 	return (
 		<Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center", mb: 1.5 }}>
-			<Typography variant="caption" sx={{ color: "text.secondary" }}>
-				Session:
-			</Typography>
+			
 			<TextField
 				size="small"
 				variant="standard"
