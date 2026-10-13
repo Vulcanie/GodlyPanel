@@ -165,7 +165,10 @@ describe("rotating an RCON password", () => {
 		assert.ok(r.json.remaining.some((f) => f.endsWith("notes.txt")), "and it is reported instead");
 	});
 
-	it("puts everything back if a file can't be written", async () => {
+	// A read-only file stops a normal user, but not root (which is what some containers and sandboxes run as), so there the write
+	// never fails and there is nothing to put back. CI runs as an ordinary user.
+	const isRoot = process.platform !== "win32" && process.getuid?.() === 0;
+	it("puts everything back if a file can't be written", { skip: isRoot && "running as root, which can write to a read-only file" }, async () => {
 		const settings = path.join(root, "locked/settings.ini");
 		const before = { script: read("locked/start.bat"), settings: read("locked/settings.ini"), record: record("Locked").rconPassword };
 		fs.chmodSync(settings, 0o444); // read-only: the write fails after the script has been changed

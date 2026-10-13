@@ -79,6 +79,20 @@ function cmd() {
 	for (const signal of ["SIGTERM", "SIGINT"]) process.on(signal, () => child.kill(signal));
 }
 
+// ---- robocopy -----------------------------------------------------------------------------------
+
+// The panel clones a server folder with `robocopy from to /E ... /XF name`. Like robocopy, a successful copy that
+// moved files exits with 1 (anything below 8 is success).
+function robocopy() {
+	const [from, to] = args;
+	if (!from || !to) die("robocopy: needs a source and a destination");
+	const skip = [];
+	const at = args.findIndex((a) => a.toUpperCase() === "/XF");
+	if (at >= 0) for (const a of args.slice(at + 1)) if (!a.startsWith("/")) skip.push(a.toLowerCase());
+	fs.cpSync(from, to, { recursive: true, filter: (src) => !skip.includes(path.basename(src).toLowerCase()) });
+	process.exit(1);
+}
+
 // ---- starting a start script (launch-hidden.ps1) -----------------------------------------------
 
 const splitWords = (text) => [...text.matchAll(/"([^"]*)"|(\S+)/g)].map((m) => ({ text: m[1] ?? m[2], quoted: m[1] !== undefined }));
@@ -242,6 +256,6 @@ function tar() {
 	die(`tar: not supported: ${args.join(" ")}`);
 }
 
-const tools = { tasklist, taskkill, cmd, powershell, tar };
+const tools = { tasklist, taskkill, cmd, powershell, tar, robocopy };
 if (!tools[tool]) die(`unknown tool ${tool}`);
 tools[tool]();

@@ -6,6 +6,7 @@ import path from "node:path";
 import { startInstance, freePort, sleep } from "../helpers/instance.js";
 import { makeFakeGame, killFakeGames, gameLog } from "../helpers/fakeGame.js";
 import { listZip } from "../../src/server/util/tarZip.js";
+import { windowsOnly } from "../helpers/winEmulation.js";
 
 // Backups against a real stand-in game process: the world and settings are copied
 // into a zip that reads back, a running server is stopped for the copy and started
@@ -230,7 +231,7 @@ describe("backups", () => {
 			}
 		});
 
-		it("rolls back and starts the server again on its old files when the restore can't finish", async () => {
+		it("rolls back and starts the server again on its old files when the restore can't finish", windowsOnly("only Windows refuses to rename a folder that a running program has as its working folder, which is how this test makes the restore fail"), async () => {
 			const id = (await copyOfV1()).id;
 			fs.writeFileSync(world, "world v4 - must survive a failed restore\n");
 			// A program whose working folder is the save folder keeps Windows from renaming it out of the way.
@@ -288,8 +289,8 @@ describe("backups", () => {
 		it("refuses folders that aren't safe or make sense", async () => {
 			for (const paths of [
 				[{ path: "relative\\folder" }],
-				[{ path: "C:\\Windows" }],
-				[{ path: "C:\\" }],
+				[{ path: process.env.SystemRoot }], // C:\\Windows
+				[{ path: path.parse(folder).root }], // the top of a drive
 				[{ path: process.env.USERPROFILE }],
 				[{ path: path.join(folder, "a", "Saved") }, { path: path.join(folder, "b", "Saved") }],
 				"not a list",

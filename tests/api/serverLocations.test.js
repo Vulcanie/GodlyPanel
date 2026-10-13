@@ -52,7 +52,8 @@ describe("where servers live", () => {
 		assert.equal(find(list, "Made").createdByPanel, true);
 		assert.equal(find(list, "ByHand").inNewServersFolder, false);
 		assert.equal(find(list, "ByHand").createdByPanel, false);
-		assert.match(find(list, "ByHand").drive, /^[A-Za-z]:\\$/);
+		// The drive is the root of the path: "C:\" on Windows, "/" on systems without drive letters.
+		assert.match(find(list, "ByHand").drive, process.platform === "win32" ? /^[A-Za-z]:\\$/ : /^\/$/);
 	});
 
 	it("says when a folder isn't there any more", async () => {

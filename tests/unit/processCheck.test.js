@@ -5,6 +5,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { removeDir } from "../helpers/instance.js";
+import { copyNodeAs } from "../helpers/fakeGame.js";
 import { checkProcess, sameImage } from "../../src/server/services/processCheck.js";
 
 // Finding a running program by its image name, including the long ones Unreal servers have
@@ -19,7 +20,7 @@ describe("checkProcess", () => {
 	});
 
 	const run = (image) => {
-		fs.copyFileSync(process.execPath, path.join(dir, image));
+		copyNodeAs(path.join(dir, image));
 		const child = spawn(path.join(dir, image), ["-e", "setInterval(() => {}, 1000)"], { stdio: "ignore", windowsHide: true });
 		children.push(child);
 		return child;

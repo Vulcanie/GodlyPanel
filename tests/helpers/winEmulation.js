@@ -1,3 +1,4 @@
+import os from "node:os";
 import path from "node:path";
 
 // The panel manages Windows programs through Windows tools (tasklist, taskkill, PowerShell, cmd,
@@ -26,4 +27,6 @@ if (!onWindows && !process.env.GP_WINSHIM_ON) {
 	// The panel starts "no window" servers through ComSpec and zips through SystemRoot\System32\tar.exe.
 	process.env.ComSpec = path.join(SHIM, "bin", "cmd");
 	process.env.SystemRoot = path.join(SHIM, "SystemRoot");
+	// Windows names the profile folder this way, and the panel refuses to back up or restore over it.
+	process.env.USERPROFILE ||= os.homedir();
 }
