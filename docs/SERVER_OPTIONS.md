@@ -162,6 +162,10 @@ Valheim and 7 Days to Die (without a custom save folder) share worlds between al
 
 ## Schedules
 
+Jobs the panel runs for you at set times: backups, restarts, updates, announcements and console commands.
+
+Schedules run only while GodlyPanel is running. One that comes due while the panel is closed is skipped, not run late. Each row shows when it runs next and how the last run went; use the play button to run it now, the switch to turn it off without deleting it.
+
 ### What to do
 
 Back up, restart, update, announce or send a console command.
@@ -304,7 +308,7 @@ The panel can see Windows Firewall but not your router. Only you can open ports 
 
 Which log file to read.
 
-Some games write several. The panel's own captured output is listed first when the server was started without a window.
+Some games write several. The panel's own captured output is listed first when the server was started without a window. Anything that looks like a password is hidden unless you are an administrator.
 
 ### Lines
 
@@ -388,11 +392,17 @@ The server must be stopped first. Removing it from GodlyPanel only leaves every 
 
 ## People
 
+### Username
+
+3 to 32 characters: letters, numbers, dots, dashes and underscores.
+
+No spaces. It is what the person types to sign in, and it is not case sensitive.
+
 ### Access
 
 Administrator does everything; Moderator runs servers day to day; Viewer can only look.
 
-Moderators can start, stop, restart, update, back up, read logs and use the console, kick and ban, but cannot see passwords or settings, delete or restore. A moderator can be limited to chosen servers. Viewers cannot see join passwords, config files or anything that changes state.
+Moderators can start, stop, restart, update, back up, read logs and use the console, kick and ban, but cannot see passwords or settings, delete or restore. A moderator can be limited to chosen servers. Viewers cannot see join passwords, config files or anything that changes state. Changing someone's access signs them out, so they have to sign in again for it to apply.
 
 ### Servers a moderator can use
 

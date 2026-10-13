@@ -1,6 +1,7 @@
 import React from "react";
 import { Alert, Box, Button, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, LinearProgress, TextField, Typography } from "@mui/material";
 import { Lock as PasswordIcon } from "@mui/icons-material";
+import { flatWhenDisabled } from "./cardStyles";
 import { api } from "../api/client";
 
 // A rough guide for the person typing, not a rule: the server has the final say (and turns away very common passwords).
@@ -121,7 +122,7 @@ function ChangePasswordDialog({ open, onClose }) {
 						<Button onClick={onClose} disabled={busy}>
 							Cancel
 						</Button>
-						<Button variant="contained" onClick={save} disabled={!ready}>
+						<Button variant="contained" onClick={save} disabled={!ready} sx={flatWhenDisabled}>
 							{busy ? "Changing…" : "Change password"}
 						</Button>
 					</>

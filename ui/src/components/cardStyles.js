@@ -34,3 +34,7 @@ export const cardAccordionSx = {
 	"& .MuiAccordionSummary-expandIconWrapper.Mui-expanded": { transform: "rotate(0deg)" },
 	"& .MuiAccordionDetails-root": { px: 2, pt: 0.5, pb: 2 },
 };
+
+// The theme paints primary buttons with a gradient, which stays behind the grey of a disabled one and leaves its label hard to
+// read (worst in the light theme). Spread this into a primary button's sx so it goes flat grey while it is disabled.
+export const flatWhenDisabled = { "&.Mui-disabled": { backgroundImage: "none", backgroundColor: "action.disabledBackground", color: "text.disabled" } };

@@ -93,6 +93,12 @@ Part of a JDK; used for Minecraft heap stats. Blank uses jcmd from PATH.
 
 Only matters for Minecraft servers: the panel runs `jcmd` to read how much of the Java heap the server is using. If you installed a JDK in an unusual place, give the full path to `jcmd.exe`.
 
+### Where your servers are now
+
+The folder each server lives in, how big it is and which drive it is on.
+
+The Server install folder setting only decides where servers made from now on go, so servers made earlier, or added by hand, can be anywhere: this list says where. A server whose folder is missing is flagged, and so is one that shares its folder with another server. The copy button puts a folder's path on your clipboard.
+
 ## Ports for new servers
 
 ### Game ports start at
@@ -124,6 +130,12 @@ The default of -1 counts down from the start (26000, 25999, ...), which keeps th
 Ports that should never be suggested for a new server.
 
 List ports that other programs on this PC use (a web server on 8080, say), separated by commas. The panel skips them when suggesting ports.
+
+### Server port list
+
+Every server and the ports it uses, to pick a free one or find what is in the way.
+
+A port that two servers both claim is marked with who. Ports a game keeps for itself next to its game port are shown dimmed: you do not type them anywhere, but they are taken. Only ports GodlyPanel knows about are listed, so something else on this PC can still be using one.
 
 ## Refresh rates
 
@@ -211,9 +223,9 @@ Measured in the background, so a brand-new server says "not measured yet" for a 
 
 ### RCON password for new servers
 
-Generate gives each server its own random password; Fixed reuses one you set under Keys and webhooks.
+Generate gives each server its own random password; Fixed reuses the Fixed RCON password just below.
 
-Generating is safer: one leaked password opens only one server. Choose Fixed only if you have other tools that need the same RCON password everywhere, then set it under Keys and webhooks.
+Generating is safer: one leaked password opens only one server. Choose Fixed only if you have other tools that need the same RCON password everywhere, then fill in Fixed RCON password just below.
 
 ### Server windows
 
@@ -227,7 +239,7 @@ The default for new servers; each server can override it on its own page. Hidden
 
 Posts one status message that updates in place, and update announcements.
 
-Needs the status webhook set under Keys and webhooks. The message lists each server's state, join password, CPU and memory. Because the join password appears in it, only use a private channel.
+Needs the Discord status webhook, just below in the same section. The message lists each server's state, join password, CPU and memory. Because the join password appears in it, only use a private channel.
 
 ### Discord admin role mention
 
@@ -239,7 +251,7 @@ Paste the role as `<@&123456789>` or just the number. In Discord, turn on Develo
 
 Lets people in your Discord server see servers with /servers, /status and /players; the admin role can start, stop, restart and back them up.
 
-You create the bot yourself in Discord's developer portal, then fill in its token (under Keys and webhooks), application ID and your server's ID. Anyone in that Discord server can look; only the admin role can change anything. With no admin role chosen nothing can be changed from Discord.
+You create the bot yourself in Discord's developer portal, then fill in its token (in the same section), application ID and your server's ID. Anyone in that Discord server can look; only the admin role can change anything. With no admin role chosen nothing can be changed from Discord.
 
 ### Discord bot application ID
 
@@ -257,7 +269,7 @@ The bot ignores every other Discord server and all private messages.
 
 Slash commands in your Discord server.
 
-See the Discord settings above for the IDs you need and Keys and webhooks for the token. The card shows whether the bot is connected and gives the invite link.
+See the Discord section above for the token and the IDs you need. The card shows whether the bot is connected and gives the invite link.
 
 ## Backups
 
@@ -351,13 +363,19 @@ Downloading checks the file's signature before anything is installed. Your game 
 
 A pop-up on the PC for the events below.
 
-Webhook (Discord, Slack and similar) and email alerts are set up with their own addresses under Keys and webhooks and Email.
+Webhook (Discord, Slack and similar) and email alerts are set up with their own addresses in the Alerts and Email sections.
 
 ### Events to tell you about
 
 Tick the events you want a notification for.
 
 Applies to every way of being notified (Windows, webhook and email). Crashes, failed backups and low disk space are on by default; "A backup finished" is off because it is noisy.
+
+### Send a test notification
+
+Sends a real test through every way of being notified that is set up.
+
+Save your changes first: the test uses what is saved, not what is typed in the boxes. The result lists each way (Windows notification, webhook, email) as sent, not set up, or failed with the reason.
 
 ### Warn when a backup hasn't reached its off-site destination after (hours, 0 = never)
 
@@ -375,7 +393,7 @@ Applies to every drive that holds a server or backups.
 
 Also email the events you picked.
 
-Fill in the mail server, account and addresses below, and the account password under Keys and webhooks.
+Fill in the mail server, account and addresses below, and the account password below.
 
 ### Mail server
 
@@ -501,7 +519,7 @@ It is not bundled with the panel. The button downloads it once from Valve. Witho
 
 The addresses other devices can use, including Tailscale and other mesh VPNs.
 
-On the same network, open the address shown. From elsewhere, a mesh VPN such as Tailscale is the safest option because it opens nothing on your router.
+On the same network, open the address shown. From elsewhere, a mesh VPN such as Tailscale is the safest option because it opens nothing on your router. Do not forward the panel's port on your router: anyone on the internet could then reach a login page that controls your servers. Install Tailscale (free for personal use) on this PC and on your phone, sign in to the same account, then open this PC's Tailscale address; ZeroTier works the same way. For friends, do not invite them into your own Tailscale account, because that puts them on the same network as all your other devices. Instead, in the Tailscale admin console choose Machines, this PC, Share, and send them the link: they can then reach this PC and nothing else of yours. Give them a guest account with the community code.
 
 ## Community view
 
@@ -509,7 +527,7 @@ On the same network, open the address shown. From elsewhere, a mesh VPN such as 
 
 A small guest-only page for friends, published through a Cloudflare Tunnel.
 
-Nothing is opened on your router and friends install nothing. Guests see what is running and how to join; they cannot change anything or see passwords.
+Nothing is opened on your router and friends install nothing. Guests see what is running and how to join; they cannot change anything or see passwords. By default it is a separate, much smaller page: administrators and moderators cannot sign in on it, and nothing can be started, stopped or changed through it.
 
 ### Let administrators and moderators sign in here too
 
@@ -529,11 +547,17 @@ The token from your tunnel in Cloudflare's dashboard.
 
 Stored privately and handed to the tunnel program through its environment, never on a command line.
 
+### Address type
+
+A temporary link, a tunnel already on this PC, or one you made in Cloudflare's dashboard.
+
+A temporary link needs no Cloudflare account but is a random address that changes each time the community view starts, and the page refreshes every few seconds instead of live. Your own address stays the same and updates live: use the tunnel already on this PC if one is found, otherwise paste the token of a tunnel from the Cloudflare dashboard (Zero Trust, Networks, Tunnels) and add a public hostname pointing at the small server's address shown in the guide.
+
 ## Community access
 
 The code friends use to make their own guest account.
 
-Guests can look but not change anything. The code can be switched off, replaced, set to expire and capped, so you can open signups for a weekend and close them again.
+Guests can look but not change anything. The code can be switched off, replaced, set to expire and capped, so you can open signups for a weekend and close them again. A new code stops the old one working; accounts already made stay (remove them under People).
 
 ### Anyone with the code can make a guest account
 
@@ -552,6 +576,12 @@ Pick a short life for a one-off event. Keep the current setting leaves it as it 
 How many accounts the code can make. Blank means no limit.
 
 Handy for a fixed group: a limit of 10 closes signups after ten people have joined.
+
+### Message to send them
+
+Ready-made instructions with your address and code, to copy and send to a friend.
+
+It uses the community view's public address when that is on, otherwise your Tailscale address. Guests need some way to reach the panel, so turn one of those on first.
 
 ## Copies of backups off this PC
 
@@ -631,6 +661,24 @@ Copies old backups too, instead of only new ones.
 
 Turn on when adding a destination you want to be complete; leave off to start fresh.
 
+### S3 service
+
+Picks your provider and fills in a typical endpoint and region for it.
+
+Backblaze B2, Wasabi, Cloudflare R2, Amazon S3 and MinIO are listed. The addresses filled in are examples: replace them with the exact endpoint your provider shows for your bucket.
+
+### Destination on or off
+
+Off pauses copying to this place without removing it.
+
+Backups made while it is off are not copied there. After turning it back on, use Copy all existing backups on a server's Backups tab to catch up.
+
+### Bring back a backup
+
+Downloads a copy from this place into the server's own backup list.
+
+Once it is back, restore it from the list like any other backup. A backup that is also on this PC does not need bringing back.
+
 ## Appearance
 
 Artwork, colours and images for your servers' dashboard cards.
@@ -642,6 +690,12 @@ By default each game's artwork is fetched from Steam and cached on this PC. Repl
 Automatic, a colour, or your own image.
 
 Automatic uses Steam's artwork. Colour paints a gradient. Image lets you upload a picture (identified by its contents, not its name).
+
+### Image
+
+Your own picture for the banner. PNG or JPEG.
+
+The banner is wide and short, so a wide picture of the recommended size works best; anything taller is cropped top and bottom. It is stored with your data and not uploaded anywhere.
 
 ### Steam app ID
 

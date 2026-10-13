@@ -4,6 +4,7 @@ import { alpha } from "@mui/material/styles";
 import { ArrowBack as ArrowBackIcon, Restore as RevertIcon, Save as SaveIcon, Terminal as ScriptIcon } from "@mui/icons-material";
 import ConfirmDialog from "./ui/ConfirmDialog";
 import EmptyState from "./ui/EmptyState";
+import { flatWhenDisabled } from "./cardStyles";
 import { useToast } from "../ToastContext";
 import { api } from "../api/client";
 
@@ -147,7 +148,7 @@ export default function BatchFileEditor({ serverName, onBack }) {
 				<Button size="small" startIcon={<ArrowBackIcon />} onClick={goBack}>
 					Back to Config
 				</Button>
-				<Typography variant="h5" component="h1" sx={{ flex: 1, minWidth: 0 }} noWrap>
+				<Typography variant="h5" component="h1" sx={{ flex: { xs: "1 1 100%", sm: 1 }, minWidth: 0, overflowWrap: "anywhere", order: { xs: 2, sm: 0 } }}>
 					Editing Batch File for: {serverName}
 				</Typography>
 			</Box>
@@ -190,7 +191,7 @@ export default function BatchFileEditor({ serverName, onBack }) {
 						)}
 						<Tooltip title="Ctrl+S">
 							<span>
-								<Button size="small" variant="contained" startIcon={<SaveIcon />} onClick={save} disabled={!dirty || saving}>
+								<Button size="small" variant="contained" startIcon={<SaveIcon />} onClick={save} disabled={!dirty || saving} sx={flatWhenDisabled}>
 									{saving ? "Saving..." : "Save Changes"}
 								</Button>
 							</span>
@@ -253,7 +254,7 @@ export default function BatchFileEditor({ serverName, onBack }) {
 								tabSize: 4,
 								whiteSpace: "pre",
 								overflow: "auto",
-								"&:focus-visible": { boxShadow: (t) => `inset 0 0 0 2px ${alpha(t.palette.primary.main, 0.5)}` },
+								"&:focus-visible": { boxShadow: (t) => `inset 0 0 0 1px ${alpha(t.palette.primary.main, 0.55)}` },
 							}}
 						/>
 					</Box>
