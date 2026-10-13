@@ -12,7 +12,6 @@ import {
 	FormControlLabel,
 	IconButton,
 	MenuItem,
-	Paper,
 	Switch,
 	TextField,
 	Tooltip,
@@ -21,6 +20,10 @@ import {
 import { Add as AddIcon, Delete as DeleteIcon, Edit as EditIcon } from "@mui/icons-material";
 import { api } from "../api/client";
 import { formatBytes } from "../utils/format";
+import InfoTip from "./InfoTip";
+import TipRow from "./settings/TipRow";
+import SectionCard from "./ui/SectionCard";
+import ConfirmDialog from "./ui/ConfirmDialog";
 
 // Where copies of backups go besides this PC's backup folder. A folder covers another
 // drive, a network share and any cloud-sync folder (OneDrive, Dropbox, Google Drive,
@@ -76,6 +79,7 @@ function toBody(form) {
 function BackupDestinations() {
 	const [list, setList] = React.useState(null);
 	const [editing, setEditing] = React.useState(null);
+	const [removing, setRemoving] = React.useState(null);
 	const [error, setError] = React.useState(null);
 	const [notice, setNotice] = React.useState(null);
 
@@ -91,7 +95,7 @@ function BackupDestinations() {
 	}, [load]);
 
 	const remove = async (d) => {
-		if (!window.confirm(`Stop copying backups to "${d.name}"? Copies already there are left in place.`)) return;
+		setRemoving(null);
 		try {
 			await api.del(`/api/settings/backup-destinations/${d.id}`);
 			load();
@@ -121,10 +125,15 @@ function BackupDestinations() {
 	};
 
 	return (
-		<Paper sx={{ p: 2, mb: 2 }}>
-			<Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 1 }}>
-				<Typography variant="subtitle2">Copies of backups off this PC</Typography>
-				<Box sx={{ display: "flex", gap: 1 }}>
+		<SectionCard
+			title={
+				<Box component="span" sx={{ display: "inline-flex", alignItems: "center" }}>
+					Copies of backups off this PC
+					<InfoTip id="card.backupDestinations" />
+				</Box>
+			}
+			actions={
+				<>
 					{list?.length > 0 && (
 						<Button size="small" onClick={retry}>
 							Retry failed copies
@@ -133,11 +142,9 @@ function BackupDestinations() {
 					<Button size="small" variant="outlined" startIcon={<AddIcon />} onClick={() => setEditing(blank())}>
 						Add a place
 					</Button>
-				</Box>
-			</Box>
-			<Typography variant="body2" sx={{ color: "text.secondary", my: 1 }}>
-				A backup kept only on the PC that broke isn't much of a backup. Each new backup is copied to every place below in the background; if a copy fails it is shown on the backup and tried again.
-			</Typography>
+				</>
+			}
+		>
 			{error && (
 				<Alert severity="error" onClose={() => setError(null)} sx={{ mb: 1 }}>
 					{error}
@@ -155,23 +162,26 @@ function BackupDestinations() {
 					None yet, so backups exist only on this PC.
 				</Typography>
 			) : (
-				list.map((d) => (
-					<Box key={d.id} sx={{ display: "flex", alignItems: "center", gap: 1.5, py: 1, borderTop: "1px solid rgba(128,128,128,0.2)", flexWrap: "wrap" }}>
+				list.map((d, i) => (
+					<Box key={d.id} sx={{ display: "flex", alignItems: "center", gap: 1.5, py: 1.25, borderTop: i === 0 ? "none" : 1, borderColor: "divider", flexWrap: "wrap" }}>
 						<Box sx={{ flex: 1, minWidth: 220 }}>
-							<Typography variant="body2">{d.name}</Typography>
+							<Typography variant="body2" sx={{ fontWeight: 600 }}>{d.name}</Typography>
 							<Typography variant="caption" sx={{ color: "text.secondary", wordBreak: "break-all" }}>
 								{d.type === "folder" ? d.folder.path : `${d.s3.bucket} · ${d.s3.endpoint}`}
 							</Typography>
 						</Box>
 						<Chip size="small" variant="outlined" label={d.type === "folder" ? "Folder" : "S3 storage"} />
-						<FormControlLabel control={<Switch size="small" checked={d.enabled} onChange={() => toggle(d)} />} label={d.enabled ? "On" : "Off"} />
+						<Box sx={{ display: "flex", alignItems: "center" }}>
+							<FormControlLabel sx={{ mr: 0 }} control={<Switch size="small" checked={d.enabled} onChange={() => toggle(d)} />} label={d.enabled ? "On" : "Off"} />
+							<InfoTip id="dest.enabled" />
+						</Box>
 						<Tooltip title="Edit">
-							<IconButton size="small" onClick={() => setEditing(fromSaved(d))}>
+							<IconButton size="small" aria-label={`Edit ${d.name}`} onClick={() => setEditing(fromSaved(d))}>
 								<EditIcon fontSize="small" />
 							</IconButton>
 						</Tooltip>
 						<Tooltip title="Remove">
-							<IconButton size="small" onClick={() => remove(d)}>
+							<IconButton size="small" aria-label={`Remove ${d.name}`} onClick={() => setRemoving(d)}>
 								<DeleteIcon fontSize="small" />
 							</IconButton>
 						</Tooltip>
@@ -179,7 +189,10 @@ function BackupDestinations() {
 				))
 			)}
 			{editing && <DestinationDialog initial={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load(); }} />}
-		</Paper>
+			<ConfirmDialog open={Boolean(removing)} title="Stop copying backups here?" confirmLabel="Remove" onClose={() => setRemoving(null)} onConfirm={() => remove(removing)}>
+				Stop copying backups to "{removing?.name}"? Copies already there are left in place.
+			</ConfirmDialog>
+		</SectionCard>
 	);
 }
 
@@ -237,16 +250,20 @@ function DestinationDialog({ initial, onClose, onSaved }) {
 						{tested.freeBytes != null ? ` · ${formatBytes(tested.freeBytes)} free` : ""}
 					</Alert>
 				)}
-				<TextField size="small" label="Name" value={form.name} onChange={(e) => set({ name: e.target.value })} placeholder="e.g. NAS, or Backblaze" />
+				<TipRow info="dest.name">
+					<TextField fullWidth size="small" label="Name" value={form.name} onChange={(e) => set({ name: e.target.value })} placeholder="e.g. NAS, or Backblaze" />
+				</TipRow>
 				{isNew && (
-					<TextField select size="small" label="Kind" value={form.type} onChange={(e) => set({ type: e.target.value })}>
-						<MenuItem value="folder">A folder: another drive, a network share, or a cloud-sync folder</MenuItem>
-						<MenuItem value="s3">S3-compatible storage: Backblaze B2, Wasabi, R2, MinIO, Amazon S3</MenuItem>
-					</TextField>
+					<TipRow info="dest.kind">
+						<TextField select fullWidth size="small" label="Kind" value={form.type} onChange={(e) => set({ type: e.target.value })}>
+							<MenuItem value="folder">A folder: another drive, a network share, or a cloud-sync folder</MenuItem>
+							<MenuItem value="s3">S3-compatible storage: Backblaze B2, Wasabi, R2, MinIO, Amazon S3</MenuItem>
+						</TextField>
+					</TipRow>
 				)}
 
 				{form.type === "folder" ? (
-					<>
+					<TipRow info="dest.folder">
 						<Box sx={{ display: "flex", gap: 1 }}>
 							<TextField size="small" fullWidth label="Folder" value={form.folder.path} onChange={(e) => set({ folder: { path: e.target.value } })} placeholder="D:\Backups   or   \\nas\share\backups" />
 							{pick && (
@@ -255,44 +272,63 @@ function DestinationDialog({ initial, onClose, onSaved }) {
 								</Button>
 							)}
 						</Box>
-						<Typography variant="caption" sx={{ color: "text.secondary" }}>
-							To use OneDrive, Dropbox or Google Drive, choose a folder inside its sync folder: the service then carries the copies off this PC. For a network share, this PC must already be signed in to it.
-						</Typography>
-					</>
+					</TipRow>
 				) : (
 					<>
-						<TextField select size="small" label="Service (fills in the address)" value={preset} onChange={(e) => { const p = PRESETS.find((x) => x.id === e.target.value); setPreset(e.target.value); if (p) setS3({ endpoint: p.endpoint, region: p.region, pathStyle: true }); }}>
-							{PRESETS.map((p) => (
-								<MenuItem key={p.id} value={p.id}>
-									{p.label}
-								</MenuItem>
-							))}
-						</TextField>
+						<TipRow info="dest.service">
+							<TextField select fullWidth size="small" label="Service (fills in the address)" value={preset} onChange={(e) => { const p = PRESETS.find((x) => x.id === e.target.value); setPreset(e.target.value); if (p) setS3({ endpoint: p.endpoint, region: p.region, pathStyle: true }); }}>
+								{PRESETS.map((p) => (
+									<MenuItem key={p.id} value={p.id}>
+										{p.label}
+									</MenuItem>
+								))}
+							</TextField>
+						</TipRow>
+						{/* Specific to the service just picked, so it can't live in the general explanation. */}
 						{presetInfo && <Typography variant="caption" sx={{ color: "text.secondary" }}>{presetInfo.help}</Typography>}
-						<TextField size="small" label="Endpoint" value={form.s3.endpoint} onChange={(e) => setS3({ endpoint: e.target.value })} />
-						<Box sx={{ display: "flex", gap: 1 }}>
-							<TextField size="small" fullWidth label="Bucket" value={form.s3.bucket} onChange={(e) => setS3({ bucket: e.target.value })} />
-							<TextField size="small" fullWidth label="Region" value={form.s3.region} onChange={(e) => setS3({ region: e.target.value })} />
+						<TipRow info="dest.s3.endpoint">
+							<TextField fullWidth size="small" label="Endpoint" value={form.s3.endpoint} onChange={(e) => setS3({ endpoint: e.target.value })} />
+						</TipRow>
+						<Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
+							<TipRow info="dest.s3.bucket">
+								<TextField size="small" fullWidth label="Bucket" value={form.s3.bucket} onChange={(e) => setS3({ bucket: e.target.value })} />
+							</TipRow>
+							<TipRow info="dest.s3.region">
+								<TextField size="small" fullWidth label="Region" value={form.s3.region} onChange={(e) => setS3({ region: e.target.value })} />
+							</TipRow>
 						</Box>
-						<TextField size="small" label="Folder inside the bucket (optional)" value={form.s3.prefix} onChange={(e) => setS3({ prefix: e.target.value })} placeholder="godlypanel" />
-						<TextField size="small" label="Access key ID" value={form.s3.accessKeyId} onChange={(e) => setS3({ accessKeyId: e.target.value })} autoComplete="off" />
-						<TextField
-							size="small"
-							type="password"
-							label={initial.hasSecret ? "Secret access key (saved: leave blank to keep it)" : "Secret access key"}
-							value={form.s3.secretAccessKey}
-							onChange={(e) => setS3({ secretAccessKey: e.target.value })}
-							autoComplete="new-password"
-						/>
+						<TipRow info="dest.s3.prefix">
+							<TextField fullWidth size="small" label="Folder inside the bucket (optional)" value={form.s3.prefix} onChange={(e) => setS3({ prefix: e.target.value })} placeholder="godlypanel" />
+						</TipRow>
+						<TipRow info="dest.s3.accessKeyId">
+							<TextField fullWidth size="small" label="Access key ID" value={form.s3.accessKeyId} onChange={(e) => setS3({ accessKeyId: e.target.value })} autoComplete="off" />
+						</TipRow>
+						<TipRow info="dest.s3.secretAccessKey">
+							<TextField
+								fullWidth
+								size="small"
+								type="password"
+								label={initial.hasSecret ? "Secret access key (saved: leave blank to keep it)" : "Secret access key"}
+								value={form.s3.secretAccessKey}
+								onChange={(e) => setS3({ secretAccessKey: e.target.value })}
+								autoComplete="new-password"
+							/>
+						</TipRow>
 					</>
 				)}
 
-				<Box sx={{ display: "flex", gap: 1 }}>
-					<TextField size="small" fullWidth type="number" label="Scheduled backups to keep here" value={form.keepCount} onChange={(e) => set({ keepCount: e.target.value })} helperText="Blank follows Settings → Backups" />
-					<TextField size="small" fullWidth type="number" label="Delete older than (days)" value={form.keepDays} onChange={(e) => set({ keepDays: e.target.value })} helperText="Blank follows Settings" />
+				<Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
+					<TipRow info="dest.keepCount">
+						<TextField size="small" fullWidth type="number" label="Scheduled backups to keep here" placeholder="Same as Backups" value={form.keepCount} onChange={(e) => set({ keepCount: e.target.value })} />
+					</TipRow>
+					<TipRow info="dest.keepDays">
+						<TextField size="small" fullWidth type="number" label="Delete older than (days)" placeholder="Same as Backups" value={form.keepDays} onChange={(e) => set({ keepDays: e.target.value })} />
+					</TipRow>
 				</Box>
 				{isNew && (
-					<FormControlLabel control={<Switch checked={form.includeExisting} onChange={(e) => set({ includeExisting: e.target.checked })} />} label="Also copy the backups that already exist (otherwise only new ones)" />
+					<TipRow info="dest.includeExisting" center>
+						<FormControlLabel sx={{ ml: 0, mr: 0 }} control={<Switch checked={form.includeExisting} onChange={(e) => set({ includeExisting: e.target.checked })} />} label="Also copy the backups that already exist (otherwise only new ones)" />
+					</TipRow>
 				)}
 			</DialogContent>
 			<DialogActions>

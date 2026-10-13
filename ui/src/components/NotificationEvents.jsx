@@ -1,6 +1,7 @@
 import React from "react";
 import { Alert, Box, Button, Checkbox, FormControlLabel, Typography } from "@mui/material";
 import { api } from "../api/client";
+import InfoTip from "./InfoTip";
 
 /** Which events send a notification, and a button that sends a real test through every channel that is set up. */
 function NotificationEvents({ labels, value, onChange }) {
@@ -35,20 +36,23 @@ function NotificationEvents({ labels, value, onChange }) {
 
 	return (
 		<Box>
-			<Typography variant="body2" sx={{ mb: 0.5 }}>
-				Events to tell you about
-			</Typography>
-			<Box sx={{ display: "flex", flexDirection: "column" }}>
+			<Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
+				<Typography variant="body2" sx={{ fontWeight: 600 }}>
+					Events to tell you about
+				</Typography>
+				<InfoTip id="notifications.events" />
+			</Box>
+			<Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", columnGap: 2 }}>
 				{Object.entries(labels ?? {}).map(([type, text]) => (
-					<FormControlLabel key={type} control={<Checkbox size="small" checked={selected.has(type)} onChange={(e) => toggle(type, e.target.checked)} />} label={text} />
+					<FormControlLabel key={type} control={<Checkbox size="small" checked={selected.has(type)} onChange={(e) => toggle(type, e.target.checked)} />} label={<Typography variant="body2">{text}</Typography>} />
 				))}
 			</Box>
-			<Typography variant="caption" sx={{ display: "block", color: "text.secondary", mt: 1 }}>
-				A webhook (Discord, Slack…) and mail are set up below and under "Keys and webhooks". Save your changes before testing.
-			</Typography>
-			<Button size="small" variant="outlined" sx={{ mt: 1 }} disabled={busy} onClick={test}>
-				{busy ? "Sending…" : "Send a test"}
-			</Button>
+			<Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
+				<Button size="small" variant="outlined" disabled={busy} onClick={test}>
+					{busy ? "Sending…" : "Send a test"}
+				</Button>
+				<InfoTip id="notifications.test" />
+			</Box>
 			{result && (
 				<Alert severity={result.error || [result.desktop, result.webhook, result.email].some((r) => r && r.ok === false) ? "warning" : "success"} sx={{ mt: 1 }}>
 					{result.error ? (

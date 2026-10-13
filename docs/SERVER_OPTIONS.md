@@ -18,6 +18,8 @@ For the settings inside a game itself, see the [game settings guide](GAME_SETTIN
 - [Logs](#logs)
 - [Players](#players)
 - [Mods](#mods)
+- [Settings history](#settings-history)
+- [Removing a server](#removing-a-server)
 - [People](#people)
 
 ## Name and tags
@@ -40,7 +42,25 @@ Up to 10 per server, 24 characters each, letters, numbers, spaces, dots, dashes 
 
 How the server's console window behaves: Minimized, Hidden or No window.
 
-Minimized keeps a taskbar entry. Hidden hides the window the moment it opens and works with any start script. No window starts the game program directly with nothing on screen and shows its live output in the panel, but it skips anything else the start script does (a SteamCMD update check, for example). Use the Update button or auto-update instead.
+Minimized keeps a taskbar entry. Hidden hides the window the moment it opens and works with any start script. No window starts the game program directly with nothing on screen and shows its live output in the panel, but it skips anything else the start script does (a SteamCMD update check, for example). Use the Update button or auto-update instead. Minecraft servers already run without any window, so for them the choice is Standard (its own start script) or No window (the panel starts Java itself and skips what the script does on each start, such as updating the loader).
+
+### Hide or show windows now
+
+Hides this server's console window(s) right now, or brings them back.
+
+It acts on the running server and does not change the window mode above. Only servers that run in a window have this.
+
+### Read or copy launch details
+
+Fills in the program and arguments for you, from the start script or from the running server.
+
+Read launch details from the start script shows what the script runs and anything No window mode would skip. Copy from the running server reads how the program was actually started, for scripts that cannot be read. Neither saves anything: check the fields, then press Save launch details. A folder copied from a running server is assumed to be the server's own folder, because Windows cannot say where a program was started.
+
+### Console output
+
+The live output of a server that runs without a window.
+
+It refreshes every couple of seconds and follows the newest line until you scroll up.
 
 ### Program
 
@@ -72,6 +92,30 @@ The ports this server uses. Changes are checked against the server's other ports
 
 Saving updates the start script, the game's own config and the panel's record together, and keeps a .bak of each file. Change ports while the server is stopped. After changing the game port, update your router and firewall (see the Ports and firewall guide).
 
+### Game port
+
+The port players connect to.
+
+For friends outside your network, forward it on your router to this PC and allow it in Windows Firewall (see the Ports and firewall guide).
+
+### Query port
+
+The port server lists use to ask the server its name and player count.
+
+Players usually find the server through it, so forward it as well when the server should show up in the game's server list.
+
+### RCON port
+
+The port the panel uses to send commands to the server's console.
+
+Only the panel on this PC needs to reach it, so there is normally no reason to forward it on your router.
+
+### Telnet port
+
+A second console port that 7 Days to Die offers, which the panel uses.
+
+Only the panel on this PC needs to reach it, so there is normally no reason to forward it on your router.
+
 ## Backups
 
 ### While the server is running
@@ -96,7 +140,7 @@ Leave blank to follow Settings → Backups.
 
 Overrides the panel-wide age limit for this server only.
 
-Leave blank to follow Settings → Backups.
+Leave blank to follow Settings → Backups. 0 means never delete by age.
 
 ### Keep a safety backup
 
@@ -236,6 +280,24 @@ Allow the firewall rule on public Wi-Fi profiles as well as private ones.
 
 Leave off unless this PC's network is classed as Public by Windows. Public profiles cover networks you do not trust.
 
+### Checklist
+
+Whether what people need to reach this server is in place.
+
+Each line is Done, Worth doing or Needs doing. It checks the panel's own settings and this PC; it cannot see your router.
+
+### Joining from the same network
+
+The addresses to type into the game when you are on the same home network as this PC.
+
+Friends outside your network need the same ports forwarded on your router to this PC's address, and they join with your public IP address.
+
+### Ports players need
+
+The ports this server uses and whether Windows Firewall lets them in.
+
+The panel can see Windows Firewall but not your router. Only you can open ports there: look for "Port forwarding" in its settings. A firewall rule for the game's program also counts as allowed. Allow these ports adds the missing rules; Windows asks for permission on this PC.
+
 ## Logs
 
 ### Log
@@ -276,6 +338,18 @@ Shown to the player where the game supports it and kept in the activity log.
 
 Optional.
 
+### Whitelist, admin and ban lists
+
+The game's own lists of who may join, who is an admin and who is banned.
+
+Which lists you see depends on the game. Add a name with the box under a list, or remove one with the x on its name (on a ban list the x unbans). Changes are applied the way the game needs: by editing its list file or by sending a console command.
+
+### Operator level
+
+How much an operator may do on a Minecraft server.
+
+Levels run from 1 to 4. A new operator gets the server's default level unless you choose another. Levels cannot be changed while the server is running.
+
 ## Mods
 
 ### Add a mod
@@ -283,6 +357,34 @@ Optional.
 Install a mod by number, package name or file.
 
 What you enter depends on the game: a Steam Workshop number (Conan Exiles), Owner-Name from Thunderstore (Valheim), a mod number in the start script (ARK) or a file or folder (Minecraft, 7 Days to Die, Palworld). The panel does not explain the settings inside mods.
+
+## Settings history
+
+### Settings file
+
+Which settings or start-script file to look at.
+
+Every change the panel makes to a file (the settings editor, ports, presets, mods, the start-script editor) is kept as a version. Changes made outside the panel are not recorded.
+
+### Compare with
+
+What the chosen version is compared against: the version before it, or the current one.
+
+Added lines are green and removed lines red.
+
+### Restore this version
+
+Puts the chosen version back as the file.
+
+The file that is there now stays in the history, so a restore can itself be undone. The server must be stopped, because a running game writes its settings back when it stops.
+
+## Removing a server
+
+### Remove or delete this server
+
+Take it out of the panel only, or delete its files as well.
+
+The server must be stopped first. Removing it from GodlyPanel only leaves every file on disk untouched. Deleting its files is offered only for servers the panel created, permanently deletes its folder including the world (or, for a server that is just a start script, only that script), and cannot be undone. You have to type the server's name to confirm.
 
 ## People
 

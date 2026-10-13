@@ -1,11 +1,14 @@
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import { onWindows } from "./winEmulation.js";
+import { pidsUnder } from "./winshim/procs.mjs";
 
 // A stand-in game server for tests that need something the panel can really start,
 // query, ask to stop, back up and watch die. It is a renamed copy of node.exe (so
 // its image name is its own, and the panel's process checks see it) running a small
-// script that:
+// script. (Off Windows the "copy" is a symlink, since node is over 100 MB, and the
+// program list reads the name from how it was started; see winshim/procs.mjs.) The script:
 //
 //   - answers Source RCON on a port, with Conan Exiles' habit of replying with the
 //     request id minus one, so the panel's Conan client works against it
@@ -85,6 +88,15 @@ setInterval(() => {}, 1000);
 `;
 
 /**
+ * Put a copy of node under another program name. Windows needs a real copy (the image name is the file's); elsewhere a
+ * symlink does the same job without writing 100 MB for every test.
+ */
+export function copyNodeAs(dest) {
+	if (onWindows) fs.copyFileSync(process.execPath, dest);
+	else fs.symlinkSync(process.execPath, dest);
+}
+
+/**
  * Lay a fake game out in `folder` and return a server entry for it.
  * @param {string} folder
  * @param {object} options
@@ -95,7 +107,7 @@ setInterval(() => {}, 1000);
  */
 export function makeFakeGame(folder, { name, rconPort, exe = "fakegame.exe", password = "pw", crashAfterMs = 0, ports = null, standardRcon = false }) {
 	fs.mkdirSync(folder, { recursive: true });
-	fs.copyFileSync(process.execPath, path.join(folder, exe));
+	copyNodeAs(path.join(folder, exe));
 	fs.writeFileSync(path.join(folder, "fakegame.cjs"), SCRIPT);
 	const saved = path.join(folder, "ConanSandbox", "Saved");
 	fs.mkdirSync(path.join(saved, "Logs"), { recursive: true });
@@ -128,7 +140,7 @@ export function makeFakeGame(folder, { name, rconPort, exe = "fakegame.exe", pas
 		rconPort,
 		rconPassword: password,
 		processName: exe,
-		installDir: `${folder}\\`,
+		installDir: `${folder}${path.sep}`,
 		workingDir: folder,
 		startScriptPath: script,
 		source: "created",
@@ -150,19 +162,7 @@ export function copyNodeWithoutConsole(dest) {
 
 /** Kill any fake game running from `folder`, whatever the test did. */
 export function killFakeGames(folder) {
-	try {
-		execFileSync(
-			"powershell",
-			[
-				"-NoProfile",
-				"-Command",
-				`Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -like '${folder.replaceAll("'", "''")}*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }`,
-			],
-			{ stdio: "ignore" },
-		);
-	} catch {
-		// Nothing running.
-	}
+	sweepProcessesUnder(folder);
 }
 
 /**
@@ -172,6 +172,17 @@ export function killFakeGames(folder) {
  * already running can still launch a program a moment later.
  */
 export function sweepProcessesUnder(folder) {
+	if (!onWindows) {
+		const pids = pidsUnder(folder);
+		for (const pid of pids) {
+			try {
+				process.kill(pid, "SIGKILL");
+			} catch {
+				// Already gone.
+			}
+		}
+		return pids.length;
+	}
 	try {
 		const out = execFileSync(
 			"powershell",

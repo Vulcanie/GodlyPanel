@@ -6,7 +6,7 @@
 // Everything here is deterministic: it follows the order the catalogs are written in, and nothing depends on the date.
 import { LAUNCH_ARGS } from "../catalog/launchArgs.js";
 import { CONFIG_CATALOG } from "../configCatalog.js";
-import { guideUrl, slugify } from "./guides.js";
+import { slugify } from "./guides.js";
 
 // ──────────────────────────────── Shared helpers ────────────────────────────────
 
@@ -28,6 +28,7 @@ function choicesText(options) {
 	return options
 		.map((o) => {
 			const [value, label] = Array.isArray(o) ? o : [o.value, o.label];
+			if (value === "") return "empty (the game's default)";
 			return label && label !== value ? `${code(value)} (${mdText(label)})` : code(value);
 		})
 		.join(", ");
@@ -54,9 +55,10 @@ function launchNotes(def, arg) {
 }
 
 function launchEntries() {
-	// A flag several games share (-batchmode, -port) gets the game's name in its heading so every heading, and so every link, is unique.
+	// A flag several games share (-batchmode, -port) gets the game's name in its heading so every heading, and so every link, is
+	// unique. Links ignore case, so -MaxPlayers and -maxplayers count as the same flag.
 	const seen = new Map();
-	for (const def of Object.values(LAUNCH_ARGS)) for (const arg of def.args) seen.set(arg.flag, (seen.get(arg.flag) ?? 0) + 1);
+	for (const def of Object.values(LAUNCH_ARGS)) for (const arg of def.args) seen.set(slugify(arg.flag), (seen.get(slugify(arg.flag)) ?? 0) + 1);
 
 	const entries = [];
 	for (const def of Object.values(LAUNCH_ARGS)) {
@@ -71,7 +73,7 @@ function launchEntries() {
 				: "This game has no Launch options form. To change an argument, open the server's start script (**Edit Batch Files** on its page) and edit the line.",
 		});
 		for (const arg of def.args) {
-			const shared = seen.get(arg.flag) > 1;
+			const shared = seen.get(slugify(arg.flag)) > 1;
 			const lines = [];
 			if (arg.options?.length) lines.push(`Values: ${choicesText(arg.options)}${arg.allowCustom ? ". Other values are accepted too." : "."}`);
 			const example = exampleLine(def, arg);
@@ -316,7 +318,3 @@ export const gameGuideEntries = {
 	},
 	entries: gameEntries,
 };
-
-// Exposed for the tests: the games the guide has a description for, and the link a launch section is reached by.
-export const GAME_GUIDE_INFO = GAME_INFO;
-export const launchSectionUrl = (title) => guideUrl("launch", title);

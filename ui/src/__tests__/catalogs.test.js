@@ -39,21 +39,25 @@ describe("every game's settings catalog", () => {
 					expect(new Set(values).size, `${key} repeats a choice: ${values.join(", ")}`).toBe(values.length);
 					for (const o of meta.options) {
 						expect(typeof o.value, key).toBe("string");
-						expect(o.label?.trim(), `${key} = ${o.value}`).toBeTruthy();
+						// The empty choice ("use the game's default") may have no label of its own.
+						if (o.value !== "") expect(o.label?.trim(), `${key} = ${o.value}`).toBeTruthy();
 					}
 				}
 			});
 
-			it("has a unique label for each setting within a group", () => {
-				const seen = new Set();
+			it("gives two settings in a group the same label only when they are the same thing under two names", () => {
+				// Palworld renamed some settings between versions, so the catalog explains both names the same way.
+				const seen = new Map();
 				for (const [key, meta] of settings) {
 					const id = `${meta.group}/${meta.label}`;
-					expect(seen.has(id), `${key} repeats "${meta.label}" in ${meta.group}`).toBe(false);
-					seen.add(id);
+					if (seen.has(id)) expect(meta.description, `${key} repeats "${meta.label}" in ${meta.group} with a different explanation`).toBe(seen.get(id));
+					seen.set(id, meta.description);
 				}
 			});
 
 			it("only names groups in groupOrder that exist", () => {
+				// The launch files share one generic order, where a game simply has no setting in some of the groups.
+				if (file.launch) return;
 				const groups = new Set(settings.map(([, m]) => m.group));
 				for (const g of file.groupOrder ?? []) expect(groups.has(g), `groupOrder lists "${g}" but no setting is in it`).toBe(true);
 			});

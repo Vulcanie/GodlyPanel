@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
-import { sweepProcessesUnder } from "./fakeGame.js";
+import "./winEmulation.js"; // first: it sets up the environment the panel is started with
+import { sweepProcessesUnder, copyNodeAs } from "./fakeGame.js";
 import fs from "node:fs";
 import net from "node:net";
 import os from "node:os";
@@ -248,7 +249,7 @@ const standIns = [];
 export function runStandIn(dir, image) {
 	fs.mkdirSync(dir, { recursive: true });
 	const exe = path.join(dir, image);
-	fs.copyFileSync(process.execPath, exe);
+	copyNodeAs(exe);
 	const child = spawn(exe, ["-e", "setInterval(() => {}, 1000)"], { stdio: "ignore", windowsHide: true });
 	standIns.push(child);
 	return image;

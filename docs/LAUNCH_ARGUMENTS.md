@@ -407,7 +407,7 @@ Example: `-world 0`
 
 Example: `-password "secret"`
 
-### `-maxplayers`
+### Core Keeper: `-maxplayers`
 
 **Max players** (Server). The most players that can be on at once.
 
@@ -565,7 +565,7 @@ Example: `-persistentDataPath ".\save-data"`
 
 The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
 
-### `-serverName`
+### V Rising: `-serverName`
 
 **Server name** (Server). The name shown in the server list. It overrides the name in the settings file.
 
@@ -637,7 +637,7 @@ Example: `-Xmx4g`
 
 The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
 
-### `-servername`
+### Project Zomboid: `-servername`
 
 **Settings name** (Server). Which settings file to use: servertest means Server\servertest.ini. It also names the world's save folder.
 
@@ -779,7 +779,7 @@ Example: `-QueryPort=27015`
 
 Example: `-RconPort=25575`
 
-### `-MaxPlayers`
+### Conan Exiles: `-MaxPlayers`
 
 **Max players** (Server). The most players that can be on at once.
 

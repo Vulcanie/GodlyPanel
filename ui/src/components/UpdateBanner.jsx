@@ -1,6 +1,7 @@
 import React from "react";
 import { Alert, Button, IconButton } from "@mui/material";
-import { Close as CloseIcon } from "@mui/icons-material";
+import { alpha } from "@mui/material/styles";
+import { Close as CloseIcon, RocketLaunch as UpdateIcon } from "@mui/icons-material";
 import { api } from "../api/client";
 import { onLive } from "../liveEvents";
 import { usePreferences } from "../utils/preferences";
@@ -76,10 +77,11 @@ function UpdateBanner({ onOpenSettings }) {
 	}, []);
 
 	const last = status?.selfUpdate?.lastUpdate;
-	const available = prefs !== null && status?.available && dismissed !== status.latest.version;
+	const latestVersion = status?.latest?.version;
+	const available = prefs !== null && status?.available && Boolean(latestVersion) && dismissed !== latestVersion;
 	if (!last && !available) return null;
 
-	const dismissVersion = () => savePref({ updateBannerDismissed: status.latest.version });
+	const dismissVersion = () => savePref({ updateBannerDismissed: latestVersion });
 	const dismissResult = async () => {
 		stopExpecting();
 		await api.post("/api/updates/panel/update-result/dismiss", {}).catch(() => {});
@@ -91,7 +93,8 @@ function UpdateBanner({ onOpenSettings }) {
 			{last && (
 				<Alert
 					severity={last.ok ? "success" : "error"}
-					sx={{ mb: 2 }}
+					variant="outlined"
+					sx={{ mb: 2, bgcolor: (t) => alpha(last.ok ? t.palette.success.main : t.palette.error.main, 0.08), alignItems: "center" }}
 					data-testid="update-result-banner"
 					action={
 						<Actions onClose={dismissResult}>
@@ -109,7 +112,9 @@ function UpdateBanner({ onOpenSettings }) {
 			{available && (
 				<Alert
 					severity="info"
-					sx={{ mb: 2 }}
+					icon={<UpdateIcon />}
+					variant="outlined"
+					sx={{ mb: 2, alignItems: "center", borderColor: (t) => alpha(t.palette.primary.main, 0.45), color: "text.primary", background: (t) => t.custom.gradientSoft, "& .MuiAlert-icon": { color: "primary.main" }, "& .MuiAlert-action": { alignItems: "center", pt: 0 } }}
 					action={
 						<Actions onClose={dismissVersion}>
 							<Button color="inherit" size="small" onClick={onOpenSettings}>
@@ -118,7 +123,7 @@ function UpdateBanner({ onOpenSettings }) {
 						</Actions>
 					}
 				>
-					GodlyPanel {status.latest.version} is available (you have {status.current}).
+					<strong>GodlyPanel {latestVersion} is available</strong> (you have {status.current}).
 				</Alert>
 			)}
 		</>
