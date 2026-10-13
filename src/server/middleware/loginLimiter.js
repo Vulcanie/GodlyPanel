@@ -11,7 +11,7 @@ const WINDOW_MS = 10 * 60 * 1000;
  * Each sign-in page that faces a different audience makes its own limiter, so wrong guesses
  * from the internet are never counted against (and can't lock out) the same account at home.
  */
-export function createLoginLimiter({ maxPerAccount = 8, maxPerAddress = 30 } = {}) {
+export function createLoginLimiter({ maxPerAccount = 8, maxPerAddress = 30, accountOf = (req) => req.body?.username } = {}) {
 	const failures = new Map(); // key -> { count, since }
 
 	function bump(key) {
@@ -37,7 +37,7 @@ export function createLoginLimiter({ maxPerAccount = 8, maxPerAddress = 30 } = {
 
 	const keys = (req) => {
 		const ip = clientAddress(req);
-		const account = String(req.body?.username ?? "").toLowerCase();
+		const account = String(accountOf(req) ?? "").toLowerCase();
 		return { ipKey: `ip:${ip}`, accountKey: `acct:${account}` };
 	};
 
@@ -71,3 +71,12 @@ const panelLimiter = createLoginLimiter();
 export const loginGuard = panelLimiter.loginGuard;
 export const recordLoginFailure = panelLimiter.recordLoginFailure;
 export const clearLoginFailures = panelLimiter.clearLoginFailures;
+
+// Changing a password asks for the current one, which is a password guess like any other: someone at an unattended, signed-in
+// browser could try them as fast as bcrypt answers. Counted per account (and per address) apart from sign-in, so guessing here
+// can't lock the owner out of signing in, and the other way round.
+const passwordLimiter = createLoginLimiter({ accountOf: (req) => req.user?.id });
+
+export const passwordChangeGuard = passwordLimiter.loginGuard;
+export const recordPasswordChangeFailure = passwordLimiter.recordLoginFailure;
+export const clearPasswordChangeFailures = passwordLimiter.clearLoginFailures;

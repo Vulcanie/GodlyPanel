@@ -11,7 +11,7 @@ import { issueSession, endSession, requireRole } from "../middleware/auth.js";
 import { revokeUserSessions, revokeSession } from "../services/sessionStore.js";
 import sessionRoutes from "./sessions.js";
 import { auditSignedIn, auditSignInFailed, auditSignedOut, auditPasswordChanged } from "../services/auditTrail.js";
-import { loginGuard, recordLoginFailure, clearLoginFailures } from "../middleware/loginLimiter.js";
+import { loginGuard, recordLoginFailure, clearLoginFailures, passwordChangeGuard, recordPasswordChangeFailure, clearPasswordChangeFailures } from "../middleware/loginLimiter.js";
 import { joiningIsOpen, joinWithCode, JoinError } from "../services/communityInvite.js";
 import { normaliseIp } from "../middleware/auth.js";
 
@@ -98,13 +98,18 @@ router.get("/me", (req, res) => {
 	res.json({ user: req.user });
 });
 
-router.post("/change-password", requireRole("admin", "guest"), async (req, res) => {
+// Every role may change its own password (a moderator used to be refused here, though the sign-in page's Password button is theirs too).
+router.post("/change-password", requireRole("admin", "moderator", "guest"), passwordChangeGuard, async (req, res) => {
 	const { currentPassword, newPassword } = req.body || {};
 	const user = getById(req.user.id);
 	if (!user) return res.status(401).json({ error: "Not signed in." });
 
 	const ok = await verifyCredentials(user.username, currentPassword);
-	if (!ok) return res.status(403).json({ error: "Your current password is incorrect." });
+	if (!ok) {
+		recordPasswordChangeFailure(req);
+		return res.status(403).json({ error: "Your current password is incorrect." });
+	}
+	clearPasswordChangeFailures(req);
 
 	try {
 		await setPassword(user.id, newPassword);
