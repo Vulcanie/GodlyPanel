@@ -237,7 +237,7 @@ export function createCommunityApp({ hostRule, uiDir, staffSignIn = () => false 
 
 	// ---- the page itself -------------------------------------------------------------------------------
 	const here = path.dirname(fileURLToPath(import.meta.url));
-	const ui = uiDir ?? path.resolve(here, "..", "..", "..", "ui", "build");
+	const ui = uiDir ?? (process.env.GHP_UI_DIR ? path.resolve(process.env.GHP_UI_DIR) : path.resolve(here, "..", "..", "..", "ui", "build"));
 	if (fs.existsSync(path.join(ui, "index.html"))) {
 		app.use(express.static(ui, { index: false, setHeaders: (res) => res.setHeader("Cache-Control", "public, max-age=300") }));
 		app.get("*", (req, res) => res.sendFile(path.join(ui, "index.html")));

@@ -118,10 +118,20 @@ export function buildApp({ quiet = false, serveUi = true } = {}) {
 	// mandatory rather than the opt-in SERVE_STATIC flag the original API had.
 	if (serveUi) {
 		const serverDir = path.dirname(fileURLToPath(import.meta.url));
-		const uiBuildPath = path.resolve(serverDir, "..", "..", "ui", "build");
+		// GHP_UI_DIR lets a test or a developer serve a build from somewhere else without touching ui/build.
+		const uiBuildPath = process.env.GHP_UI_DIR ? path.resolve(process.env.GHP_UI_DIR) : path.resolve(serverDir, "..", "..", "ui", "build");
 
 		if (fs.existsSync(path.join(uiBuildPath, "index.html"))) {
-			app.use(express.static(uiBuildPath));
+			// The build names every script and stylesheet after its contents (assets/name-HASH.js), so a copy never goes stale and can
+			// be kept for a year; the page that points at them must be fetched fresh each time so a new version is picked up.
+			app.use(
+				express.static(uiBuildPath, {
+					setHeaders: (res, file) => {
+						if (/[\\/]assets[\\/]/.test(file)) res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+						else res.setHeader("Cache-Control", "no-cache");
+					},
+				}),
+			);
 			app.get("*", (req, res) => res.sendFile(path.join(uiBuildPath, "index.html")));
 		} else {
 			console.warn(`[ui] No build found at ${uiBuildPath} — run "npm run build:ui".`);
