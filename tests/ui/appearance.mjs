@@ -52,7 +52,21 @@ const signIn = async (page) => {
 	await page.getByLabel(/username/i).fill("admin");
 	await page.getByLabel(/password/i).fill("TestAdmin!2345");
 	await page.getByRole("button", { name: /sign in|log in/i }).click();
-	await page.getByRole("button", { name: "Expand All" }).waitFor({ timeout: 30_000 });
+	await page.getByTestId("user-menu").waitFor({ timeout: 30_000 });
+};
+// The sidebar is always there on a wide screen; on a narrow one it is a drawer behind the menu button.
+const goDashboard = async (page) => {
+	const menu = page.getByRole("button", { name: "Open the menu" });
+	if (await menu.isVisible()) await menu.click();
+	await page.getByTestId("nav-dashboard").click();
+	await page.getByTestId("create-server").waitFor();
+};
+// Settings has its groups down the left (or along the top on a phone); each setting lives in one.
+const openSettings = async (page, category) => {
+	const menu = page.getByRole("button", { name: "Open the menu" });
+	if (await menu.isVisible()) await menu.click();
+	await page.getByTestId("nav-settings").click();
+	await page.getByTestId(`settings-category-${category}`).click();
 };
 const luminance = (css) => { const m = css.match(/\d+/g).map(Number); return (0.2126 * m[0] + 0.7152 * m[1] + 0.0722 * m[2]) / 255; };
 
@@ -62,11 +76,12 @@ try {
 		const ctx = await browser.newContext({ viewport: { width: 1280, height: 850 }, colorScheme: "dark" });
 		const page = await ctx.newPage();
 		await signIn(page);
-		await page.getByRole("button", { name: "Expand All" }).click();
 		await settle(page);
 		check("follows Windows: dark when Windows is dark", luminance(await bg(page)) < 0.2, await bg(page));
 		await shot(page, "01-dashboard-dark");
 
+		// The theme choice lives in the user menu at the foot of the sidebar.
+		await page.getByTestId("user-menu").click();
 		await page.getByRole("button", { name: "Appearance" }).click();
 		await page.getByRole("menuitem", { name: "Light" }).click();
 		await settle(page, 500);
@@ -75,9 +90,10 @@ try {
 		await shot(page, "02-dashboard-light");
 
 		await page.reload({ waitUntil: "domcontentloaded" });
-		await page.getByRole("button", { name: "Expand All" }).waitFor();
+		await page.getByTestId("user-menu").waitFor();
 		check("remembers the choice after a reload", luminance(await bg(page)) > 0.85);
 
+		await page.getByTestId("user-menu").click();
 		await page.getByRole("button", { name: "Appearance" }).click();
 		await page.getByRole("menuitem", { name: "Match Windows" }).click();
 		await page.emulateMedia({ colorScheme: "dark" });
@@ -88,7 +104,6 @@ try {
 		check("and follows Windows live", luminance(await bg(page)) > 0.85);
 
 		// Text must stay readable: no text at all in the same colour as its background.
-		await page.getByRole("button", { name: "Expand All" }).click();
 		await settle(page, 600);
 		const unreadable = await page.evaluate(() => {
 			const parse = (c) => c.match(/[\d.]+/g).map(Number);
@@ -99,8 +114,13 @@ try {
 				if (!el.childNodes.length || ![...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim())) continue;
 				const r = el.getBoundingClientRect();
 				if (r.width === 0 || r.height === 0) continue;
-				// Text over the game banners is white on an image with a dark overlay; skip it.
-				if (el.closest(".MuiAccordionSummary-root")) continue;
+				// Text over the game artwork (card and page headers) is white on an image with a dark overlay, so a flat background
+				// colour says nothing about it: skip text that sits inside a small gradient or image strip.
+				let overArtwork = false;
+				for (let e = el; e && e !== document.body; e = e.parentElement) {
+					if (getComputedStyle(e).backgroundImage !== "none" && e.getBoundingClientRect().height < 300) { overArtwork = true; break; }
+				}
+				if (overArtwork) continue;
 				const fg = parse(getComputedStyle(el).color).slice(0, 3);
 				if (Math.abs(lum(fg) - lum(effectiveBg(el))) < 0.25) bad.push(el.textContent.trim().slice(0, 30));
 			}
@@ -115,7 +135,6 @@ try {
 		const ctx = await browser.newContext({ viewport: { width: 1280, height: 850 }, colorScheme: "dark" });
 		const page = await ctx.newPage();
 		await signIn(page);
-		await page.getByRole("button", { name: "Expand All" }).click();
 		await settle(page);
 		check("the dashboard lists all three servers", (await page.getByText("Survival Craft").count()) > 0 && (await page.getByText("Friends Conan").count()) > 0 && (await page.getByText("Old Valheim").count()) > 0);
 		check("tags are shown on the servers", (await page.getByText("modded", { exact: true }).count()) > 0);
@@ -137,13 +156,14 @@ try {
 		await page.getByRole("button", { name: "friends", exact: true }).click();
 		await settle(page, 500);
 		check("a tag chip filters", (await page.getByText("Old Valheim").count()) === 0 && (await page.getByText("Friends Conan").count()) > 0);
-		await page.getByRole("button", { name: "Clear" }).click();
+		// A chip is a toggle: pressing it again clears the filter.
+		await page.getByRole("button", { name: "friends", exact: true }).click();
+		await settle(page, 400);
+		check("pressing the tag chip again clears the filter", (await page.getByText("Old Valheim").count()) > 0);
 
 		await page.getByLabel("Group by").click();
 		await page.getByRole("option", { name: "Tag" }).click();
 		await settle(page, 600);
-		await page.getByRole("button", { name: "Expand All" }).click();
-		await settle(page, 400);
 		check("groups by tag", (await page.getByText("friends", { exact: true }).count()) > 0 && (await page.getByText("archive", { exact: true }).count()) > 0);
 		await shot(page, "03-dashboard-by-tag");
 		await ctx.close();
@@ -154,8 +174,7 @@ try {
 		const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, colorScheme: "dark" });
 		const page = await ctx.newPage();
 		await signIn(page);
-		await page.getByRole("button", { name: "Expand All" }).click();
-		await page.getByText("Survival Craft", { exact: true }).first().click();
+		await page.getByTestId("sidebar-server-Survival Craft").click();
 		await settle(page, 1200);
 		check("an administrator can edit tags", (await page.getByLabel("Add a tag").count()) > 0);
 		await page.getByLabel("Add a tag").fill("weekend");
@@ -175,9 +194,7 @@ try {
 		check("the backups tab has a place for off-PC copies", await visible(page, "Copies off this PC"));
 		await shot(page, "05-backups");
 
-		await page.getByText("Back to Dashboard").click();
-		await page.getByRole("button", { name: "Settings" }).click();
-		await page.getByRole("button", { name: "Open all sections" }).click();
+		await openSettings(page, "backups");
 		await settle(page, 1500);
 		check("settings has off-PC backup places", await visible(page, "Copies of backups off this PC"));
 		await page.getByRole("button", { name: "Add a place" }).click();
@@ -193,18 +210,17 @@ try {
 		const ctx = await browser.newContext({ viewport: size, colorScheme: scheme, deviceScaleFactor: 2, hasTouch: true, isMobile: size.width < 500 });
 		const page = await ctx.newPage();
 		await signIn(page);
-		await page.getByRole("button", { name: "Expand All" }).click();
 		await settle(page, 800);
 		let o = await overflow(page, size.width);
 		check(`${label}: the dashboard fits the screen width`, o.scroll <= o.view, `${o.scroll} vs ${o.view}`);
 		await shot(page, `10-${label}-dashboard`);
 
-		await page.getByText("Survival Craft", { exact: true }).first().click();
+		await page.getByTestId("server-card-Survival Craft").click();
 		await settle(page, 1200);
 		o = await overflow(page, size.width);
 		check(`${label}: a server's page fits`, o.scroll <= o.view, `${o.scroll} vs ${o.view}`);
 		await shot(page, `11-${label}-server`);
-		for (const name of ["Players", "Backups", "Stats", "Schedules", "Automation"]) {
+		for (const name of ["Overview", "Players", "Backups", "Schedules", "Network", "Automation", "Advanced"]) {
 			const t = page.getByRole("tab", { name });
 			if ((await t.count()) === 0) continue;
 			await t.scrollIntoViewIfNeeded();
@@ -214,9 +230,7 @@ try {
 			check(`${label}: the ${name} tab fits`, o.scroll <= o.view, `${o.scroll} vs ${o.view}`);
 			if (name === "Players" || name === "Backups") await shot(page, `12-${label}-${name.toLowerCase()}`);
 		}
-		await page.getByText("Back to Dashboard").click();
-		await page.getByRole("button", { name: "Settings" }).click();
-		await page.getByRole("button", { name: "Open all sections" }).click();
+		await openSettings(page, "backups");
 		await settle(page, 1500);
 		o = await overflow(page, size.width);
 		check(`${label}: settings fits`, o.scroll <= o.view, `${o.scroll} vs ${o.view}`);
