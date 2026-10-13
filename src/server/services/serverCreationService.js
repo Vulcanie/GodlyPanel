@@ -72,7 +72,12 @@ export function listTemplates() {
 	}));
 }
 
+// What createServer hands out: the server's slug and a time. Anything else asked for (it arrives in the address of the request)
+// is not a job of ours and must not become part of a file path.
+const JOB_ID = /^[a-z0-9-]+-\d+$/;
+
 export async function getJob(jobId) {
+	if (!JOB_ID.test(String(jobId))) return null;
 	const inMemory = jobs.get(jobId);
 	if (inMemory) return inMemory;
 	try {
@@ -262,6 +267,16 @@ export async function validateNewServer(template, name, ports, sharedInstallDir)
 	const labelOf = (key) => template.ports.find((p) => p.key === key)?.label ?? key;
 	const entries = Object.entries(ports);
 
+	// Whole numbers in the range a game can use (below 1024 needs special rights and clashes with system services), and not the
+	// panel's own port or one reserved in Settings: the same rules as changing the ports of a server that exists (serverPorts.js).
+	const panelPort = Number(process.env.GHP_PORT) || getConfig().http.port;
+	const reserved = new Set(getConfig().portAllocation.reservedPorts);
+	for (const [key, value] of entries) {
+		if (!Number.isInteger(value) || value < 1024 || value > 65535) throw new Error(`${labelOf(key)} must be a whole number from 1024 to 65535.`);
+		if (value === panelPort) throw new Error(`${value} is the port GodlyPanel itself uses, so ${labelOf(key).toLowerCase()} can't be ${value}.`);
+		if (reserved.has(value)) throw new Error(`${value} is on the reserved list in Settings, so ${labelOf(key).toLowerCase()} can't use it.`);
+	}
+
 	// Two of this server's own ports can't be the same.
 	const seen = new Map();
 	for (const [key, value] of entries) {
@@ -279,6 +294,7 @@ export async function validateNewServer(template, name, ports, sharedInstallDir)
 	const implied = impliedPortsFor(template, ports);
 	for (const item of implied) {
 		const { port, offset, label } = item;
+		if (port > 65535) throw new Error(`${template.displayName} also needs port ${port} (game port + ${offset}, for ${label}), which doesn't exist. Choose a lower game port.`);
 		const clash = entries.find(([key, value]) => key !== "port" && value === port);
 		if (clash) {
 			throw new Error(
@@ -634,6 +650,12 @@ export async function createServer(templateId, rawParams) {
 	const template = getTemplate(templateId);
 	if (!template) throw new Error(`Unknown template: ${templateId}`);
 
+	// These values are written into a start script or a settings file, line by line. A line break would end the line they belong
+	// on and start another one of the sender's choosing.
+	for (const [key, value] of Object.entries(rawParams ?? {})) {
+		if (typeof value === "string" && /[\r\n\u0000]/.test(value)) throw new Error(`"${key}" can't contain a line break.`);
+	}
+
 	const suggested = await suggestParams(templateId);
 	const ports = {};
 	for (const portDef of template.ports) {
@@ -707,7 +729,8 @@ export async function createServer(templateId, rawParams) {
 	}
 
 	const jobId = `${slug}-${Date.now()}`;
-	jobs.set(jobId, { status: "queued", template: templateId, name: rawParams.name });
+	// The id is part of the job itself, so whoever has the job (a poll, the file kept for after a restart) can say which one it is.
+	jobs.set(jobId, { jobId, status: "queued", template: templateId, name: rawParams.name });
 	await saveJobState(jobId, jobs.get(jobId));
 
 	// Fire and forget — the caller polls getJob(jobId) for progress.

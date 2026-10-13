@@ -13,6 +13,8 @@ import net from "node:net";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+// First: on Linux it puts stand-ins for Windows' tar.exe on the path, which the zip below and the panel both use.
+import "../helpers/winEmulation.js";
 import { createZip } from "../../src/server/util/tarZip.js";
 
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
@@ -86,8 +88,9 @@ async function openCard(page, B) {
 	await page.getByLabel(/username/i).fill("admin");
 	await page.getByLabel(/password/i).fill("TestAdmin!2345");
 	await page.getByRole("button", { name: /sign in/i }).click();
-	await page.getByRole("button", { name: "Settings" }).click();
-	await page.getByRole("button", { name: "Open all sections" }).click();
+	await page.getByTestId("nav-settings").click();
+	// The update card is in the General group, which is the one Settings opens on.
+	await page.getByTestId("settings-category-general").click();
 	await page.getByText("GodlyPanel version", { exact: true }).waitFor({ timeout: 30_000 });
 	await page.getByRole("button", { name: "Check now" }).click();
 }
@@ -105,7 +108,7 @@ try {
 		const button = page.getByRole("button", { name: /^Update now/ });
 		await button.waitFor({ timeout: 10_000 });
 		const label = await button.textContent();
-		check("a new version offers Update now, with the size of the small download", /Update now \(\d+(\.\d+)? (KB|MB)\)/.test(label ?? ""), label);
+		check("a new version offers Update now, with the size of the small download", /Update now \(\d+(\.\d+)? (B|KB|MB)\)/.test(label ?? ""), label);
 		await shot(page, "update-1-card");
 
 		await button.click();
@@ -155,7 +158,7 @@ try {
 		const banner = page.getByTestId("update-result-banner");
 		await banner.waitFor({ timeout: 30_000 });
 		check(`an update that ${name} is the first thing the dashboard says`, pattern.test(await banner.textContent()), (await banner.textContent()).slice(0, 120));
-		check(`and is shown as ${severity === "success" ? "good news" : "a problem"}`, (await banner.getAttribute("class")).includes(severity === "success" ? "MuiAlert-colorSuccess" : "MuiAlert-colorError") || (await banner.getAttribute("class")).includes(severity === "success" ? "MuiAlert-standardSuccess" : "MuiAlert-standardError"));
+		check(`and is shown as ${severity === "success" ? "good news" : "a problem"}`, new RegExp(severity === "success" ? "MuiAlert-(color|outlined|standard)Success" : "MuiAlert-(color|outlined|standard)Error").test(await banner.getAttribute("class")));
 		await shot(page, `update-6-banner-${name.replace(" ", "-")}`);
 		await banner.getByRole("button", { name: "Close" }).click();
 		await banner.waitFor({ state: "hidden", timeout: 10_000 });

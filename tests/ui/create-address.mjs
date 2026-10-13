@@ -32,7 +32,7 @@ try {
 	await page.getByLabel(/username/i).fill("admin");
 	await page.getByLabel(/password/i).fill("TestAdmin!2345");
 	await page.getByRole("button", { name: /sign in|log in/i }).click();
-	await page.getByRole("button", { name: /create server/i }).first().click();
+	await page.getByTestId("nav-create").click();
 	const settle = () => page.waitForTimeout(500);
 	const choose = async (game) => { await page.getByRole("heading", { name: game, exact: true }).click(); await settle(); };
 

@@ -39,6 +39,18 @@ export async function readJson(filePath, fallback = null, { strict = false } = {
 		if (strict && UNREADABLE.has(err?.code)) {
 			throw new Error(`GodlyPanel can't read ${filePath} (${err.code}). Check that this Windows account may open it and that no other program has it locked; the file was not changed.`);
 		}
+		// A file that is there but damaged (a typo from editing it by hand, say) is not the same as no file: reading it as empty
+		// would start a store of accounts, servers or settings from nothing, and its next save would overwrite what is left of the
+		// real one, including the .bak that every save keeps of the version before. So the last good version is used first.
+		if (strict && err instanceof SyntaxError) {
+			try {
+				const good = JSON.parse(await fs.readFile(`${filePath}.bak`, "utf8"));
+				console.warn(`[data] ${filePath} is damaged (${err.message}); using the last good copy, ${filePath}.bak.`);
+				return good;
+			} catch {
+				// No usable copy either: nothing else to go on.
+			}
+		}
 		return fallback;
 	}
 }

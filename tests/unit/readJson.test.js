@@ -28,6 +28,17 @@ describe("reading a data file", () => {
 		}
 	});
 
+	it("uses the last good copy of a damaged store file instead of starting it empty", async () => {
+		fs.writeFileSync(path.join(dir, "users.json"), '{"users":[1,2]');
+		fs.writeFileSync(path.join(dir, "users.json.bak"), '{"users":[1]}');
+		assert.deepEqual(await readJson(path.join(dir, "users.json"), null, { strict: true }), { users: [1] });
+		// Only the stores that must not start empty (strict) do this; and with no good copy it is as before.
+		assert.equal(await readJson(path.join(dir, "users.json"), "fallback"), "fallback");
+		fs.writeFileSync(path.join(dir, "both-bad.json"), "{nope");
+		fs.writeFileSync(path.join(dir, "both-bad.json.bak"), "{nope too");
+		assert.equal(await readJson(path.join(dir, "both-bad.json"), "fallback", { strict: true }), "fallback");
+	});
+
 	it("refuses to call an existing but unreadable file empty, when asked to be strict", { skip: !onWindows }, async () => {
 		const file = path.join(dir, "locked.json");
 		fs.writeFileSync(file, '{"users":[1]}');

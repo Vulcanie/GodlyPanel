@@ -128,7 +128,7 @@ export async function readLog(server, id, { lines = 300, since = null, redact = 
 		return { lines: out, offset, size: stat.size, reset, name: log.name, label: log.label };
 	};
 
-	if (since !== null && Number.isFinite(since)) {
+	if (since !== null && Number.isFinite(since) && since >= 0) {
 		// The file was replaced or rotated since: start over from its end.
 		if (since > stat.size) return readLog(server, id, { lines, redact });
 		const length = Math.min(stat.size - since, MAX_CHUNK);
@@ -159,6 +159,12 @@ export async function searchLog(server, id, term, { max = 300, redact = true } =
 	const log = await resolveLog(server, id);
 	if (!log) return null;
 	const needle = String(term).toLowerCase();
+	// A line is a hit only if it still matches once what a caller may not see is masked. Matching the raw line and masking
+	// afterwards would let a moderator find a password one guess at a time: the line comes back (or doesn't) for each guess.
+	const hit = (line) => {
+		if (!line.toLowerCase().includes(needle)) return false;
+		return !redact || redactSecrets(line).toLowerCase().includes(needle);
+	};
 	const stat = await fs.stat(log.path);
 	const start = Math.max(0, stat.size - MAX_SEARCH_BYTES);
 	const matches = [];
@@ -175,12 +181,12 @@ export async function searchLog(server, id, term, { max = 300, redact = true } =
 			const parts = splitLines(text);
 			carry = parts.pop() ?? "";
 			for (const line of parts) {
-				if (line.toLowerCase().includes(needle)) matches.push(line);
+				if (hit(line)) matches.push(line);
 			}
 			// Keep the newest: drop the oldest as we go instead of holding everything.
 			if (matches.length > max * 4) matches.splice(0, matches.length - max);
 		}
-		if (carry.toLowerCase().includes(needle)) matches.push(carry);
+		if (hit(carry)) matches.push(carry);
 	} finally {
 		await fd.close();
 	}

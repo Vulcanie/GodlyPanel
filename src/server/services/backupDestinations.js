@@ -74,7 +74,9 @@ function clean(input, existing = null) {
 		createdAt: existing?.createdAt ?? new Date().toISOString(),
 	};
 	for (const k of ["keepCount", "keepDays"]) {
-		if (out[k] !== null && (!Number.isInteger(out[k]) || out[k] < 0 || out[k] > 3650)) throw new BackupError(`${k} must be a whole number or blank.`, "bad_number");
+		// keepDays 0 means "no age limit"; keepCount 0 would delete every scheduled backup as soon as it was copied.
+		const min = k === "keepCount" ? 1 : 0;
+		if (out[k] !== null && (!Number.isInteger(out[k]) || out[k] < min || out[k] > 3650)) throw new BackupError(`${k} must be a whole number${min ? ` of at least ${min}` : ""} or blank.`, "bad_number");
 	}
 	if (type === "folder") {
 		const p = String(input.folder?.path ?? existing?.folder?.path ?? "").trim();
@@ -418,7 +420,8 @@ const kindOf = (id) => /_(manual|scheduled|pre-restore|pre-update)$/.exec(id)?.[
 /** Keep rules at a destination: scheduled backups by count and age, safety backups to the last few, manual ones always. */
 async function trimDestination(d, server) {
 	const config = getConfig().backups;
-	const keepCount = d.keepCount ?? config.keepCount;
+	// At least one, as for local backups (see applyRetention).
+	const keepCount = Math.max(1, d.keepCount ?? config.keepCount);
 	const keepDays = d.keepDays ?? config.keepDays;
 	const adapter = adapterFor(d);
 	const dir = path.basename(serverBackupDir(server));

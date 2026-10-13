@@ -44,12 +44,22 @@ const signIn = async (page, username, password) => {
 	await page.getByLabel(/username/i).fill(username);
 	await page.getByLabel(/password/i).fill(password);
 	await page.getByRole("button", { name: /sign in|log in/i }).click();
-	await page.getByRole("button", { name: "Expand All" }).waitFor({ timeout: 30_000 });
+	await page.getByRole("heading", { name: "Dashboard", level: 1 }).waitFor({ timeout: 30_000 });
 };
+// The sidebar lists every server the person may open.
 const openServer = async (page, name) => {
-	await page.getByRole("button", { name: "Expand All" }).click();
-	await page.getByText(name, { exact: true }).first().click();
+	await page.getByTestId(`sidebar-server-${name}`).click();
+	await page.getByTestId("tab-overview").waitFor();
 	await settle(page, 1200);
+};
+// The server page's header says "Online · <game>" / "Offline · <game>" / "Starting… · <game>".
+const isOnline = (page) => visible(page, /^Online ·/);
+const waitOnline = (page, timeout = 60_000) => page.getByText(/^Online ·/).first().waitFor({ timeout }).catch(() => {});
+// Pages that are not a server's have no Back button; the sidebar is the way between them.
+const openSettings = async (page, category) => {
+	await page.getByTestId("nav-settings").click();
+	await page.getByTestId(`settings-category-${category}`).click();
+	await settle(page, 1000);
 };
 const tab = async (page, name) => { await page.getByRole("tab", { name }).click(); await settle(page, 1000); };
 
@@ -63,17 +73,24 @@ try {
 	await openServer(page, "Fake Conan");
 
 	const tabs = await page.getByRole("tab").allTextContents();
-	check("an administrator gets every tab", ["Settings", "Backups", "Schedules", "Logs", "Players", "Mods", "Activity", "Automation"].every((t) => tabs.includes(t)), tabs.join(", "));
-	check("the settings tab still has the start and stop buttons", await page.getByRole("button", { name: "Start Server", exact: true }).isVisible());
-	check("and a Restart button", await page.getByRole("button", { name: "Restart Server" }).isVisible());
+	check("an administrator gets every tab", ["Overview", "Settings", "Players", "Backups", "Schedules", "Logs", "Network", "Mods", "Activity", "Automation", "Advanced"].every((t) => tabs.includes(t)), tabs.join(", "));
+	check("the header has the start, restart and stop buttons whatever tab is open", (await page.getByTestId("header-start").isVisible()) && (await page.getByTestId("header-restart").isVisible()) && (await page.getByTestId("header-stop").isVisible()));
+	check("the overview has the same controls and the performance charts", (await page.getByTestId("ctl-start").isVisible()) && (await visible(page, "Performance")));
+	check("while it is off only Start can be pressed", (await page.getByTestId("header-start").isEnabled()) && (await page.getByTestId("header-restart").isDisabled()));
+	await shot(page, "1-overview");
+
+	// the settings form (the game's own file, with a form and an explanation for each setting)
+	await tab(page, "Settings");
+	check("the settings tab shows the game's settings file as a form", (await page.getByTestId("save-config").count()) === 1 && (await page.getByTestId("save-config").isDisabled()));
 	await shot(page, "1-settings");
 
 	// start it through the real button and watch it say so
-	await page.getByRole("button", { name: "Start Server", exact: true }).click();
+	await tab(page, "Overview");
+	await page.getByTestId("header-start").click();
 	await page.getByText("Starting…").first().waitFor({ timeout: 15_000 }).catch(() => {});
 	check("it says it is starting", await visible(page, "Starting…"));
-	await page.getByText("Online", { exact: true }).first().waitFor({ timeout: 60_000 }).catch(() => {});
-	check("and then that it is online", await visible(page, "Online"));
+	await waitOnline(page);
+	check("and then that it is online", await isOnline(page));
 	await page.waitForFunction(() => !document.body.innerText.includes("Starting…"), null, { timeout: 30_000 }).catch(() => {});
 
 	// ---- backups
@@ -86,8 +103,8 @@ try {
 	await page.getByText(/^Manual$/).first().waitFor({ timeout: 90_000 }).catch(() => {});
 	check("and then it is listed", await visible(page, "Manual"));
 	await shot(page, "2b-backups-done");
-	await page.getByText("Online", { exact: true }).first().waitFor({ timeout: 60_000 }).catch(() => {});
-	check("the server was started again afterwards", await visible(page, "Online"));
+	await waitOnline(page);
+	check("the server was started again afterwards", await isOnline(page));
 
 	// ---- restart and use a backup
 	const worldFile = path.join(game, "ConanSandbox", "Saved", "world.sav");
@@ -96,15 +113,15 @@ try {
 	const dialog = page.getByRole("dialog");
 	await dialog.getByText("This erases everything newer than this backup.").waitFor({ timeout: 10_000 });
 	check("a running server's backup says it will restart and what it erases", (await visible(page, "stop the server, put this backup back, and start it again")) && (await visible(page, "erases everything newer")));
-	check("a safety backup is kept by default, so no name has to be typed", (await dialog.getByLabel(/Keep a safety backup/).isChecked()) && (await dialog.getByLabel(/type Fake Conan to confirm/).count()) === 0);
+	check("a safety backup is kept by default, so no name has to be typed", (await dialog.getByRole("checkbox", { name: /Keep a safety backup/ }).isChecked()) && (await dialog.getByLabel(/type Fake Conan to confirm/).count()) === 0);
 	await settle(page, 700);
 	if (SHOTS) await page.screenshot({ path: path.join(SHOTS, "2c-restore-dialog.png") });
-	await dialog.getByLabel(/Keep a safety backup/).uncheck();
+	await dialog.getByRole("checkbox", { name: /Keep a safety backup/ }).uncheck();
 	const confirm = dialog.getByRole("button", { name: "Restart and use this backup" });
 	check("without the safety backup it asks for the server's name", await confirm.isDisabled());
 	await dialog.getByLabel(/type Fake Conan to confirm/).fill("Fake Conan");
 	check("and then goes ahead", await confirm.isEnabled());
-	await dialog.getByLabel(/Keep a safety backup/).check();
+	await dialog.getByRole("checkbox", { name: /Keep a safety backup/ }).check();
 	check("with the safety backup back on, the name isn't needed", (await dialog.getByLabel(/type Fake Conan to confirm/).count()) === 0 && (await confirm.isEnabled()));
 	await confirm.click();
 	await page.getByText(/Restoring. The server is being stopped/).first().waitFor({ timeout: 10_000 }).catch(() => {});
@@ -113,14 +130,14 @@ try {
 	check("and when it is done", await visible(page, "started it again"));
 	await shot(page, "2d-restored");
 	check("the older world is back", fs.readFileSync(worldFile, "utf8").startsWith("world v1"));
-	await page.getByText("Online", { exact: true }).first().waitFor({ timeout: 60_000 }).catch(() => {});
-	check("and the server is running again", await visible(page, "Online"));
+	await waitOnline(page);
+	check("and the server is running again", await isOnline(page));
 	check("a safety backup of the newer world was kept", await visible(page, "Before a restore"));
 
 	// ---- logs
 	await tab(page, "Logs");
 	check("the logs tab shows the game's log", await visible(page, "rcon listening"));
-	await page.getByLabel("Search this log").fill("listening");
+	await page.getByRole("textbox", { name: "Search this log" }).fill("listening");
 	await page.getByRole("button", { name: "Search", exact: true }).click();
 	await settle(page);
 	check("a search narrows it to matching lines", await visible(page, "matching line"));
@@ -135,7 +152,7 @@ try {
 	await tab(page, "Schedules");
 	await page.getByRole("button", { name: "Add a schedule" }).click();
 	await settle(page, 500);
-	await page.getByLabel("Name (optional)").fill("Nightly backup");
+	await page.getByRole("textbox", { name: "Name (optional)" }).fill("Nightly backup");
 	await page.getByRole("button", { name: "Save" }).click();
 	await settle(page, 1200);
 	check("a schedule can be added", await visible(page, "Nightly backup"));
@@ -145,6 +162,7 @@ try {
 	// ---- mods
 	await tab(page, "Mods");
 	check("the mods tab explains Conan's mods", await visible(page, "modlist.txt"));
+	check("and warns that mods' settings have no explanations", await page.getByTestId("mods-no-explanations").isVisible());
 	await shot(page, "6-mods");
 
 	// ---- activity + automation
@@ -152,30 +170,45 @@ try {
 	check("the activity tab shows what happened", await visible(page, "Backup of Fake Conan finished"));
 	await shot(page, "7-activity");
 	await tab(page, "Automation");
-	await page.getByLabel("Restart it if it crashes").click();
+	// Each setting also has an (i) button beside it, so the switch is asked for by its role.
+	await page.getByRole("switch", { name: "Restart it if it crashes" }).click();
 	await settle(page, 600);
-	check("auto-restart can be switched on", await page.getByLabel("Restart it if it crashes").isChecked());
+	check("auto-restart can be switched on", await page.getByRole("switch", { name: "Restart it if it crashes" }).isChecked());
 	check("presets and cloning are there", (await visible(page, "Setting presets")) && (await visible(page, "Clone this server")));
 	await shot(page, "8-automation");
 
-	// ---- dashboard: activity dialog and settings
-	await page.getByRole("button", { name: "Back to Dashboard" }).click();
-	await settle(page);
-	await page.getByRole("button", { name: "Activity" }).click();
+	// ---- stopping asks first, because players are on
+	await tab(page, "Overview");
+	await page.getByTestId("header-stop").click();
+	const stopDialog = page.getByRole("dialog");
+	await stopDialog.getByText("Stop Fake Conan?").waitFor({ timeout: 10_000 });
+	check("Stop asks before it disconnects anyone", await stopDialog.getByText(/Players will be disconnected/).isVisible());
+	await stopDialog.getByRole("button", { name: "Cancel" }).click();
+	await stopDialog.waitFor({ state: "hidden" });
+	check("and cancelling leaves it running", await isOnline(page));
+	await page.getByTestId("header-stop").click();
+	await page.getByTestId("confirm-yes").click();
+	await page.getByText(/^Offline ·/).first().waitFor({ timeout: 60_000 }).catch(() => {});
+	check("confirming stops it", await visible(page, /^Offline ·/));
+	await shot(page, "8b-stopped");
+
+	// ---- the sidebar's Activity page and the settings
+	await page.getByTestId("nav-activity").click();
 	await settle(page, 700);
-	check("the dashboard's Activity button lists events for every server", await visible(page, "Fake Conan:"));
-	await page.keyboard.press("Escape");
-	await page.getByRole("button", { name: "Settings" }).click();
-	await page.getByRole("button", { name: "Open all sections" }).click();
-	await settle(page, 1200);
+	check("the Activity page lists events for every server", await visible(page, "Fake Conan"));
+	await openSettings(page, "general");
 	check("settings has the update check", await visible(page, "GodlyPanel version"));
+	check("and start-with-Windows", await visible(page, "Start GodlyPanel when I sign in to Windows"));
+	await page.getByTestId("settings-category-notifications").click();
+	await settle(page, 700);
 	check("and notification choices", await visible(page, "Events to tell you about"));
-	check("and start-with-Windows and backup settings", (await visible(page, "Start GodlyPanel when I sign in to Windows")) && (await visible(page, "Backup folder")));
+	await page.getByTestId("settings-category-backups").click();
+	await settle(page, 700);
+	check("and backup settings", await visible(page, "Backup folder"));
 	await shot(page, "9-settings");
 
 	// ---- people: moderator with servers
-	await page.getByRole("button", { name: "Back to Dashboard" }).click();
-	await page.getByRole("button", { name: "People" }).click();
+	await page.getByTestId("nav-people").click();
 	await settle(page, 800);
 	check("the people page offers Moderator", await visible(page, "Moderator"));
 	check("and shows the limited moderator's scope", await visible(page, "1 server"));
@@ -189,23 +222,26 @@ try {
 	const merrors = [];
 	mod.on("pageerror", (e) => merrors.push(e.message));
 	await signIn(mod, "modone", "TestMod!2345");
-	check("a moderator sees no People or Settings", (await mod.getByRole("button", { name: "People" }).count()) === 0 && (await mod.getByRole("button", { name: "Settings" }).count()) === 0);
-	check("but does see Activity", (await mod.getByRole("button", { name: "Activity" }).count()) === 1);
+	check("a moderator sees no People, Settings or Create server", (await mod.getByTestId("nav-people").count()) === 0 && (await mod.getByTestId("nav-settings").count()) === 0 && (await mod.getByTestId("nav-create").count()) === 0 && (await mod.getByTestId("create-server").count()) === 0);
+	check("but does see Activity", (await mod.getByTestId("nav-activity").count()) === 1);
+	check("and only the servers they were given are in the sidebar", (await mod.getByTestId("sidebar-server-Fake Conan").count()) === 1 && (await mod.getByTestId("sidebar-server-Other Server").count()) === 0);
 	await shot(mod, "11-moderator-dashboard");
 
 	// The server they're limited away from isn't clickable.
-	await mod.getByRole("button", { name: "Expand All" }).click();
-	await mod.getByText("Other Server", { exact: true }).first().click();
-	await settle(mod, 800);
+	if ((await mod.getByTestId("server-card-Other Server").count()) > 0) {
+		await mod.getByTestId("server-card-Other Server").click();
+		await settle(mod, 800);
+	}
 	check("a server they weren't given doesn't open", (await mod.getByRole("tab").count()) === 0);
 
-	await mod.getByText("Fake Conan", { exact: true }).first().click();
+	await mod.getByTestId("server-card-Fake Conan").click();
 	await settle(mod, 1200);
 	const modTabs = await mod.getByRole("tab").allTextContents();
-	check("a moderator gets the day-to-day tabs", ["Controls", "Backups", "Schedules", "Logs", "Players", "Activity"].every((t) => modTabs.includes(t)), modTabs.join(", "));
-	check("and not settings, mods or automation", !["Settings", "Mods", "Automation"].some((t) => modTabs.includes(t)));
-	check("the controls tab has start, stop and restart", (await mod.getByRole("button", { name: "Restart", exact: true }).count()) === 1 && (await mod.getByRole("button", { name: "Stop", exact: true }).count()) === 1);
-	await shot(mod, "12-moderator-controls");
+	check("a moderator gets the day-to-day tabs", ["Overview", "Players", "Backups", "Schedules", "Logs", "Network", "Activity"].every((t) => modTabs.includes(t)), modTabs.join(", "));
+	check("and not settings, mods, automation or advanced", !["Settings", "Mods", "Automation", "Advanced"].some((t) => modTabs.includes(t)));
+	check("the header has start, stop and restart", (await mod.getByTestId("header-start").count()) === 1 && (await mod.getByTestId("header-stop").count()) === 1 && (await mod.getByTestId("header-restart").count()) === 1);
+	check("and the overview has no labels or tags to edit", (await mod.getByLabel("Add a tag").count()) === 0);
+	await shot(mod, "12-moderator-overview");
 	await tab(mod, "Backups");
 	check("a moderator can take a backup", await mod.getByRole("button", { name: "Back up now" }).isEnabled());
 	check("but can't restore or delete", (await mod.getByRole("button", { name: /Choose folders/ }).count()) === 0 && (await mod.getByRole("button", { name: /use this backup/i }).count()) === 0);

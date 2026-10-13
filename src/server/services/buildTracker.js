@@ -24,7 +24,11 @@ export async function markBuildIdSeen(appId, buildId) {
 // app_info_print is a read-only query against Steam's app info cache — it
 // does not touch any installed game files (steamcmd's own brief
 // self-update-on-launch noise in the output is unrelated housekeeping).
-function getRemoteBuildId(steamCmdPath, appId) {
+// SteamCMD with no network (or a Steam outage) can sit there for ever. The check runs on a timer, so every hung run would stay
+// behind as a process of its own and the next check would start another.
+const QUERY_TIMEOUT_MS = 5 * 60_000;
+
+function getRemoteBuildId(steamCmdPath, appId, timeoutMs = QUERY_TIMEOUT_MS) {
 	return new Promise((resolve, reject) => {
 		let output = "";
 		const child = spawn(
@@ -42,8 +46,16 @@ function getRemoteBuildId(steamCmdPath, appId) {
 		);
 
 		child.stdout?.on("data", (d) => (output += d));
-		child.on("error", reject);
+		const timer = setTimeout(() => {
+			child.kill();
+			reject(new Error(`steamcmd did not answer within ${Math.round(timeoutMs / 60_000)} minutes`));
+		}, timeoutMs);
+		child.on("error", (err) => {
+			clearTimeout(timer);
+			reject(err);
+		});
 		child.on("exit", (code) => {
+			clearTimeout(timer);
 			if (code !== 0) {
 				reject(new Error(`steamcmd exited with code ${code}`));
 				return;

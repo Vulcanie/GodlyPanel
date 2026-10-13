@@ -61,6 +61,7 @@ const repliesOutOfStep = (server) => server.type === "conan" || server.type === 
 
 const AUTH = 3;
 const EXEC = 2;
+const MAX_PACKET = 16 * 1024 * 1024;
 
 function encode(id, type, body) {
 	const text = Buffer.from(body, "utf8");
@@ -129,6 +130,13 @@ class SequentialRcon {
 		this.buffer = Buffer.concat([this.buffer, chunk]);
 		while (this.buffer.length >= 4) {
 			const length = this.buffer.readInt32LE(0);
+			// A packet is at least its id, type and two terminating zeros. Anything else isn't RCON, and a negative length would
+			// neither wait for more data nor use up what is there: this loop would never end, with the whole panel stuck inside it.
+			if (length < 10 || length > MAX_PACKET) {
+				this.#settle(null, new Error("The game answered with something that isn't RCON."));
+				this.end();
+				return;
+			}
 			if (this.buffer.length < 4 + length) break;
 			const id = this.buffer.readInt32LE(4);
 			const body = this.buffer.subarray(12, 4 + length - 2).toString("utf8");

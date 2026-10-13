@@ -47,12 +47,14 @@ try {
 
 	await page.goto(B, { waitUntil: "networkidle" });
 	await signIn(ADMIN.username, ADMIN.password);
-	await page.getByRole("button", { name: "Expand All" }).waitFor();
+	await page.getByRole("heading", { name: "Dashboard", level: 1 }).waitFor();
 
 	// ---- your own password -----------------------------------------------------------------
-	await page.getByRole("button", { name: "Password", exact: true }).click();
+	// Password, Sessions, the theme and Sign out all live in the menu on the signed-in person's name.
+	await page.getByTestId("user-menu").click();
+	await page.getByRole("menuitem", { name: "Change password" }).click();
 	const dialog = page.getByRole("dialog");
-	check("a Password button opens the change-password dialog", await dialog.getByText("Change your password").isVisible());
+	check("the user menu's Change password opens the change-password dialog", await dialog.getByText("Change your password").isVisible());
 	const submit = dialog.getByRole("button", { name: "Change password" });
 	check("it can't be sent empty", await submit.isDisabled());
 
@@ -79,11 +81,11 @@ try {
 	check("the right current password and a good new one succeeds", await dialog.getByText("Your password is changed").waitFor({ timeout: 8000 }).then(() => true, () => false));
 	await dialog.getByRole("button", { name: "Done" }).click();
 	await settle();
-	check("this browser stays signed in", await page.getByRole("button", { name: "Expand All" }).isVisible());
+	check("this browser stays signed in", await page.getByRole("heading", { name: "Dashboard", level: 1 }).isVisible());
 	check("the old password no longer works, the new one does", !(await canSignIn(ADMIN.username, ADMIN.password)) && (await canSignIn(ADMIN.username, "Second-Admin-Pass-2")));
 
 	// ---- an administrator sets someone else's -------------------------------------------------
-	await page.getByRole("button", { name: "People" }).click();
+	await page.getByTestId("nav-people").click();
 	await settle();
 	// The edit button of the one account that isn't your own (yours is disabled).
 	await page.locator('[aria-label="Change access"] button').last().click();

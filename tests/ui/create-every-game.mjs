@@ -36,7 +36,7 @@ try {
 	await page.getByLabel(/username/i).fill("admin");
 	await page.getByLabel(/password/i).fill("TestAdmin!2345");
 	await page.getByRole("button", { name: /sign in|log in/i }).click();
-	await page.getByRole("button", { name: /create server/i }).first().click();
+	await page.getByTestId("nav-create").click();
 	const createBtn = page.getByRole("button", { name: /^Create Server$/ });
 
 	check("there are templates to try", templates.length >= 16, `${templates.length}: ${templates.map((t) => t.id).join(", ")}`);

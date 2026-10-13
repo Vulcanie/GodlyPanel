@@ -63,13 +63,20 @@ function robocopy(from, to) {
 	});
 }
 
-/** Replace `from` with `to` in every string of a value, ignoring letter case. */
-function rewriteStrings(value, pairs) {
+/**
+ * Replace `from` with `to` in every string of a value. Letter case is ignored (paths and names are case-insensitive on Windows)
+ * unless the pair's third item says `exact`, which is for a password: it is matched as written and only as a whole word. Matching
+ * it loosely rewrote other words that happen to contain it (a password of "admin" also turned the "Admin" in
+ * "ServerAdminPassword" into the new one, which broke the setting).
+ */
+export function rewriteStrings(value, pairs) {
 	if (typeof value === "string") {
 		let out = value;
-		for (const [from, to] of pairs) {
+		for (const [from, to, options = {}] of pairs) {
 			if (!from) continue;
-			out = out.replace(new RegExp(from.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi"), () => to);
+			const escaped = from.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+			const pattern = options.exact ? new RegExp(`(?<![A-Za-z0-9])${escaped}(?![A-Za-z0-9])`, "g") : new RegExp(escaped, "gi");
+			out = out.replace(pattern, () => to);
 		}
 		return out;
 	}
@@ -153,7 +160,7 @@ async function run(job, source, plan, { sessionName }) {
 		const newRcon = source.rconPassword ? randomPassword() : null;
 		const pairs = [
 			[sourceDir, dest],
-			...(source.rconPassword ? [[source.rconPassword, newRcon]] : []),
+			...(source.rconPassword ? [[source.rconPassword, newRcon, { exact: true }]] : []),
 			[`"${source.name}"`, `"${name}"`], // the window title in start scripts
 			...(sessionName && source.sessionName && sessionName !== source.sessionName ? [[source.sessionName, sessionName]] : []),
 		];

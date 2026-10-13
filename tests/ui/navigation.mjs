@@ -37,68 +37,88 @@ try {
 	const blocked = [];
 	page.on("console", (m) => /content security policy|refused to (load|apply|execute|connect)/i.test(m.text()) && blocked.push(m.text().slice(0, 200)));
 	const see = async (text) => page.getByText(text, { exact: false }).first().isVisible().catch(() => false);
-	const onDashboard = async () => (await page.getByRole("button", { name: "Expand All" }).count()) > 0;
+	// The dashboard is the page whose heading says so (a server's page is headed by the server's name, the others by theirs).
+	const onDashboard = async () => (await page.getByRole("heading", { name: "Dashboard", level: 1 }).count()) > 0;
+	// A server's page is the one with the server's tabs; the breadcrumb across the top names the server.
+	const onServer = async (name = "Nav Test") => (await page.getByTestId("tab-overview").count()) > 0 && (await page.getByRole("main").getByRole("heading", { name, level: 1 }).count()) > 0;
 	const settle = () => page.waitForTimeout(700);
 	const back = async (name) => { await page.getByRole("button", { name }).first().click(); await settle(); };
+	const signIn = async () => {
+		await page.getByLabel(/username/i).fill("admin");
+		await page.getByLabel(/password/i).fill("TestAdmin!2345");
+		await page.getByRole("button", { name: /sign in|log in/i }).click();
+		await page.getByRole("heading", { name: "Dashboard", level: 1 }).waitFor();
+	};
 
 	await page.goto(B, { waitUntil: "networkidle" });
-	await page.getByLabel(/username/i).fill("admin");
-	await page.getByLabel(/password/i).fill("TestAdmin!2345");
-	await page.getByRole("button", { name: /sign in|log in/i }).click();
-	await page.waitForLoadState("networkidle");
-	await page.getByRole("button", { name: "Expand All" }).waitFor();
+	await signIn();
 	check("signs in to the dashboard", await onDashboard());
 
 	// dashboard -> server -> batch editor -> back -> back
-	await page.getByRole("button", { name: "Expand All" }).click();
-	await page.getByText("Nav Test", { exact: true }).first().click();
+	await page.getByTestId("server-card-Nav Test").click();
 	await settle();
-	check("a server tile opens its config page", await see("Edit Launch Script") || await see("Ports"));
-	await page.getByRole("button", { name: /batch|launch script/i }).first().click();
+	check("a server card opens its page", await onServer());
+	check("the breadcrumb names where you are", (await page.getByRole("button", { name: "Dashboard", exact: true }).count()) > 0);
+	// The start script editor is under Advanced.
+	await page.getByTestId("tab-advanced").click();
+	await page.getByTestId("edit-batch-files").click();
 	await settle();
 	check("the launch script editor opens for that server", await page.locator("textarea").count() > 0 && (await page.locator("textarea").first().inputValue()).includes("ConanSandboxServer"));
 	await page.getByRole("button", { name: /back/i }).first().click();
 	await settle();
-	check("Back from the launch script returns to the SAME server's config page", await see("Ports") && !(await see("No server selected")));
-	await page.getByRole("button", { name: /batch|launch script/i }).first().click();
+	check("Back from the launch script returns to the SAME server's page", await onServer() && !(await see("No server selected")));
+	await page.getByTestId("edit-batch-files").click();
 	await settle();
 	await page.goBack();
 	await settle();
-	check("the browser Back button also returns to the config page", await see("Ports") && !(await see("No server selected")));
+	check("the browser Back button also returns to the server's page", await onServer() && !(await see("No server selected")));
 	await page.goBack();
 	await settle();
 	check("and once more to the dashboard", await onDashboard());
 	await page.goForward();
 	await settle();
-	check("Forward returns to the server", await see("Ports"));
-	await back(/back/i);
-	check("the config page's Back returns to the dashboard", await onDashboard());
+	check("Forward returns to the server", await onServer());
+	await back(/^Dashboard$/);
+	check("the breadcrumb's Dashboard returns to the dashboard", await onDashboard());
 
-	// each other page and back
-	for (const [label, marker] of [["Settings", /Artwork|Appearance|Panel/i], ["People", /Add|user|People/i]]) {
-		await page.getByRole("button", { name: label }).click();
+	// the sidebar moves the same way
+	await page.getByTestId("sidebar-server-Nav Test").click();
+	await settle();
+	check("the sidebar's server list opens the server", await onServer());
+	await page.getByTestId("nav-dashboard").click();
+	await settle();
+	check("and its Dashboard item returns to the dashboard", await onDashboard());
+
+	// each other page and back. Where a page has its own Back button it is used; Settings and Activity have none (the sidebar and
+	// the browser's Back button are the way out), so those are checked with the browser's.
+	for (const [nav, label] of [["settings", "Settings"], ["activity", "Activity"]]) {
+		await page.getByTestId(`nav-${nav}`).click();
 		await settle();
-		check(`${label} opens`, !(await onDashboard()));
-		await back(/back/i);
-		check(`${label} -> Back returns to the dashboard`, await onDashboard());
+		check(`${label} opens`, !(await onDashboard()) && (await page.getByRole("heading", { name: label, level: 1 }).count()) > 0);
+		await page.goBack();
+		await settle();
+		check(`${label} -> the browser's Back returns to the dashboard`, await onDashboard());
 	}
-	await page.getByRole("button", { name: /create server|add server|new server/i }).first().click();
+	await page.getByTestId("nav-people").click();
+	await settle();
+	check("People opens", !(await onDashboard()));
+	await back(/back/i);
+	check("People -> Back returns to the dashboard", await onDashboard());
+	await page.getByTestId("create-server").click();
 	await settle();
 	check("Create server opens", !(await onDashboard()));
 	await back(/back/i);
 	check("Create server -> Back returns to the dashboard", await onDashboard());
 
 	// Settings page stays out of a different person's session
-	await page.getByRole("button", { name: "Settings" }).click();
+	await page.getByTestId("nav-settings").click();
 	await settle();
 	await post("/api/users", {}).catch(() => {});
-	await page.getByRole("button", { name: /sign out/i }).click();
+	await page.getByTestId("user-menu").click();
+	await page.getByTestId("sign-out").click();
 	await settle();
 	check("signing out shows the login form", await page.getByLabel(/username/i).count() > 0);
-	await page.getByLabel(/username/i).fill("admin");
-	await page.getByLabel(/password/i).fill("TestAdmin!2345");
-	await page.getByRole("button", { name: /sign in|log in/i }).click();
-	await page.waitForLoadState("networkidle");
+	await signIn();
 	await settle();
 	check("signing back in starts on the dashboard, not the last page", await onDashboard());
 

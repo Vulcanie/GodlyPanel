@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { paths } from "../paths.js";
 import { broadcastSseEvent } from "./sseHub.js";
+import { canAccessServer } from "../middleware/permissions.js";
 
 // A running record of what the panel did and what happened to servers: crashes,
 // restarts, backups, updates. It feeds the Activity view and the notifier, and
@@ -35,8 +36,9 @@ export function logActivity({ type, server = null, level = "info", message, data
 	} catch (err) {
 		console.warn("[activity] Could not record an event:", err.message);
 	}
-	// Only people who run servers see this feed, not view-only guests.
-	broadcastSseEvent({ type: "activity", event }, (client) => client.role === "admin" || client.role === "moderator");
+	// Only people who run servers see this feed, not view-only guests, and a moderator limited to some servers sees only theirs
+	// (the same rule as the activity list: what happened to a server they can't reach is not theirs to read).
+	broadcastSseEvent({ type: "activity", event }, (client) => (client.role === "admin" || client.role === "moderator") && (!event.server || canAccessServer(client, event.server)));
 	for (const listener of listeners) {
 		try {
 			listener(event);
@@ -72,8 +74,12 @@ function readTail(file, bytes) {
 	}
 }
 
-/** Newest first. `server` limits to one server; `types` to event-type prefixes. */
-export function recentActivity({ server = null, types = null, limit = 100 } = {}) {
+/**
+ * Newest first. `server` limits to one server; `types` to event-type prefixes. `canSee(serverName)` leaves out the servers the
+ * caller may not look at, before the limit is applied (applied afterwards, a limited moderator would get a short page because
+ * the newest events belonged to other servers).
+ */
+export function recentActivity({ server = null, types = null, limit = 100, canSee = null } = {}) {
 	const lines = (readTail(FILE, 1024 * 1024) + "\n" + (readTail(`${FILE}.1`, 512 * 1024))).split("\n");
 	const events = [];
 	for (const line of lines) {
@@ -88,6 +94,7 @@ export function recentActivity({ server = null, types = null, limit = 100 } = {}
 	return events
 		.filter((e) => (server ? e.server === server : true))
 		.filter((e) => (types ? types.some((t) => e.type.startsWith(t)) : true))
+		.filter((e) => !e.server || !canSee || canSee(e.server))
 		.slice(0, Math.min(Math.max(1, limit), 500));
 }
 

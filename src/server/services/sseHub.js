@@ -7,16 +7,24 @@ const clients = new Set();
 // opening connections without limit.
 const MAX_CLIENTS = 32;
 const HEARTBEAT_MS = 15000;
+// A browser that stops reading without closing (a laptop put to sleep behind a router, a stalled tab) leaves every update queued
+// in this process's memory until the connection finally times out, which can take hours. Past this much unsent data the
+// stream is cut; the page reconnects by itself and is told the current state again.
+const MAX_BUFFERED_BYTES = 1024 * 1024;
 
 /**
  * @param {object} payload
- * @param {(client: {userId: string, role: string}) => boolean} [filter]
+ * @param {(client: {userId: string, role: string, servers: string[]|null}) => boolean} [filter]
  */
 export function broadcastSseEvent(payload, filter) {
 	const data = `data: ${JSON.stringify(payload)}\n\n`;
 	for (const client of [...clients]) {
 		if (filter && !filter(client)) continue;
 		try {
+			if ((client.res.writableLength ?? 0) > MAX_BUFFERED_BYTES) {
+				drop(client);
+				continue;
+			}
 			client.res.write(data);
 		} catch {
 			// A dead socket used to throw here and abort the whole loop, so
@@ -60,6 +68,8 @@ export function addSseClient(req, res, user, { group = null, maxGroup = MAX_CLIE
 		userId: user?.id ?? null,
 		sid: req.sid ?? null, // the sign-in this stream belongs to, so ending that sign-in ends the stream
 		role: user?.role ?? null,
+		// A moderator limited to some servers (null = all of them), so server-specific events can be kept from the rest.
+		servers: user?.servers ?? null,
 		group,
 		address,
 		heartbeat: setInterval(() => {

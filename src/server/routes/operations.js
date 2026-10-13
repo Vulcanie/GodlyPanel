@@ -152,7 +152,9 @@ router.put("/server/:serverName/backups/settings", requirePermission("backup.set
 		}
 		for (const [key, value] of Object.entries({ keepCount, keepDays })) {
 			if (value === undefined) continue;
-			if (value !== null && (!Number.isInteger(value) || value < 0 || value > 3650)) throw new BackupError(`${key} must be a whole number or null.`, "bad_number");
+			// keepDays 0 means "no age limit"; keepCount 0 would delete each scheduled backup as soon as it was made.
+			const min = key === "keepCount" ? 1 : 0;
+			if (value !== null && (!Number.isInteger(value) || value < min || value > 3650)) throw new BackupError(`${key} must be a whole number${min ? ` of at least ${min}` : ""} or null.`, "bad_number");
 			patch[key] = value;
 		}
 		await setOptions(req.server.name, { backup: patch });
@@ -377,7 +379,8 @@ router.post("/server/:serverName/network/firewall-rule", async (req, res) => {
 
 // ---- how busy things have been --------------------------------------------------
 
-const rangeOf = (req) => (RANGES[req.query.range] ? req.query.range : "24h");
+// hasOwn: "constructor" and the like are on every object, and would otherwise pass for a range.
+const rangeOf = (req) => (typeof req.query.range === "string" && Object.hasOwn(RANGES, req.query.range) ? req.query.range : "24h");
 
 router.get("/metrics/system", requirePermission("metrics.view"), async (req, res) => {
 	res.json(await readSeries("system", rangeOf(req)));
@@ -403,7 +406,7 @@ router.get("/activity", requirePermission("activity.view"), (req, res) => {
 	if (server && !canAccessServer(req.user, server)) {
 		return res.status(403).json({ error: "You don't have access to that server.", code: "forbidden_server" });
 	}
-	res.json(recentActivity({ server, types, limit }).filter((e) => !e.server || canAccessServer(req.user, e.server)));
+	res.json(recentActivity({ server, types, limit, canSee: (name) => canAccessServer(req.user, name) }));
 });
 
 // Search, filter and sort the whole log, a page at a time. Also says which servers and kinds of event the log holds, for the

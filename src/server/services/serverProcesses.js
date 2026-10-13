@@ -68,6 +68,56 @@ export function listByName(imageName) {
 	});
 }
 
+// ---- one listing for everyone in a poll cycle -------------------------------------------------------
+
+// The query above starts a PowerShell for one image name, which is the best part of a second of CPU. The poller asks about every
+// server that is up, every few seconds, so with a handful of servers on the same program name (or just a handful of servers) it
+// was starting a handful of PowerShells per cycle. This asks for every process once and answers each server from that. Only for
+// the poller: a stop, a start or a restore needs the truth of this moment and still asks on its own.
+const LISTING_QUERY = "Get-CimInstance Win32_Process | Select-Object ProcessId, Name, ExecutablePath, CommandLine | ConvertTo-Json -Compress";
+const SNAPSHOT_TTL_MS = 1500;
+
+/** Every running process as { pid, name, path }, or null when it could not be found out. */
+function listEverything() {
+	return new Promise((resolve) => {
+		execFile(
+			"powershell",
+			["-NoProfile", "-NonInteractive", "-Command", LISTING_QUERY],
+			{ windowsHide: true, timeout: 20_000, maxBuffer: 32 * 1024 * 1024 },
+			(error, stdout) => {
+				if (error) return resolve(null);
+				try {
+					const parsed = JSON.parse(stdout);
+					resolve((Array.isArray(parsed) ? parsed : [parsed]).filter((p) => Number.isInteger(p?.ProcessId) && p.Name).map((p) => ({ pid: p.ProcessId, name: String(p.Name), path: p.ExecutablePath || null })));
+				} catch {
+					resolve(null);
+				}
+			},
+		);
+	});
+}
+
+/**
+ * A `listByName` that shares one listing between callers for a moment. Callers that ask while it is being taken wait for the same
+ * one. `run` and `ttlMs` are for tests.
+ */
+export function createSharedLister({ run = listEverything, ttlMs = SNAPSHOT_TTL_MS, now = Date.now } = {}) {
+	let current = null; // { at, result: Promise }
+	const everything = () => {
+		if (!current || now() - current.at > ttlMs) current = { at: now(), result: run() };
+		return current.result;
+	};
+	return async (imageName) => {
+		if (!SAFE_NAME.test(String(imageName ?? ""))) return [];
+		const all = await everything();
+		if (all === null) return null;
+		const wanted = imageName.toLowerCase();
+		return all.filter((p) => p.name.toLowerCase() === wanted).map(({ pid, path: exe }) => ({ pid, path: exe }));
+	};
+}
+
+export const listByNameShared = createSharedLister();
+
 /**
  * The server's own running programs, and any others that merely share the name. `unknown` is true when the lookup couldn't be
  * done: then `owned` and `foreign` are empty, and mean nothing. Use ownedProgramRunning / ownedProgramGone to decide.

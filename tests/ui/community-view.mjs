@@ -38,8 +38,8 @@ const openSettings = async (page, B) => {
 	await page.getByLabel(/username/i).fill("admin");
 	await page.getByLabel(/password/i).fill("TestAdmin!2345");
 	await page.getByRole("button", { name: /sign in/i }).click();
-	await page.getByRole("button", { name: "Settings" }).click();
-	await page.getByRole("button", { name: "Open all sections" }).click();
+	await page.getByTestId("nav-settings").click();
+	await page.getByTestId("settings-category-community").click();
 	await page.getByText("Community view (a public address)").first().waitFor({ timeout: 30_000 });
 };
 
@@ -83,7 +83,7 @@ try {
 		check("a temporary link is described as temporary", await page.getByText(/temporary address: it changes/).isVisible());
 		await shot(page, "cview-2-on");
 		// The friends' message now carries the public address instead of Tailscale steps.
-		await page.getByLabel(/Community code is off/).click();
+		await page.getByRole("switch", { name: /Community code is off/ }).click();
 		await page.getByTestId("community-code").waitFor({ timeout: 10_000 });
 		await page.waitForFunction(() => document.querySelector("textarea")?.value.includes("trycloudflare"), null, { timeout: 15_000 }).catch(() => {});
 		const message = await page.locator("textarea").first().inputValue();
