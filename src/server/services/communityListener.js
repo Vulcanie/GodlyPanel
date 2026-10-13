@@ -9,7 +9,7 @@ import { auditActions, auditSignInFailed, auditSignedOut, auditPasswordChanged }
 import sessionRoutes from "../routes/sessions.js";
 import { revokeUserSessions, revokeSession } from "./sessionStore.js";
 import { attachUser, endSession, issueSession, requireRole, clientAddress } from "../middleware/auth.js";
-import { createLoginLimiter } from "../middleware/loginLimiter.js";
+import { createLoginLimiter, passwordChangeGuard, recordPasswordChangeFailure, clearPasswordChangeFailures } from "../middleware/loginLimiter.js";
 import { securityHeaders } from "../middleware/securityHeaders.js";
 import { sameOriginOnly } from "../middleware/sameOrigin.js";
 import { joiningIsOpen, joinWithCode, JoinError } from "./communityInvite.js";
@@ -188,10 +188,14 @@ export function createCommunityApp({ hostRule, uiDir, staffSignIn = () => false 
 	});
 
 	// A staff session only exists here while staff sign-in is on, so the role list needs no further check.
-	app.post("/api/auth/change-password", requireRole("admin", "moderator", "guest"), async (req, res) => {
+	app.post("/api/auth/change-password", requireRole("admin", "moderator", "guest"), passwordChangeGuard, async (req, res) => {
 		const { currentPassword, newPassword } = req.body || {};
 		const user = getById(req.user.id);
-		if (!user || !(await verifyCredentials(user.username, currentPassword))) return res.status(403).json({ error: "Your current password is incorrect." });
+		if (!user || !(await verifyCredentials(user.username, currentPassword))) {
+			recordPasswordChangeFailure(req);
+			return res.status(403).json({ error: "Your current password is incorrect." });
+		}
+		clearPasswordChangeFailures(req);
 		try {
 			await setPassword(user.id, newPassword);
 		} catch (e) {

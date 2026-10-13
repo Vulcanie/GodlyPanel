@@ -135,6 +135,8 @@ export function createLanOnly(getConfig) {
 		const now = Date.now();
 		const last = loggedAt.get(ip) ?? 0;
 		if (now - last > 60 * 60 * 1000) {
+			// Bounded: a scan from many addresses (if the port were ever exposed) shouldn't grow this without limit.
+			if (loggedAt.size >= 1000) for (const [key, at] of loggedAt) if (now - at > 60 * 60 * 1000 || loggedAt.size >= 1000) loggedAt.delete(key);
 			loggedAt.set(ip, now);
 			console.warn(`[lan-only] Refused a connection from ${ip} (not a local address).`);
 		}
