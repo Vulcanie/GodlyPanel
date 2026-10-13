@@ -1,8 +1,1 @@
-[
-	{
-		"id": "GHSA-ch52-4w7c-c8xp",
-		"package": "http-cache-semantics",
-		"reason": "Reached through gamedig -> got -> cacheable-request. The flaw is a shared HTTP cache serving one user's cached response to another. GodlyPanel keeps no shared response cache, and gamedig does not turn got's cache option on, so the vulnerable code is not exercised. No patched version exists yet.",
-		"expires": "2027-01-12"
-	}
-]
+[]
