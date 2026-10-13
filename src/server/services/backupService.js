@@ -98,7 +98,7 @@ export async function backupSpecsFor(server) {
 					const working = server.workingDir || server.installDir || "";
 					const value = flagValue(script, p.flag);
 					if (value) {
-						const dir = path.resolve(working, value.replaceAll("%~dp0", `${working}\\`));
+						const dir = path.resolve(working, value.replaceAll("%~dp0", `${working}${path.sep}`));
 						raw.push({ path: p.join ? path.join(dir, p.join) : dir, label: p.label, exclude: p.exclude ?? [] });
 					} else {
 						raw.push({ path: path.resolve(expandEnv(p.fallback)), label: p.label, exclude: p.exclude ?? [], shared: true });

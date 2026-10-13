@@ -116,7 +116,9 @@ export async function planClone(source, newName, wantedPorts = null) {
 	for (const def of template.ports) ports[def.key] = Number.isInteger(wantedPorts?.[def.key]) ? wantedPorts[def.key] : suggested.ports[def.key];
 	await validateNewServer(template, name, ports, null);
 
-	const dest = path.win32.join(getConfig().paths.serversRoot, slugify(name));
+	// The platform's own join: on Windows this is exactly the Windows join it used to be, and anywhere else a Windows-style
+	// join would turn the folder into one oddly named entry in the current directory.
+	const dest = path.join(getConfig().paths.serversRoot, slugify(name));
 	if (await fs.stat(dest).then(() => true, () => false)) throw new CloneError(`The folder ${dest} already exists.`, "folder_exists");
 
 	const bytes = await dirSize(source.installDir);
