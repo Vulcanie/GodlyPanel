@@ -108,7 +108,7 @@ A name plus a number or a symbol counts as the name.
 **A user named "…" already exists.** Names aren't case-sensitive. Pick another.
 
 **Your current password is incorrect.**
-In **Password** (top right) you have to give your current password before choosing a new one.
+In **Change password** (your menu, at the bottom of the left-hand menu) you have to give your current password before choosing a new one.
 
 **Cannot change the role of / disable / delete the only admin account.**
 The panel won't let you lock yourself out. Make another administrator first.

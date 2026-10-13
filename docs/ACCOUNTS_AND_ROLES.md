@@ -39,7 +39,7 @@ the panel refuses it. Leave the list empty to let them act on all of them.
 1. Open **People**.
 2. Fill in a username, a password and a role, then choose **Add**.
 3. Give the person the address and their password. Ask them to change it the first time
-   they sign in: the **Password** button at the top right opens a dialog that asks for the
+   they sign in: **Change password** in your menu (click your name at the bottom of the left-hand menu) opens a dialog that asks for the
    current password, then the new one twice.
 
 Usernames are 3 to 32 characters: letters, numbers, dots, dashes and underscores, no
@@ -74,7 +74,7 @@ and, beside it:
 - the bin icon to **delete** it.
 
 You can't change, suspend or delete your own account from this page. To change your own
-password use the **Password** button at the top right.
+password use **Change password** in your menu (your name at the bottom of the left-hand menu).
 
 The panel won't let you remove, disable or demote the **only active administrator**, so
 you can't lock yourself out by accident.

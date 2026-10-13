@@ -125,13 +125,13 @@ only thing between the internet and an administrator login, and it isn't designe
 
 ## Keeping a record
 
-**Activity** (top right) lists every sign-in by an administrator or moderator, every sign-in that failed
+**Activity** (left-hand menu) lists every sign-in by an administrator or moderator, every sign-in that failed
 (the name tried and the address it came from, never the password), and every change anyone made: who
 started, stopped or restored a server, who made or removed an account, and *which* settings and secrets
 were changed (never their values). A request someone wasn't allowed to make is listed too, marked
 "refused".
 
-- **Sessions** (top right) lists every place you are signed in: the browser, roughly where from, when you
+- **Where I'm signed in** (your menu, at the bottom of the left-hand menu) lists every place you are signed in: the browser, roughly where from, when you
   signed in and when it was last used. End any of them, or **Sign out everywhere else**. Administrators also
   see everyone else's, and on **People** can sign a person out everywhere (it doesn't stop them signing in
   again with their password; suspend the account for that). Signing out, changing your password and ending a
@@ -162,7 +162,7 @@ Do these in this order. None of them takes long.
 1. **Turn off** what you don't need: *Staff sign-in from outside*, the community view, the community code.
 2. **Change the passwords** of the accounts involved (the **Password** button for yours; **People** for others).
 3. **Change the RCON passwords** of every server (stopped servers first; restart the running ones when you can).
-4. Look at **Activity** (top right) for sign-ins and actions you don't recognise.
+4. Look at **Activity** (left-hand menu) for sign-ins and actions you don't recognise.
 5. Revoke the **Discord bot token** and **webhooks**, regenerate **cloud-storage keys** and the **tunnel token**
    if the `data` folder or `.godlypanel-secretssecrets.json` may have been seen. Put the new ones in `Settings`.
 6. Check your router's **port forwards** and Windows Firewall rules for entries you didn't make.

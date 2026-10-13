@@ -1,9 +1,19 @@
 # Managing servers
 
-Click a server on the dashboard to open it. Its tabs are along the top: **Settings**
-(administrators) or **Controls** (moderators), **Backups**, **Schedules**, **Logs**,
-**Players**, **Stats**, **Network**, **Mods**, **Activity**, **History** and **Automation**.
-Moderators see the ones they're allowed to use.
+Open a server from the dashboard (click its card) or from the **Servers** list in the left-hand menu. Press
+**Ctrl+K** anywhere to jump to any server, any of its tabs, or to start, stop or restart one without looking for it.
+**Start**, **Restart** and **Stop** are at the top of every server page.
+
+Its tabs are along the top: **Overview** (the controls, the console where the game has one, and CPU, memory and
+player charts), **Settings** (administrators: the game's settings with an explanation for each, its launch
+options, and a version history of every save), **Players**, **Backups**, **Schedules**, **Logs**, **Network**
+(ports and the firewall), **Mods**, **Activity**, **Automation** and **Advanced** (the server's window, its start
+script, and removing it). Moderators see the ones they're allowed to use.
+
+Every setting in the panel's own Settings and in these tabs has a small **(i)** beside it: hover it for what the
+setting does and a link to the part of the guides that explains how to use it. The settings inside a game
+are explained underneath each one; see the [game settings guide](GAME_SETTINGS.md). Mods and plugins have no
+explanations, since they depend on the mod.
 
 ## Where a server's files are
 
@@ -188,7 +198,7 @@ keeps the ports it started with. For which ports to open on your router, see
 
 - **Logs** follows the game's log live, and you can search it. Passwords are masked for everyone but
   administrators.
-- The **console** (on **Settings** or **Controls**, when the game has RCON or Telnet) sends a command to
+- The **console** (on **Overview**, when the game has RCON or Telnet) sends a command to
   the game and shows its reply.
 - **Players** shows who is on and who has been. For the games that support it you can **kick**,
   **ban**, and edit whitelist and admin lists. Every one of these is recorded in **Activity**.
