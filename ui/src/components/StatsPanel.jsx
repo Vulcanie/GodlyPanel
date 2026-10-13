@@ -15,7 +15,7 @@ const RANGES = [
 
 // A number with a small label, and an accent bar down its left edge. Wraps with its neighbours on a phone.
 const Stat = ({ label, value, sub }) => (
-	<Box sx={{ position: "relative", overflow: "hidden", flex: "1 1 150px", minWidth: 0, p: 1.5, pl: 2, borderRadius: 3, border: 1, borderColor: "divider", bgcolor: (t) => t.custom.hover }}>
+	<Box sx={{ position: "relative", overflow: "hidden", flex: "1 1 150px", minWidth: 0, p: 1.5, pl: 2, borderRadius: "12px", border: 1, borderColor: "divider", bgcolor: (t) => t.custom.hover }}>
 		<Box aria-hidden sx={{ position: "absolute", inset: "0 auto 0 0", width: 3, background: (t) => t.custom.gradient }} />
 		<Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
 			{label}
@@ -33,7 +33,7 @@ const Stat = ({ label, value, sub }) => (
 
 // A framed area for one chart. It adds no card of its own around the whole panel: the page already puts the panel in one.
 const Frame = ({ title, children, sx }) => (
-	<Box sx={{ p: 1.75, borderRadius: 3, border: 1, borderColor: "divider", minWidth: 0, ...sx }}>
+	<Box sx={{ p: 1.75, borderRadius: "12px", border: 1, borderColor: "divider", minWidth: 0, ...sx }}>
 		{title && (
 			<Typography variant="caption" sx={{ display: "block", mb: 1, color: "text.secondary", fontWeight: 600 }}>
 				{title}
@@ -51,10 +51,10 @@ function Loading() {
 			<Skeleton variant="rounded" height={40} width={200} sx={{ mb: 2 }} />
 			<Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", mb: 2 }}>
 				{[0, 1, 2, 3].map((i) => (
-					<Skeleton key={i} variant="rounded" height={74} sx={{ flex: "1 1 150px", borderRadius: 3 }} />
+					<Skeleton key={i} variant="rounded" height={74} sx={{ flex: "1 1 150px", borderRadius: "12px" }} />
 				))}
 			</Box>
-			<Skeleton variant="rounded" height={190} sx={{ borderRadius: 3 }} />
+			<Skeleton variant="rounded" height={190} sx={{ borderRadius: "12px" }} />
 		</Box>
 	);
 }

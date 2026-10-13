@@ -33,13 +33,41 @@ panel (see the note in the README under Development).
 ## Tests
 
 ```powershell
-npm test               # unit + API tests, about 3-4 minutes (4 files at a time, to leave the machine usable)
-npm run test:desktop   # real processes and windows, about 2 minutes
+npm test                  # unit + API tests, about 3-4 minutes (4 files at a time, to leave the machine usable)
+npm --prefix ui test      # the interface's own unit tests (vitest), a few seconds
+node tests/ui/sections.mjs  # one browser test (see below); needs a built interface and a Chromium
+npm run test:desktop      # real processes and windows, about 2 minutes
 ```
 
-`npm test` runs on every push. `npm run test:desktop` needs an interactive Windows
-desktop, so it runs on your machine. It only ever starts and stops stand-in programs
-it creates itself; it won't touch real game servers.
+What runs where:
+
+| Tests | Where | Notes |
+| --- | --- | --- |
+| `tests/unit`, `tests/api` (`npm test`) | Every push and pull request, on **Linux** (4 parallel parts) and, for the ones that need real Windows tools, on **Windows** | Pushes to `main` and releases run the whole suite on Windows too |
+| `ui/src/**/*.test.js` (`npm --prefix ui test`) | Every push and pull request, on Linux | Also checks the generated guides in `docs/` are current (`node scripts/build-guides.mjs --check`) |
+| `tests/ui/*.mjs` (browser tests) | Every push and pull request, on Linux | Not part of `npm test`: they need `npm run build:ui` first and a Chrome or Chromium |
+| `tests/desktop` (`npm run test:desktop`) | Your machine only | Needs an interactive Windows desktop, so it is skipped everywhere else |
+| `tests/real`, `tests/clean-machine` | By hand (`clean-machine` from the Actions tab) | Real game installs and a clean Windows machine |
+
+The panel drives Windows programs (`tasklist`, `taskkill`, PowerShell, `cmd`, Windows' `tar`), so a plain Linux
+machine can't run the real thing. The tests handle that in `tests/helpers/winEmulation.js`: off Windows it puts small
+stand-ins for those programs (`tests/helpers/winshim`) ahead of them on the `PATH`, and the panel's own code runs
+unchanged on top. That means `npm test` also works on Linux and macOS, which is what CI uses for speed. A test that is
+only meaningful against the real tools says so with `windowsOnly("why")` and shows up as skipped elsewhere. If your
+change adds a new call into Windows, the stand-in fails with `winshim: ... not supported`; teach it that one request (it is
+a few lines in `tests/helpers/winshim/winshim.mjs`) and keep the test running on Windows too.
+
+`node scripts/test-files.mjs windows` lists the files CI always runs on a real Windows machine (they start stand-in game
+programs, read the process list, or are marked `windowsOnly`). Run just those with
+`node --test $(node scripts/test-files.mjs windows)`.
+
+**Browser tests** run one file at a time: `node tests/ui/workspace.mjs`. They start the panel against a throwaway folder
+and drive the built interface in Chrome. `tests/ui/_chrome.mjs` finds the browser: `GP_CHROME` if you set it, else the
+Chromium Playwright installs (`npx playwright-core install chromium`), else the usual Chrome locations. Set `GP_SHOTS` to a folder to
+keep screenshots.
+
+`npm run test:desktop` needs an interactive Windows desktop, so it runs on your machine. It only ever starts and stops
+stand-in programs it creates itself; it won't touch real game servers.
 
 Please add a test with a bug fix. The reasoning is in the history: several of the
 project's real bugs only surfaced because a test existed to be surprised by them.

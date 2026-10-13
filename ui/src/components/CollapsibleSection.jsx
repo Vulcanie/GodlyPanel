@@ -49,7 +49,7 @@ function CollapsibleSection({ title, hint, open, onToggle, danger = false, id, c
 			<Paper
 				variant="outlined"
 				sx={{
-					borderRadius: 4,
+					borderRadius: "16px",
 					overflow: "hidden",
 					borderColor: danger ? "error.main" : open ? (t) => alpha(t.palette.primary.main, 0.45) : "divider",
 					transition: "border-color .2s",

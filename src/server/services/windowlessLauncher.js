@@ -4,6 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { paths } from "../paths.js";
 import { readJson, writeJsonAtomic, createWriteQueue } from "../util/atomicJson.js";
+import { sameImage } from "./processCheck.js";
 
 // "No window" mode: the panel starts the game program itself instead of going
 // through the server's start script. That script's `start /MIN game.exe` is
@@ -68,7 +69,9 @@ function pidIsStill(pid, imageName) {
 			(error, stdout) => {
 				if (error) return resolve(false);
 				const match = stdout.match(/^"([^"]*)"/);
-				resolve(Boolean(match) && match[1].toLowerCase() === imageName.toLowerCase().slice(0, 25));
+				// tasklist's CSV gives the whole image name. Cutting the wanted one to 25 characters, as this used to, never
+				// matched a long name (Unreal servers have them), so a panel-started server was reported as gone.
+				resolve(Boolean(match) && sameImage(match[1], imageName));
 			},
 		);
 	});

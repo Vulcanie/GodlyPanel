@@ -1,4 +1,5 @@
 import React from "react";
+import { copyToClipboard } from "../utils/clipboard";
 import { Alert, Box, Button, Chip, FormControlLabel, MenuItem, Switch, TextField, Typography } from "@mui/material";
 import { api } from "../api/client";
 import InfoTip from "./InfoTip";
@@ -64,15 +65,14 @@ function CommunityAccessCard() {
 		}
 	};
 
-	const copy = async (what, text) => {
-		try {
-			await navigator.clipboard.writeText(text);
-			setCopied(what);
-			setTimeout(() => setCopied(""), 2000);
-		} catch {
-			setError("Couldn't copy to the clipboard. Select the text and copy it yourself.");
-		}
-	};
+	// Not navigator.clipboard: the panel is usually opened over plain http, where the browser switches that off.
+	const copy = (what, text) =>
+		copyToClipboard(text, (result) => {
+			if (result === "Copied!") {
+				setCopied(what);
+				setTimeout(() => setCopied(""), 2000);
+			} else setError("Couldn't copy to the clipboard. Select the text and copy it yourself.");
+		});
 
 	const url = tailscaleUrl(access);
 	// The public address (no software to install) when the community view is on, otherwise Tailscale.

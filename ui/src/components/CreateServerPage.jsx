@@ -105,37 +105,34 @@ function Art({ type, height, children, sx }) {
 
 /** One game in the picker. The whole card is the button, and the game's name is its heading. */
 function GameCard({ template, onPick }) {
-	const gamePort = template.ports?.find((p) => p.key === "port")?.default;
+	// A hint about what choosing it involves, only where it is not the usual one-step setup.
+	const note = template.fields?.includes("uploadId") ? "Needs a modpack zip" : template.sharedInstall ? "Shared install" : null;
 	return (
 		<ButtonBase
 			onClick={() => onPick(template)}
 			focusRipple
 			sx={{
-				display: "flex",
-				flexDirection: "column",
-				alignItems: "stretch",
+				display: "block",
 				textAlign: "left",
-				borderRadius: 4,
+				borderRadius: "16px",
 				border: 1,
 				borderColor: "divider",
 				overflow: "hidden",
 				bgcolor: "background.paper",
 				transition: "transform .18s ease, box-shadow .18s ease, border-color .18s ease",
 				"&:hover, &:focus-visible": { transform: "translateY(-3px)", boxShadow: (t) => t.custom.shadow, borderColor: "primary.main" },
+				"&:hover .gp-pick, &:focus-visible .gp-pick": { opacity: 1, transform: "none" },
 			}}
 		>
-			<Art type={template.type} height={112}>
-				{template.sharedInstall && <Chip size="small" label="Shared install" sx={{ position: "absolute", top: 8, right: 8, height: 22, bgcolor: "rgba(8,12,24,0.7)", color: "#fff" }} />}
-				<Typography variant="subtitle1" component="h3" sx={{ position: "absolute", left: 14, right: 14, bottom: 10, color: "#fff", lineHeight: 1.2, textShadow: "0 1px 6px rgba(0,0,0,.6)" }}>
-					{template.displayName}
-				</Typography>
+			<Art type={template.type} height={132}>
+				{note && <Chip size="small" label={note} sx={{ position: "absolute", top: 8, right: 8, height: 22, bgcolor: "rgba(8,12,24,0.7)", color: "#fff" }} />}
+				<Box sx={{ position: "absolute", left: 14, right: 14, bottom: 10, display: "flex", alignItems: "flex-end", gap: 1 }}>
+					<Typography variant="subtitle1" component="h3" sx={{ flex: 1, color: "#fff", lineHeight: 1.2, textShadow: "0 1px 6px rgba(0,0,0,.6)" }}>
+						{template.displayName}
+					</Typography>
+					<OpenIcon className="gp-pick" sx={{ fontSize: 18, color: "#fff", opacity: 0, transform: "translateX(-6px)", transition: "opacity .18s, transform .18s" }} />
+				</Box>
 			</Art>
-			<Box sx={{ px: 1.75, py: 1, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1 }}>
-				<Typography variant="caption" sx={{ color: "text.secondary" }}>
-					{gamePort ? `Starts on port ${gamePort}` : "Ready to set up"}
-				</Typography>
-				<OpenIcon sx={{ fontSize: 16, color: "primary.main" }} />
-			</Box>
 		</ButtonBase>
 	);
 }
@@ -185,7 +182,7 @@ function GamePicker({ templates, loadError, onRetry, onPick }) {
 			) : !list ? (
 				<Box sx={gridSx} aria-busy="true">
 					{Array.from({ length: 8 }, (_, i) => (
-						<Skeleton key={i} variant="rounded" height={156} sx={{ borderRadius: 4 }} />
+						<Skeleton key={i} variant="rounded" height={132} sx={{ borderRadius: "16px" }} />
 					))}
 				</Box>
 			) : shown.length === 0 ? (
@@ -206,7 +203,7 @@ function GamePicker({ templates, loadError, onRetry, onPick }) {
 /** The picked game's banner, with its name. */
 function Hero({ template, children }) {
 	return (
-		<Art type={template.type} height={{ xs: 104, sm: 132 }} sx={{ borderRadius: 4, border: 1, borderColor: "divider", mb: 2.5 }}>
+		<Art type={template.type} height={{ xs: 104, sm: 132 }} sx={{ borderRadius: "16px", border: 1, borderColor: "divider", mb: 2.5 }}>
 			<Box sx={{ position: "absolute", left: { xs: 16, sm: 24 }, right: { xs: 16, sm: 24 }, bottom: 14, display: "flex", alignItems: "flex-end", gap: 1.5, flexWrap: "wrap" }}>
 				<Typography variant="h5" component="h2" sx={{ color: "#fff", textShadow: "0 1px 8px rgba(0,0,0,.6)", mr: "auto" }}>
 					{template.displayName}
@@ -670,8 +667,7 @@ function JobProgress({ job, stages, onBack, onOpen, onTryAgain }) {
 						{stageLabel(job.status)}
 					</Typography>
 					<Typography variant="body2" sx={{ color: "text.secondary" }}>
-						Status: {job.status}
-						{JOB_STAGES[job.status]?.hint ? ` — ${JOB_STAGES[job.status].hint}` : ""}
+						{JOB_STAGES[job.status]?.hint ?? `Status: ${job.status}`}
 					</Typography>
 					{finished.length > 0 && (
 						<Box sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 0.5 }}>

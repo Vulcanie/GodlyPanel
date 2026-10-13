@@ -25,7 +25,7 @@ function Row({ s, onEnd, busy, showWho }) {
 	const Icon = isPhone(s.device) ? PhoneIcon : ComputerIcon;
 	return (
 		<Box sx={{ display: "flex", alignItems: "center", gap: 1.5, py: 1.2, borderBottom: (t) => `1px solid ${t.palette.divider}`, "&:last-of-type": { borderBottom: 0 } }}>
-			<Box sx={{ width: 36, height: 36, borderRadius: 2.5, display: "grid", placeItems: "center", flexShrink: 0, color: s.current ? "primary.main" : "text.secondary", background: (t) => (s.current ? t.custom.gradientSoft : t.custom.hover) }}>
+			<Box sx={{ width: 36, height: 36, borderRadius: "10px", display: "grid", placeItems: "center", flexShrink: 0, color: s.current ? "primary.main" : "text.secondary", background: (t) => (s.current ? t.custom.gradientSoft : t.custom.hover) }}>
 				<Icon fontSize="small" />
 			</Box>
 			<Box sx={{ flex: 1, minWidth: 0 }}>
@@ -99,7 +99,7 @@ function SessionsDialog({ open, onClose, isAdmin, onSignedOut }) {
 	return (
 		<Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
 			<DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-				<Box sx={{ width: 36, height: 36, borderRadius: 2.5, display: "grid", placeItems: "center", color: "primary.main", background: (t) => t.custom.gradientSoft, flexShrink: 0 }}>
+				<Box sx={{ width: 36, height: 36, borderRadius: "10px", display: "grid", placeItems: "center", color: "primary.main", background: (t) => t.custom.gradientSoft, flexShrink: 0 }}>
 					<DevicesIcon fontSize="small" />
 				</Box>
 				Where you're signed in

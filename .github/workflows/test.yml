@@ -12,22 +12,40 @@ on:
         type: string
         default: "true"
 
+# Nothing here writes to the repository.
+permissions:
+  contents: read
+
+# A new push to a pull request makes the run for the old one pointless. Pushes to main and
+# releases are never cancelled, so every commit that lands keeps its result.
+concurrency:
+  group: tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  # The tests never launch the desktop shell, so skip the ~100 MB download.
+  ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+
 jobs:
-  # The suite is split into four parts that run on four machines at the same time
-  # (about 3 minutes each instead of about 12 in a row).
+  # Where the suite runs, and why:
+  #
+  #   Linux   everything in tests/unit and tests/api (about 105 files). The panel manages Windows programs through
+  #           Windows tools (tasklist, taskkill, PowerShell, cmd, tar), so the tests put small stand-ins for those
+  #           ahead of them on the PATH (tests/helpers/winshim) and run the panel's own code unchanged. That is
+  #           several times cheaper and faster than a Windows machine, so it is the quick, wide check.
+  #   Windows only the tests whose point is the real tools: they start and find real stand-in game programs, read
+  #           the real process list, zip with Windows' tar, or are marked "needs Windows". Pull requests run just
+  #           those (scripts/test-files.mjs windows); pushes to main and releases run everything here too.
+  #   Browser the interface in a real browser, on Linux (the page is the same on any system).
+
   shards:
-    name: tests (part ${{ matrix.shard }} of 4)
-    # The panel manages Windows processes and uses Windows tools (tasklist,
-    # taskkill, PowerShell), so it is tested where it runs.
-    runs-on: windows-latest
+    name: tests, Linux (part ${{ matrix.shard }} of 4)
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
         shard: [1, 2, 3, 4]
-    env:
-      # The tests never launch the desktop shell, so skip the ~100 MB download.
-      ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
     steps:
       - uses: actions/checkout@v5
 
@@ -38,16 +56,63 @@ jobs:
 
       - run: npm ci
 
-      # Unit and API tests. The desktop tests (real windows and processes) need an
-      # interactive Windows session, so they are run locally with `npm run test:desktop`.
-      # (The flag has to come before the file patterns, so this is `npm test` written out.)
-      - run: node --test --test-shard=${{ matrix.shard }}/4 "tests/unit/**/*.test.js" "tests/api/**/*.test.js"
+      # Unit and API tests. The desktop tests (real windows and processes) need an interactive Windows
+      # session, so they are run locally with `npm run test:desktop`.
+      # (The flags have to come before the files, so this is `npm test` written out.)
+      - name: Run this part of the suite
+        run: node --test --test-concurrency=4 --test-shard=${{ matrix.shard }}/4 $(node scripts/test-files.mjs)
+
+  windows:
+    name: tests, Windows (part ${{ matrix.shard }} of 2)
+    runs-on: windows-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Run the tests that need real Windows
+        shell: bash
+        env:
+          # A pull request runs only the tests that need Windows; main and releases run the whole suite here as well,
+          # so a Windows-only difference in anything else is still caught before it ships.
+          WHICH: ${{ github.event_name == 'pull_request' && 'windows' || 'all' }}
+        run: node --test --test-concurrency=4 --test-shard=${{ matrix.shard }}/2 $(node scripts/test-files.mjs "$WHICH")
+
+  # The interface's own unit tests (vitest), and a check that the guides in docs/ match the help text they are built from.
+  ui-unit:
+    name: interface tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+
+      - run: npm --prefix ui ci
+
+      - run: npm --prefix ui test
+
+      - run: node scripts/build-guides.mjs --check
 
   # The interface is built once and shared, so each browser-test machine only has to install
   # the panel, not rebuild the interface.
   ui-build:
     if: ${{ inputs.ui != 'false' }}
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
@@ -68,12 +133,12 @@ jobs:
           path: ui/build
           retention-days: 1
 
-  # The interface in a real browser (the Chrome that comes with the runner), as an administrator and as a
-  # moderator: every server tab, settings, sign-in, the update card, creating servers. Three machines at once.
+  # The interface in a real browser, as an administrator and as a moderator: every server tab, settings,
+  # sign-in, the update card, creating servers. Three machines at once.
   ui:
     name: browser tests (${{ matrix.name }})
     needs: ui-build
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
       fail-fast: false
@@ -85,9 +150,6 @@ jobs:
             suites: "workspace create-ports create-every-game create-address session-box"
           - name: community and updates
             suites: "community-view community-join panel-update"
-    env:
-      ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
-      GP_CHROME: C:\Program Files\Google\Chrome\Application\chrome.exe
     steps:
       - uses: actions/checkout@v5
 
@@ -103,32 +165,44 @@ jobs:
           name: ui-build
           path: ui/build
 
+      # The Chrome that comes with the runner, or else the Chromium that playwright-core downloads. The tests find
+      # it through GP_CHROME (see tests/ui/_chrome.mjs, which also knows where playwright keeps its own).
+      - name: Find a browser
+        run: |
+          if [ -x /usr/bin/google-chrome ]; then
+            echo "GP_CHROME=/usr/bin/google-chrome" >> "$GITHUB_ENV"
+          else
+            npx playwright-core install --with-deps chromium
+          fi
+
       - name: Run the browser tests
         run: |
-          $failed = @()
-          foreach ($suite in "${{ matrix.suites }}".Split(" ")) {
-            Write-Host "::group::$suite"
-            node "tests/ui/$suite.mjs"
-            if ($LASTEXITCODE -ne 0) { $failed += $suite }
-            Write-Host "::endgroup::"
-          }
-          if ($failed.Count -gt 0) {
-            Write-Host "::error::These browser tests failed: $($failed -join ', ')"
+          failed=""
+          for suite in ${{ matrix.suites }}; do
+            echo "::group::$suite"
+            node "tests/ui/$suite.mjs" || failed="$failed $suite"
+            echo "::endgroup::"
+          done
+          if [ -n "$failed" ]; then
+            echo "::error::These browser tests failed:$failed"
             exit 1
-          }
+          fi
 
   # One result for the whole suite. This is the check the main branch requires, so the
   # number of parts can change without touching the repository settings.
   test:
-    needs: [shards, ui]
+    needs: [shards, windows, ui-unit, ui]
     if: ${{ always() }}
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - run: |
-          if [ "${{ needs.shards.result }}" != "success" ]; then
-            echo "At least one part of the test suite failed or didn't run."
-            exit 1
-          fi
+          for result in "${{ needs.shards.result }}" "${{ needs.windows.result }}" "${{ needs.ui-unit.result }}"; do
+            if [ "$result" != "success" ]; then
+              echo "At least one part of the test suite failed or didn't run."
+              exit 1
+            fi
+          done
           # "skipped" is how a release, which doesn't run them, looks.
           if [ "${{ needs.ui.result }}" != "success" ] && [ "${{ needs.ui.result }}" != "skipped" ]; then
             echo "At least one browser test failed or didn't run."

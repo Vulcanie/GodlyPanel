@@ -60,7 +60,7 @@ function ChangePasswordDialog({ open, onClose }) {
 	return (
 		<Dialog open={open} onClose={busy ? undefined : onClose} fullWidth maxWidth="xs">
 			<DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-				<Box sx={{ width: 36, height: 36, borderRadius: 2.5, display: "grid", placeItems: "center", color: "primary.main", background: (t) => t.custom.gradientSoft, flexShrink: 0 }}>
+				<Box sx={{ width: 36, height: 36, borderRadius: "10px", display: "grid", placeItems: "center", color: "primary.main", background: (t) => t.custom.gradientSoft, flexShrink: 0 }}>
 					<PasswordIcon fontSize="small" />
 				</Box>
 				Change your password
