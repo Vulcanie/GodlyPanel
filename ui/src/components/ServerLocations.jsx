@@ -3,6 +3,7 @@ import { Alert, Box, Chip, IconButton, Table, TableBody, TableCell, TableHead, T
 import { ContentCopy as CopyIcon } from "@mui/icons-material";
 import { api } from "../api/client";
 import { formatBytes } from "../utils/format";
+import { copyToClipboard } from "../utils/clipboard";
 
 // Where servers' files are now. The "Server install folder" setting only says where servers made from now on will go;
 // servers made earlier, or added by hand, can be anywhere, and this is the place that says where.
@@ -24,14 +25,12 @@ function useLocations() {
 
 function CopyPath({ path }) {
 	const [copied, setCopied] = React.useState(false);
-	const copy = async () => {
-		try {
-			await navigator.clipboard.writeText(path);
-			setCopied(true);
+	const copy = () => {
+		// Not navigator.clipboard: the panel is usually opened over plain http, where the browser switches that off.
+		copyToClipboard(path, (result) => {
+			setCopied(result === "Copied!");
 			setTimeout(() => setCopied(false), 1500);
-		} catch {
-			// The path is on screen to select by hand.
-		}
+		});
 	};
 	return (
 		<Tooltip title={copied ? "Copied" : "Copy the folder's path"}>

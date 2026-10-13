@@ -4,6 +4,7 @@ import { Delete as DeleteIcon, UploadFile as UploadIcon } from "@mui/icons-mater
 import { api } from "../api/client";
 import { formatBytes } from "../utils/format";
 import { useOperation, operationLabel } from "../OperationsContext";
+import InfoTip from "./InfoTip";
 
 const ACCEPT_HINT = { ".jar": ".jar", ".pak": ".pak", ".dll": ".dll", archive: ".zip" };
 
@@ -95,8 +96,15 @@ function ModsPanel({ serverName, serverStatus }) {
 				</Alert>
 			)}
 
+			<Alert severity="info" variant="outlined" sx={{ mb: 2 }} data-testid="mods-no-explanations">
+				<strong>Mods will not have explanations.</strong> The settings that belong to a mod show up in the server's Settings with no explanation, because they depend on the mod. The mod's own page says what they do.
+			</Alert>
+
 			<Paper sx={{ p: 2, mb: 2 }}>
-				<Typography variant="subtitle1">{data.label}</Typography>
+				<Box sx={{ display: "flex", alignItems: "center" }}>
+					<Typography variant="subtitle1">{data.label}</Typography>
+					<InfoTip id="server.mods.add" />
+				</Box>
 				{data.note && (
 					<Typography variant="body2" sx={{ color: "text.secondary", mb: 1.5 }}>
 						{data.note}

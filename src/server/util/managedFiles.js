@@ -27,14 +27,34 @@ export async function writeManagedFile(filePath, content, source = "settings edi
 		// Saving a file that doesn't exist yet is fine; there's nothing to keep.
 		if (err.code !== "ENOENT") throw err;
 	}
-	await fs.writeFile(filePath, content, "utf8");
+	await writeWhole(filePath, content);
 	await recordVersion(filePath, before, content, source);
+}
+
+/**
+ * Write the file so it is never half written: the new text goes to a file beside it, which then replaces the old one in one step.
+ * A crash, a full disk or a power cut in the middle leaves the old file intact instead of a truncated settings file the game then
+ * refuses to read. Where Windows won't let one file replace another (a program has the old one open), write in place as before.
+ */
+async function writeWhole(filePath, content) {
+	const temp = `${filePath}.${process.pid}.tmp`;
+	try {
+		await fs.writeFile(temp, content, "utf8");
+		await fs.rename(temp, filePath);
+	} catch (err) {
+		await fs.rm(temp, { force: true }).catch(() => {});
+		if (!["EPERM", "EBUSY", "EACCES", "EXDEV"].includes(err.code)) throw err;
+		await fs.writeFile(filePath, content, "utf8");
+	}
 }
 
 /** Answer a failed read/write in the same way everywhere. */
 export function sendFileError(res, err, what) {
 	if (err.code === "path_not_allowed") {
 		return res.status(400).json({ error: err.message });
+	}
+	if (err.code === "ENOENT") {
+		return res.status(404).json({ error: `${what[0].toUpperCase()}${what.slice(1)} doesn't exist yet.`, code: "file_missing" });
 	}
 	console.error(`Error handling ${what}:`, err);
 	res.status(500).json({ error: `Failed to handle ${what}. System error: ${err.code ?? "unknown"}` });

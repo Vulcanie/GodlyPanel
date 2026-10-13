@@ -1,12 +1,18 @@
 import { prettifyKey } from "./utils/prettifyKey";
-
-function rows(list) {
-	const map = {};
-	for (const [key, label, description, group] of list) {
-		map[key] = { label, description, group };
-	}
-	return map;
-}
+import { rows, withChoices } from "./catalog/rows.js";
+import {
+	CONAN_CHOICES,
+	ENSHROUDED_GAME_CHOICES,
+	ENSHROUDED_TOP_CHOICES,
+	MINECRAFT_CHOICES,
+	PALWORLD_CHOICES,
+} from "./catalog/enums.js";
+import { sevenDaysSettings, sevenDaysGroupOrder } from "./catalog/sevenDays.js";
+import { vrisingSettings, vrisingGroupOrder } from "./catalog/vrising.js";
+import { sotfSettings, sotfGroupOrder } from "./catalog/sotf.js";
+import { rustSettings, rustGroupOrder } from "./catalog/rust.js";
+import { zomboidSettings, zomboidGroupOrder } from "./catalog/zomboid.js";
+import { LAUNCH_ARGS, launchDefFor } from "./catalog/launchArgs.js";
 
 // ───────────────────────── ARK: Survival Ascended / Evolved ─────────────────────────
 
@@ -250,7 +256,8 @@ const arkGameSettings = rows([
 
 // ───────────────────────── Conan Exiles ─────────────────────────
 
-const conanSettings = rows([
+const conanSettings = withChoices(
+	rows([
 	["ServerName", "Server Name", "The name shown for this server in the in-game server browser.", "Server Info"],
 	["ServerPassword", "Server Password", "Password players must enter to join the server. Leave blank for a public server.", "Server Info"],
 	["AdminPassword", "Admin Password", "Password required to gain admin privileges in-game.", "Server Info"],
@@ -434,11 +441,15 @@ const conanSettings = rows([
 	["AllowedTimeUndermesh", "Allowed Time Undermesh (sec)", "Grace period allowed underneath the mesh before undermesh detection acts.", "Admin & Misc"],
 	["CapCharacterLayoutScalarParams", "Cap Character Scaling Params", "Clamps character body-scaling parameters to prevent extreme/exploited values.", "Admin & Misc"],
 	["PathFollowingSendsAngularVelocity", "Path Following Sends Angular Velocity", "Includes angular velocity data in NPC path-following network updates.", "Admin & Misc"],
-]);
+
+	]),
+	CONAN_CHOICES,
+);
 
 // ───────────────────────── Minecraft (server.properties) ─────────────────────────
 
-const minecraftSettings = rows([
+const minecraftSettings = withChoices(
+	rows([
 	["motd", "Message of the Day", "The line of text shown for this server in the multiplayer server list.", "Server Info"],
 	["max-players", "Max Players", "Maximum number of players allowed on the server at once.", "Server Info"],
 	["difficulty", "Difficulty", "World difficulty: peaceful, easy, normal, or hard.", "Gameplay"],
@@ -504,39 +515,15 @@ const minecraftSettings = rows([
 	["text-filtering-config", "Text Filtering Config", "Path to a chat text-filtering configuration, if used.", "Resource Pack"],
 	["initial-enabled-packs", "Initially Enabled Data Packs", "Comma-separated data packs enabled when the world is first created.", "Resource Pack"],
 	["initial-disabled-packs", "Initially Disabled Data Packs", "Comma-separated data packs disabled when the world is first created.", "Resource Pack"],
-]);
 
-// ───────────────────────── Valheim ─────────────────────────
-// Keyed by the setting's name; the group is where it appears. Changes apply the next time the server is started.
-const valheimLaunchSettings = {
-	name: { label: "Server name", description: "The name shown in the server list (-name). The password can't be part of it.", group: "Server" },
-	port: { label: "Game port", description: "The UDP port players connect to (-port). The game also uses the next two ports. Change it under the server's ports so the panel can check for clashes.", group: "Server" },
-	world: { label: "World name", description: "Which world file to load or create (-world). A new name makes a new world; the old one is kept.", group: "Server" },
-	password: { label: "Password", description: "What players type to join (-password). At least 5 characters, and it can't be part of the server name. Leave empty for none, which Valheim refuses for a public server.", group: "Server" },
-	public: { label: "Listed publicly (1 = yes, 0 = no)", description: "Whether the server appears in Valheim's server browser (-public). Without it the default is 1.", group: "Server" },
-	crossplay: { label: "Crossplay", description: "Lets Xbox and Microsoft Store players join through PlayFab (-crossplay). Changes which ports are used for joining.", group: "Server" },
-	savedir: { label: "Save folder", description: "Where worlds and the admin, ban and permitted lists are kept (-savedir). Without it they go in the Windows user's profile, shared with every other Valheim server on this PC.", group: "Saves and logs" },
-	logFile: { label: "Log file", description: "Where the server writes its log (-logFile). The Logs tab reads this file.", group: "Saves and logs" },
-	saveinterval: { label: "Save every (seconds)", description: "How often the world is saved (-saveinterval). The default is 1800.", group: "Saves and logs" },
-	backups: { label: "Automatic backups to keep", description: "How many automatic backups Valheim keeps (-backups). The default is 4.", group: "Saves and logs" },
-	backupshort: { label: "First backup after (seconds)", description: "Time before the first automatic backup (-backupshort). The default is 7200.", group: "Saves and logs" },
-	backuplong: { label: "Then a backup every (seconds)", description: "Time between later automatic backups (-backuplong). The default is 43200.", group: "Saves and logs" },
-	instanceid: { label: "Instance ID", description: "Tells two servers that share a save folder apart (-instanceid).", group: "Saves and logs" },
-	preset: { label: "Difficulty preset", description: "Applies a whole set of world modifiers at once (-preset): normal, casual, easy, hard, hardcore, immersive or hammer. Individual modifiers below are applied after it.", group: "World modifiers" },
-	combat: { label: "Combat", description: "veryeasy, easy, hard or veryhard (-modifier combat). Empty keeps the default.", group: "World modifiers" },
-	deathpenalty: { label: "Death penalty", description: "casual, veryeasy, easy, hard or hardcore (-modifier deathpenalty). Empty keeps the default.", group: "World modifiers" },
-	resources: { label: "Resources", description: "muchless, less, more, muchmore or most (-modifier resources). Empty keeps the default.", group: "World modifiers" },
-	raids: { label: "Raids", description: "none, muchless, less, more or muchmore (-modifier raids). Empty keeps the default.", group: "World modifiers" },
-	portals: { label: "Portals", description: "casual or hard (-modifier portals): hard stops ores and metal passing through. Empty keeps the default.", group: "World modifiers" },
-	"setkey nobuildcost": { label: "No build cost", description: "Building is free (-setkey nobuildcost).", group: "World modifiers" },
-	"setkey playerevents": { label: "Player-based events", description: "Raids depend on what players have done (-setkey playerevents).", group: "World modifiers" },
-	"setkey passivemobs": { label: "Passive creatures", description: "Creatures don't attack (-setkey passivemobs).", group: "World modifiers" },
-	"setkey nomap": { label: "No map", description: "The map doesn't show where you have been (-setkey nomap).", group: "World modifiers" },
-};
+	]),
+	MINECRAFT_CHOICES,
+);
 
 // ───────────────────────── Enshrouded ─────────────────────────
 
-const enshroudedTop = rows([
+const enshroudedTop = withChoices(
+	rows([
 	["name", "Server Name", "The name shown for this server in the in-game server browser.", "Server Info"],
 	["ip", "Bind IP Address", "Network interface IP the server binds to.", "Networking"],
 	["queryPort", "Query Port", "Network port used for the server browser query.", "Networking"],
@@ -547,9 +534,13 @@ const enshroudedTop = rows([
 	["gameSettingsPreset", "Game Settings Preset", "Named difficulty/rules preset the gameSettings below were based on.", "Server Info"],
 	["saveDirectory", "Save Directory", "Folder path where world save data is stored.", "Advanced"],
 	["logDirectory", "Log Directory", "Folder path where server logs are written.", "Advanced"],
-]);
 
-const enshroudedGameSettings = rows([
+	]),
+	ENSHROUDED_TOP_CHOICES,
+);
+
+const enshroudedGameSettings = withChoices(
+	rows([
 	["playerHealthFactor", "Player Health Factor", "Multiplies player max health.", "Player"],
 	["playerManaFactor", "Player Mana Factor", "Multiplies player max mana.", "Player"],
 	["playerStaminaFactor", "Player Stamina Factor", "Multiplies player max stamina.", "Player"],
@@ -590,7 +581,10 @@ const enshroudedGameSettings = rows([
 	["threatBonus", "Threat Bonus", "Multiplies threat/aggro generation.", "Enemies & Bosses"],
 	["pacifyAllEnemies", "Pacify All Enemies", "Makes all enemies passive and non-hostile.", "Enemies & Bosses"],
 	["tamingStartleRepercussion", "Taming Startle Repercussion", "What happens to taming progress if the creature being tamed is startled.", "Enemies & Bosses"],
-]);
+
+	]),
+	ENSHROUDED_GAME_CHOICES,
+);
 
 // ───────────────────────── RuneScape: Dragonwilds ─────────────────────────
 
@@ -619,7 +613,8 @@ const windroseSettings = rows([
 
 // ───────────────────────── Palworld ─────────────────────────
 
-const palworldSettings = rows([
+const palworldSettings = withChoices(
+	rows([
 	["ServerName", "Server Name", "The name shown for this server in the in-game server browser.", "General"],
 	["ServerDescription", "Server Description", "Short description shown in the server browser.", "General"],
 	["ServerPassword", "Server Password", "Password players must enter to join the server.", "General"],
@@ -691,9 +686,47 @@ const palworldSettings = rows([
 	["SupplyDropSpan", "Supply Drop Interval (min)", "Minutes between scheduled supply drop events.", "Admin"],
 	["EnablePredatorBossPal", "Enable Predator Boss Pals", "Enables the special Predator boss Pal variants.", "Admin"],
 	["MaxBuildingLimitNumRate", "Max Building Limit Rate", "Multiplies the server-wide building count limit.", "Admin"],
-]);
+
+	]),
+	PALWORLD_CHOICES,
+);
 
 // ───────────────────────── Catalog ─────────────────────────
+//
+// Per game, per file:
+//   parser         how the file is read (see ConfigPage's PARSERS)
+//   settings       what each setting is called and does, keyed by "Section::Key" (or the bare key, or a JSON path)
+//   groupOrder     the order the groups are listed in (a group not named goes after, in file order)
+//   launch         true for the "Launch options" file, which is the start script's launch line
+//   excludeSections/excludeKeys/excludePaths   things in the file that are never shown
+// Settings are listed in the order they are written below, which is the order the form shows them in.
+
+/** The settings of a game's launch line, as catalog entries keyed like the form's fields. */
+function launchSettings(def) {
+	const out = {};
+	for (const arg of def.args) {
+		if (arg.edit === false || /\s/.test(arg.flag) && !arg.key) continue;
+		const key = arg.key ?? arg.flag.replace(/^[-+]+/, "");
+		out[key] = {
+			label: arg.label,
+			description: arg.managed ? `${arg.description} (GodlyPanel puts this on the line when it creates the server; change it with care.)` : arg.description,
+			group: arg.group,
+			placeholder: arg.example,
+			type: arg.kind === "bool" ? "boolean" : /^-?\d+(\.\d+)?$/.test(arg.example ?? "") ? "number" : "text",
+			...(arg.options ? { options: arg.options.map((o) => (Array.isArray(o) ? { value: o[0], label: o[1] } : { value: o, label: o })), ...(arg.allowCustom ? { allowCustom: true } : {}) } : {}),
+		};
+	}
+	return out;
+}
+
+const launchFile = (game) => ({
+	parser: "launchArgs",
+	launch: true,
+	excludeSections: [],
+	sectionLabels: {},
+	settings: launchSettings(LAUNCH_ARGS[game]),
+	groupOrder: ["Server", "World", "Network", "Memory", "Saves and logs", "Files"],
+});
 
 export const CONFIG_CATALOG = {
 	ark: {
@@ -714,11 +747,12 @@ export const CONFIG_CATALOG = {
 					"/Script/Engine.GameSession": "Session Limits",
 				},
 				settings: {
-					...prefixKeys("ServerSettings", arkServerSettings),
 					...prefixKeys("SessionSettings", arkSessionSettings),
-					...prefixKeys("MessageOfTheDay", arkMotdSettings),
 					...prefixKeys("/Script/Engine.GameSession", arkGameSessionSettings),
+					...prefixKeys("MessageOfTheDay", arkMotdSettings),
+					...prefixKeys("ServerSettings", arkServerSettings),
 				},
+				groupOrder: ["Session", "General", "Taming & Breeding", "Harvesting & Resources", "Dinos & Wild Population", "PvP & Structures", "Admin & Performance", "Cryo & Data Transfer", "Misc / ASA Features"],
 			},
 			"Game.ini": {
 				parser: "ini",
@@ -750,6 +784,7 @@ export const CONFIG_CATALOG = {
 				excludeSections: [],
 				sectionLabels: { root: "Server Properties" },
 				settings: { ...prefixKeys("root", minecraftSettings) },
+				groupOrder: ["Server Info", "Gameplay", "World", "Access Control", "Admin & Networking", "Resource Pack"],
 			},
 		},
 	},
@@ -764,6 +799,7 @@ export const CONFIG_CATALOG = {
 					...prefixJson("", enshroudedTop),
 					...prefixJson("gameSettings", enshroudedGameSettings),
 				},
+				groupOrder: ["Server Info", "Networking", "Player", "World", "Resources", "Enemies & Bosses", "Advanced"],
 			},
 		},
 	},
@@ -773,8 +809,10 @@ export const CONFIG_CATALOG = {
 				parser: "xml",
 				excludeSections: [],
 				sectionLabels: {},
-				settings: {},
+				settings: { ...sevenDaysSettings },
+				groupOrder: sevenDaysGroupOrder,
 			},
+			"Launch options": launchFile("7days"),
 		},
 	},
 	subsistence: {
@@ -823,9 +861,11 @@ export const CONFIG_CATALOG = {
 		files: {
 			"Launch options": {
 				parser: "valheimLaunch",
+				launch: true,
 				excludeSections: [],
 				sectionLabels: {},
-				settings: { ...valheimLaunchSettings },
+				settings: launchSettings(LAUNCH_ARGS.valheim),
+				groupOrder: ["Server", "World modifiers", "Saves and logs"],
 			},
 		},
 	},
@@ -836,9 +876,65 @@ export const CONFIG_CATALOG = {
 				excludeSections: [],
 				sectionLabels: {},
 				settings: { ...palworldSettings },
+				groupOrder: ["General", "Gameplay", "Admin"],
 			},
 		},
 	},
+	rust: {
+		files: {
+			"server.cfg": {
+				parser: "convar",
+				excludeSections: [],
+				sectionLabels: { root: "Server" },
+				settings: { ...rustSettings },
+				groupOrder: rustGroupOrder,
+				// The game doesn't make this file until it is asked to, so it may not be there yet.
+				mayBeMissing: "Rust makes server.cfg only when asked to (`server.writecfg` in the console). You can write one here: each line is a setting name and its value, such as server.hostname \"My Server\". A setting on the launch line wins over one in this file.",
+			},
+			"Launch options": launchFile("rust"),
+		},
+	},
+	zomboid: {
+		files: {
+			"servertest.ini": {
+				parser: "ini",
+				excludeSections: [],
+				sectionLabels: { root: "Server" },
+				settings: { ...zomboidSettings },
+				groupOrder: zomboidGroupOrder,
+				mayBeMissing: "The game makes this file the first time the server starts. Start the server once, then come back.",
+			},
+			"Launch options": launchFile("zomboid"),
+		},
+	},
+	vrising: {
+		files: {
+			"ServerHostSettings.json": {
+				parser: "json",
+				excludePaths: [],
+				structuredPaths: [],
+				sectionLabels: {},
+				settings: { ...vrisingSettings },
+				groupOrder: vrisingGroupOrder,
+			},
+			"Launch options": launchFile("vrising"),
+		},
+	},
+	sotf: {
+		files: {
+			"dedicatedserver.cfg": {
+				parser: "json",
+				excludePaths: [],
+				structuredPaths: [],
+				sectionLabels: { "": "Server", GameSettings: "Game rules (advanced)", CustomGameModeSettings: "Custom game mode rules" },
+				settings: { ...sotfSettings },
+				groupOrder: sotfGroupOrder,
+			},
+			"Launch options": launchFile("sotf"),
+		},
+	},
+	corekeeper: { files: { "Launch options": launchFile("corekeeper") } },
+	satisfactory: { files: { "Launch options": launchFile("satisfactory") } },
 };
 
 function prefixKeys(section, settingsMap) {
@@ -857,19 +953,16 @@ function prefixJson(basePath, settingsMap) {
 	return out;
 }
 
-// The backend only reports real per-game filenames for servers whose
-// ServerData entry uses `configPaths` (a named map) — that's ARK only today.
-// Every other game uses a single `configPath` and the API collapses its
-// (only) file down to the generic name "config". When that happens, and the
-// game's catalog only defines one file, resolve to that file instead of
-// failing the lookup.
+// The backend reports a game's settings files by name only where a server records several (ARK's two). For a game with one
+// settings file it calls that file "config", and the "Launch options" file (the start script) goes by its own name. So "config"
+// means the game's first file that isn't the launch line.
 function resolveFileCatalog(gameCatalog, fileName) {
 	if (!gameCatalog) return null;
 	if (gameCatalog.files[fileName]) return gameCatalog.files[fileName];
 
-	const names = Object.keys(gameCatalog.files);
-	if (fileName === "config" && names.length === 1) {
-		return gameCatalog.files[names[0]];
+	if (fileName === "config") {
+		const own = Object.values(gameCatalog.files).filter((f) => !f.launch);
+		if (own.length === 1) return own[0];
 	}
 	return null;
 }
@@ -904,21 +997,32 @@ function groupFor(fileCatalog, entry, meta) {
 	return fileCatalog.sectionLabels?.[top] || prettifyKey(top || "General");
 }
 
-// Turns flat parser entries into { groups: [{ name, settings }] } for ConfigForm,
-// applying catalog exclusions/labels/descriptions and falling back to a
-// prettified key name for anything not in the catalog.
-export function annotateEntries(gameType, fileName, entries) {
+const NO_FILE = { excludeSections: [], sectionLabels: {}, settings: {} };
+
+/** The catalog of one settings file, or null for a game or file the panel knows nothing about. */
+export function getFileCatalog(gameType, fileName) {
 	const gameCatalog = CONFIG_CATALOG[(gameType || "").toLowerCase()];
-	const fileCatalog = resolveFileCatalog(gameCatalog, fileName) || {
-		excludeSections: [],
-		sectionLabels: {},
-		settings: {},
-	};
+	return resolveFileCatalog(gameCatalog, fileName);
+}
+
+/**
+ * Turns flat parser entries into { groups: [{ name, settings }] } for ConfigForm: applies the catalog's exclusions, labels,
+ * explanations and choices, puts the groups and the settings in the catalog's order (what the file lists that the catalog doesn't
+ * know goes after, in file order), and falls back to a prettified key name for anything not in the catalog.
+ *
+ * `undocumented` counts the settings that have no explanation: ones from mods, or from a newer version of the game than the
+ * catalog was written for. The form says so, since mods are not explained.
+ */
+export function annotateEntries(gameType, fileName, entries) {
+	const fileCatalog = getFileCatalog(gameType, fileName) || NO_FILE;
+	const position = new Map(Object.keys(fileCatalog.settings).map((key, i) => [key, i]));
+	const groupRank = new Map((fileCatalog.groupOrder ?? []).map((name, i) => [name, i]));
 
 	const groupsMap = new Map();
+	let undocumented = 0;
 
-	for (const entry of entries) {
-		if (isExcluded(fileCatalog, entry)) continue;
+	entries.forEach((entry, fileIndex) => {
+		if (isExcluded(fileCatalog, entry)) return;
 
 		const meta = findMeta(fileCatalog, entry);
 		const label =
@@ -926,33 +1030,73 @@ export function annotateEntries(gameType, fileName, entries) {
 			prettifyKey(entry.key) +
 				(entry.repeatCount > 1 ? ` (#${entry.occurrence + 1})` : "");
 		const description = meta?.description || entry.comment || "";
+		if (!meta?.description && !entry.comment) undocumented += 1;
 		const groupName = groupFor(fileCatalog, entry, meta);
+		const metaKey = fileCatalog.settings[lookupId(entry)] ? lookupId(entry) : entry.key;
+		const rank = meta ? (position.get(metaKey) ?? Number.MAX_SAFE_INTEGER) : Number.MAX_SAFE_INTEGER;
 
 		if (!groupsMap.has(groupName)) groupsMap.set(groupName, []);
-		groupsMap.get(groupName).push({ ...entry, label, description });
-	}
+		groupsMap.get(groupName).push({
+			...entry,
+			label,
+			description,
+			documented: Boolean(meta?.description || entry.comment),
+			options: meta?.options,
+			allowCustom: meta?.allowCustom,
+			placeholder: meta?.placeholder,
+			type: meta?.type,
+			clearable: Boolean(fileCatalog.launch),
+			_rank: rank,
+			_file: fileIndex,
+		});
+	});
+
+	const groups = Array.from(groupsMap.entries()).map(([name, settings], appearance) => ({
+		name,
+		appearance,
+		settings: settings.sort((a, b) => a._rank - b._rank || a._file - b._file).map(({ _rank, _file, ...rest }) => rest),
+	}));
+	groups.sort((a, b) => (groupRank.get(a.name) ?? 1000) - (groupRank.get(b.name) ?? 1000) || a.appearance - b.appearance);
 
 	return {
-		groups: Array.from(groupsMap.entries()).map(([name, settings]) => ({
-			name,
-			settings,
-		})),
+		groups: groups.map(({ appearance, ...group }) => group),
 		structuredPaths: fileCatalog.structuredPaths || [],
+		undocumented,
 	};
 }
 
 export function getStructuredPaths(gameType, fileName) {
-	const gameCatalog = CONFIG_CATALOG[(gameType || "").toLowerCase()];
-	return resolveFileCatalog(gameCatalog, fileName)?.structuredPaths || [];
+	return getFileCatalog(gameType, fileName)?.structuredPaths || [];
+}
+
+/** The names of every setting the catalog explains for a file, so a parser can offer ones the file doesn't have yet. */
+export function getCatalogKeys(gameType, fileName) {
+	return Object.keys(getFileCatalog(gameType, fileName)?.settings ?? {});
+}
+
+/** What to tell the person when the file may not exist yet, or null. */
+export function getMissingFileNote(gameType, fileName) {
+	return getFileCatalog(gameType, fileName)?.mayBeMissing ?? null;
 }
 
 export function getFileParser(gameType, fileName) {
-	const gameCatalog = CONFIG_CATALOG[(gameType || "").toLowerCase()];
-	const fileCatalog = resolveFileCatalog(gameCatalog, fileName);
+	const fileCatalog = getFileCatalog(gameType, fileName);
 	if (fileCatalog?.parser) return fileCatalog.parser;
 
+	if (fileName === "Launch options") return "launchArgs";
 	if (fileName.endsWith(".json")) return "json";
 	if (fileName.endsWith(".xml")) return "xml";
 	if (fileName === "server.properties") return "properties";
 	return "ini";
+}
+
+/** The launch-argument definition behind a game's "Launch options" file, if it has one. */
+export function getLaunchDef(gameType) {
+	return launchDefFor(gameType);
+}
+
+/** The name of a game's own settings file (the first one that isn't the launch line), or null. */
+export function getPrimaryFileName(gameType) {
+	const game = CONFIG_CATALOG[(gameType || "").toLowerCase()];
+	return game ? (Object.entries(game.files).find(([, f]) => !f.launch)?.[0] ?? null) : null;
 }
