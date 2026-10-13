@@ -79,8 +79,7 @@ function ServerConsole({ serverName, active }) {
 	if (exists === false) {
 		return (
 			<Typography variant="body2" sx={{ color: "text.secondary" }}>
-				No output captured yet. Servers started in "No window" mode show
-				their live output here.
+				No output captured yet.
 			</Typography>
 		);
 	}
@@ -90,22 +89,27 @@ function ServerConsole({ serverName, active }) {
 			ref={box}
 			onScroll={onScroll}
 			component="pre"
+			role="log"
+			aria-label="Console output"
+			data-testid="server-console"
 			sx={{
 				m: 0,
 				p: 1.5,
 				height: 280,
 				overflow: "auto",
-				fontFamily: "Consolas, 'Cascadia Mono', monospace",
+				fontFamily: (t) => t.custom.mono,
 				fontSize: 12,
 				lineHeight: 1.45,
 				whiteSpace: "pre-wrap",
 				wordBreak: "break-word",
-				bgcolor: "#0b0b0b",
-				border: "1px solid rgba(255,255,255,0.08)",
-				borderRadius: 1,
+				bgcolor: "background.default",
+				border: 1,
+				borderColor: "divider",
+				borderRadius: 2,
+				color: "text.primary",
 			}}
 		>
-			{text || "Waiting for output..."}
+			{text || "Waiting for output…"}
 		</Box>
 	);
 }

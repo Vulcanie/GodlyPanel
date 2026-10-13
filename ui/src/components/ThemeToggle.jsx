@@ -17,11 +17,11 @@ function ThemeToggle() {
 	return (
 		<>
 			<Tooltip title={`Appearance: ${current.label}`}>
-				<IconButton size="small" aria-label="Appearance" onClick={(e) => setAnchor(e.currentTarget)}>
+				<IconButton size="small" aria-label="Appearance" aria-haspopup="menu" onClick={(e) => setAnchor(e.currentTarget)} sx={{ color: "text.secondary", "&:hover": { color: "text.primary", bgcolor: (t) => t.custom.hover } }}>
 					{mode === "system" ? <AutoIcon fontSize="small" /> : resolved === "dark" ? <DarkIcon fontSize="small" /> : <LightIcon fontSize="small" />}
 				</IconButton>
 			</Tooltip>
-			<Menu anchorEl={anchor} open={Boolean(anchor)} onClose={() => setAnchor(null)}>
+			<Menu anchorEl={anchor} open={Boolean(anchor)} onClose={() => setAnchor(null)} slotProps={{ paper: { sx: { borderRadius: 3, border: 1, borderColor: "divider", minWidth: 180 } } }}>
 				{OPTIONS.map((o) => (
 					<MenuItem
 						key={o.mode}

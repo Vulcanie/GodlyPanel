@@ -6,6 +6,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { copyNodeWithoutConsole, killFakeGames } from "../helpers/fakeGame.js";
+import { windowsOnly } from "../helpers/winEmulation.js";
 
 // resources/scripts/apply-update.ps1, the part of the updater that swaps files while the app is closed. It is run here
 // against a stand-in "app" (a renamed node.exe whose resources/main.js says which version it is, and reports that it is
@@ -24,7 +25,7 @@ const main = (version, behaviour = "ok") =>
 			(behaviour === "silent" ? "" : `setTimeout(() => fs.writeFileSync(process.env.HEALTH, JSON.stringify({ version: ${JSON.stringify(version)} })), 700);\n`) +
 			`setInterval(() => {}, 1000);\n`;
 
-describe("apply-update.ps1", () => {
+describe("apply-update.ps1", windowsOnly("it runs the real Windows PowerShell updater script against a GUI-subsystem copy of node.exe"), () => {
 	let root;
 	let seq = 0;
 

@@ -142,7 +142,7 @@ function buildSectionDefs({ data, storage, installingSteam, installSteamCmd, res
 					actions={<Chip size="small" color={data.steamCmdInstalled ? "success" : "warning"} label={data.steamCmdInstalled ? "Installed" : "Not installed"} />}
 				>
 					<Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
-						<Typography variant="body2" sx={{ color: "text.secondary", flex: "1 1 260px", minWidth: 0, wordBreak: "break-all" }}>
+						<Typography variant="body2" sx={{ color: "text.secondary", flex: "1 1 260px", minWidth: 0, overflowWrap: "anywhere" }}>
 							{data.steamCmdInstalled ? `Using ${data.resolved.paths.steamCmdPath}` : "Not installed yet. Download it from Valve once, or point the SteamCMD location (Servers, Folders) at a copy you already have."}
 						</Typography>
 						{!data.steamCmdInstalled && (
@@ -676,7 +676,8 @@ function CategoryList({ categories, active, onPick, unsaved, matches }) {
 							textAlign: "left",
 							justifyContent: "flex-start",
 							flexShrink: 0,
-							whiteSpace: "nowrap",
+							// A strip you swipe along needs one line per tab; the column on a wide page can wrap a long name.
+							whiteSpace: { xs: "nowrap", md: "normal" },
 							color: selected ? "primary.main" : "text.primary",
 							opacity: hits === 0 ? 0.5 : 1,
 							backgroundColor: selected ? (t) => t.custom.hover : "transparent",
@@ -768,6 +769,7 @@ function Field({ spec, value, onChange, events }) {
 					value={value ?? ""}
 					onChange={onChange}
 					checkUrl="/api/settings/check-folder"
+					checkBody={spec.path === "backups.dir" ? { blankUses: "backups" } : undefined}
 					info={spec.path}
 				/>
 			</Box>

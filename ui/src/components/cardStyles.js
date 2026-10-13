@@ -1,3 +1,5 @@
+import { alpha } from "@mui/material/styles";
+
 // How an accordion looks when it is one of a page's cards (a server's Settings tab), so it matches the cards on the
 // panel's own Settings page: a bordered, rounded card with room around its text, a gap between cards, and an arrow at
 // the left that points right when it is shut and down when it is open. (This version of MUI wraps the title bar in a
@@ -11,11 +13,16 @@ export const cardAccordionSx = {
 	borderColor: "divider",
 	boxShadow: "none",
 	overflow: "hidden",
-	"&, &:first-of-type, &:last-of-type, &.Mui-expanded": { borderRadius: "12px" },
+	"&, &:first-of-type, &:last-of-type, &.Mui-expanded": { borderRadius: "16px" },
+	bgcolor: "background.paper",
+	transition: "border-color .2s",
+	"&.Mui-expanded": { borderColor: (t) => alpha(t.palette.primary.main, 0.45) },
 	// More specific than the theme's own "an open accordion has no margin", which would otherwise win.
 	"&.MuiAccordion-root.Mui-expanded": { margin: "0 0 16px" },
 	"& .MuiAccordionSummary-root": {
 		px: 2,
+		transition: "background-color .15s",
+		"&:hover": { bgcolor: (t) => t.custom.hover },
 		py: 1.25,
 		minHeight: 48,
 		flexDirection: "row-reverse",

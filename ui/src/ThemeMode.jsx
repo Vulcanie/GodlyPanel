@@ -55,15 +55,36 @@ export function ThemeModeProvider({ children }) {
 	const resolved = mode === "system" ? (systemDark ? "dark" : "light") : mode;
 	const value = React.useMemo(() => ({ mode, resolved, setMode }), [mode, resolved, setMode]);
 
-	// Native form controls and scrollbars follow too.
+	// Another tab or window of the panel changed the choice: follow it.
+	React.useEffect(() => {
+		const onStorage = (e) => {
+			if (e.key === KEY) setModeState(stored());
+		};
+		window.addEventListener("storage", onStorage);
+		return () => window.removeEventListener("storage", onStorage);
+	}, []);
+
+	// Native form controls and scrollbars follow too, and so does the colour of a phone browser's address bar.
+	const theme = resolved === "dark" ? darkTheme : lightTheme;
 	React.useEffect(() => {
 		document.documentElement.style.colorScheme = resolved;
 		document.documentElement.dataset.theme = resolved;
-	}, [resolved]);
+		try {
+			let meta = document.querySelector('meta[name="theme-color"]');
+			if (!meta) {
+				meta = document.createElement("meta");
+				meta.name = "theme-color";
+				document.head.appendChild(meta);
+			}
+			meta.content = theme.palette.background.default;
+		} catch {
+			// The browser keeps its own bar colour.
+		}
+	}, [resolved, theme]);
 
 	return (
 		<ThemeModeContext.Provider value={value}>
-			<ThemeProvider theme={resolved === "dark" ? darkTheme : lightTheme}>{children}</ThemeProvider>
+			<ThemeProvider theme={theme}>{children}</ThemeProvider>
 		</ThemeModeContext.Provider>
 	);
 }

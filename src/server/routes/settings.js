@@ -1,4 +1,5 @@
 import express from "express";
+import path from "node:path";
 import { FIELD_SPECS } from "../config/configSchema.js";
 import { getRawConfig, getConfig, patchConfig, configPath } from "../config/configStore.js";
 import { describeSecrets, patchSecrets } from "../config/secretsStore.js";
@@ -54,7 +55,10 @@ router.post("/check-folder", (req, res) => {
 	// On the create page a blank box means "my usual server folder", which is
 	// the configured one — not the built-in default the settings box means.
 	const blankUsesConfigured = req.body?.blankUsesConfigured === true;
+	// The backup folder's blank means a folder of its own inside the data directory, not the servers folder.
+	const blankIsBackups = req.body?.blankUses === "backups";
 	const typed = String(req.body?.path ?? "").trim();
+	if (typed === "" && blankIsBackups) return res.json(inspectFolder(path.join(paths.dataDir, "backups")));
 	res.json(inspectFolder(typed === "" && blankUsesConfigured ? getConfig().paths.serversRoot : typed));
 });
 

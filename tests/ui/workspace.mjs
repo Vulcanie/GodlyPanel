@@ -11,10 +11,7 @@ import { fileURLToPath } from "node:url";
 import { makeFakeGame, killFakeGames } from "./../helpers/fakeGame.js";
 
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-const browsers = path.join(os.homedir(), "AppData/Local/ms-playwright");
-const EXE =
-	process.env.GP_CHROME ||
-	fs.readdirSync(browsers).filter((d) => d.startsWith("chromium-")).map((d) => path.join(browsers, d, "chrome-win64/chrome.exe")).find((p) => fs.existsSync(p));
+import { EXE } from "./_chrome.mjs";
 const SHOTS = process.env.GP_SHOTS ? path.resolve(process.env.GP_SHOTS) : null;
 if (SHOTS) fs.mkdirSync(SHOTS, { recursive: true });
 

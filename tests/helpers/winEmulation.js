@@ -10,6 +10,12 @@ import path from "node:path";
 
 export const onWindows = process.platform === "win32";
 
+/**
+ * Test options for something only real Windows can check: `describe("...", windowsOnly("why"), () => {...})`.
+ * The reason is shown in the test report as the skip message, and CI's Windows job (which always runs these) is where they count.
+ */
+export const windowsOnly = (reason) => (onWindows ? {} : { skip: `needs Windows: ${reason}` });
+
 const SHIM = path.join(import.meta.dirname, "winshim");
 
 if (!onWindows && !process.env.GP_WINSHIM_ON) {

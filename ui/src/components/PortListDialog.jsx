@@ -1,6 +1,7 @@
 import React from "react";
 import { Alert, Box, Button, Chip, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Tooltip, Typography } from "@mui/material";
 import { api } from "../api/client";
+import InfoTip from "./InfoTip";
 
 /**
  * Every server and the ports it is using, for picking a free one or finding what is in the way. A port that another server also
@@ -22,7 +23,10 @@ function PortListDialog({ open, onClose, highlight = null }) {
 
 	return (
 		<Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
-			<DialogTitle>Ports in use</DialogTitle>
+			<DialogTitle sx={{ display: "flex", alignItems: "center" }}>
+				Ports in use
+				<InfoTip id="card.portList" />
+			</DialogTitle>
 			<DialogContent>
 				{error && <Alert severity="error">{error}</Alert>}
 				{!data && !error && <CircularProgress size={24} />}
@@ -41,9 +45,9 @@ function PortListDialog({ open, onClose, highlight = null }) {
 							<Box
 								key={s.name}
 								sx={{
-									border: "1px solid",
+									border: 1,
 									borderColor: s.name === highlight ? "primary.main" : "divider",
-									borderRadius: 1,
+									borderRadius: 3,
 									p: 1.5,
 								}}
 							>

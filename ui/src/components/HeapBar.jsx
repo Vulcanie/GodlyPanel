@@ -6,6 +6,8 @@ import LevelBar from "./LevelBar";
 // from the CPU/RAM StatChip (which reflects the OS process's working set),
 // this is the actual -Xmx ceiling the server can hit before GC pressure
 // turns into player-visible lag.
+const gb = (mb) => (Number(mb) / 1024).toFixed(1);
+
 function HeapBar({ usedMB, maxMB, percent }) {
 	return (
 		<Box
@@ -16,7 +18,7 @@ function HeapBar({ usedMB, maxMB, percent }) {
 				px: 1,
 				py: 0.5,
 				borderRadius: 999,
-				bgcolor: "action.hover",
+				bgcolor: (t) => t.custom.hover,
 				border: (t) => `1px solid ${t.palette.divider}`,
 			}}
 		>
@@ -24,8 +26,8 @@ function HeapBar({ usedMB, maxMB, percent }) {
 				Heap
 			</Typography>
 			<LevelBar percent={percent} height={6} width={60} />
-			<Typography variant="caption" sx={{ flexShrink: 0 }}>
-				{(usedMB / 1024).toFixed(1)}/{(maxMB / 1024).toFixed(1)} GB ({percent}%)
+			<Typography variant="caption" sx={{ flexShrink: 0, fontFamily: (t) => t.custom.mono, fontSize: 11 }}>
+				{gb(usedMB)}/{gb(maxMB)} GB ({Math.round(Number(percent) || 0)}%)
 			</Typography>
 		</Box>
 	);

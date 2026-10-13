@@ -1,5 +1,5 @@
 import React from "react";
-import { Alert, Box, Chip, TextField, Typography } from "@mui/material";
+import { Alert, Box, Chip, TextField } from "@mui/material";
 import { api } from "../api/client";
 
 /** A server's tags: labels used to search and group the dashboard. Administrators only. */
@@ -12,7 +12,13 @@ function TagsEditor({ serverName, tags = [] }) {
 	// The live status catches up within a few seconds; until then show what was just saved.
 	React.useEffect(() => {
 		setSaved(null);
-	}, [tags.join("\u0000")]); // eslint-disable-line react-hooks/exhaustive-deps
+	}, [tags.join("\u0000"), serverName]); // eslint-disable-line react-hooks/exhaustive-deps
+
+	// Another server starts with nothing half-typed and no old error.
+	React.useEffect(() => {
+		setDraft("");
+		setError(null);
+	}, [serverName]);
 
 	const save = async (next) => {
 		setError(null);
@@ -33,7 +39,6 @@ function TagsEditor({ serverName, tags = [] }) {
 
 	return (
 		<Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, alignItems: "center", mb: 1.5 }}>
-			
 			{current.map((tag) => (
 				<Chip key={tag} size="small" label={tag} onDelete={() => save(current.filter((t) => t !== tag))} />
 			))}

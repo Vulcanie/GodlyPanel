@@ -10,9 +10,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-const EXE =
-	process.env.GP_CHROME ||
-	fs.readdirSync(path.join(os.homedir(), "AppData/Local/ms-playwright")).filter((d) => d.startsWith("chromium-")).map((d) => path.join(os.homedir(), "AppData/Local/ms-playwright", d, "chrome-win64/chrome.exe")).find((p) => fs.existsSync(p));
+import { EXE } from "./_chrome.mjs";
 const root = fs.mkdtempSync(path.join(os.tmpdir(), "gp-dismiss-"));
 const PORT = 8791;
 fs.writeFileSync(path.join(root, "servers.json"), JSON.stringify({ schemaVersion: 1, servers: [] }));

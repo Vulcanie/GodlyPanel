@@ -1,5 +1,6 @@
 import React from "react";
 import { Box, ButtonBase, Collapse, Paper, Typography } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
 
 // A card that folds away to one line: its name, a short hint about what's inside, and an arrow. Used where a page is
@@ -48,21 +49,36 @@ function CollapsibleSection({ title, hint, open, onToggle, danger = false, id, c
 			<Paper
 				variant="outlined"
 				sx={{
-					borderColor: danger ? "error.main" : undefined,
+					borderRadius: 4,
+					overflow: "hidden",
+					borderColor: danger ? "error.main" : open ? (t) => alpha(t.palette.primary.main, 0.45) : "divider",
+					transition: "border-color .2s",
 					...(open ? { borderBottomLeftRadius: 0, borderBottomRightRadius: 0, borderBottom: "none" } : {}),
 				}}
 			>
 				<ButtonBase
 					onClick={onToggle}
 					aria-expanded={open}
-					sx={{ width: "100%", display: "flex", alignItems: "center", gap: 1.5, px: 2, py: 1.25, textAlign: "left", justifyContent: "flex-start" }}
+					sx={{
+						width: "100%",
+						display: "flex",
+						alignItems: "center",
+						gap: 1.5,
+						px: 2,
+						py: 1.5,
+						textAlign: "left",
+						justifyContent: "flex-start",
+						transition: "background-color .15s",
+						"&:hover": { bgcolor: (t) => t.custom.hover },
+						"&.Mui-focusVisible": { bgcolor: (t) => t.custom.hover },
+					}}
 				>
-					<ExpandMoreIcon sx={{ transform: open ? "rotate(0deg)" : "rotate(-90deg)", transition: "transform 0.15s", color: "text.secondary" }} />
-					<Typography variant="subtitle1" sx={{ color: danger ? "error.main" : undefined }}>
+					<ExpandMoreIcon sx={{ transform: open ? "rotate(0deg)" : "rotate(-90deg)", transition: "transform 0.15s", color: danger ? "error.main" : "text.secondary" }} />
+					<Typography variant="subtitle1" sx={{ color: danger ? "error.main" : undefined, flexShrink: 0 }}>
 						{title}
 					</Typography>
 					{hint && !open && (
-						<Typography variant="body2" sx={{ color: "text.secondary", ml: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+						<Typography variant="body2" sx={{ color: "text.secondary", ml: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: { xs: "none", sm: "block" } }}>
 							{hint}
 						</Typography>
 					)}

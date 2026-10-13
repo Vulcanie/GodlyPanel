@@ -4,6 +4,7 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { startInstance, tempDir, removeDir, ADMIN } from "../helpers/instance.js";
+import { windowsOnly } from "../helpers/winEmulation.js";
 
 // secrets.json lives in a hidden, private folder of its own (GHP_SECRETS_DIR, which the desktop app points at a folder beside
 // `data`), not in the data folder a person might copy or back up. An install that has it in the data folder gets it moved.
@@ -49,11 +50,11 @@ describe("where secrets.json is kept", () => {
 		}
 	});
 
-	it("keeps the folder hidden", () => {
+	it("keeps the folder hidden", windowsOnly("the hidden flag is read back with Windows' attrib.exe"), () => {
 		assert.match(execFileSync(path.join(system32, "attrib.exe"), [secretsDir], { encoding: "utf8" }).slice(0, 20), /H/);
 	});
 
-	it("keeps the folder private to this account, SYSTEM and Administrators", () => {
+	it("keeps the folder private to this account, SYSTEM and Administrators", windowsOnly("the permissions are read back with Windows' icacls.exe"), () => {
 		const acl = execFileSync(path.join(system32, "icacls.exe"), [secretsDir], { encoding: "utf8" });
 		assert.doesNotMatch(acl, /BUILTIN\\Users|Authenticated Users|Everyone/i);
 	});
