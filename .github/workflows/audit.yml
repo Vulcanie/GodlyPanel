@@ -4,8 +4,8 @@ name: Dependency audit
 # and takes seconds. It is a check of its own and does not hold up the tests or a release; it also runs weekly, because a new advisory
 # can appear against a lock file that hasn't changed.
 #
-# Only what ships is checked. The interface's build tooling (react-scripts) has ~100 advisories of its own, but it runs on the
-# developer's machine to produce static files and is not part of the app.
+# Only what ships is checked. The interface's build tooling (Vite) is not part of what ships: it runs on the
+# developer's machine to produce static files.
 on:
   push:
     branches: [main]
