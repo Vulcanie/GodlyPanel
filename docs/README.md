@@ -16,6 +16,13 @@ Plain-language help for running GodlyPanel. Pick what you need:
 | Find out what a word means (RCON, query port, tunnel…) | [Glossary](GLOSSARY.md) |
 | Quick answers | [FAQ](FAQ.md) |
 | See which games are supported and how well they were tested | [Game support](GAME_SUPPORT.md) |
+| Find out what a setting on the Settings page does | [Panel settings guide](PANEL_SETTINGS.md) |
+| Find out what a control on a server's page does | [Server options guide](SERVER_OPTIONS.md) |
+| Find out what a setting inside a game means | [Game settings guide](GAME_SETTINGS.md) |
+| Find out what a launch argument does | [Launch arguments guide](LAUNCH_ARGUMENTS.md) |
+
+The four guides at the bottom of the table are generated from the help text in the interface (the (i) icons link to them),
+so edit that text, in `ui/src/help` and the catalogs in `ui/src`, and run `npm run build:guides` rather than editing them by hand.
 
 Behind these, [SECURITY.md](../SECURITY.md) is the technical description of how the
 panel defends itself, and the [README](../README.md) covers building it from source.

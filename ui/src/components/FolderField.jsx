@@ -1,6 +1,7 @@
 import React from "react";
 import { Box, Button, TextField, Typography, Chip } from "@mui/material";
 import { api } from "../api/client";
+import InfoTip from "./InfoTip";
 import { formatBytes } from "../utils/format";
 
 /**
@@ -9,6 +10,9 @@ import { formatBytes } from "../utils/format";
  * partway through a multi-gigabyte install.
  *
  * Blank means "use the default", which is inside the app's own folder.
+ *
+ * `info` is a help id: the (i) beside the box then explains the setting, and no hint is printed under it. Without it, the older
+ * `helperText` (or a line saying what blank means) is shown, for the places that have no entry in the help yet.
  */
 function FolderField({
 	value,
@@ -17,6 +21,7 @@ function FolderField({
 	label = "Folder",
 	blankMeans = "the default folder inside the app",
 	helperText,
+	info,
 	onCheck,
 	checkBody,
 }) {
@@ -40,6 +45,7 @@ function FolderField({
 	}, [value, checkUrl]);
 
 	const blocked = result && !result.ok;
+	const hint = info ? undefined : (helperText ?? `Blank uses ${blankMeans}.`);
 
 	const pick = window.godlyPanel?.pickFolder;
 	const browse = async () => {
@@ -49,31 +55,29 @@ function FolderField({
 
 	return (
 		<Box>
-			<Box sx={{ display: "flex", gap: 1 }}>
-			<TextField
-				fullWidth
-				size="small"
-				label={label}
-				placeholder="Leave blank for the default"
-				value={value}
-				onChange={(e) => onChange(e.target.value)}
-				error={Boolean(blocked)}
-				helperText={
-					blocked
-						? result.errors[0]
-						: (helperText ?? `Blank uses ${blankMeans}.`)
-				}
-			/>
-			{pick && (
-				<Button size="small" variant="outlined" onClick={browse} sx={{ alignSelf: "flex-start", mt: 0.25, whiteSpace: "nowrap" }}>
-					Browse…
-				</Button>
-			)}
+			<Box sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
+				<TextField
+					fullWidth
+					size="small"
+					label={label}
+					placeholder="Leave blank for the default"
+					value={value}
+					onChange={(e) => onChange(e.target.value)}
+					error={Boolean(blocked)}
+					// A problem with the folder is a state, so it is printed; what the setting means is in the (i).
+					helperText={blocked ? result.errors[0] : hint}
+				/>
+				{pick && (
+					<Button size="small" variant="outlined" onClick={browse} sx={{ whiteSpace: "nowrap", flexShrink: 0, height: 40 }}>
+						Browse…
+					</Button>
+				)}
+				{info && <InfoTip id={info} sx={{ mt: 0.75 }} />}
 			</Box>
 			{result && (
 				<Box sx={{ mt: 1, display: "flex", flexDirection: "column", gap: 0.5 }}>
 					<Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap" }}>
-						<Typography variant="caption" sx={{ color: "text.secondary", wordBreak: "break-all" }}>
+						<Typography variant="caption" sx={{ color: "text.secondary", wordBreak: "break-all", fontFamily: (t) => t.custom.mono }}>
 							{result.resolved}
 						</Typography>
 						{result.insideAppFolder && <Chip size="small" label="Inside the app folder" />}
