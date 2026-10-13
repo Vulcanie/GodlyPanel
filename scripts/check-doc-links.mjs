@@ -20,7 +20,7 @@ const slug = (heading) =>
 		.toLowerCase()
 		.replace(/`/g, "")
 		.replace(/[^\p{L}\p{N}\s_-]/gu, "")
-		.replace(/\s+/g, "-");
+		.replace(/\s/g, "-");
 
 const anchorsOf = (file) => {
 	const text = fs.readFileSync(path.join(root, file), "utf8");

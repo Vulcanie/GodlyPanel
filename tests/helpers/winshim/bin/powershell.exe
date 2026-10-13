@@ -1,0 +1,2 @@
+#!/bin/sh
+exec "${GP_WINSHIM_NODE:-node}" "$(dirname "$0")/../winshim.mjs" powershell.exe "$@"

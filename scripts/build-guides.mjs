@@ -1,7 +1,7 @@
 // Writes the guides in docs/ that the interface's (i) tooltips link to, from the help text in ui/src/help.
 //
 //   node scripts/build-guides.mjs           write them
-//   node scripts/build-guides.mjs --check   fail if what is committed is out of date (the tests do this)
+//   node scripts/build-guides.mjs --check   fail if what is committed is out of date (the tests do the same)
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -12,7 +12,8 @@ import { launchGuideEntries, gameGuideEntries } from "../ui/src/help/generatedGu
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
-const DOCS = {
+// Exported so the tests render the very same pages.
+export const DOCS = {
 	settings: {
 		doc: {
 			title: "Panel settings guide",
@@ -37,19 +38,29 @@ const DOCS = {
 	games: { doc: gameGuideEntries.doc, entries: () => gameGuideEntries.entries() },
 };
 
-const check = process.argv.includes("--check");
-let stale = 0;
-for (const [key, spec] of Object.entries(DOCS)) {
-	const file = path.join(root, "docs", `${GUIDES[key].file}.md`);
-	const next = renderGuide(spec.doc, spec.entries());
-	const current = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : null;
-	if (current === next) continue;
-	if (check) {
-		stale += 1;
-		console.error(`${path.relative(root, file)} is out of date: run npm run build:guides`);
-	} else {
-		fs.writeFileSync(file, next);
-		console.log(`wrote ${path.relative(root, file)}`);
+export const guideFile = (key) => path.join(root, "docs", `${GUIDES[key].file}.md`);
+
+/** What the generator makes for a guide: the markdown for docs/<file>.md. */
+export const renderDoc = (key) => renderGuide(DOCS[key].doc, DOCS[key].entries());
+
+function run() {
+	const check = process.argv.includes("--check");
+	let stale = 0;
+	for (const key of Object.keys(DOCS)) {
+		const file = guideFile(key);
+		const next = renderDoc(key);
+		const current = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : null;
+		if (current === next) continue;
+		if (check) {
+			stale += 1;
+			console.error(`${path.relative(root, file)} is out of date: run npm run build:guides`);
+		} else {
+			fs.writeFileSync(file, next);
+			console.log(`wrote ${path.relative(root, file)}`);
+		}
 	}
+	process.exit(stale ? 1 : 0);
 }
-process.exit(stale ? 1 : 0);
+
+// Only when run as a script: the tests import this file for DOCS and renderDoc without writing anything.
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) run();

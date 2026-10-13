@@ -28,6 +28,8 @@
 		"test": "node --test --test-concurrency=4 \"tests/unit/**/*.test.js\" \"tests/api/**/*.test.js\"",
 		"test:desktop": "node --test \"tests/desktop/**/*.test.js\"",
 		"test:all": "node --test --test-concurrency=4 \"tests/**/*.test.js\"",
+		"build:guides": "node scripts/build-guides.mjs",
+		"check:guides": "node scripts/build-guides.mjs --check",
 		"package": "npm run build:ui && electron-builder",
 		"package:update": "node scripts/make-update-payload.mjs"
 	},

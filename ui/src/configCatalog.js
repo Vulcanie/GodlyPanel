@@ -1,4 +1,4 @@
-import { prettifyKey } from "./utils/prettifyKey";
+import { prettifyKey } from "./utils/prettifyKey.js";
 import { rows, withChoices } from "./catalog/rows.js";
 import {
 	CONAN_CHOICES,
