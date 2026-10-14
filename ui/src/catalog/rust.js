@@ -13,8 +13,6 @@ export const rustSettings = withChoices(
 		["server.headerimage", "Banner image", "The web address of a picture (512 by 256 pixels works best) shown at the top of the server's page.", "Server"],
 		["server.maxplayers", "Max players", "The most players that can be on at once.", "Server"],
 		["server.pve", "PvE (players can't hurt each other)", "Stops players from damaging each other.", "Server"],
-		["server.secure", "Anti-cheat", "Easy Anti-Cheat. Leave it on for a public server.", "Server"],
-		["server.globalchat", "Global chat", "Lets everyone read global chat. Turn off to make chat team-only.", "Server"],
 		["server.identity", "Identity (folder name)", "The name of the folder this server keeps its world and settings in, under server\\. Don't change it unless you also move the folder.", "Server"],
 
 		["server.ip", "Bind address", "The network address the server listens on. 0.0.0.0 means every address on this PC.", "Network"],

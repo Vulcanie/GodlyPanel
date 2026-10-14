@@ -1257,7 +1257,7 @@ Rust does not make `server.cfg` until it is asked to (`server.writecfg` in the c
 
 ### Rust: Server
 
-9 settings in `server.cfg`, shown under **Server** on the Settings tab.
+7 settings in `server.cfg`, shown under **Server** on the Settings tab.
 
 | Setting | Name in the file | What it does |
 | --- | --- | --- |
@@ -1267,8 +1267,6 @@ Rust does not make `server.cfg` until it is asked to (`server.writecfg` in the c
 | Banner image | `server.headerimage` | The web address of a picture (512 by 256 pixels works best) shown at the top of the server's page. |
 | Max players | `server.maxplayers` | The most players that can be on at once. |
 | PvE (players can't hurt each other) | `server.pve` | Stops players from damaging each other. |
-| Anti-cheat | `server.secure` | Easy Anti-Cheat. Leave it on for a public server. Choices: `true` (On (Easy Anti-Cheat)), `false` (Off). |
-| Global chat | `server.globalchat` | Lets everyone read global chat. Turn off to make chat team-only. |
 | Identity (folder name) | `server.identity` | The name of the folder this server keeps its world and settings in, under server\. Don't change it unless you also move the folder. |
 
 ### Rust: World
@@ -1571,11 +1569,12 @@ How the world itself plays (zombie numbers, loot, the speed of the seasons) is i
 V Rising keeps the server's options in `save-data\Settings\ServerHostSettings.json` inside the server's install folder.
 
 - `ServerHostSettings.json`: The server's name, passwords, ports, listing, saves and player limits.
+- `ServerGameSettings.json`: Settings of the server.
 - Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#v-rising).
 
 The rules of the world itself (clan size, blood drain, castle rules and similar) are in `ServerGameSettings.json`, which the game makes the first time it runs. The Settings tab does not edit that file.
 
-### V Rising: Server
+### V Rising (ServerHostSettings.json): Server
 
 9 settings in `ServerHostSettings.json`, shown under **Server** on the Settings tab.
 
@@ -1591,7 +1590,7 @@ The rules of the world itself (clan size, blood drain, castle rules and similar)
 | List on Epic | `ListOnEOS` | Shows the server in the Epic Online Services server list, so other platforms can find it. |
 | Anti-cheat | `Secure` | Turns anti-cheat on. Players need it on to join. |
 
-### V Rising: Network
+### V Rising (ServerHostSettings.json): Network
 
 4 settings in `ServerHostSettings.json`, shown under **Network** on the Settings tab.
 
@@ -1602,7 +1601,7 @@ The rules of the world itself (clan size, blood drain, castle rules and similar)
 | Bind address | `BindIpAddress` | The network address the server listens on. Leave empty to use every address. |
 | Server speed (ticks/sec) | `ServerFps` | How many times a second the game world updates. Higher is smoother but heavier on the CPU. |
 
-### V Rising: World
+### V Rising (ServerHostSettings.json): World
 
 4 settings in `ServerHostSettings.json`, shown under **World** on the Settings tab.
 
@@ -1613,7 +1612,7 @@ The rules of the world itself (clan size, blood drain, castle rules and similar)
 | Debug events: admins only | `AdminOnlyDebugEvents` | Only admins may trigger debug events. |
 | Debug events: off | `DisableDebugEvents` | Turns debug events off for everybody. |
 
-### V Rising: Saving
+### V Rising (ServerHostSettings.json): Saving
 
 3 settings in `ServerHostSettings.json`, shown under **Saving** on the Settings tab.
 
@@ -1623,7 +1622,7 @@ The rules of the world itself (clan size, blood drain, castle rules and similar)
 | Autosave every (seconds) | `AutoSaveInterval` | How often the world is saved on its own. |
 | Compress saves | `CompressSaveFiles` | Makes the save files smaller, at a little extra CPU cost when saving. |
 
-### V Rising: Remote console
+### V Rising (ServerHostSettings.json): Remote console
 
 4 settings in `ServerHostSettings.json`, shown under **Remote console** on the Settings tab.
 
@@ -1633,6 +1632,213 @@ The rules of the world itself (clan size, blood drain, castle rules and similar)
 | Remote console port | `Rcon.Port` | The port of the remote console. |
 | Remote console password | `Rcon.Password` | The remote console's password. |
 | Web API | `API.Enabled` | Turns on the game's web API for metrics. |
+
+### V Rising (ServerGameSettings.json): Rules
+
+23 settings in `ServerGameSettings.json`, shown under **Rules** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Game mode | `GameModeType` | Whether players can fight each other. PvP is the normal game; PvE stops players hurting one another. Choices: `PvE` (PvE (players can't hurt each other)), `PvP`. |
+| Difficulty | `GameDifficulty` | How hard the game is overall. Choices: `Easy`, `Normal`, `Brutal`. |
+| When players can hurt each other | `PlayerDamageMode` | In PvP, whether players can always hurt each other or only in the hours set under the weekly PvP hours. Choices: `Always`, `TimeRestricted` (Only in the weekly PvP hours). Another value can be typed. |
+| New player protection | `PvPProtectionMode` | How long a new vampire is protected from other players after they start. Choices: `Disabled` (None), `VeryShort` (Very short), `Short`, `Medium`, `Long`. Another value can be typed. |
+| PvP respawn time | `PvPVampireRespawnModifier` | Multiplies how long a vampire waits to respawn after being killed by another player. |
+| Biggest clan | `ClanSize` | The most players one clan may have. |
+| Global chat | `AllowGlobalChat` | Lets everyone read and write in the global chat. Off leaves only clan and local chat. |
+| All waypoints unlocked | `AllWaypointsUnlocked` | Gives every player every waypoint from the start. |
+| Starting progression | `StartingProgressionLevel` | How far along the game's progression new vampires begin. 0 is the very start. |
+| Stack size | `InventoryStacksModifier` | Multiplies how many items fit in one inventory stack. |
+| Who can open a dead player's items | `DeathContainerPermission` | Who may take items from the container a player leaves behind when they die. Choices: `Anyone`, `ClanMembers` (Clan members only), `OnlySelf` (Only the player). Another value can be typed. |
+| Loot other players' containers | `CanLootEnemyContainers` | Lets players loot containers that belong to other players. |
+| Equipment stays with the player | `BloodBoundEquipment` | Bound equipment is kept by the player on death instead of dropping. |
+| Bound items can be used to teleport | `TeleportBoundItems` | Lets players teleport with the items bound to them. |
+| Bat form can carry bound items | `BatBoundItems` | Lets players keep bound items on them in bat form. |
+| Bat form can carry soul shards | `BatBoundShards` | Lets players keep soul shards on them in bat form. |
+| Remove inactive players' castles | `InactivityKillEnabled` | Lets the game remove the castles of players who have not played for a long time, so abandoned castles don't pile up. |
+| Shortest time before an inactive castle goes (seconds) | `InactivityKillTimeMin` | The shortest time a player can be away before their castle may be removed. |
+| Longest time before an inactive castle goes (seconds) | `InactivityKillTimeMax` | The time away after which a castle is removed whatever its level. |
+| Extra safe time (seconds) | `InactivityKillSafeTimeAddition` | Extra time added before removal for a player with a well-equipped character. |
+| Remove disconnected players who are down | `DisableDisconnectedDeadEnabled` | Removes a player who disconnects while downed, so they can't be farmed. |
+| Time before they are removed (seconds) | `DisableDisconnectedDeadTimer` | How long a downed player who disconnected stays before being removed. |
+| Sun protection after disconnecting (seconds) | `DisconnectedSunImmunityTime` | How long a vampire is safe from the sun after disconnecting. |
+
+### V Rising (ServerGameSettings.json): Loot and resources
+
+7 settings in `ServerGameSettings.json`, shown under **Loot and resources** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Loot drops | `DropTableModifier_General` | Multiplies how much enemies drop. |
+| Stygian shard drops | `DropTableModifier_StygianShards` | Multiplies how many Stygian shards drop. |
+| Mission rewards | `DropTableModifier_Missions` | Multiplies the rewards from missions. |
+| Material yield | `MaterialYieldModifier_Global` | Multiplies how much material you get from gathering. |
+| Blood essence yield | `BloodEssenceYieldModifier` | Multiplies how much blood essence enemies give. |
+| Soul shard wear | `SoulShard_DurabilityLossRate` | How fast soul shards wear out. 0 means they never do. |
+| Relic spawning | `RelicSpawnType` | Whether each soul shard relic exists once on the map or can appear more than once. Choices: `Unique` (Each relic once), `Plentiful`. Another value can be typed. |
+
+### V Rising (ServerGameSettings.json): Survival
+
+8 settings in `ServerGameSettings.json`, shown under **Survival** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Blood drain | `BloodDrainModifier` | Multiplies how fast a vampire's blood runs out. |
+| Gear wear | `DurabilityDrainModifier` | Multiplies how fast equipment wears out. |
+| Garlic strength | `GarlicAreaStrengthModifier` | Multiplies how strong garlic areas are. |
+| Holy area strength | `HolyAreaStrengthModifier` | Multiplies how strong holy areas are. |
+| Silver strength | `SilverStrengthModifier` | Multiplies how strong silver's effect is. |
+| Sun damage | `SunDamageModifier` | Multiplies how much damage the sun does. |
+| Gear wear on death | `Death_DurabilityFactorLoss` | The share of an item's durability lost when its owner dies. 0.125 is an eighth. |
+| Gear lost as resources | `Death_DurabilityLossFactorAsResources` | The share of that lost durability given back as resources. |
+
+### V Rising (ServerGameSettings.json): Castles
+
+42 settings in `ServerGameSettings.json`, shown under **Castles** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Distance between castles | `CastleMinimumDistanceInFloors` | How many floors apart castle hearts must be. |
+| Castle decay | `CastleDecayRateModifier` | Multiplies how fast castles decay when their blood runs out. |
+| Castle blood essence use | `CastleBloodEssenceDrainModifier` | Multiplies how fast a castle heart uses up blood essence. |
+| When castles can be damaged | `CastleDamageMode` | Whether other players can damage a castle: never, always, or only in the hours set under the weekly PvP hours. Choices: `Never`, `Always`, `TimeRestricted` (Only in the weekly PvP hours). |
+| Castle heart damage | `CastleHeartDamageMode` | Who can damage or destroy a castle heart. Choices: `CanBeDestroyedOnlyWhenDecaying` (Only when the castle has decayed), `CanBeDestroyedByPlayers` (Players can destroy it), `CanBeSeizedOrDestroyedByPlayers` (Players can seize or destroy it). Another value can be typed. |
+| Siege weapon health | `SiegeWeaponHealth` | How much damage siege weapons can take. Choices: `VeryLow` (Very low), `Low`, `Normal`, `High`, `VeryHigh` (Very high). Another value can be typed. |
+| Siege time (seconds) | `CastleSiegeTimer` | How long a siege lasts. |
+| Under-attack time (seconds) | `CastleUnderAttackTimer` | How long a castle counts as under attack after being hit. |
+| Raid time (seconds) | `CastleRaidTimer` | How long a raid on a castle lasts. |
+| Raid protection (seconds) | `CastleRaidProtectionTime` | How long a castle is protected after a raid ends. |
+| Free claim delay (seconds) | `CastleExposedFreeClaimTimer` | How long an exposed castle waits before it can be claimed freely. |
+| Castle move cooldown (seconds) | `CastleRelocationCooldown` | How long a player must wait before moving their castle again. |
+| Castles can be moved | `CastleRelocationEnabled` | Lets players move their castle. |
+| Announce siege weapons | `AnnounceSiegeWeaponSpawn` | Tells players when a siege weapon appears. |
+| Show siege weapons on the map | `ShowSiegeWeaponMapIcon` | Shows siege weapons on the map. |
+| Raid free castles | `FreeCastleRaid` | Lets players raid castles nobody owns. |
+| Claim free castles | `FreeCastleClaim` | Lets players claim castles nobody owns. |
+| Destroy free castles | `FreeCastleDestroy` | Lets players destroy castles nobody owns. |
+| Castles per player | `CastleStatModifiers_Global.CastleLimit` | The most castles one player may own. |
+| Tombs per castle | `CastleStatModifiers_Global.TombLimit` | The most tombs one castle may have. |
+| Vermin nests per castle | `CastleStatModifiers_Global.VerminNestLimit` | The most vermin nests one castle may have. |
+| Prison cells per castle | `CastleStatModifiers_Global.PrisonCellLimit` | The most prison cells one castle may have. |
+| Nether gates per castle | `CastleStatModifiers_Global.NetherGateLimit` | The most nether gates one castle may have. |
+| Thrones of Darkness per castle | `CastleStatModifiers_Global.ThroneOfDarknessLimit` | The most thrones of darkness one castle may have. |
+| Arena stations per castle | `CastleStatModifiers_Global.ArenaStationLimit` | The most arena stations one castle may have. |
+| Routing stations per castle | `CastleStatModifiers_Global.RoutingStationLimit` | The most routing stations one castle may have. |
+| Who the castle limit counts | `CastleStatModifiers_Global.CastleHeartLimitType` | Whether the castle limit is per player or per clan. Choices: `User` (Per player), `Clan` (Per clan). Another value can be typed. |
+| Castle level 1: floors | `CastleStatModifiers_Global.HeartLimits.Level1.FloorLimit` | The most floor tiles a level 1 castle heart allows. |
+| Castle level 1: servants | `CastleStatModifiers_Global.HeartLimits.Level1.ServantLimit` | The most servants a level 1 castle heart allows. |
+| Castle level 1: height | `CastleStatModifiers_Global.HeartLimits.Level1.HeightLimit` | How many storeys high a level 1 castle may be built. |
+| Castle level 2: floors | `CastleStatModifiers_Global.HeartLimits.Level2.FloorLimit` | The most floor tiles a level 2 castle heart allows. |
+| Castle level 2: servants | `CastleStatModifiers_Global.HeartLimits.Level2.ServantLimit` | The most servants a level 2 castle heart allows. |
+| Castle level 2: height | `CastleStatModifiers_Global.HeartLimits.Level2.HeightLimit` | How many storeys high a level 2 castle may be built. |
+| Castle level 3: floors | `CastleStatModifiers_Global.HeartLimits.Level3.FloorLimit` | The most floor tiles a level 3 castle heart allows. |
+| Castle level 3: servants | `CastleStatModifiers_Global.HeartLimits.Level3.ServantLimit` | The most servants a level 3 castle heart allows. |
+| Castle level 3: height | `CastleStatModifiers_Global.HeartLimits.Level3.HeightLimit` | How many storeys high a level 3 castle may be built. |
+| Castle level 4: floors | `CastleStatModifiers_Global.HeartLimits.Level4.FloorLimit` | The most floor tiles a level 4 castle heart allows. |
+| Castle level 4: servants | `CastleStatModifiers_Global.HeartLimits.Level4.ServantLimit` | The most servants a level 4 castle heart allows. |
+| Castle level 4: height | `CastleStatModifiers_Global.HeartLimits.Level4.HeightLimit` | How many storeys high a level 4 castle may be built. |
+| Castle level 5: floors | `CastleStatModifiers_Global.HeartLimits.Level5.FloorLimit` | The most floor tiles a level 5 castle heart allows. |
+| Castle level 5: servants | `CastleStatModifiers_Global.HeartLimits.Level5.ServantLimit` | The most servants a level 5 castle heart allows. |
+| Castle level 5: height | `CastleStatModifiers_Global.HeartLimits.Level5.HeightLimit` | How many storeys high a level 5 castle may be built. |
+
+### V Rising (ServerGameSettings.json): Crafting
+
+10 settings in `ServerGameSettings.json`, shown under **Crafting** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Building cost | `BuildCostModifier` | Multiplies what building costs. |
+| Recipe cost | `RecipeCostModifier` | Multiplies what crafting recipes cost. |
+| Crafting speed | `CraftRateModifier` | Multiplies how fast things are crafted. |
+| Research cost | `ResearchCostModifier` | Multiplies what research costs. |
+| Research time | `ResearchTimeModifier` | Multiplies how long research takes. |
+| Refining cost | `RefinementCostModifier` | Multiplies what refining costs. |
+| Refining speed | `RefinementRateModifier` | Multiplies how fast things are refined. |
+| Resources from dismantling | `DismantleResourceModifier` | Multiplies the resources you get back from dismantling. |
+| Servant converting speed | `ServantConvertRateModifier` | Multiplies how fast servants are converted. |
+| Repair cost | `RepairCostModifier` | Multiplies what repairs cost. |
+
+### V Rising (ServerGameSettings.json): Time
+
+8 settings in `ServerGameSettings.json`, shown under **Time** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Length of a day (seconds) | `GameTimeModifiers.DayDurationInSeconds` | How many real seconds a whole in-game day lasts. |
+| Day starts at (hour) | `GameTimeModifiers.DayStartHour` | The in-game hour daylight starts, on a 24-hour clock. |
+| Day starts at (minute) | `GameTimeModifiers.DayStartMinute` | The minute past that hour. |
+| Day ends at (hour) | `GameTimeModifiers.DayEndHour` | The in-game hour daylight ends, on a 24-hour clock. |
+| Day ends at (minute) | `GameTimeModifiers.DayEndMinute` | The minute past that hour. |
+| Fewest days between blood moons | `GameTimeModifiers.BloodMoonFrequency_Min` | The least number of days that pass between blood moons. |
+| Most days between blood moons | `GameTimeModifiers.BloodMoonFrequency_Max` | The most days that pass between blood moons. |
+| Blood moon bonus | `GameTimeModifiers.BloodMoonBuff` | How much stronger vampires are during a blood moon, as a fraction. 0.2 is 20%. |
+
+### V Rising (ServerGameSettings.json): Players
+
+13 settings in `ServerGameSettings.json`, shown under **Players** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Player health | `VampireStatModifiers.MaxHealthModifier` | Multiplies players' maximum health. |
+| Player physical power | `VampireStatModifiers.PhysicalPowerModifier` | Multiplies players' physical damage. |
+| Player spell power | `VampireStatModifiers.SpellPowerModifier` | Multiplies players' spell damage. |
+| Player gathering power | `VampireStatModifiers.ResourcePowerModifier` | Multiplies how well players gather resources. |
+| Player siege power | `VampireStatModifiers.SiegePowerModifier` | Multiplies players' damage to castles. |
+| Damage players take | `VampireStatModifiers.DamageReceivedModifier` | Multiplies the damage players receive. |
+| Revive cancel delay (seconds) | `VampireStatModifiers.ReviveCancelDelay` | How long before a player's revive can be cancelled. |
+| Equipment: health | `EquipmentStatModifiers_Global.MaxHealthModifier` | Multiplies the health that equipment gives. |
+| Equipment: gathering | `EquipmentStatModifiers_Global.ResourceYieldModifier` | Multiplies the gathering bonus that equipment gives. |
+| Equipment: physical power | `EquipmentStatModifiers_Global.PhysicalPowerModifier` | Multiplies the physical power that equipment gives. |
+| Equipment: spell power | `EquipmentStatModifiers_Global.SpellPowerModifier` | Multiplies the spell power that equipment gives. |
+| Equipment: siege power | `EquipmentStatModifiers_Global.SiegePowerModifier` | Multiplies the siege power that equipment gives. |
+| Equipment: speed | `EquipmentStatModifiers_Global.MovementSpeedModifier` | Multiplies the movement speed that equipment gives. |
+
+### V Rising (ServerGameSettings.json): Enemies
+
+6 settings in `ServerGameSettings.json`, shown under **Enemies** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Enemy health | `UnitStatModifiers_Global.MaxHealthModifier` | Multiplies the health of every enemy. |
+| Enemy damage | `UnitStatModifiers_Global.PowerModifier` | Multiplies the damage every enemy does. |
+| Enemy extra levels | `UnitStatModifiers_Global.LevelIncrease` | Adds this many levels to every enemy. |
+| Boss health | `UnitStatModifiers_VBlood.MaxHealthModifier` | Multiplies the health of the V Blood bosses. |
+| Boss damage | `UnitStatModifiers_VBlood.PowerModifier` | Multiplies the damage the V Blood bosses do. |
+| Boss extra levels | `UnitStatModifiers_VBlood.LevelIncrease` | Adds this many levels to the V Blood bosses. |
+
+### V Rising (ServerGameSettings.json): Traders
+
+3 settings in `ServerGameSettings.json`, shown under **Traders** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Trader stock | `TraderModifiers.StockModifier` | Multiplies how much traders have for sale. |
+| Trader prices | `TraderModifiers.PriceModifier` | Multiplies what traders charge. |
+| Trader restock time | `TraderModifiers.RestockTimerModifier` | Multiplies how long traders take to restock. |
+
+### V Rising (ServerGameSettings.json): Weekly PvP hours
+
+17 settings in `ServerGameSettings.json`, shown under **Weekly PvP hours** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Time zone for the weekly PvP hours | `PlayerInteractionSettings.TimeZone` | Which clock the weekly PvP hours below follow. Local is the server PC's own time. |
+| Players can hurt each other on weekdays: starts (hour) | `PlayerInteractionSettings.VSPlayerWeekdayTime.StartHour` | The hour the period starts or ends on weekdays, 24-hour clock. It applies when the matching damage setting is "Only in the weekly PvP hours". |
+| Players can hurt each other on weekdays: starts (minute) | `PlayerInteractionSettings.VSPlayerWeekdayTime.StartMinute` | The minute the period starts or ends on weekdays, 24-hour clock. It applies when the matching damage setting is "Only in the weekly PvP hours". |
+| Players can hurt each other on weekdays: ends (hour) | `PlayerInteractionSettings.VSPlayerWeekdayTime.EndHour` | The hour the period starts or ends on weekdays, 24-hour clock. It applies when the matching damage setting is "Only in the weekly PvP hours". |
+| Players can hurt each other on weekdays: ends (minute) | `PlayerInteractionSettings.VSPlayerWeekdayTime.EndMinute` | The minute the period starts or ends on weekdays, 24-hour clock. It applies when the matching damage setting is "Only in the weekly PvP hours". |
+| Players can hurt each other on weekends: starts (hour) | `PlayerInteractionSettings.VSPlayerWeekendTime.StartHour` | The hour the period starts or ends on weekends, 24-hour clock. It applies when the matching damage setting is "Only in the weekly PvP hours". |
+| Players can hurt each other on weekends: starts (minute) | `PlayerInteractionSettings.VSPlayerWeekendTime.StartMinute` | The minute the period starts or ends on weekends, 24-hour clock. It applies when the matching damage setting is "Only in the weekly PvP hours". |
+| Players can hurt each other on weekends: ends (hour) | `PlayerInteractionSettings.VSPlayerWeekendTime.EndHour` | The hour the period starts or ends on weekends, 24-hour clock. It applies when the matching damage setting is "Only in the weekly PvP hours". |
+| Players can hurt each other on weekends: ends (minute) | `PlayerInteractionSettings.VSPlayerWeekendTime.EndMinute` | The minute the period starts or ends on weekends, 24-hour clock. It applies when the matching damage setting is "Only in the weekly PvP hours". |
+| Castles can be damaged on weekdays: starts (hour) | `PlayerInteractionSettings.VSCastleWeekdayTime.StartHour` | The hour the period starts or ends on weekdays, 24-hour clock. It applies when the matching damage setting is "Only in the weekly PvP hours". |
+| Castles can be damaged on weekdays: starts (minute) | `PlayerInteractionSettings.VSCastleWeekdayTime.StartMinute` | The minute the period starts or ends on weekdays, 24-hour clock. It applies when the matching damage setting is "Only in the weekly PvP hours". |
+| Castles can be damaged on weekdays: ends (hour) | `PlayerInteractionSettings.VSCastleWeekdayTime.EndHour` | The hour the period starts or ends on weekdays, 24-hour clock. It applies when the matching damage setting is "Only in the weekly PvP hours". |
+| Castles can be damaged on weekdays: ends (minute) | `PlayerInteractionSettings.VSCastleWeekdayTime.EndMinute` | The minute the period starts or ends on weekdays, 24-hour clock. It applies when the matching damage setting is "Only in the weekly PvP hours". |
+| Castles can be damaged on weekends: starts (hour) | `PlayerInteractionSettings.VSCastleWeekendTime.StartHour` | The hour the period starts or ends on weekends, 24-hour clock. It applies when the matching damage setting is "Only in the weekly PvP hours". |
+| Castles can be damaged on weekends: starts (minute) | `PlayerInteractionSettings.VSCastleWeekendTime.StartMinute` | The minute the period starts or ends on weekends, 24-hour clock. It applies when the matching damage setting is "Only in the weekly PvP hours". |
+| Castles can be damaged on weekends: ends (hour) | `PlayerInteractionSettings.VSCastleWeekendTime.EndHour` | The hour the period starts or ends on weekends, 24-hour clock. It applies when the matching damage setting is "Only in the weekly PvP hours". |
+| Castles can be damaged on weekends: ends (minute) | `PlayerInteractionSettings.VSCastleWeekendTime.EndMinute` | The minute the period starts or ends on weekends, 24-hour clock. It applies when the matching damage setting is "Only in the weekly PvP hours". |
 
 ## Sons of the Forest
 

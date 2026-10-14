@@ -257,14 +257,6 @@ Values: `undefined`, `undefined`.
 
 Example: `+server.pve true`
 
-### `+server.secure`
-
-**Anti-cheat** (Server). Easy Anti-Cheat. Leave it on for a public server.
-
-Values: `undefined`, `undefined`.
-
-Example: `+server.secure true`
-
 ### `+server.ip`
 
 **Bind address** (Network). The network address the server listens on. 0.0.0.0 means every address on this PC.

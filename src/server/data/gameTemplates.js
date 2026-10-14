@@ -1210,6 +1210,11 @@ export const GAME_TEMPLATES = [
 				2,
 			),
 		}),
+		// The game doesn't write the world rules file itself (it uses the copy it ships with until one is in the save folder), so the
+		// panel puts a copy there for the Settings tab to edit.
+		copyInstalledFiles: [
+			{ from: "VRisingServer_Data\\StreamingAssets\\Settings\\ServerGameSettings.json", to: "save-data\\Settings\\ServerGameSettings.json" },
+		],
 		buildServerEntry: (p) => ({
 			name: p.name,
 			type: "vrising",
@@ -1220,6 +1225,11 @@ export const GAME_TEMPLATES = [
 			sessionName: p.sessionName,
 			serverPassword: p.serverPassword,
 			configPath: `${p.installDir}\\save-data\\Settings\\ServerHostSettings.json`,
+			// The rules of the world are a second file in the same folder (see copyInstalledFiles).
+			configPaths: {
+				"ServerHostSettings.json": `${p.installDir}\\save-data\\Settings\\ServerHostSettings.json`,
+				"ServerGameSettings.json": `${p.installDir}\\save-data\\Settings\\ServerGameSettings.json`,
+			},
 			startScriptPath: `${p.installDir}\\${p.startScriptFilename}`,
 			workingDir: `${p.installDir}`,
 			processName: "VRisingServer.exe",

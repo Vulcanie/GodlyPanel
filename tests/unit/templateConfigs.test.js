@@ -129,3 +129,19 @@ describe("Subsistence's ports on a fresh install", () => {
 		assert.equal(text.split(/\r?\n/).filter((l) => /^\w+=/.test(l)).length, 2, "nothing else is set");
 	});
 });
+
+describe("V Rising's two settings files", () => {
+	const p = { name: "V", sessionName: "S", serverPassword: "", port: 9876, queryPort: 9877, installDir: "C:\\Servers\\v", startScriptFilename: "Start_V.bat", instanceSlug: "v" };
+
+	it("lists the host settings and the world rules, so the Settings tab shows both", () => {
+		const entry = template("vrising").buildServerEntry(p);
+		assert.deepEqual(Object.keys(entry.configPaths), ["ServerHostSettings.json", "ServerGameSettings.json"]);
+		assert.equal(entry.configPaths["ServerGameSettings.json"], "C:\\Servers\\v\\save-data\\Settings\\ServerGameSettings.json");
+	});
+
+	it("copies the game's own default world rules into the save folder, because the game doesn't write that file itself", () => {
+		assert.deepEqual(template("vrising").copyInstalledFiles, [
+			{ from: "VRisingServer_Data\\StreamingAssets\\Settings\\ServerGameSettings.json", to: "save-data\\Settings\\ServerGameSettings.json" },
+		]);
+	});
+});
