@@ -24,6 +24,7 @@ import { PresetError, listPresets, savePreset, deletePreset, applyPreset } from 
 import { extractModpackZip, cleanupUpload } from "../services/modpackService.js";
 import { SUPPORTED_MODLOADER_FAMILIES } from "../data/gameTemplates.js";
 import { pollServers } from "../services/pollingService.js";
+import { GAME_MODULES } from "../data/games/index.js";
 import {
 	isAutoUpdateEnabled,
 	setAutoUpdateEnabled,
@@ -53,7 +54,7 @@ router.use("/server/:serverName", serverWindowRoutes);
 // the others take a few settings there. The start script is offered as one more settings file, "Launch options": the interface
 // reads the arguments out of its launch line and writes edits back (see ui/src/configParsers).
 const LAUNCH_OPTIONS_FILE = "Launch options";
-const LAUNCH_OPTION_GAMES = new Set(["valheim", "rust", "corekeeper", "satisfactory", "7days", "vrising", "sotf", "zomboid"]);
+const LAUNCH_OPTION_GAMES = new Set(["valheim", "rust", "corekeeper", "satisfactory", "7days", "vrising", "sotf", "zomboid", ...GAME_MODULES.filter((m) => m.launchOptions).map((m) => m.template.type)]);
 const launchOptionsFile = (server) => (LAUNCH_OPTION_GAMES.has(String(server.type).toLowerCase()) && server.startScriptPath ? server.startScriptPath : null);
 const ownsNoConfig = (server) => !server.configPaths && !server.configPath;
 

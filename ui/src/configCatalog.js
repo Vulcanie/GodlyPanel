@@ -15,6 +15,7 @@ import { rustSettings, rustGroupOrder } from "./catalog/rust.js";
 import { subsistenceSettings, subsistenceGroupOrder, SUBSISTENCE_SECTION } from "./catalog/subsistence.js";
 import { zomboidSettings, zomboidGroupOrder } from "./catalog/zomboid.js";
 import { LAUNCH_ARGS, launchDefFor } from "./catalog/launchArgs.js";
+import { GAME_UI_MODULES } from "./catalog/games/index.js";
 
 // ───────────────────────── ARK: Survival Ascended / Evolved ─────────────────────────
 
@@ -1019,6 +1020,9 @@ export const CONFIG_CATALOG = {
 	corekeeper: { files: { "Launch options": launchFile("corekeeper") } },
 	satisfactory: { files: { "Launch options": launchFile("satisfactory") } },
 };
+
+// Games added one module each (see catalog/games/index.js): their settings files, then their launch options.
+for (const m of GAME_UI_MODULES) CONFIG_CATALOG[m.type] = { files: { ...m.files, ...(m.launch ? { "Launch options": launchFile(m.type) } : {}) } };
 
 function prefixKeys(section, settingsMap) {
 	const out = {};

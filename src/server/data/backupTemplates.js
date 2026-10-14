@@ -1,3 +1,4 @@
+import { GAME_MODULES } from "./games/index.js";
 // Where each game keeps what is worth backing up: its world, saves and settings.
 //
 // `base` says what `rel` is relative to: the server's working folder, its install
@@ -124,3 +125,7 @@ export const BACKUP_TEMPLATES = {
 		],
 	},
 };
+
+// Games added one module each (see games/index.js).
+for (const m of GAME_MODULES) if (m.backup) BACKUP_TEMPLATES[m.template.type] = m.backup;
+

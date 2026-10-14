@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { GAME_MODULES } from "./games/index.js";
 
 // Recipes for one-click server creation. Each template knows everything
 // generic per-game creation logic (services/serverCreationService.js) needs:
@@ -1366,6 +1367,9 @@ export const GAME_TEMPLATES = [
 		}),
 	},
 ];
+
+// Games added one module each (see games/index.js).
+GAME_TEMPLATES.push(...GAME_MODULES.map((m) => m.template));
 
 export function getTemplate(id) {
 	return GAME_TEMPLATES.find((t) => t.id === id) ?? null;

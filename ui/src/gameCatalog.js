@@ -7,6 +7,8 @@
 // gradient sits underneath either way, so a card with no artwork still looks
 // deliberate.
 
+import { GAME_UI_MODULES } from "./catalog/games/index.js";
+
 const CATALOG = {
 	ark: { title: "ARK: Survival Ascended" },
 	valheim: { title: "Valheim" },
@@ -28,6 +30,9 @@ const CATALOG = {
 		gradient: "linear-gradient(135deg, #1f4d2c 0%, #2f7a3f 60%, #4caf50 100%)",
 	},
 };
+
+// Games added one module each (see catalog/games/index.js).
+for (const m of GAME_UI_MODULES) CATALOG[m.type] = { title: m.title, ...(m.gradient ? { gradient: m.gradient } : {}) };
 
 const FALLBACK_GRADIENTS = [
 	"linear-gradient(135deg, #3a1c71 0%, #6a2c8c 50%, #d76d77 100%)",
