@@ -82,10 +82,13 @@ export async function patchConfig(partial) {
 		const merged = JSON.parse(JSON.stringify(before));
 
 		for (const [key, value] of Object.entries(partial ?? {})) {
+			// See coerceConfig: "__proto__" is a key like any other in JSON, and merging it would write onto Object.prototype.
+			if (key === "__proto__") continue;
 			if (
 				value &&
 				typeof value === "object" &&
 				!Array.isArray(value) &&
+				Object.hasOwn(merged, key) &&
 				typeof merged[key] === "object"
 			) {
 				Object.assign(merged[key], value);

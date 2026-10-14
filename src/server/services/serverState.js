@@ -1,6 +1,6 @@
 import { serverStatus, pollServerNow } from "./pollingService.js";
 import { checkProcess } from "./processCheck.js";
-import { findServerProcesses, ownedProgramRunning, ownedProgramGone } from "./serverProcesses.js";
+import { findServerProcesses, ownedProgramRunning, ownedProgramGone, listByNameShared } from "./serverProcesses.js";
 import { getRecordedPid } from "./windowlessLauncher.js";
 
 // Every Minecraft server is "java.exe", so the image name says nothing about
@@ -11,10 +11,11 @@ const SHARED_PROGRAM = /^javaw?(\.exe)?$/i;
  * Is the server's program running? true/false when its image name says so; null
  * when it can't be told from the name (Minecraft's java.exe, or no process name).
  */
-export async function isProgramAlive(server) {
+export async function isProgramAlive(server, { shared = false } = {}) {
 	if (!server.processName || SHARED_PROGRAM.test(server.processName)) return null;
-	// Its own program, not another server's that happens to share the name.
-	const found = await findServerProcesses(server);
+	// Its own program, not another server's that happens to share the name. `shared`: from the listing every server in this
+	// moment is answered from, not a lookup of its own (for what asks about many servers on a timer).
+	const found = await findServerProcesses(server, shared ? { list: listByNameShared } : undefined);
 	return found.unknown ? null : found.owned.length > 0; // null: the lookup failed, so it can't be told
 }
 

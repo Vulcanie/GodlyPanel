@@ -67,7 +67,8 @@ export async function checkServersOnce(now = Date.now()) {
 		}
 
 		const online = serverStatus[server.name]?.online === true;
-		const alive = online ? true : await isProgramAlive(server);
+		// (Asked every few seconds about every server that is down, so from the shared listing, not a PowerShell each.)
+		const alive = online ? true : await isProgramAlive(server, { shared: true });
 		const hangMs = options.restartWhenUnresponsive ? options.unresponsiveMinutes * 60_000 : null;
 		const result = step(entry.policy, { online, alive, now }, { ...cfg(), hangRestartMs: hangMs });
 

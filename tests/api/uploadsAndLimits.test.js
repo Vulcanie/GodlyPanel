@@ -84,4 +84,21 @@ describe("uploads and limits", () => {
 			assert.match(r.json.error, /Valid config file/);
 		}
 	});
+
+	it("does no artwork lookups for game types nobody has (guests can ask for any name)", async () => {
+		const { ensureSteamArt, missCount } = await import("../../src/server/services/artService.js");
+		const before = missCount();
+		for (let i = 0; i < 50; i += 1) assert.equal(await ensureSteamArt(`made-up-${i}`), null);
+		assert.equal(missCount(), before, "nothing was remembered about them");
+		const guest = await api.cookieFor({ username: "viewer", password: "TestGuest!2345" });
+		assert.equal((await api.get("/api/art/another-made-up-name", { cookie: guest })).status, 404);
+		assert.equal(missCount(), before);
+	});
+
+	it("ignores a \"__proto__\" entry in a settings change (it would be written onto every object in the process)", async () => {
+		const r = await api.put("/api/settings", '{"__proto__": {"pollutedBySettings": "yes"}, "polling": {"serversMs": 9000}}');
+		assert.equal(r.status, 200, JSON.stringify(r.json));
+		assert.equal({}.pollutedBySettings, undefined);
+		assert.equal((await api.get("/api/settings")).json.config.polling.serversMs, 9000);
+	});
 });

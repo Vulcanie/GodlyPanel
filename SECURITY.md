@@ -103,6 +103,12 @@ accepts. When it is on:
 
 The safer way to give trusted people remote access is still a mesh VPN, which opens nothing.
 
+- **Limited moderators see only their servers.** A moderator restricted to some servers is filtered on every server-scoped route and on the live
+  stream: activity and backup-progress events about other servers are not sent to them, and a log search can't be used to test guesses at a
+  password that masking hides.
+- **The legacy import runs a file you point it at.** Importing from the old `servers.js` loads that file as code. It is an administrator action
+  (an administrator can already run programs on the PC), so only import files you trust.
+
 ### Hardening applied to the panel and the desktop app
 
 - **Browser-side limits.** Every page is sent with a Content-Security-Policy (own-origin scripts only, no framing, no

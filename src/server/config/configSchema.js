@@ -626,11 +626,14 @@ export function coerceConfig(raw) {
 	if (raw && typeof raw === "object") {
 		// Deep-merge known object branches, preserve everything else verbatim.
 		for (const [key, value] of Object.entries(raw)) {
+			// A file or request with a "__proto__" entry (JSON makes it an ordinary key) would, merged like the rest, write its
+			// contents onto Object.prototype, which every object in the process inherits from.
+			if (key === "__proto__") continue;
 			if (
 				value &&
 				typeof value === "object" &&
 				!Array.isArray(value) &&
-				config[key] &&
+				Object.hasOwn(config, key) &&
 				typeof config[key] === "object"
 			) {
 				Object.assign(config[key], value);

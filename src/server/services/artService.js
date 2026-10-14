@@ -4,7 +4,7 @@ import { existsSync } from "node:fs";
 import { paths } from "../paths.js";
 import { all as allServers } from "../data/serverStore.js";
 import { GAME_TEMPLATES } from "../data/gameTemplates.js";
-import { get as getAppearance, safeTypeKey } from "../data/appearanceStore.js";
+import { get as getAppearance, all as allAppearance, safeTypeKey } from "../data/appearanceStore.js";
 
 // Game artwork, resolved rather than tabulated.
 //
@@ -70,6 +70,19 @@ const inFlight = new Map();
 // page load.
 const misses = new Map();
 const MISS_TTL_MS = 10 * 60 * 1000;
+
+/**
+ * Is this a game type the panel has any reason to draw: one a server or a template has, or one with a saved look? Guests ask for
+ * artwork by type, on the home network and on the community address, so without this any made-up name would cost a lookup and
+ * leave an entry behind in `misses` for ever.
+ */
+function isKnownType(key) {
+	return (
+		allServers().some((s) => safeTypeKey(s.type) === key) ||
+		GAME_TEMPLATES.some((t) => safeTypeKey(t.type) === key) ||
+		Object.hasOwn(allAppearance(), key)
+	);
+}
 
 function templateAppIds(type) {
 	const key = String(type ?? "").toLowerCase();
@@ -193,6 +206,7 @@ export async function ensureSteamArt(type) {
 
 	const file = cachePath(key);
 	if (existsSync(file)) return file;
+	if (!isKnownType(key)) return null;
 
 	const missedAt = misses.get(key);
 	if (missedAt && Date.now() - missedAt < MISS_TTL_MS) return null;
@@ -221,9 +235,16 @@ export async function ensureSteamArt(type) {
 	}
 
 	const result = await inFlight.get(key);
-	if (!result) misses.set(key, Date.now());
+	if (!result) {
+		misses.set(key, Date.now());
+		// Only a few dozen game types exist; this is a ceiling for a sloppy caller, not something normal use reaches.
+		if (misses.size > 200) misses.delete(misses.keys().next().value);
+	}
 	return result;
 }
+
+/** How many types are remembered as having no artwork. For tests. */
+export const missCount = () => misses.size;
 
 /** Forget the cached artwork for a type so the next request resolves it again. */
 export async function forgetSteamArt(type) {
