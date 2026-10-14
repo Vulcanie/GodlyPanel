@@ -58,4 +58,13 @@ describe("config coercion", () => {
 		const spec = FIELD_SPECS.find((s) => s.path === "servers.defaultWindowMode");
 		assert.ok(spec.values.includes(DEFAULTS.servers.defaultWindowMode));
 	});
+
+	it("ignores a \"__proto__\" entry instead of writing it onto every object in the process", () => {
+		// JSON.parse makes it an ordinary key, which is how it would arrive from a file or a request.
+		const hostile = JSON.parse('{"__proto__": {"polluted": "yes"}, "http": {"port": 9000}}');
+		const { config } = coerceConfig(hostile);
+		assert.equal({}.polluted, undefined, "Object.prototype is untouched");
+		assert.equal(config.polluted, undefined);
+		assert.equal(config.http.port, 9000, "the rest of it is still used");
+	});
 });

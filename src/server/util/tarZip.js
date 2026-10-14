@@ -23,12 +23,24 @@ function run(args, { timeoutMs = 6 * 60 * 60 * 1000 } = {}) {
 	});
 }
 
+// tar reads any argument that starts with a dash as an option, and a few of them run programs (--use-compress-program). The names
+// handed to it come from folders chosen in the panel and from the record inside a backup (which may have been tampered with), so
+// a name like that is refused rather than passed on.
+function assertPlainNames(names) {
+	for (const name of names) {
+		if (typeof name !== "string" || name === "" || name.startsWith("-")) {
+			throw new Error(`"${String(name).slice(0, 60)}" can't be used as a name in an archive: names starting with a dash are read as options by tar.`);
+		}
+	}
+}
+
 /**
  * @param {string} outFile
  * @param {{ dir: string, name: string }[]} entries  each `name` is a file or folder inside `dir`
  * @param {string[]} [exclude]  entry paths (as they appear in the archive, e.g. "Saved/Logs")
  */
 export async function createZip(outFile, entries, exclude = []) {
+	assertPlainNames(entries.map((e) => e.name));
 	const args = ["-a", "-c", "-f", outFile];
 	for (const pattern of exclude) args.push("--exclude", pattern);
 	for (const { dir, name } of entries) args.push("-C", dir, name);
@@ -43,6 +55,7 @@ export async function listZip(file) {
 
 /** Extract the named top-level entries (and everything under them) into `destDir`. */
 export async function extractZip(file, destDir, names = []) {
+	assertPlainNames(names);
 	await run(["-xf", file, "-C", destDir, ...names]);
 }
 

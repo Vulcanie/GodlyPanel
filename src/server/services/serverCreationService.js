@@ -261,6 +261,9 @@ export async function suggestParams(templateId) {
 
 export async function validateNewServer(template, name, ports, sharedInstallDir) {
 	if (!name || !name.trim()) throw new Error("A server name is required.");
+	// Servers are looked up by name in plain objects all over the panel (live status, options, intent), where "__proto__" would
+	// replace the object's prototype instead of adding an entry, and "constructor" would find a function that is already there.
+	if (name.trim() in Object.prototype) throw new Error(`"${name.trim()}" can't be used as a server name. Choose another.`);
 	if (allServers().some((s) => s.name === name)) {
 		throw new Error(`A server named "${name}" already exists.`);
 	}
@@ -654,6 +657,8 @@ export async function createServer(templateId, rawParams) {
 	// on and start another one of the sender's choosing.
 	for (const [key, value] of Object.entries(rawParams ?? {})) {
 		if (typeof value === "string" && /[\r\n\u0000]/.test(value)) throw new Error(`"${key}" can't contain a line break.`);
+		// Text, numbers and yes/no only: anything else would be written into the script as "[object Object]".
+		if (value !== null && typeof value === "object") throw new Error(`"${key}" has to be text or a number.`);
 	}
 
 	const suggested = await suggestParams(templateId);

@@ -45,10 +45,24 @@ describe("creation jobs", () => {
 		}
 	});
 
+	it("refuses a server name that is already on every object", async () => {
+		for (const name of ["__proto__", "constructor", "toString"]) {
+			const r = await create({ name, port: 9701 });
+			assert.equal(r.status, 400, name);
+			assert.match(r.json.error, /can't be used as a server name/);
+		}
+	});
+
 	it("refuses a value with a line break in it", async () => {
 		const r = await create({ name: "Broken", sessionName: "One\r\necho hacked" });
 		assert.equal(r.status, 400);
 		assert.match(r.json.error, /sessionName.*line break/);
+	});
+
+	it("refuses a value that isn't text or a number (it would be written into the script as [object Object])", async () => {
+		const r = await create({ name: "Objecty", sessionName: { a: 1 } });
+		assert.equal(r.status, 400);
+		assert.match(r.json.error, /sessionName.*text or a number/);
 	});
 
 	it("carries its own id, and is found only by an id the panel made", async () => {

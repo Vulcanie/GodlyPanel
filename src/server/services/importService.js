@@ -22,7 +22,7 @@ function validateEntry(entry, seenNames, seenPorts) {
 	if (!entry || typeof entry !== "object") {
 		return { errors: ["Not an object."], warnings };
 	}
-	if (!entry.name || !NAME_PATTERN.test(entry.name)) {
+	if (!entry.name || !NAME_PATTERN.test(entry.name) || entry.name.trim() in Object.prototype) {
 		errors.push(`Invalid or missing name: ${JSON.stringify(entry.name)}`);
 	} else if (seenNames.has(entry.name)) {
 		errors.push(`Duplicate name "${entry.name}".`);
