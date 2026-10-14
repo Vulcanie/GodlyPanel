@@ -28,6 +28,12 @@ Some games are set up by the arguments on the command that starts them, not by a
 - [Sons of the Forest](#sons-of-the-forest)
 - [Core Keeper](#core-keeper)
 - [Satisfactory](#satisfactory)
+- [Abiotic Factor](#abiotic-factor)
+- [Don't Starve Together](#dont-starve-together)
+- [Icarus](#icarus)
+- [SCUM](#scum)
+- [StarRupture](#starrupture)
+- [Unturned](#unturned)
 
 ## ARK: Survival Ascended / Evolved
 
@@ -1905,3 +1911,1097 @@ The panel sets Core Keeper up from the arguments on the command that starts it, 
 Satisfactory is set up from inside the game (the Server Manager screen, with the server's address and port) and by a few launch arguments, which are the **Launch options** on the Settings tab. It has no settings file in the panel.
 
 - Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#satisfactory).
+
+## Abiotic Factor
+
+Abiotic Factor has two small settings files in the server's install folder, under `AbioticFactor\Saved`. The rules of the world (difficulty, enemies, survival, items and more) are in `SandboxSettings.ini`, which the panel writes when it makes the server. The in-game admins are in `Admin.ini`, which the game writes the first time the server runs. The server's name, ports, passwords and player limit are arguments on the start script's launch line (**Launch options**).
+
+- `SandboxSettings.ini`: The rules of the world: difficulty, hardcore mode, day and night, weather, survival needs, building, enemies, player damage, items, progression and what happens on death.
+- `Admin.ini`: The Steam IDs of the in-game admins and of banned players.
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#abiotic-factor).
+
+The server reads `SandboxSettings.ini` when it starts, so restart the server after changing it. The panel's start script points the server at `AbioticFactor\Saved\Config\WindowsServer\SandboxSettings.ini` (with `-SandboxIniPath`) instead of the copy in the world's own folder.
+Edit `Admin.ini` while the server is stopped; one report says the game can rewrite it when it starts. The form changes the lines already in the file. To add more admins, add more `Moderator=` lines to the file by hand.
+Stopping the server asks its console window to close, which the game answers by shutting down. The game has no remote console and no stop command. It is not known whether a world is saved on the way out, so use the admin menu's Force World Save in the game before you stop it.
+Forward the two UDP ports (game and query). The game has no TCP listener. The first time the server runs, Windows may ask whether to allow it through the firewall: if the prompt is dismissed Windows blocks it, and players outside the PC can not join until an Allow rule exists.
+Mods are not supported by the developer on dedicated servers yet, and the panel adds nothing for them. If you drop mod files into `AbioticFactor\Content\Paks` while the server is stopped, every player needs the same files, and you should back up the world first. The developer says the next big update (official mod support) will probably break all current mods.
+Leave the number of players at 6 or less: the game warns players before they join a bigger server. A new server uses about 1 GB of memory empty; plan for 4 GB or more with several players.
+
+### Abiotic Factor (SandboxSettings.ini): Difficulty
+
+3 settings in `SandboxSettings.ini`, shown under **Difficulty** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Difficulty | `GameDifficulty` in `[SandboxSettings]` | How many enemies appear in some areas, how aggressive they are and how fast they react. Anything above Normal also switches off the automatic extra difficulty the game adds when more players are present. Choices: `1` (Normal), `2` (Hard), `3` (Apocalyptic). |
+| Hardcore mode | `HardcoreMode` in `[SandboxSettings]` | Characters get only one life, and the difficulty is forced to Apocalyptic. A dead scientist can spectate or quit; admins can revive them. |
+| Allow the Iron Mode job | `AllowIronMode` in `[SandboxSettings]` | Only matters when Hardcore mode is on. Offers a very hard starting job called Iron Mode: few perk points, fewer perks, no health regeneration, and no recipes received from other players. |
+
+### Abiotic Factor (SandboxSettings.ini): Time and weather
+
+3 settings in `SandboxSettings.ini`, shown under **Time and weather** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Day and night | `DayNightCycleState` in `[SandboxSettings]` | Stops the day and night from changing. Time still passes, but the light stays fixed. Some things only happen by day or by night, so some items could become impossible to get. Choices: `0` (Normal day and night), `1` (Always day), `2` (Always night). |
+| Day and night speed | `DayNightCycleSpeedMultiplier` in `[SandboxSettings]` | How fast the clock runs: higher means shorter days. It does not change cooldowns or respawn times. The wiki's range is 0.1 to 3; the default is 1.0. |
+| Weather events | `WeatherFrequency` in `[SandboxSettings]` | How often weather events start. Even frequent weather still needs the right story progress before it happens. Choices: `1` (Never), `2` (Infrequent), `3` (Normal), `4` (Frequent), `5` (Daily). |
+
+### Abiotic Factor (SandboxSettings.ini): Facility
+
+3 settings in `SandboxSettings.ini`, shown under **Facility** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Resources respawn | `LootRespawnEnabled` in `[SandboxSettings]` | When on, resources slowly come back around the Facility (furniture does not). Handy on public servers, but objects can overlap or float and gathering matters less. |
+| Power goes off at night | `PowerSocketsOffAtNight` in `[SandboxSettings]` | Normally the Facility's power, including power sockets, shuts off at night. Turn this off to keep the power on, which makes the game easier because batteries are not needed. You may need it off if the day and night setting is Always night. |
+| Allow Home Worlds | `HomeWorlds` in `[SandboxSettings]` | When off, nobody can use the Home World portal worlds, including free and paid ones such as Torii. |
+
+### Abiotic Factor (SandboxSettings.ini): Survival
+
+10 settings in `SandboxSettings.ini`, shown under **Survival** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Hunger speed | `HungerSpeedMultiplier` in `[SandboxSettings]` | How fast hunger builds up: higher means players must eat more often. The wiki's range is 0.0 to 2.0; the default is 1.0. |
+| Thirst speed | `ThirstSpeedMultiplier` in `[SandboxSettings]` | How fast thirst builds up: higher means players must drink more often. The wiki's range is 0.0 to 2.0; the default is 1.0. |
+| Tiredness speed | `FatigueSpeedMultiplier` in `[SandboxSettings]` | How fast tiredness builds up: higher means players need to sleep more often. The wiki's range is 0.0 to 2.0; the default is 1.0. |
+| Bathroom need speed | `ContinenceSpeedMultiplier` in `[SandboxSettings]` | How fast the need for the toilet builds up: higher means more trips. The wiki's range is 0.0 to 2.0; the default is 1.0. |
+| Sink refill speed | `SinkRefillRate` in `[SandboxSettings]` | How fast sinks refill so players can drink from them: higher is faster. At 0 sinks never refill, which is much harder. The wiki's range is 0 to 10; the default is 1.0. |
+| Food spoil speed | `FoodSpoilSpeedMultiplier` in `[SandboxSettings]` | How fast food rots: lower slows it down and 0 stops it. The wiki's range is 0.0 to 2.0; the default is 1.0. |
+| Fridge strength | `RefrigerationEffectivenessMultiplier` in `[SandboxSettings]` | How well refrigeration keeps items fresh. It also changes how well hot items, such as a cup of coffee, stay warm in a warm place. The wiki's range is 0.0 to 2.0; the default is 1.0. |
+| Hide the radiation effect | `InvisibleRadiation` in `[SandboxSettings]` | When on, radiation shows no effect on the screen, so players need Geiger counters to find it. Harder. |
+| Tainted sink water | `TaintedSinkWater` in `[SandboxSettings]` | When on, sinks and similar sources that would give clean drinking water give tainted water instead. Harder. |
+| Radiation hurts health | `RadiationDealsDamage` in `[SandboxSettings]` | When on, radiation damages health directly. Much harder. |
+
+### Abiotic Factor (SandboxSettings.ini): Building and storage
+
+4 settings in `SandboxSettings.ini`, shown under **Building and storage** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Containers limited by item type | `StorageByTag` in `[SandboxSettings]` | When off, containers stop limiting what goes in them. Normally a fridge, for example, only takes food. |
+| Building support limit | `StructuralSupportLimit` in `[SandboxSettings]` | How much furniture and other placed objects can be stacked on each other before a limit is reached. A lower number limits tall builds. 0 removes the limit. The wiki does not say what the number counts; the default is 5. |
+| Bridge support needed | `BridgeSupports` in `[SandboxSettings]` | How much support a bridge needs; lower it to let bridges work with little or no extra support. 0 means no support is needed. The default is 2. The wiki does not explain what 1 and 2 mean. |
+| Furniture is destroyed at zero durability | `PlayerFurnitureDestruction` in `[SandboxSettings]` | When on, furniture players built is destroyed when its durability reaches zero. When off it just packs itself up, so it is easy to rebuild after an attack. |
+
+### Abiotic Factor (SandboxSettings.ini): Enemies
+
+8 settings in `SandboxSettings.ini`, shown under **Enemies** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Enemy respawn rate | `EnemySpawnRate` in `[SandboxSettings]` | How often enemies come back: lower means longer waits, higher means they return faster. The wiki's range is 0.5 to 3; the default is 1.0. |
+| Enemy health | `EnemyHealthMultiplier` in `[SandboxSettings]` | Multiplies enemy health: lower makes them easier to kill, higher makes them tougher. The wiki's range is 0.75 to 3.0; the default is 1.0. |
+| Enemy damage to players | `EnemyPlayerDamageMultiplier` in `[SandboxSettings]` | Multiplies the damage enemies do to players. The default is tuned to be fair: lower is easier, higher is deadlier. The wiki's range is 0.25 to 3.0. |
+| Enemy damage to buildings | `EnemyDeployableDamageMultiplier` in `[SandboxSettings]` | Multiplies the damage enemies do to deployables such as furniture and base pieces. Lower makes bases tougher. The wiki's range is 0 to 5.0; the default is 1.0. |
+| Enemy detection speed | `DetectionSpeedMultiplier` in `[SandboxSettings]` | How fast enemies notice players. Above 1 means they notice faster than normal. The wiki's range is 0.1 to 3.0; the default is 1.0. |
+| Enemy accuracy | `EnemyAccuracy` in `[SandboxSettings]` | How accurate enemies are on average. Higher accuracy mainly means they group their shots more tightly on their target. Choices: `0` (Pathetic), `1` (Low), `2` (Default), `3` (High), `4` (Precise). |
+| Apocalyptic abilities for all enemies | `ApocalypticAbilities` in `[SandboxSettings]` | When on, every enemy may use its Apocalyptic-difficulty abilities, even when the difficulty is lower. |
+| Use every enemy spawn point | `MaximizeEnemySpawns` in `[SandboxSettings]` | When on, every enemy spawn point is turned on, whatever the difficulty or the number of players. |
+
+### Abiotic Factor (SandboxSettings.ini): Players
+
+4 settings in `SandboxSettings.ini`, shown under **Players** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Player-versus-player damage | `DamageToAlliesMultiplier` in `[SandboxSettings]` | How much damage players do to each other, as a share of normal: 0.5 is half, 0.1 is a tenth. For real player-versus-player fights it needs to be 1.0 or more. The wiki's range is 0.0 to 3.0; the default is 0.5. |
+| Show death messages | `ShowDeathMessages` in `[SandboxSettings]` | When off, players are not told when someone is killed. |
+| Allow recipe sharing | `AllowRecipeSharing` in `[SandboxSettings]` | When off, players can not share item recipes with each other. |
+| Allow pagers | `AllowPagers` in `[SandboxSettings]` | When off, pagers can not be used, either from the inventory or the emote wheel. That makes it harder to find other players. |
+
+### Abiotic Factor (SandboxSettings.ini): Items
+
+5 settings in `SandboxSettings.ini`, shown under **Items** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Stack size | `ItemStackSizeMultiplier` in `[SandboxSettings]` | Multiplies how many of an item fit in one inventory slot: an item that stacks to 5 stacks to 10 at 2. Items that do not stack are not affected. The wiki's range is 1.0 to 30; the default is 1.0. |
+| Item weight | `ItemWeightMultiplier` in `[SandboxSettings]` | Multiplies how heavy items are: at 2 an item weighing 5 weighs 10. Below 1 makes items lighter. The wiki's range is 0.0 to 5.0; the default is 1.0. |
+| Item durability | `ItemDurabilityMultiplier` in `[SandboxSettings]` | Multiplies how much durability items have: at 2 an item with 10 durability has 20. Below 1 makes items break faster. The wiki's range is 0.1 to 10.0; the default is 1.0. |
+| Inventory slots without a backpack | `BaseInventorySize` in `[SandboxSettings]` | How many inventory slots a player has with no backpack on. A smaller number makes small backpacks less useful; a backpack's weight reduction still applies. The default is 12. |
+| Allow armor appearance swap | `AllowTransmog` in `[SandboxSettings]` | When off, players can not change how their armor looks to match another piece. That limits customization but never lets someone disguise their gear as different gear. |
+
+### Abiotic Factor (SandboxSettings.ini): Progression
+
+5 settings in `SandboxSettings.ini`, shown under **Progression** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Bonus perk points | `BonusPerkPoints` in `[SandboxSettings]` | Extra perk points on top of the ones each chosen job gives. A negative number takes points away. The default is 0. |
+| XP gain | `PlayerXPGainMultiplier` in `[SandboxSettings]` | How fast players earn XP: above 1 is faster, below 1 is slower, and 0 means skills can not level up at all. The wiki's range is 0.0 to 3; the default is 1.0. |
+| Skip the research minigame | `DisableResearchMinigame` in `[SandboxSettings]` | When on, new recipes unlock at once, without the research minigame. |
+| Starting weapon | `FirstTimeStartingWeapon` in `[SandboxSettings]` | The weapon a player gets the first time they spawn into the world, in addition to the items from their job. Choices: `0` (None), `1` (Shiv), `2` (Desk Leg), `3` (Kitchen Knife), `4` (Starter Baton), `5` (Pipe Club), `6` (Random). |
+| Allow character reset | `AllowCharacterReset` in `[SandboxSettings]` | The game has ways to reset a character's jobs, skills and traits later on. When off, players can not change their minds. |
+
+### Abiotic Factor (SandboxSettings.ini): Death and respawn
+
+3 settings in `SandboxSettings.ini`, shown under **Death and respawn** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| What a player loses on death | `DeathPenalties` in `[SandboxSettings]` | What a player loses when they respawn after dying, or when they use the Unstick option. Choices: `0` (Keep all items), `1` (Keep equipped items and hotbar), `2` (Keep hotbar only), `3` (Keep equipped items only), `4` (Lose all items, including the hotbar), `5` (All items are destroyed). |
+| Durability lost on death | `DurabilityLossOnDeathMultiplier` in `[SandboxSettings]` | How much durability weapons and carried items lose when a player respawns. The wiki's range is 0.0 to 1.0; the default is 0.1. |
+| Host can open death bags | `HostAccessPlayerCorpses` in `[SandboxSettings]` | When on, the host can open the inventories in the Death Bags players drop when they die. This may depend on other settings. |
+
+### Abiotic Factor (Admin.ini): Admins
+
+1 setting in `Admin.ini`, shown under **Admins** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Admin (Steam ID) | `Moderator` in `[Moderators]` | Makes one Steam player an in-game admin: put their 17-digit Steam ID here (for example 76561198053306820). Replace the example lines the game writes. Only for Steam players; console players use the admin password launch option instead. |
+
+### Abiotic Factor (Admin.ini): Bans
+
+1 setting in `Admin.ini`, shown under **Bans** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Banned player (Steam ID) | `BannedPlayer` in `[BannedPlayers]` | The Steam ID of a player banned from this server. The game writes one example line; replace it with a real ID. |
+
+## Don't Starve Together
+
+Don't Starve Together keeps the server's shared settings in `cluster.ini`, in `data\DoNotStarveTogether\Cluster_1` inside the server's folder. This version of the panel runs a single overworld (the Master shard): there is no Caves shard, because the panel runs one program per server and a cluster with caves is two.
+
+- `cluster.ini`: The server's name, password, player limit, game mode, saving, and whether it is online or offline.
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#dont-starve-together).
+
+An online server needs a **cluster token** from your Klei account (accounts.klei.com, Games, Don't Starve Together, Game Servers). Paste it into the create form; the panel writes it to `cluster_token.txt` in the cluster folder. Without one the server is made offline (your own network only). A token can be added later by putting it alone in that file and turning off **Offline server**.
+The server's ports are on the launch line, not in `Master\server.ini`, so they can be changed from the server's Ports section. The game port is the one players connect to (UDP); the two Steam ports are internal.
+The world itself (seasons, resources, how hard it is) is set in `worldgenoverride.lua` in the `Master` folder, and mods are set in `modoverrides.lua` there. Both are Lua files, which the Settings tab does not edit. The game builds the world from its default preset when no override file is there.
+Stopping the server from the panel closes the program without the game's own shutdown command (`c_shutdown()`), so the world is saved only by the autosave at the end of each in-game day. Anything since the last day change is lost.
+Mods are Steam Workshop mods listed when the server is created. The server downloads them when it starts. Mods marked client-only are installed by each player in their own game and do not belong on the server.
+
+### Don't Starve Together: Server
+
+4 settings in `cluster.ini`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server name | `cluster_name` in `[NETWORK]` | The name shown in the in-game server list. Do not leave it empty on an online server. |
+| Description | `cluster_description` in `[NETWORK]` | Text shown in the server's details panel in the server list. |
+| Password | `cluster_password` in `[NETWORK]` | What players type to join. Leave it empty for a server anyone can join. |
+| Max players | `max_players` in `[GAMEPLAY]` | The most players connected at once. The game accepts 1 to 64; its own default is 16, and the panel starts a new server at 8. |
+
+### Don't Starve Together: Gameplay
+
+4 settings in `cluster.ini`, shown under **Gameplay** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Game mode | `game_mode` in `[GAMEPLAY]` | How death works. Survival is the normal game: a player who dies becomes a ghost that friends can revive. The older Endless and Wilderness modes are now part of the world rules instead, and the game turns them into Survival. Choices: `survival` (Survival). Another value can be typed. |
+| Players can hurt each other | `pvp` in `[GAMEPLAY]` | Lets players damage each other. |
+| Pause when nobody is on | `pause_when_empty` in `[GAMEPLAY]` | Freezes the world while no one is connected, so no game time passes while everyone is away. The game's own default is off; the panel turns it on for a new server. |
+| Player votes | `vote_enabled` in `[GAMEPLAY]` | Lets players start votes in the game, such as kicking someone or rolling the world back. |
+
+### Don't Starve Together: Saving
+
+2 settings in `cluster.ini`, shown under **Saving** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Autosave each day | `autosaver_enabled` in `[NETWORK]` | Saves the world at the end of every in-game day. Stopping the server from the panel does not use the game's own shutdown command, so this autosave is what keeps your progress: leave it on. |
+| Rollback snapshots kept | `max_snapshots` in `[MISC]` | How many save snapshots are kept so the world can be rolled back. One is made at every save. |
+
+### Don't Starve Together: Network
+
+4 settings in `cluster.ini`, shown under **Network** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Offline server | `offline_cluster` in `[NETWORK]` | Not listed in the server list; only players on your own network can join, and Steam features do not work. An offline server needs no cluster token. To go online, turn this off and put your Klei cluster token (a single line of text) in a file named cluster_token.txt in this server's data\DoNotStarveTogether\Cluster_1 folder. |
+| Local network only | `lan_only_cluster` in `[NETWORK]` | Only machines on the same local network can join. |
+| Network updates per second | `tick_rate` in `[NETWORK]` | How many times a second the server sends updates to players. The game's default is 15 and Klei says to leave it; if you change it, use a number that divides 60 evenly (15, 20 or 30) and only for games on a local network. 15 to 60 is accepted. |
+| Slots kept for the whitelist | `whitelist_slots` in `[NETWORK]` | How many places are kept free for the players listed in whitelist.txt. It does not make the server whitelist-only; use a password for that. |
+
+### Don't Starve Together: Steam group
+
+3 settings in `cluster.ini`, shown under **Steam group** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Steam group members only | `steam_group_only` in `[STEAM]` | Only members of the Steam group named below may join. |
+| Steam group id | `steam_group_id` in `[STEAM]` | The number of the Steam group the two settings around it use. |
+| Steam group admins are server admins | `steam_group_admins` in `[STEAM]` | Lets the admins of that Steam group be admins on this server too. |
+
+### Don't Starve Together: Advanced
+
+1 setting in `cluster.ini`, shown under **Advanced** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server console | `console_enabled` in `[MISC]` | Lets Lua commands be typed into the server's console window. The panel also starts the game with the -console argument. |
+
+## Icarus
+
+Icarus keeps the server's options in `Icarus\Saved\Config\WindowsServer\ServerSettings.ini` inside the server's install folder. The server's name and ports are given on the command that starts it (the **Launch options**).
+
+- `ServerSettings.ini`: The join and admin passwords, the player limit, when an idle server goes back to its lobby, who may start and delete worlds, and which world opens at start.
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#icarus).
+
+Difficulty and hardcore are not in any file. They belong to a world and are chosen when it is created: in the game's lobby, or in the `CreateProspect` setting (`<world type> <difficulty 1-4> <hardcore true/false> <save name>`).
+The server's name is set by the `-SteamServerName` launch argument. `SessionName` in the settings file is documented as doing nothing.
+Icarus has no remote console the panel can use. Admin commands (kick, ban, return to lobby) are typed in the game's chat after `/AdminLogin <password>`.
+
+### Icarus: Server
+
+2 settings in `ServerSettings.ini`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Session name (does not work) | `SessionName` in `[/Script/Icarus.DedicatedServerSettings]` | Meant to be the server's name in the server browser, but the developers say it currently does nothing. The name comes from the -SteamServerName launch argument instead (Launch options). |
+| Max players | `MaxPlayers` in `[/Script/Icarus.DedicatedServerSettings]` | The most players that can be on the server at once. The official guide documents 1 to 8. A higher number may be accepted, but that has not been confirmed, and more players make the server heavier. |
+
+### Icarus: Access
+
+2 settings in `ServerSettings.ini`, shown under **Access** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Join password | `JoinPassword` in `[/Script/Icarus.DedicatedServerSettings]` | What players type to join. Leave empty for a server anyone can join. |
+| Admin password | `AdminPassword` in `[/Script/Icarus.DedicatedServerSettings]` | Players type /AdminLogin followed by this password in the game's chat to become admin and use the kick, ban and return-to-lobby commands. If it is empty, anyone can become admin, so set one. |
+
+### Icarus: Idle behaviour
+
+2 settings in `ServerSettings.ini`, shown under **Idle behaviour** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Back to lobby if nobody joins (seconds) | `ShutdownIfNotJoinedFor` in `[/Script/Icarus.DedicatedServerSettings]` | After a world starts, if no player joins within this many seconds the world is closed and the server goes back to its lobby (the game is paused meanwhile). A negative number never does this and 0 does it at once. 300 is 5 minutes. |
+| Back to lobby when empty (seconds) | `ShutdownIfEmptyFor` in `[/Script/Icarus.DedicatedServerSettings]` | After the last player leaves, the server waits this many seconds, then closes the world and goes back to its lobby (the game is paused meanwhile). A negative number never does this and 0 does it at once. 300 is 5 minutes. |
+
+### Icarus: Lobby permissions
+
+2 settings in `ServerSettings.ini`, shown under **Lobby permissions** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Anyone can start worlds | `AllowNonAdminsToLaunchProspects` in `[/Script/Icarus.DedicatedServerSettings]` | On: anyone in the lobby can create a new world or open a saved one. Off: only players who have signed in as admin can. |
+| Anyone can delete worlds | `AllowNonAdminsToDeleteProspects` in `[/Script/Icarus.DedicatedServerSettings]` | On: anyone in the lobby can delete saved worlds from the server. Off: only players who have signed in as admin can. |
+
+### Icarus: World at startup
+
+4 settings in `ServerSettings.ini`, shown under **World at startup** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Resume the last world at start | `ResumeProspect` in `[/Script/Icarus.DedicatedServerSettings]` | On: when the server starts it reopens the last world it ran (the one named under 'Last world used') and skips the lobby. Off: it waits in the lobby for someone to pick a world. |
+| Open this saved world at start | `LoadProspect` in `[/Script/Icarus.DedicatedServerSettings]` | The name of a saved world to open when the server starts. It is looked up among the server's saved worlds. Leave empty to not force one. |
+| Create this world at start | `CreateProspect` in `[/Script/Icarus.DedicatedServerSettings]` | Makes and starts a brand-new world when the server starts. Written as four parts separated by spaces: world type, difficulty (1 easy to 4 extreme), hardcore (true or false, true means no respawns) and a save name, for example Tier1_Forest_Recon_0 3 false MyWorld. The save name is required for outposts. The server handles LoadProspect first, then ResumeProspect, then this; a hosting guide warns that leaving it set can make a fresh world each time the server starts, so clear it after the first start. |
+| Last world used | `LastProspectName` in `[/Script/Icarus.DedicatedServerSettings]` | The world that ran most recently. The server fills this in itself, and 'Resume the last world at start' reads it. Only change it while the server is stopped, and only to the name of a saved world that exists. |
+
+## SCUM
+
+SCUM keeps its settings in `SCUM\Saved\Config\WindowsServer\ServerSettings.ini` inside the server's install folder. Every setting is a `scum.<Name>=<value>` line under one of six sections (General, World, Respawn, Vehicles, Damage, Features). The launch line only gives the game port, the player limit and a few switches.
+
+- `ServerSettings.ini`: The server's name, password, player limit and the rules of the world: zombies, animals, loot, respawn, vehicles, damage, base building, raid protection, skills and quests.
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#scum).
+
+The game reads the file only when it starts, and a running server can write over changes made to it, so stop the server before editing.
+The player and admin lists (`AdminUsers.ini`, `ExclusiveUsers.ini`, `WhitelistedUsers.ini`, `BannedUsers.ini`), the trader prices (`EconomyOverride.json`), the raid windows (`RaidTimes.json`), the scheduled messages (`Notifications.json`) and the `Loot` folder are in the same folder. The Settings tab does not edit them.
+SCUM has no official mod support (the developer said on 30 September 2026 that it will not arrive in 2026). Loot, trader and raid-time changes are made with those files.
+The game changes its list of settings about once a month. A setting the file has that the panel does not explain is still shown.
+
+### SCUM: General: Server identity & access
+
+7 settings in `ServerSettings.ini`, shown under **General: Server identity & access** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server name | `scum.ServerName` | The name shown in the server browser. The panel fills it in with the name you typed when it created the server. Default: SCUM Server. |
+| Server password | `scum.ServerPassword` | The password players type to join. Leave it empty for a server anyone can join. |
+| Max players | `scum.MaxPlayers` | The most players that can be connected at once. The -MaxPlayers launch option on the start line overrides this value, and the panel puts it there when it creates the server, so change it under Launch options as well. Default 64, range 1 to 128. |
+| PlaySafe ID protection | `scum.PlaySafeIdProtection` | Allows only players who have verified their identity, linked their account, and are not currently banned on PlaySafe ID to join the server. |
+| Welcome message | `scum.WelcomeMessage` | Message displayed on every server join. |
+| Message of the day | `scum.MessageOfTheDay` | A message shown to players over and over, at the interval set by the message of the day cooldown. |
+| Message of the day cooldown | `scum.MessageOfTheDayCooldown` | Interval at which the message of the day is displayed. Default 10 minutes, range 10 to 720 minutes. |
+
+### SCUM: General: Performance & connection
+
+5 settings in `ServerSettings.ini`, shown under **General: Performance & connection** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Min server tick rate | `scum.MinServerTickRate` | How many times a second the server updates the world while nobody is connected. Default 5 Hz, range 1 to 1000 Hz. |
+| Max server tick rate | `scum.MaxServerTickRate` | How many times a second the server updates the world while at least one player is connected. Higher is smoother but uses more CPU. Default 30 in current guides (an older guide recommended up to 35), range 1 to 1000 Hz. |
+| Max ping check enabled | `scum.MaxPingCheckEnabled` | Max Ping Value will be respected only if this is switched on. |
+| Max ping | `scum.MaxPing` | Maximum ping before player is denied access to the server or kicked. Default 400 ms, range 10 to 999 ms. |
+| Max number of consecutive high ping readings | `scum.MaxNumberOfConsecutiveHighPingReadings` | Number of consecutive high ping readings required before a player is kicked from the server. Default 5, range 1 to 100. |
+
+### SCUM: General: Logout timers
+
+3 settings in `ServerSettings.ini`, shown under **General: Logout timers** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Logout timer | `scum.LogoutTimer` | Time in seconds before player disappears from the game world when logging out. Default 60 seconds, range 1 to 600 seconds. |
+| Logout timer while captured | `scum.LogoutTimerWhileCaptured` | Time in seconds before player disappears from the game world when logged out when tied up. Default 120 seconds, range 1 to 600 seconds. |
+| Logout timer in bunker | `scum.LogoutTimerInBunker` | Time in seconds before player disappears from the game world when logging out if in the bunker. Default 30000 seconds, range 1 to 36000 seconds. |
+
+### SCUM: General: Player options
+
+13 settings in `ServerSettings.ini`, shown under **General: Player options** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Allow first person | `scum.AllowFirstPerson` | Whether first person view is allowed (on = allowed). |
+| Allow third person | `scum.AllowThirdPerson` | Whether third person view is allowed (on = allowed). |
+| Allow crosshair | `scum.AllowCrosshair` | Whether the crosshair is allowed (on = allowed). |
+| Allow map screen | `scum.AllowMapScreen` | Whether players are allowed to view the map screen (on = allowed). |
+| Allow kill claiming | `scum.AllowKillClaiming` | Whether BCU drop is allowed after a player is killed (on = allowed). |
+| Allow coma | `scum.AllowComa` | Whether players can fall into a coma before death, for example, to be revived (on = allowed). |
+| Allow mines and traps | `scum.AllowMinesAndTraps` | Whether mines or traps can be used (on = allowed). |
+| Allow skill gain in safe zones | `scum.AllowSkillGainInSafeZones` | Whether experience points can be earned in safe zones (e.g., merchant zone) (on = allowed). |
+| Allow events | `scum.AllowEvents` | Whether events are allowed on the server (on = allowed) (Event tab is still displayed when deactivated, but is empty). |
+| Hide kill notification | `scum.HideKillNotification` | Switch on to hide the notification shown to players who kill each other. |
+| Disable examine ghost | `scum.DisableExamineGhost` | Switch on to stop the ghost that can surprise players when they search item containers. |
+| Disable timed gifts | `scum.DisableTimedGifts` | Whether time-based gifts should be deactivated (e.g. gifts at Christmas) (on = deactivated). |
+| Enable spawn on ground | `scum.EnableSpawnOnGround` | When on, players skip the parachute jump and spawn on the ground. |
+
+### SCUM: General: Voting
+
+4 settings in `ServerSettings.ini`, shown under **General: Voting** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Allow voting | `scum.AllowVoting` | Whether players are allowed to participate in votes (on = allowed). |
+| Voting duration | `scum.VotingDuration` | Duration for a vote. Default 60 seconds, range 30 to 600 seconds. |
+| Minimum share of players who must vote | `scum.PlayerMinimalVotingInterest` | What percentage of online players must vote for a vote to be valid (0.5=50%). Default 0.5, range 0 to 1. |
+| Share of yes votes needed | `scum.PlayerPositiveVotePercentage` | What proportion of votes must be yes for a referendum to be accepted (0.5=50%). Default 0.5, range 0 to 1. |
+
+### SCUM: General: Chat
+
+5 settings in `ServerSettings.ini`, shown under **General: Chat** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Limit global chat | `scum.LimitGlobalChat` | Whether the global chat can only be used by admins or by any player (on = admins only). |
+| Allow global chat | `scum.AllowGlobalChat` | Whether the global chat is usable (on = usable). |
+| Allow local chat | `scum.AllowLocalChat` | Whether the local chat is usable (on = usable). |
+| Allow squad chat | `scum.AllowSquadChat` | Whether the Squad Chat is usable (on = usable). |
+| Allow admin chat | `scum.AllowAdminChat` | Whether the admin chat is usable (on = usable). |
+
+### SCUM: General: Cleanup & logging
+
+8 settings in `ServerSettings.ini`, shown under **General: Cleanup & logging** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Rusty locks logging | `scum.RustyLocksLogging` | Enable log for rusty locks (10 second locks in the world) (on = log enabled). |
+| Log suicides | `scum.LogSuicides` | Whether a log of suicides should be created (on = Create log). |
+| Delete inactive users | `scum.DeleteInactiveUsers` | Whether inactive players should be automatically deleted after the following time at server start (on = Inactive players are deleted). |
+| Days since last login to become inactive | `scum.DaysSinceLastLoginToBecomeInactive` | Days after which a player is considered inactive. Default 180 days, range 1 to 3600 days. |
+| Delete banned users | `scum.DeleteBannedUsers` | Whether banned players should be deleted at server start (on = banned players are deleted). |
+| Maximum time for chests in forbidden zones | `scum.MaximumTimeForChestsInForbiddenZones` | Time chests are allowed to exist in forbidden zones (e.g. merchants) (despawn is applied if no player is nearby). Default 02:00:00, range 00:00:00 to 2400:00:00. Written as hours:minutes:seconds (HH:MM:SS). |
+| Log chest ownership | `scum.LogChestOwnership` | Whether a log of chest owners should be kept (on = log is created). |
+| Delete duplicate chests on server startup | `scum.DeleteDuplicateChestsOnServerStartup` | When on, duplicated chests are deleted each time the server starts. |
+
+### SCUM: General: Base building rules
+
+3 settings in `ServerSettings.ini`, shown under **General: Base building rules** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Use map base building restriction | `scum.UseMapBaseBuildingRestriction` | Restricts base building in certain map areas (for example near points of interest). Must be on for the building proximity restrictions to take effect. |
+| Disable base building | `scum.DisableBaseBuilding` | Whether base building should be completely banned (on = banned). |
+| Use building proximity restrictions | `scum.UseBuildingProximityRestrictions` | Stops structures being placed too close to each other or to restricted areas. Only works while the map base building restriction is on. |
+
+### SCUM: General: Wipes
+
+3 settings in `ServerSettings.ini`, shown under **General: Wipes** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Partial wipe | `scum.PartialWipe` | Switch on to run a partial wipe the next time the server starts: world progress is reset, character development is not. The server switches it back off by itself afterwards. Stop the server and back up before using it. |
+| Gold wipe | `scum.GoldWipe` | Switch on to delete every player's gold the next time the server starts. The server switches it back off by itself afterwards. Stop the server and back up before using it. |
+| Full wipe | `scum.FullWipe` | Switch on to run a full wipe the next time the server starts. The server switches it back off by itself afterwards. This cannot be undone, so stop the server and back up before using it. |
+
+### SCUM: General: Fame
+
+4 settings in `ServerSettings.ini`, shown under **General: Fame** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Fame gain multiplier | `scum.FameGainMultiplier` | Multiplier for earning fame points (>1=more fame, between 0 and 1 for less fame). Default 1, range 0 to 1000. 1 keeps the normal amount. |
+| Fame point penalty on death | `scum.FamePointPenaltyOnDeath` | What percentage of fame points a player loses upon death (excluding PvP) (0.1=10% of his fame points). Default 0.1, range 0 to 1. |
+| Fame point penalty on killed | `scum.FamePointPenaltyOnKilled` | What percentage of fame points a player loses when killed by another player (0.5=50% of his fame points). Default 0.5, range 0 to 1. |
+| Fame point reward on kill | `scum.FamePointRewardOnKill` | What percentage of the killed player's fame points a player receives (0.25=25% of the killed player's fame points). Default 0.25, range 0 to 1. |
+
+### SCUM: General: Settings file
+
+1 setting in `ServerSettings.ini`, shown under **General: Settings file** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Settings file version (do not change) | `scum.ServerSettingsVersion` | The version number of this settings file, kept up to date by the game. Do not change it. Default 7. |
+
+### SCUM: World: Puppets (zombies) & population caps
+
+14 settings in `ServerSettings.ini`, shown under **World: Puppets (zombies) & population caps** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Max allowed characters | `scum.MaxAllowedCharacters` | The most characters (players, NPCs, mechs, animals and puppets) allowed in the world at once, not counting high-threat zones. -1 uses the game's own value, which is 128. Range -1 to 1024. |
+| Max allowed puppets | `scum.MaxAllowedPuppets` | Maximum number of zombies that can exist at the same time. Range -1 to 1024. |
+| Max allowed armed NPCs | `scum.MaxAllowedNPCs` | Maximum number of NPCs that can exist simultaneously (Armed NPCs). Range -1 to 512. |
+| Max allowed drones | `scum.MaxAllowedDrones` | Maximum permitted drones in the world. Default 0, range 0 to 40. |
+| Disable suicide puppet spawning | `scum.DisableSuicidePuppetSpawning` | Whether explosive puppets should be deactivated (on = no explosive puppets). |
+| Disable loot puppet spawning | `scum.DisableLootPuppetSpawning` | Disables loot puppet spawning when switched on. |
+| Enable loot puppet horde | `scum.EnableLootPuppetHorde` | Enables the horde that spawns when a loot puppet dies when switched on. |
+| Puppets can open doors | `scum.PuppetsCanOpenDoors` | Whether zombies can open doors (on = Puppets can open doors). |
+| Puppets can vault windows | `scum.PuppetsCanVaultWindows` | Whether zombies can jump through windows (on = Puppets can jump through windows). |
+| Puppet health multiplier | `scum.PuppetHealthMultiplier` | Puppet health multiplier (higher values = more health). Default 1, range 0.01 to 100. 1 keeps the normal amount. |
+| Puppet running speed multiplier | `scum.PuppetRunningSpeedMultiplier` | How fast puppets (zombies) run: above 1 is faster, below 1 is slower. Default 1, range 0.5 to 2. |
+| Puppet cull distance override | `scum.PuppetCullDistanceOverride` | Specifies the maximum distance in meters at which puppets are rendered to connected clients. Range 0 to 1000 m. -1 usually means the game uses its own built-in value. |
+| Puppet world encounter spawn weight multiplier | `scum.PuppetWorldEncounterSpawnWeightMultiplier` | Multiplier for the spawn weight of puppets in an encounter. Default 1, range 0 to 1000. |
+| Puppet limping health threshold | `scum.PuppetLimpingHealthThreshold` | The health level below which puppets (zombies) start limping. -1 or 0 turns limping off, 0.2 limps below 20% health (the usual behaviour), 0.7 below 70%, and 1 means always limping. Replaces the old PuppetLimpingEnabled setting. Range -1 to 1. |
+
+### SCUM: World: Dropships, mechs & base-building raids
+
+14 settings in `ServerSettings.ini`, shown under **World: Dropships, mechs & base-building raids** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Disable sentry spawning | `scum.DisableSentrySpawning` | Whether Mech spawning should be disabled (on = no Mechs). |
+| Enable sentry respawning | `scum.EnableSentryRespawning` | Whether mechs can respawn at POIs through dropship drops, but does not affect general respawning of mechs (on = respawn possible). |
+| Dropship health multiplier | `scum.DropshipHealthMultiplier` | Dropship health multiplier (higher values = more health). Default 1, range 0.01 to 100. 1 keeps the normal amount. |
+| Sentry health multiplier | `scum.SentryHealthMultiplier` | Mech Health Multiplier (Higher values = more health). Default 1, range 0.01 to 100. 1 keeps the normal amount. |
+| Base building attacker sentry health multiplier | `scum.BaseBuildingAttackerSentryHealthMultiplier` | Multiplier for Mech health of the Mech that can be dropped from a dropship during base building (Higher values = more health). Default 1, range 0.01 to 100. 1 keeps the normal amount. |
+| Dropship world encounter spawn weight multiplier | `scum.DropshipWorldEncounterSpawnWeightMultiplier` | Multiplier for the spawn weight of dropships in an encounter. Default 1, range 0 to 1000. |
+| Base building encounter trigger chance | `scum.BaseBuildingEncounterTriggerChance` | Chance for a dropship spawn during base building (percent chance, -1 is default and means 7.5%). Range 0 to 100. |
+| Base building encounter trigger time multiplier | `scum.BaseBuildingEncounterTriggerTimeMultiplier` | Multiplier of the time of player activity at the base before dropship encounter can happen (default value=900s player activity/ 1800s-2700s spawn after spawn fail/ 28800s-36000s cooldown after base building encounter). Default 1, range 0 to 100. 1 keeps the normal amount. |
+| Enable dropship base building encounter | `scum.EnableDropshipBaseBuildingEncounter` | Whether dropships can spawn during base building (on = spawn possible). |
+| Base building raid: elements needed to start | `scum.BaseBuildingEncounterMinNumElementsToStart` | Total number of base building elements where a Dropship Encounter can start (-1=default value 100). Range 0 to 1000. |
+| Base building raid: elements left to end | `scum.BaseBuildingEncounterMinNumElementsToEnd` | Total number of base building elements at which the Dropship Encounter ends (-1=default value 50). Range 0 to 1000. |
+| Base building encounter damage percentage increase per squad member | `scum.BaseBuildingEncounterDamagePercentageIncreasePerSquadMember` | Increases the damage to base building elements in a Dropship Encounter by this percentage per squad member (except the first) (50=Dropship does 50% more damage to base building elements). Default 0, range 0 to 100. |
+| Base building raid: days until it ends | `scum.BaseBuildingEncounterTimeToFullMinNumToEnd` | Time in days after which a base building Encounter finally ends when the minimum number of base building elements is reached (default -1 = 3 days). Range -1 to 30. |
+| Base building raid: most reduction of elements to end | `scum.BaseBuildingEncounterMaximumMinToEndReduction` | Reduction of the minimum number of base building elements that must be destroyed at the beginning of a base building encounter (default = 0, so no reduction). Range -1 to 1000. |
+
+### SCUM: World: Bunkers & keycards
+
+16 settings in `ServerSettings.ini`, shown under **World: Bunkers & keycards** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Abandoned bunker commotion threshold | `scum.AbandonedBunkerCommotionThreshold` | Basic threshold for noise generated in the bunker, above which the bunker reacts (noises such as shaft rattling, etc.). Range 0 to 1000. -1 usually means the game uses its own built-in value. |
+| Abandoned bunker commotion threshold per player extra | `scum.AbandonedBunkerCommotionThresholdPerPlayerExtra` | Additional threshold at which the bunker reacts, for noise generated per player in the bunker (except the first) (Base Threshold + Extra Threshold). Range 0 to 1000. -1 usually means the game uses its own built-in value. |
+| Abandoned bunker enemy activation threshold | `scum.AbandonedBunkerEnemyActivationThreshold` | Base threshold for generated noise in the bunker, from which Razors spawn from the shafts. Range 0 to 1000. -1 usually means the game uses its own built-in value. |
+| Abandoned bunker enemy activation threshold per player extra | `scum.AbandonedBunkerEnemyActivationThresholdPerPlayerExtra` | Additional threshold at which Razors spawn for noise generated per player in the bunker (except the first one) (Base Threshold + Extra Threshold). Range 0 to 1000. -1 usually means the game uses its own built-in value. |
+| Abandoned bunker reset armory lockers on activation only | `scum.AbandonedBunkerResetArmoryLockersOnActivationOnly` | Armory rooms in abandoned bunkers are only reset when activated (naturally or by keycard) when this is switched on. |
+| Enable dropship abandoned bunker encounter | `scum.EnableDropshipAbandonedBunkerEncounter` | Whether dropships can spawn at abandoned bunkers (on = spawn possible). |
+| Dropship abandoned bunker encounter trigger chance | `scum.DropshipAbandonedBunkerEncounterTriggerChance` | Chance for a dropship spawn at Abandoned Bunker Alarms (percent chance, -1 is default and means 50%). Range 0 to 100. |
+| Max allowed killbox keycards | `scum.MaxAllowedKillboxKeycards` | Maximum number of keycards that can be found in total (police stations + radiation zone). Default 4, range 0 to 1024. |
+| Max allowed killbox keycards - police station | `scum.MaxAllowedKillboxKeycards_PoliceStation` | Maximum number of keycards that can be found in police stations. Default 3, range 0 to 1024. |
+| Max allowed apex facility keycards | `scum.MaxAllowedApexFacilityKeycards` | Maximum number of Apex Facility keycards that can be found in total (police stations + Radiation Zone). Default 4, range 0 to 1024. |
+| Max allowed apex facility keycards - police station | `scum.MaxAllowedApexFacilityKeycards_PoliceStation` | Maximum number of Apex Facility keycards that can be found in police stations. Default 3, range 0 to 1024. |
+| Abandoned bunker max simultaneously active | `scum.AbandonedBunkerMaxSimultaneouslyActive` | Maximum number of abandoned bunkers that can be active at the same time. Default 2, range 1 to 4. |
+| Abandoned bunker active duration hours | `scum.AbandonedBunkerActiveDurationHours` | Duration in hours that abandoned bunkers remain active after natural activation. Default 24, range 0 to 720. |
+| Abandoned bunker key card active duration hours | `scum.AbandonedBunkerKeyCardActiveDurationHours` | Duration in hours that abandoned bunkers remain active after activation by keycard. Default 3, range 0 to 720. |
+| Abandoned bunker BCU terminal cooldown | `scum.AbandonedBunkerBCUTerminalCooldown` | Modify the cooldown (in HH : MM : SS) of BCU terminals in abandoned bunkers. Default 24:00:00, range 00:00:01 to 2400:00:00. Written as hours:minutes:seconds (HH:MM:SS). |
+| Secret bunker key card active duration hours | `scum.SecretBunkerKeyCardActiveDurationHours` | Duration in hours that secret bunkers remain active after activation by keycard. Default 0.5, range 0 to 720. |
+
+### SCUM: World: Armed NPCs
+
+10 settings in `ServerSettings.ini`, shown under **World: Armed NPCs** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Armed NPC difficulty level | `scum.ArmedNPCDifficultyLevel` | How hard armed NPCs are: it changes their accuracy and how often they attack. Default 2 (medium). Choices: `1` (Easy), `2` (Medium), `3` (Hard). |
+| Armed NPC health multiplier | `scum.ArmedNPCHealthMultiplier` | Armed NPC max health multiplier (higher values = more health). Default 1, range 0.01 to 100. 1 keeps the normal amount. |
+| Armed NPC damage multiplier | `scum.ArmedNPCDamageMultiplier` | Armed NPC max damage multiplier (higher values = NPCs deal more damage). Default 1, range 0.01 to 100. 1 keeps the normal amount. |
+| Armed NPC spread multiplier | `scum.ArmedNPCSpreadMultiplier` | Armed NPC max spread multiplier (bullet spread of firearms, higher values=more spread). Default 1, range 0.01 to 100. 1 keeps the normal amount. |
+| Armed NPC running speed multiplier | `scum.ArmedNPCRunningSpeedMultiplier` | How fast armed NPCs run: above 1 is faster, below 1 is slower. Default 1, range 0.5 to 2. |
+| Armed NPC net cull distance override | `scum.ArmedNPCNetCullDistanceOverride` | Armed NPC net cull distance in meters (rendering to connected clients). Range 0 to 1000 m. -1 usually means the game uses its own built-in value. |
+| Probability for armed NPC to drop item from hands when searched | `scum.ProbabilityForArmedNPCToDropItemFromHandsWhenSearched` | Chance that an NPC drops the weapon in their hand (0.4=40% chance for drop). Default 1, range 0 to 1. |
+| Minimum durability of armed NPCs dropped item from hands | `scum.MinimumDurabilityOfArmedNPCsDroppedItemFromHands` | Durability of an item dropped from hands by an armed NPC will be randomly picked from a minimum - maximum interval (can't be higher than max value). Default 0.2, range 0 to 1. |
+| Maximum durability of armed NPCs dropped item from hands | `scum.MaximumDurabilityOfArmedNPCsDroppedItemFromHands` | Durability of an item dropped from hands by an armed NPC will be randomly picked from a minimum - maximum interval. Default 0.3, range 0 to 1. |
+| Armed NPC limping health threshold | `scum.ArmedNPCLimpingHealthThreshold` | The health level below which armed NPCs start limping. -1 turns limping off. Replaces the old ArmedNPCLimpingEnabled setting. Range -1 to 1. |
+
+### SCUM: World: Animals, fishing & radiation
+
+27 settings in `ServerSettings.ini`, shown under **World: Animals, fishing & radiation** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Animal net cull distance override | `scum.AnimalNetCullDistanceOverride` | Sets animal net cull distance override in meters (rendering to connected clients). Range 0 to 1000 m. -1 usually means the game uses its own built-in value. |
+| Bear max health multiplier | `scum.BearMaxHealthMultiplier` | Bear maximum health multiplier (higher value = more health). Default 1, range 0.01 to 100. 1 keeps the normal amount. |
+| Boar max health multiplier | `scum.BoarMaxHealthMultiplier` | Wild boar maximum health multiplier (higher value = more health). Default 1, range 0.01 to 100. 1 keeps the normal amount. |
+| Chicken max health multiplier | `scum.ChickenMaxHealthMultiplier` | Multiplier for the maximum health of chickens (higher value = more health). Default 1, range 0.01 to 100. 1 keeps the normal amount. |
+| Deer max health multiplier | `scum.DeerMaxHealthMultiplier` | Deer maximum health multiplier (higher value = more health). Default 1, range 0.01 to 100. 1 keeps the normal amount. |
+| Donkey max health multiplier | `scum.DonkeyMaxHealthMultiplier` | Donkey maximum health multiplier (higher value = more health). Default 1, range 0.01 to 100. 1 keeps the normal amount. |
+| Goat max health multiplier | `scum.GoatMaxHealthMultiplier` | Goat maximum health multiplier (higher value = more health). Default 1, range 0.01 to 100. 1 keeps the normal amount. |
+| Horse max health multiplier | `scum.HorseMaxHealthMultiplier` | Multiplier for maximum horse health (higher value = more health). Default 1, range 0.01 to 100. 1 keeps the normal amount. |
+| Rabbit max health multiplier | `scum.RabbitMaxHealthMultiplier` | Rabbit maximum health multiplier (higher value = more health). Default 1, range 0.01 to 100. 1 keeps the normal amount. |
+| Wolf max health multiplier | `scum.WolfMaxHealthMultiplier` | Multiplier for the maximum health of wolves (higher value = more health). Default 1, range 0.01 to 100. 1 keeps the normal amount. |
+| Max allowed killbox keycards - radiation zone | `scum.MaxAllowedKillboxKeycards_RadiationZone` | Maximum number of keycards that can be found in the Radiation Zone. Default 1, range 0 to 1024. |
+| Max allowed apex facility keycards - radiation zone | `scum.MaxAllowedApexFacilityKeycards_RadiationZone` | Maximum number of Apex Facility keycards that can be found in the Radiation Zone. Default 1, range 0 to 1024. |
+| Radiation enabled | `scum.RadiationEnabled` | Enables or disables the radiation mechanic on the server. |
+| Are animals allowed in world | `scum.AreAnimalsAllowedInWorld` | Enables or disables animal spawning in the world. |
+| Animal global density multiplier | `scum.AnimalGlobalDensityMultiplier` | Global multiplier for how many animals live on the map. Guides disagree on the default (0.5 or 1), so check the value in your file. Range 0 to 25. |
+| Max non-virtual animals in world | `scum.MaxNonVirtualAnimalsInWorld` | The most animals that can be physically present in the world at the same time (not counting animals the game keeps in a lightweight stored state). Guides disagree on the default (500 or 800), so check the value in your file. Range 0 to 2500. |
+| Bear prevalence multiplier | `scum.BearPrevalenceMultiplier` | Multiplier for bear spawn prevalence relative to other animals. Default 1, range 0 to 100. |
+| Boar prevalence multiplier | `scum.BoarPrevalenceMultiplier` | Multiplier for boar spawn prevalence relative to other animals. Default 1, range 0 to 100. |
+| Chicken prevalence multiplier | `scum.ChickenPrevalenceMultiplier` | Multiplier for chicken spawn prevalence relative to other animals. Default 1, range 0 to 100. |
+| Deer prevalence multiplier | `scum.DeerPrevalenceMultiplier` | Multiplier for deer spawn prevalence relative to other animals. Default 1, range 0 to 100. |
+| Donkey prevalence multiplier | `scum.DonkeyPrevalenceMultiplier` | Multiplier for donkey spawn prevalence relative to other animals. Default 1, range 0 to 100. |
+| Goat prevalence multiplier | `scum.GoatPrevalenceMultiplier` | Multiplier for goat spawn prevalence relative to other animals. Default 1, range 0 to 100. |
+| Horse prevalence multiplier | `scum.HorsePrevalenceMultiplier` | Multiplier for horse spawn prevalence relative to other animals. Default 1, range 0 to 100. |
+| Rabbit prevalence multiplier | `scum.RabbitPrevalenceMultiplier` | Multiplier for rabbit spawn prevalence relative to other animals. Default 1, range 0 to 100. |
+| Wolf prevalence multiplier | `scum.WolfPrevalenceMultiplier` | Multiplier for wolf spawn prevalence relative to other animals. Default 1, range 0 to 100. |
+| Fishing high activity zone rotation time | `scum.FishingHighActivityZoneRotationTime` | Time in hours to trigger the activation of a new set of fishing high activity zones. Activation happens on server restart. Range 0 to 8760 hours. -1 usually means the game uses its own built-in value. |
+| Fishing high activity zone amount | `scum.FishingHighActivityZoneAmount` | The percentage of fishing zones that are active as high-activity zones at once. -1 uses the game default, about 10%. Range -1 to 100. |
+
+### SCUM: World: Encounters & hordes
+
+33 settings in `ServerSettings.ini`, shown under **World: Encounters & hordes** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Encounter base character amount multiplier | `scum.EncounterBaseCharacterAmountMultiplier` | Multiplies the base character count in an encounter with the standard number per zone (LTZ (low-threat zone):1-2, MTZ (medium-threat zone):2-3, HTZ (high-threat zone):4-5) Example: Multiplier 3 for MTZ: between 3*2 and 3*3 puppets. Default 1, range 0 to 3. 1 keeps the normal amount. |
+| Encounter extra character per player multiplier | `scum.EncounterExtraCharacterPerPlayerMultiplier` | Increases base character count in an encounter according to the formula: Standard number + (number of players - 1) * Extra number per player * Multiplier. Default 1, range 0 to 3. 1 keeps the normal amount. |
+| Encounter extra character player cap multiplier | `scum.EncounterExtraCharacterPlayerCapMultiplier` | From which number of players the characters are no longer increased in an encounter (e.g.: Set this to 3 = From 3 players on the numbers of puppets in an encounter will remain the same). Default 1, range 0 to 3. 1 keeps the normal amount. |
+| Encounter character respawn time multiplier | `scum.EncounterCharacterRespawnTimeMultiplier` | Time between respawns according to the formula base value * multiplier (HTZ (high-threat zone) - From 0 to 0.5sec/MTZ (medium-threat zone) - From 60 to 120sec/LTZ (low-threat zone) - From 60 to 120sec). Default 1, range 0 to 100. 1 keeps the normal amount. |
+| Encounter character respawn batch size multiplier | `scum.EncounterCharacterRespawnBatchSizeMultiplier` | Multiplier for the size of respawn waves in an encounter according to the formula base value * multiplier (HTZ (high-threat zone) - 0 / MTZ (medium-threat zone) - From 1 to 2 entities per wave / LTZ (low-threat zone) - From 1 to 2 entities per wave). Default 1, range 0 to 3. 1 keeps the normal amount. |
+| Encounter character aggressive spawn chance override | `scum.EncounterCharacterAggressiveSpawnChanceOverride` | Percentage of characters that already spawn aggressively and attack the player directly (50=half of the zombies spawn aggressively). Range -1 to 100. |
+| Encounter character AI noise response radius multiplier | `scum.EncounterCharacterAINoiseResponseRadiusMultiplier` | Distance multiplier for puppets that hear the alarm like a zombie scream from other puppets according to the formula base value*multiplier (HTZ (high-threat zone) - 20m / MTZ (medium-threat zone)-20m/LTZ (low-threat zone)-30m). Default 1, range 0 to 100. |
+| Encounter horde group extra character per player multiplier | `scum.EncounterHordeGroupExtraCharacterPerPlayerMultiplier` | Increases the number of characters in a horde wave according to the formula: Standard number + (number of players - 1) * Extra number per player * Multiplier. Default 1, range 0 to 3. 1 keeps the normal amount. |
+| Encounter horde group extra character player cap multiplier | `scum.EncounterHordeGroupExtraCharacterPlayerCapMultiplier` | From which number of players the characters of a horde wave are no longer increased (e.g.: Set this to 3 = From 3 players on the numbers of puppets in a horde wave will remain the same). Default 1, range 0 to 3. 1 keeps the normal amount. |
+| Encounter horde extra character per player multiplier | `scum.EncounterHordeExtraCharacterPerPlayerMultiplier` | Increases total horde size according to formula: Standard number + (number of players - 1) * Extra number per player * Multiplier. Default 1, range 0 to 3. 1 keeps the normal amount. |
+| Encounter horde extra character player cap multiplier | `scum.EncounterHordeExtraCharacterPlayerCapMultiplier` | From which number of players the characters of a horde are no longer increased (e.g.: Set this to 3 = From 3 players on the total number of puppets in a horde will remain the same). Default 1, range 0 to 3. 1 keeps the normal amount. |
+| Encounter horde activation chance multiplier | `scum.EncounterHordeActivationChanceMultiplier` | Multiplier for the chance that an action that makes noise triggers a horde. Default 1, range 0 to 10000. 1 keeps the normal amount. |
+| Encounter horde noise check cooldown multiplier | `scum.EncounterHordeNoiseCheckCooldownMultiplier` | Cooldown multiplier for how often checks are made after Horde trigger (higher values = rare checks after Horde trigger). Default 1, range 0 to 10000. 1 keeps the normal amount. |
+| Encounter horde should play activation sound | `scum.EncounterHordeShouldPlayActivationSound` | Whether a sound should be played when a horde is triggered (on = sound is played). |
+| Encounter horde puppet horde activation scream override chance | `scum.EncounterHordePuppetHordeActivationScreamOverrideChance` | Chance that a Puppet's scream activates a Horde (-1=default value of 20%). Range -1 to 100. |
+| Encounter can remove low priority characters | `scum.EncounterCanRemoveLowPriorityCharacters` | Removes inactive puppets further away from the player to spawn new ones when spawn limit is reached (on = inactive puppets are removed). |
+| Encounter: cut size at the spawn limit | `scum.EncounterCanClampCharacterNumWhenOutOfResources` | Can set the puppet count of an encounter to the minimum value if the spawn limit has been reached (on = number can be reduced if the limit has been reached). |
+| Encounter character spawn distance min override low-threat zone | `scum.EncounterCharacterSpawnDistanceMinOverrideLTZ` | Determines the minimal character spawn distance from players; this applies to all LTZ (low-threat zone) encounters. Range 0 to 1000 m. -1 usually means the game uses its own built-in value. |
+| Encounter character spawn distance max override low-threat zone | `scum.EncounterCharacterSpawnDistanceMaxOverrideLTZ` | Determines maximum character spawn distance from players; this applies to all LTZ (low-threat zone) encounters. Range 0 to 1100 m. -1 usually means the game uses its own built-in value. |
+| Encounter character spawn distance min override large POI | `scum.EncounterCharacterSpawnDistanceMinOverrideLargePOI` | Determines the minimal character spawn distance from players; this applies to all large POI encounters. Range 0 to 200 m. -1 usually means the game uses its own built-in value. |
+| Encounter character spawn distance max override large POI | `scum.EncounterCharacterSpawnDistanceMaxOverrideLargePOI` | Determines maximum character spawn distance from players; this applies to all large POI encounters. Range 0 to 220 m. -1 usually means the game uses its own built-in value. |
+| Encounter character respawn distance min override low-threat zone | `scum.EncounterCharacterRespawnDistanceMinOverrideLTZ` | Determines the minimal character respawn distance from players; this applies for all LTZ (low-threat zone) encounters. Range 0 to 1000 m. -1 usually means the game uses its own built-in value. |
+| Encounter character respawn distance max override low-threat zone | `scum.EncounterCharacterRespawnDistanceMaxOverrideLTZ` | Determines the maximum character respawn distance from players; this applies to all LTZ (low-threat zone) encounters. Range 0 to 1100 m. -1 usually means the game uses its own built-in value. |
+| Encounter character respawn distance min override large POI | `scum.EncounterCharacterRespawnDistanceMinOverrideLargePOI` | Determines the minimal character respawn distance from players; this applies to all large POI encounters. Range 0 to 200 m. -1 usually means the game uses its own built-in value. |
+| Encounter character respawn distance max override large POI | `scum.EncounterCharacterRespawnDistanceMaxOverrideLargePOI` | Determines maximum character respawn distance from players; this applies for all large POI encounters. Range 0 to 220 m. -1 usually means the game uses its own built-in value. |
+| Encounter low-threat zone radius multiplier | `scum.EncounterLTZRadiusMultiplier` | Multiplies the effective size of LTZ (low-threat zone) encounters; by changing this, you can change the size of the area the encounter covers, giving you more area/distance to keep the characters owned by the encounter spawned. Default 1, range 1 to 10. 1 keeps the normal amount. |
+| Encounter medium-threat zone radius multiplier | `scum.EncounterMTZRadiusMultiplier` | Multiplies the effective size of MTZ (medium-threat zone) encounters; by changing this, you can change the size of the area the encounter covers, giving you more area/distance to keep the characters owned by the encounter spawned. Default 1, range 1 to 10. 1 keeps the normal amount. |
+| Encounter high-threat zone radius multiplier | `scum.EncounterHTZRadiusMultiplier` | Encounter radius multiplier (applied to ALL newly spawned encounters in high threat zones). Default 1, range 1 to 10. 1 keeps the normal amount. |
+| Encounter virtualized time override | `scum.EncounterVirtualizedTimeOverride` | Overrides the time an encounter spends in a virtualized state before being destroyed. Range 0 to 60 minutes. -1 usually means the game uses its own built-in value. |
+| Encounter zone activation distance multiplier | `scum.EncounterZoneActivationDistanceMultiplier` | Controls the distance from the edges of encounter zones (cities, POIs, ...) where encounters start being triggered. Default 1, range 0.1 to 10. 1 keeps the normal amount. |
+| Encounter global zone cooldown multiplier | `scum.EncounterGlobalZoneCooldownMultiplier` | Multiplier for the cooldown time after an encounter has ended before a new encounter can occur (higher values = longer time between encounters). Default 1. 1 keeps the normal amount. |
+| Encounter: no spawns near a killed player | `scum.EncounterEnableSpawnPreventionAreaSpawnOnCharacterDeath` | Prevents characters from spawning near a killed player (on = prevented). |
+| Encounter never respawn characters | `scum.EncounterNeverRespawnCharacters` | Whether characters should only spawn at the beginning of an encounter and not respawn (on = no respawn). |
+
+### SCUM: World: Misc
+
+5 settings in `ServerSettings.ini`, shown under **World: Misc** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Spawn encounters in threat zones ignoring base building | `scum.SpawnEncountersInThreatZonesIgnoringBaseBuilding` | Whether encounters are allowed to spawn in HTZ (high-threat zone) and MTZ (medium-threat zone) zones if base building is allowed there (in LTZ (low-threat zone), spawning is always prohibited if base building is allowed). |
+| Enable encounter manager low player count mode | `scum.EnableEncounterManagerLowPlayerCountMode` | Spawn behavior more in the direction of a pre-encounter manager (larger threat zones and more character spawns). WARNING: High server load, designed for single player! (Tested: Server RAM increased from 2GB to 9GB with 1 player). |
+| Should destroy entities outside map limits on restart | `scum.ShouldDestroyEntitiesOutsideMapLimitsOnRestart` | Whether objects outside the map boundaries should be destroyed on server restart (on = objects are destroyed). |
+| Enable locked loot containers | `scum.EnableLockedLootContainers` | Whether the lockers in the world should be locked or open (on = lockers are locked). |
+| Garage doors can be locked | `scum.DoorLockability.Garage` | Whether garage doors can be locked with locks (off = cannot be locked). |
+
+### SCUM: World: Time & light
+
+6 settings in `ServerSettings.ini`, shown under **World: Time & light** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Start time of day | `scum.StartTimeOfDay` | Time of day (ingame) the server starts after a wipe. Default 08:00:00, range 00:00:00 to 23:59:59. Written as hours:minutes:seconds (HH:MM:SS). |
+| Time of day speed | `scum.TimeOfDaySpeed` | How fast the in-game clock runs: higher values make days shorter. The default (3.84) gives days of about 6 real-time hours. Range 0 to 12. |
+| Nighttime darkness | `scum.NighttimeDarkness` | Darkness of the night (Lower values = brighter night). Default 0, range 0 to 1. |
+| Sunrise time | `scum.SunriseTime` | Sunrise time. Default 06:00:00, range 00:00:00 to 23:59:59. Written as hours:minutes:seconds (HH:MM:SS). |
+| Sunset time | `scum.SunsetTime` | Sunset time. Default 21:00:00, range 00:00:00 to 23:59:59. Written as hours:minutes:seconds (HH:MM:SS). |
+| Enable fog | `scum.EnableFog` | Renders various fogs on the island if this is switched on. |
+
+### SCUM: World: Custom map area
+
+5 settings in `ServerSettings.ini`, shown under **World: Custom map area** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Custom map enabled | `scum.CustomMapEnabled` | Whether a custom map limit (only part of the map playable) should be applied (on = map limit applied). |
+| Custom map center x coordinate | `scum.CustomMapCenterXCoordinate` | Center of your own map area X-coordinate. Default 0, range -922896 to 637685. |
+| Custom map center y coordinate | `scum.CustomMapCenterYCoordinate` | Center of your own map area Y-coordinate. Default 0, range -922896 to 619200. |
+| Custom map width | `scum.CustomMapWidth` | Width of your map in kilometers. Default 15.24 km, range 0 to 15.24 km. |
+| Custom map height | `scum.CustomMapHeight` | Height of your map in kilometers. Default 15.24 km, range 0 to 15.24 km. |
+
+### SCUM: World: Cargo drops
+
+7 settings in `ServerSettings.ini`, shown under **World: Cargo drops** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Cargo drop cooldown minimum | `scum.CargoDropCooldownMinimum` | Minimum time in minutes that must pass before a new Cargo Drop can spawn. Default 90 minutes, range 1 to 720 minutes. |
+| Cargo drop cooldown maximum | `scum.CargoDropCooldownMaximum` | Maximum time in minutes that can pass until a new Cargo Drop can spawn. Default 120 minutes, range 1 to 720 minutes. |
+| Cargo drop fall delay | `scum.CargoDropFallDelay` | Time in seconds until a CargoDrop starts falling after the announcement. Default 540 seconds, range 1 to 600 seconds. |
+| Cargo drop fall duration | `scum.CargoDropFallDuration` | Time in seconds that a CargoDrop takes to fall to the ground. Default 60 seconds, range 1 to 600 seconds. |
+| Cargo drop selfdestruct time | `scum.CargoDropSelfdestructTime` | Time in seconds until a CargoDrop explodes after spawning. Default 1200 seconds, range 1 to 3600 seconds. |
+| Cargo drop zombie encounter weight multiplier | `scum.CargoDropZombieEncounterWeightMultiplier` | Multiplier for the chance of encountering zombies during a CargoDrop (base value of 1=Zombies 90% and Dropship 10%). Default 1, range 0 to 100. 1 keeps the normal amount. |
+| Cargo drop dropship encounter weight multiplier | `scum.CargoDropDropshipEncounterWeightMultiplier` | Multiplier for the chance of encountering a dropship during a cargo drop (base value of 1=Zombies 90% and Dropship 10%). Default 1, range 0 to 100. 1 keeps the normal amount. |
+
+### SCUM: Respawn: Rules
+
+5 settings in `ServerSettings.ini`, shown under **Respawn: Rules** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Allow sector respawn | `scum.AllowSectorRespawn` | Whether it is allowed to spawn in the sector (with enough money depending on the settings). |
+| Allow shelter respawn | `scum.AllowShelterRespawn` | Whether it is allowed to spawn at the hideout (with enough money depending on the settings). |
+| Allow squadmate respawn | `scum.AllowSquadmateRespawn` | Whether it is allowed to spawn with other squad members (with enough money depending on the settings). |
+| Permadeath threshold | `scum.PermadeathThreshold` | Limit of negative account balance at which the player is deleted (permadeath). Default -2500, range -1000000 to 2147483646. |
+| Cloning sickness enabled | `scum.CloningSicknessEnabled` | Enables or disables cloning sickness. |
+
+### SCUM: Respawn: Prices
+
+7 settings in `ServerSettings.ini`, shown under **Respawn: Prices** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Random respawn price | `scum.RandomRespawnPrice` | Price to respawn at a random point. Default 250, range 0 to 100000. |
+| Sector respawn price | `scum.SectorRespawnPrice` | Price to respawn in a specific sector. Default 1000. A plain number is money; a number followed by g is gold (for example 2g). |
+| Shelter respawn price | `scum.ShelterRespawnPrice` | Price to respawn at the hideout. Default 1g. A plain number is money; a number followed by g is gold (for example 2g). |
+| Shelter respawn price outside flag area | `scum.ShelterRespawnPriceOutsideFlagArea` | Determines the price for the respawn on the shelters outside the flag area. Default 2g. A plain number is money; a number followed by g is gold (for example 2g). |
+| Random price per squadmate modifier | `scum.RandomPricePerSquadmateModifier` | Multiplier for the random respawn price per squad member (e.g. price is 100, 3 squad members and multiplier is 1, so 100*(3x1)=300). Default 0, range 0 to 10. |
+| Sector price per squadmate modifier | `scum.SectorPricePerSquadmateModifier` | Multiplier for the sector respawn price per squad member (e.g. price is 100, 3 squad members and multiplier is 1 so 100*(3x1)=300). Default 0, range 0 to 10. |
+| Shelter price per squadmate modifier | `scum.ShelterPricePerSquadmateModifier` | Multiplier for the hideout respawn price per squad member (e.g. price is 100, 3 squad members and multiplier is 1 so 100*(3x1)=300). Default 0, range 0 to 10. |
+
+### SCUM: Respawn: Timers
+
+12 settings in `ServerSettings.ini`, shown under **Respawn: Timers** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Random respawn initial time | `scum.RandomRespawnInitialTime` | Waiting time until random respawn is possible after the first death. Default 0 seconds, range 0 to 18000 seconds. |
+| Sector respawn initial time | `scum.SectorRespawnInitialTime` | Waiting time until the sector respawn is possible after the first death. Default 60 seconds, range 0 to 18000 seconds. |
+| Shelter respawn initial time | `scum.ShelterRespawnInitialTime` | Waiting time until the hideout respawn is possible after the first death. Default 60 seconds, range 0 to 18000 seconds. |
+| Squad respawn initial time | `scum.SquadRespawnInitialTime` | Waiting time until the squad member respawn is possible after the first death. Default 60 seconds, range 0 to 18000 seconds. |
+| Random respawn cooldown | `scum.RandomRespawnCooldown` | Cooldown time for random spawn after multiple deaths (added to the standard waiting time). Default 0 seconds, range 0 to 18000 seconds. |
+| Sector respawn cooldown | `scum.SectorRespawnCooldown` | Cooldown time for the sector spawn after multiple deaths (added to the standard waiting time). Default 240 seconds, range 0 to 18000 seconds. |
+| Shelter respawn cooldown | `scum.ShelterRespawnCooldown` | Cooldown time for the hideout spawn after multiple deaths (added to the standard waiting time). Default 240 seconds, range 0 to 18000 seconds. |
+| Squad respawn cooldown | `scum.SquadRespawnCooldown` | Cooldown time for squad member spawn after multiple deaths (added to the standard waiting time). Default 60 seconds, range 0 to 18000 seconds. |
+| Random cooldown reset multiplier | `scum.RandomCooldownResetMultiplier` | The cooldown time is multiplied by this to get the time after which the cooldown is reset to its default value for random respawn. Default 0, range 0 to 10. |
+| Sector cooldown reset multiplier | `scum.SectorCooldownResetMultiplier` | The cooldown time is multiplied by this to get the time after which the cooldown is reset to its default value for the sector respawn. Default 3, range 0 to 10. |
+| Shelter cooldown reset multiplier | `scum.ShelterCooldownResetMultiplier` | The cooldown time is multiplied by this to get the time after which the cooldown is reset to its default value for the hideout respawn. Default 3, range 0 to 10. |
+| Squad cooldown reset multiplier | `scum.SquadCooldownResetMultiplier` | The cooldown time is multiplied by this to get the time after which the cooldown is reset to its default value for the squad member respawn. Default 2, range 0 to 10. |
+
+### SCUM: Respawn: Suicide
+
+3 settings in `ServerSettings.ini`, shown under **Respawn: Suicide** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Commit suicide initial time | `scum.CommitSuicideInitialTime` | Waiting time until suicide is available. Default 0 seconds, range 0 to 18000 seconds. |
+| Commit suicide cooldown | `scum.CommitSuicideCooldown` | Cooldown time for suicide after use. Default 60 seconds, range 0 to 18000 seconds. |
+| Commit suicide cooldown reset multiplier | `scum.CommitSuicideCooldownResetMultiplier` | Multiplier for cooldown time after multiple uses before cooldown is reset. Default 1.25, range 0 to 10. |
+
+### SCUM: Vehicles: Fuel & battery
+
+6 settings in `ServerSettings.ini`, shown under **Vehicles: Fuel & battery** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Fuel drain from engine multiplier | `scum.FuelDrainFromEngineMultiplier` | Multiplier for fuel consumption of all engines. Default 1, range 0 to 10. |
+| Battery drain from engine multiplier | `scum.BatteryDrainFromEngineMultiplier` | Multiplier for battery consumption of all engines. Default 1, range 0 to 10. |
+| Battery drain from devices multiplier | `scum.BatteryDrainFromDevicesMultiplier` | Multiplier for battery consumption of all electrical devices. Default 1, range 0 to 10. |
+| Battery drain from inactivity multiplier | `scum.BatteryDrainFromInactivityMultiplier` | Multiplier for battery consumption due to inactivity of a device or motor. Default 1, range 0 to 10. |
+| Battery charge with alternator multiplier | `scum.BatteryChargeWithAlternatorMultiplier` | Multiplier for battery charging rate by alternator. Default 1, range 0 to 10. |
+| Battery charge with dynamo multiplier | `scum.BatteryChargeWithDynamoMultiplier` | Multiplier for battery charging rate by generators. Default 1, range 0 to 10. |
+
+### SCUM: Vehicles: Counts per type
+
+36 settings in `ServerSettings.ini`, shown under **Vehicles: Counts per type** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Kinglet duster max amount | `scum.KingletDusterMaxAmount` | Maximum number of aircraft. Default 2, range 0 to 128. |
+| Dirtbike max amount | `scum.DirtbikeMaxAmount` | Maximum number of motorcycles (dirt bikes). Default 20, range 0 to 128. |
+| Dirtbike max functional amount | `scum.DirtbikeMaxFunctionalAmount` | Maximum number of motorcycles (dirt bikes) that work (with engine). Default 15, range 0 to 128. |
+| Dirtbike min purchased amount | `scum.DirtbikeMinPurchasedAmount` | Minimum number of motorcycles (dirt bikes) available for sale at the dealer. Default 5, range 0 to 128. |
+| Laika max amount | `scum.LaikaMaxAmount` | Maximum number of Laika. Default 50, range 0 to 128. |
+| Laika max functional amount | `scum.LaikaMaxFunctionalAmount` | Maximum number of Laika that work (with engine). Default 20, range 0 to 128. |
+| Laika min purchased amount | `scum.LaikaMinPurchasedAmount` | Minimum number of Laika available for sale at the dealer. Default 5, range 0 to 128. |
+| Motorboat max amount | `scum.MotorboatMaxAmount` | Maximum number of boats (motorboat). Default 11, range 0 to 128. |
+| Motorboat min purchased amount | `scum.MotorboatMinPurchasedAmount` | Minimum number of boats (motorboats) available for sale at the dealer. Default 5, range 0 to 128. |
+| Wheelbarrow max amount | `scum.WheelbarrowMaxAmount` | Maximum number of wheelbarrows. Default 20, range 0 to 128. |
+| Wheelbarrow min purchased amount | `scum.WheelbarrowMinPurchasedAmount` | Minimum number of wheelbarrows available for sale at the dealer. Default 10, range 0 to 128. |
+| Wolfswagen max amount | `scum.WolfswagenMaxAmount` | Maximum number of Wolfswagen. Default 50, range 0 to 128. |
+| Wolfswagen max functional amount | `scum.WolfswagenMaxFunctionalAmount` | Maximum number of Wolfswagen that work (with engine). Default 20, range 0 to 128. |
+| Wolfswagen min purchased amount | `scum.WolfswagenMinPurchasedAmount` | Minimum number of Wolfswagen available for sale at the dealer. Default 5, range 0 to 128. |
+| Bicycle max amount | `scum.BicycleMaxAmount` | Maximum number of bicycles. Default 20, range 0 to 128. |
+| Bicycle min purchased amount | `scum.BicycleMinPurchasedAmount` | Minimum number of bicycles available for sale at the dealer. Default 5, range 0 to 128. |
+| Rager max amount | `scum.RagerMaxAmount` | Maximum number of ragers. Default 50, range 0 to 128. |
+| Rager max functional amount | `scum.RagerMaxFunctionalAmount` | Maximum number of working ragers (with engine). Default 20, range 0 to 128. |
+| Rager min purchased amount | `scum.RagerMinPurchasedAmount` | Minimum number of Ragers available for sale at the dealer. Default 5, range 0 to 128. |
+| Cruiser max amount | `scum.CruiserMaxAmount` | Maximum number of cruisers. Default 30, range 0 to 128. |
+| Cruiser max functional amount | `scum.CruiserMaxFunctionalAmount` | Maximum number of cruisers that work (with engine). Default 20, range 0 to 128. |
+| Cruiser min purchased amount | `scum.CruiserMinPurchasedAmount` | Minimum number of cruisers available for sale at the dealer. Default 5, range 0 to 128. |
+| RIS quad max amount | `scum.RisMaxAmount` | Maximum number of quads (RIS). Default 50, range 0 to 128. |
+| RIS quad max working amount | `scum.RisMaxFunctionalAmount` | Maximum number of quads (RIS) that work (with engine). Default 20, range 0 to 128. |
+| RIS quad min for sale | `scum.RisMinPurchasedAmount` | Minimum number of quads (RIS) available for sale at the dealer. Default 5, range 0 to 128. |
+| Dinghy max amount | `scum.DinghyMaxAmount` | Maximum amount of dinghies on the server. Default 14, range 0 to 128. |
+| Dinghy min purchased amount | `scum.DinghyMinPurchasedAmount` | Minimum amount of Dinghies or dinghy engines available to buy. Default 5, range 0 to 128. |
+| SUP max amount | `scum.SUPMaxAmount` | Maximum number of SUPs. Default 20, range 0 to 128. |
+| SUP min purchased amount | `scum.SUPMinPurchasedAmount` | Minimum number of SUPs available for sale at the dealer. Default 5, range 0 to 128. |
+| Kinglet mariner max amount | `scum.KingletMarinerMaxAmount` | Maximum number of seaplanes (Kinglet Mariner). Default 1, range 0 to 128. |
+| Kinglet mariner min purchased amount | `scum.KingletMarinerMinPurchasedAmount` | Minimum number of seaplanes (Kinglet Mariner) available for sale at the dealer. Default 0, range 0 to 128. |
+| Tractor max amount | `scum.TractorMaxAmount` | Maximum number of tractors. Default 50, range 0 to 128. |
+| Tractor min purchased amount | `scum.TractorMinPurchasedAmount` | Minimum number of tractors available for sale at the dealer. Default 5, range 0 to 128. |
+| Sidecar bike max amount | `scum.SidecarBikeMaxAmount` | Maximum amount of Sidecar bikes on the server. Default 25, range 0 to 128. |
+| Sidecar bike max functional amount | `scum.SidecarBikeMaxFunctionalAmount` | Maximum amount of functional Sidecar bikes spawning. Default 15, range 0 to 128. |
+| Sidecar bike min purchased amount | `scum.SidecarBikeMinPurchasedAmount` | Minimum amount of Sidecar bikes or Sidecar bike engines available to buy. Default 5, range 0 to 128. |
+
+### SCUM: Vehicles: Cleanup & logging
+
+3 settings in `ServerSettings.ini`, shown under **Vehicles: Cleanup & logging** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Maximum time of vehicle inactivity | `scum.MaximumTimeOfVehicleInactivity` | Time until a vehicle is considered inactive and removed from the world. Default 240:00:00, range 00:00:00 to 2400:00:00. Written as hours:minutes:seconds (HH:MM:SS). |
+| Maximum time for vehicles in forbidden zones | `scum.MaximumTimeForVehiclesInForbiddenZones` | Time that vehicles may remain in prohibited zones (e.g. dealers) before they are removed. Default 02:00:00, range 00:00:00 to 2400:00:00. Written as hours:minutes:seconds (HH:MM:SS). |
+| Log vehicle destroyed | `scum.LogVehicleDestroyed` | Whether a log should be created about the destroyed vehicles (on = log is created). |
+
+### SCUM: Damage: Player damage
+
+4 settings in `ServerSettings.ini`, shown under **Damage: Player damage** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Human to human damage multiplier | `scum.HumanToHumanDamageMultiplier` | Multiplier for damage between two people (higher = more damage) (also affects NPCs). Default 1, range 0 to 10. 1 keeps the normal amount. |
+| Human to human armed melee damage multiplier | `scum.HumanToHumanArmedMeleeDamageMultiplier` | Multiplier for damage between two people with melee weapons (higher = more damage) (also affects NPCs). Default 1, range 0 to 10. 1 keeps the normal amount. |
+| Human to human unarmed melee damage multiplier | `scum.HumanToHumanUnarmedMeleeDamageMultiplier` | Multiplier for damage between two people with fists (higher = more damage). Default 1, range 0 to 10. 1 keeps the normal amount. |
+| Human to human throwing damage multiplier | `scum.HumanToHumanThrowingDamageMultiplier` | Multiplier for damage between two people with thrown objects (higher = more damage). Default 1, range 0 to 10. 1 keeps the normal amount. |
+
+### SCUM: Damage: Mechs, dropships & puppets
+
+11 settings in `ServerSettings.ini`, shown under **Damage: Mechs, dropships & puppets** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Sentry damage multiplier | `scum.SentryDamageMultiplier` | Multiplier for damage caused by the sentries (higher = more damage). Default 1, range 0 to 100. 1 keeps the normal amount. |
+| Sentry railgun damage multiplier | `scum.SentryRailgunDamageMultiplier` | Multiplier for damage that sentries cause with their railgun (higher = more damage). Default 1, range 0 to 100. 1 keeps the normal amount. |
+| Sentry grenade damage multiplier | `scum.SentryGrenadeDamageMultiplier` | Multiplier for damage caused by sentries' grenades (higher = more damage). Default 1, range 0 to 100. 1 keeps the normal amount. |
+| Base building attacker sentry damage multiplier | `scum.BaseBuildingAttackerSentryDamageMultiplier` | Multiplier for damage that base building elements receive in an encounter (higher = more damage). Default 1, range 0 to 100. 1 keeps the normal amount. |
+| Base building attacker sentry railgun damage multiplier | `scum.BaseBuildingAttackerSentryRailgunDamageMultiplier` | Multiplier for damage that Mechs inflict with the rail gun in the base building Encounter (higher = more damage). Default 1, range 0 to 100. 1 keeps the normal amount. |
+| Base building attacker sentry grenade damage multiplier | `scum.BaseBuildingAttackerSentryGrenadeDamageMultiplier` | Multiplier for damage caused by mechs with grenades in base building encounters (higher = more damage). Default 1, range 0 to 100. 1 keeps the normal amount. |
+| Sentry base building damage multiplier | `scum.SentryBaseBuildingDamageMultiplier` | Multiplier for damage caused by Mechs in base building Encounters (higher = more damage). Default 1, range 0 to 100. 1 keeps the normal amount. |
+| Dropship damage multiplier | `scum.DropshipDamageMultiplier` | Multiplier for damage that dropships cause to characters (higher = more damage). Default 1, range 0 to 100. 1 keeps the normal amount. |
+| Dropship railgun damage multiplier | `scum.DropshipRailgunDamageMultiplier` | Multiplier for damage caused by a dropship's rail gun (higher = more damage). Default 1, range 0 to 100. 1 keeps the normal amount. |
+| Dropship base building elements damage multiplier | `scum.DropshipBaseBuildingElementsDamageMultiplier` | Multiplier for damage that dropships cause to base building elements (higher = more damage). Default 1, range 0 to 100. 1 keeps the normal amount. |
+| Zombie damage multiplier | `scum.ZombieDamageMultiplier` | Multiplier for damage caused by zombies (higher = more damage). Default 1, range 0 to 10. 1 keeps the normal amount. |
+
+### SCUM: Damage: Decay & locks
+
+4 settings in `ServerSettings.ini`, shown under **Damage: Decay & locks** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Item decay damage multiplier | `scum.ItemDecayDamageMultiplier` | Multiplier for the damage that items gradually receive (higher = items decay faster) (value 1.0= roughly 1.4% decay per 24 hours). Default 1, range 0 to 10. 1 keeps the normal amount. |
+| Food decay damage multiplier | `scum.FoodDecayDamageMultiplier` | Food decay multiplier (higher = food decays faster). Default 1, range 0 to 10. 1 keeps the normal amount. |
+| Weapon decay damage on firing | `scum.WeaponDecayDamageOnFiring` | Multiplier for the wear and tear of a weapon when firing (higher = weapons wear out faster). Default 1, range 0 to 10. 1 keeps the normal amount. |
+| Lock protection damage multiplier | `scum.LockProtectionDamageMultiplier` | Multiplier for the damage caused by locks (higher = more damage) (excluding killbox locks). Default 1, range 0 to 10. 1 keeps the normal amount. |
+
+### SCUM: Features: Flags & base building
+
+26 settings in `ServerSettings.ini`, shown under **Features: Flags & base building** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Flag overtake duration | `scum.FlagOvertakeDuration` | How long it takes to capture an enemy flag. Default 24:00:00, range 00:00:01 to 2400:00:00. Written as hours:minutes:seconds (HH:MM:SS). |
+| Maximum amount of elements per flag | `scum.MaximumAmountOfElementsPerFlag` | Maximum number of base elements that can be built per flag. Default 100, range 1 to 9999. |
+| Extra elements per flag for additional squad member | `scum.ExtraElementsPerFlagForAdditionalSquadMember` | Additional elements that can be built per flag per squad member except the first. Default 25, range 1 to 100. |
+| Maximum number of expanded elements per flag | `scum.MaximumNumberOfExpandedElementsPerFlag` | By how many elements the total number of possible elements can be expanded using base expansion kits. Default 75, range 1 to 500. |
+| Allow multiple flags per player | `scum.AllowMultipleFlagsPerPlayer` | Whether players may build multiple flags or only one (on = multiple flags possible). |
+| Allow flags on base building pieces | `scum.AllowFlagPlacementOnBBElements` | Whether flags may be built on base building elements (on = flags on base elements possible). |
+| Chest acquisition duration | `scum.ChestAcquisitionDuration` | Time before an enemy chest becomes your property if it is in your flag area. Default 24, range 0 to 9999. |
+| Weapon rack max amount per flag area | `scum.WeaponRackMaxAmountPerFlagArea` | Maximum number of weapon racks per flag area. Range 0 to 10. -1 usually means the game uses its own built-in value. |
+| Weapon rack start decaying if flag area has more than | `scum.WeaponRackStartDecayingIfFlagAreaHasMoreThan` | Weapon racks start to decay faster when there are more than X per flag area. Range 0 to 10. -1 usually means the game uses its own built-in value. |
+| Wall weapon rack max amount per flag area | `scum.WallWeaponRackMaxAmountPerFlagArea` | Maximum number of wall weapon racks per flag area. Range 0 to 10. -1 usually means the game uses its own built-in value. |
+| Wall weapon rack start decaying if flag area has more than | `scum.WallWeaponRackStartDecayingIfFlagAreaHasMoreThan` | Wall weapon racks start to decay faster when there are more than X per flag area. Range 0 to 10. -1 usually means the game uses its own built-in value. |
+| Well max amount per flag area | `scum.WellMaxAmountPerFlagArea` | Maximum number of wells per flag area. Range 0 to 10. -1 usually means the game uses its own built-in value. |
+| Well start decaying if flag area has more than | `scum.WellStartDecayingIfFlagAreaHasMoreThan` | Wells begin to decay when there are more than X per flag area. Range 0 to 10. -1 usually means the game uses its own built-in value. |
+| Turret max amount per flag area | `scum.TurretMaxAmountPerFlagArea` | Maximum number of turrets per flag area. Range 0 to 10. -1 usually means the game uses its own built-in value. |
+| Turret start decaying if flag area has more than | `scum.TurretStartDecayingIfFlagAreaHasMoreThan` | Turrets start to decay faster if there are more than X per flag area. Range 0 to 10. -1 usually means the game uses its own built-in value. |
+| Oven max amount per flag area | `scum.OvenMaxAmountPerFlagArea` | Determines the maximum number of ovens per flag area. Range 0 to 10. -1 usually means the game uses its own built-in value. |
+| Oven start decaying if flag area has more than | `scum.OvenStartDecayingIfFlagAreaHasMoreThan` | Determines the maximum number of ovens per flag area before they start decaying at an increased pace. Range 0 to 10. -1 usually means the game uses its own built-in value. |
+| Garden max amount per flag area | `scum.GardenMaxAmountPerFlagArea` | Maximum number of gardens per flag area. Range 0 to 10. -1 usually means the game uses its own built-in value. |
+| Allow floor placement on half and low walls | `scum.AllowFloorPlacementOnHalfAndLowWalls` | Allows placing floors on half-height or low walls (on = allowed). |
+| Allow wall placement on half and low walls | `scum.AllowWallPlacementOnHalfAndLowWalls` | Allows placing walls on half-height or low walls (on = allowed). |
+| Base building destruction log damage threshold | `scum.BaseBuildingDestructionLogDamageThreshold` | Damage threshold for the base building destruction log, which outputs the last 10 instances of damage for each destroyed base building element. Only damage instances that would make more or the same damage as the threshold are logged. Default 20, range 0 to 999. |
+| Number of allowed flags per player | `scum.NumberOfAllowedFlagsPerPlayer` | How many flags each player may place. Only used when multiple flags per player are allowed. Default 10, range 1 to 30. |
+| Smoker max amount per flag area | `scum.SmokerMaxAmountPerFlagArea` | Maximum number of smokers per flag area. Range 0 to 10. -1 usually means the game uses its own built-in value. |
+| Smoker start decaying if flag area has more than | `scum.SmokerStartDecayingIfFlagAreaHasMoreThan` | Maximum number of smokers per flag area before they start decaying at an increased pace. Range 0 to 10. -1 usually means the game uses its own built-in value. |
+| Tombstone max amount per squad | `scum.TombstoneMaxAmountPerSquad` | The most tombstones one squad may have. -1 means no limit. Guides disagree on the default (-1 or 3), so check the value in your file. Range -1 to 100. |
+| Base elements decay rate multiplier | `scum.BaseElementsDecayRateMultiplier` | Multiplier for the default base element decay rate of 672 hours. Setting 0 disables decay entirely. Values greater than 1 cause faster decay; values less than 1 cause slower decay. Default 1, range 0 to 10. 1 keeps the normal amount. |
+
+### SCUM: Features: Raid protection
+
+10 settings in `ServerSettings.ini`, shown under **Features: Raid protection** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Raid protection type | `scum.RaidProtectionType` | Which kind of raid protection the server uses: off, only while everyone is offline, set by each flag, or one schedule for the whole server (which reads RaidTimes.json). Default 0 (off). Choices: `0` (Off), `1` (Offline: protected while everyone is offline), `2` (Flag-specific: each flag sets its own protection), `3` (Global: one schedule for the whole server (RaidTimes.json)). |
+| Raid protection enable log | `scum.RaidProtectionEnableLog` | Enables logging for raid protection events (on = active). |
+| Raid protection flag specific change setting cooldown | `scum.RaidProtectionFlagSpecificChangeSettingCooldown` | Cooldown between setting new times for flag-specific raid protection. Default 120:00:00, range 00:00:00 to 240:00:00. Written as hours:minutes:seconds (HH:MM:SS). |
+| Raid protection flag specific change setting price | `scum.RaidProtectionFlagSpecificChangeSettingPrice` | Price to skip cooldown for flag-specific raid protection. Default 10g. A plain number is money; a number followed by g is gold (for example 2g). |
+| Raid protection flag specific max protection time | `scum.RaidProtectionFlagSpecificMaxProtectionTime` | Maximum duration of flag-specific raid protection. Default 08:00:00, range 00:00:00 to 08:00:00. Written as hours:minutes:seconds (HH:MM:SS). |
+| Raid protection offline protection start delay | `scum.RaidProtectionOfflineProtectionStartDelay` | Time the base is still vulnerable after the last player has logged out. Default 00:30:00, range 00:00:00 to 23:59:59. Written as hours:minutes:seconds (HH:MM:SS). |
+| Raid protection offline max protection time | `scum.RaidProtectionOfflineMaxProtectionTime` | Maximum protected time for offline raid protection. Range 00:00:00 to 2400:00:00. Written as hours:minutes:seconds (HH:MM:SS). |
+| Raid protection global should show raid times message | `scum.RaidProtectionGlobalShouldShowRaidTimesMessage` | Should clients be shown a message about the global raid time (on = yes). |
+| Raid protection global should show raid announcement message | `scum.RaidProtectionGlobalShouldShowRaidAnnouncementMessage` | Should clients be shown a raid announcement message (on = yes). |
+| Raid protection global should show raid start end messages | `scum.RaidProtectionGlobalShouldShowRaidStartEndMessages` | Should clients be shown a start and end message (on = yes). |
+
+### SCUM: Features: Fuel & water supply
+
+16 settings in `ServerSettings.ini`, shown under **Features: Fuel & water supply** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Water periodic max amount multiplier | `scum.WaterPeriodicMaxAmountMultiplier` | Multiplier for the maximum water quantity in base building water tanks (base building well). Default 1, range 0 to 10. 1 keeps the normal amount. |
+| Water periodic replenish amount multiplier | `scum.WaterPeriodicReplenishAmountMultiplier` | Multiplier for the amount of water that is refilled at certain intervals (base building well). Default 1, range 0 to 10. 1 keeps the normal amount. |
+| Water periodic replenish interval multiplier | `scum.WaterPeriodicReplenishIntervalMultiplier` | Multiplier for the intervals at which water is refilled (base building well). Default 1, range 0 to 10. 1 keeps the normal amount. |
+| Water proximity replenish amount multiplier | `scum.WaterProximityReplenishAmountMultiplier` | Multiplier for the amount of water refilled in wells around the world (World Wells). Default 1, range 0 to 10. 1 keeps the normal amount. |
+| Water proximity replenish chance multiplier | `scum.WaterProximityReplenishChanceMultiplier` | Multiplier for the chance that a world well is refilled (World Well). Default 1, range 0 to 10. 1 keeps the normal amount. |
+| Water proximity replenish timeout multiplier | `scum.WaterProximityReplenishTimeoutMultiplier` | Multiplier for the time between individual checks whether a world well is refilled (World Well). Default 1, range 0 to 10. 1 keeps the normal amount. |
+| Gasoline price per unit multiplier | `scum.GasolinePricePerUnitMultiplier` | Multiplier for the fuel price per liter at gas stations (1=approx. $15 per liter). Default 1, range 0 to 10. 1 keeps the normal amount. |
+| Gasoline periodic initial amount multiplier | `scum.GasolinePeriodicInitialAmountMultiplier` | Multiplier for the initial amount of fuel at petrol stations. Default 1, range 0 to 10. 1 keeps the normal amount. |
+| Gasoline periodic max amount multiplier | `scum.GasolinePeriodicMaxAmountMultiplier` | Multiplier for the maximum amount of fuel in petrol stations. Default 1, range 0 to 10. 1 keeps the normal amount. |
+| Gasoline periodic replenish amount multiplier | `scum.GasolinePeriodicReplenishAmountMultiplier` | Multiplier for the amount of fuel that is refilled at certain intervals in petrol stations. Default 1, range 0 to 10. 1 keeps the normal amount. |
+| Gasoline periodic replenish interval multiplier | `scum.GasolinePeriodicReplenishIntervalMultiplier` | Multiplier for the interval at which petrol stations are refilled with fuel. Default 1, range 0 to 10. 1 keeps the normal amount. |
+| Propane price per unit multiplier | `scum.PropanePricePerUnitMultiplier` | Multiplier for the propane price per liter at gas stations. Default 1, range 0 to 10. 1 keeps the normal amount. |
+| Propane periodic initial amount multiplier | `scum.PropanePeriodicInitialAmountMultiplier` | Multiplier for the initial amount of propane in propane tanks at gas stations. Default 1, range 0 to 10. 1 keeps the normal amount. |
+| Propane periodic max amount multiplier | `scum.PropanePeriodicMaxAmountMultiplier` | Multiplier for the maximum amount of propane in gas stations. Default 1, range 0 to 10. 1 keeps the normal amount. |
+| Propane periodic replenish amount multiplier | `scum.PropanePeriodicReplenishAmountMultiplier` | Multiplier for the amount of propane that is refilled at certain intervals in gas stations. Default 1, range 0 to 10. 1 keeps the normal amount. |
+| Propane periodic replenish interval multiplier | `scum.PropanePeriodicReplenishIntervalMultiplier` | Multiplier for the interval at which gas stations are refilled with propane. Default 1, range 0 to 10. 1 keeps the normal amount. |
+
+### SCUM: Features: Loot spawning & farming
+
+8 settings in `ServerSettings.ini`, shown under **Features: Loot spawning & farming** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Spawner probability multiplier | `scum.SpawnerProbabilityMultiplier` | Multiplier for the probability that a world item spawns (items that are lying around freely). Default 1, range 0.1 to 10. 1 keeps the normal amount. |
+| Examine spawner probability multiplier | `scum.ExamineSpawnerProbabilityMultiplier` | Multiplier for the probability that a container you examine will spawn an item. Default 1, range 0.1 to 10. 1 keeps the normal amount. |
+| Examine spawner expiration time multiplier | `scum.ExamineSpawnerExpirationTimeMultiplier` | Multiplier for the time without a player nearby (50m) after which a container decides whether it contains items (1=60min;0.5=30min). Default 1, range 0.1 to 10. 1 keeps the normal amount. |
+| Spawner expiration time multiplier | `scum.SpawnerExpirationTimeMultiplier` | Multiplier for the time without players nearby (50m) after which a world spawner decides whether to spawn items (1=60min;0.5=30min). Default 1, range 0.1 to 10. 1 keeps the normal amount. |
+| Enable item cooldown groups | `scum.EnableItemCooldownGroups` | Whether certain items should be grouped into cooldown groups to prevent item farming (cooldown when certain rare items are found, on the same group of items). |
+| Item cooldown groups duration multiplier | `scum.ItemCooldownGroupsDurationMultiplier` | Multiplier for the time of cooldown groups before items from the group can be found again (higher values = higher cooldown). Default 1, range 0.1 to 10. 1 keeps the normal amount. |
+| Plant harvest examine time multiplier | `scum.PlantHarvestExamineTimeMultiplier` | Multiplier for the expiration time of harvested products in plants after they have grown. Default 1, range 0.2 to 10. 1 keeps the normal amount. |
+| First plant harvest additional chance | `scum.FirstPlantHarvestAdditionalChance` | Percent chance that harvest products spawn at the first plant harvest (1=100%). Default 1, range 0 to 1. |
+
+### SCUM: Features: Squads
+
+10 settings in `ServerSettings.ini`, shown under **Features: Squads** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Squad size at INT level 1 | `scum.SquadMemberCountAtIntLevel1` | Number of possible team members at INT level 1. Default 2, range 0 to 100. |
+| Squad size at INT level 2 | `scum.SquadMemberCountAtIntLevel2` | Number of possible team members at INT level 2. Default 4, range 0 to 100. |
+| Squad size at INT level 3 | `scum.SquadMemberCountAtIntLevel3` | Number of possible team members at INT level 3. Default 6, range 0 to 100. |
+| Squad size at INT level 4 | `scum.SquadMemberCountAtIntLevel4` | Number of possible team members at INT level 4. Default 8, range 0 to 100. |
+| Squad size at INT level 5 | `scum.SquadMemberCountAtIntLevel5` | Number of possible team members at INT level 5. Default 10, range 0 to 100. |
+| Squad member count limit for punishment | `scum.SquadMemberCountLimitForPunishment` | Maximum number of squad mates for which prisoners will not receive a penalty. Default 2, range 0 to 64. |
+| Squad probation duration | `scum.RTSquadProbationDuration` | Probationary period for a squad member who leaves and rejoins the squad. Default 1 day, range 0 to 100 days. |
+| Squad money penalty per prev squad member | `scum.SquadMoneyPenaltyPerPrevSquadMember` | Money that prisoners have to pay per squad member in a former squad to join or form a new one. Default 0, range 0 to 100000. |
+| Squad fame points penalty per prev squad member | `scum.SquadFamePointsPenaltyPerPrevSquadMember` | Fame points that must be lost per squad member in a former squad to join or form a new one. Default 0, range 0 to 1000. |
+| Enable squad member name widget | `scum.EnableSquadMemberNameWidget` | Whether a widget with the name should be displayed above the heads of team members (on = Widget on). |
+
+### SCUM: Features: Skills
+
+22 settings in `ServerSettings.ini`, shown under **Features: Skills** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Archery skill multiplier | `scum.ArcherySkillMultiplier` | Multiplier for XP gain in archery (higher = more xp per action). Default 1, range 0 to 10. 1 keeps the normal amount. |
+| Aviation skill multiplier | `scum.AviationSkillMultiplier` | Multiplier for XP gain when flying aircraft. Default 1, range 0 to 10. 1 keeps the normal amount. |
+| Awareness skill multiplier | `scum.AwarenessSkillMultiplier` | Multiplier for XP gain during perception training. Default 1, range 0 to 10. 1 keeps the normal amount. |
+| Brawling skill multiplier | `scum.BrawlingSkillMultiplier` | Multiplier for XP gain in fistfights. Default 1, range 0 to 10. 1 keeps the normal amount. |
+| Camouflage skill multiplier | `scum.CamouflageSkillMultiplier` | Multiplier for XP gain when camouflaging. Default 1, range 0 to 10. 1 keeps the normal amount. |
+| Cooking skill multiplier | `scum.CookingSkillMultiplier` | Multiplier for XP gain when cooking. Default 1, range 0 to 10. 1 keeps the normal amount. |
+| Demolition skill multiplier | `scum.DemolitionSkillMultiplier` | Multiplier for XP gain in explosives crafting. Default 1, range 0 to 10. 1 keeps the normal amount. |
+| Driving skill multiplier | `scum.DrivingSkillMultiplier` | Multiplier for XP gain when driving a car. Default 1, range 0 to 10. 1 keeps the normal amount. |
+| Endurance skill multiplier | `scum.EnduranceSkillMultiplier` | Multiplier for XP gain in endurance activities. Default 1, range 0 to 10. 1 keeps the normal amount. |
+| Engineering skill multiplier | `scum.EngineeringSkillMultiplier` | Multiplier for XP gain in engineering. Default 1, range 0 to 10. 1 keeps the normal amount. |
+| Farming skill multiplier | `scum.FarmingSkillMultiplier` | Multiplier for XP gain when farming. Default 1, range 0 to 10. 1 keeps the normal amount. |
+| Handgun skill multiplier | `scum.HandgunSkillMultiplier` | Multiplier for XP gain when shooting with a pistol. Default 1, range 0 to 10. 1 keeps the normal amount. |
+| Medical skill multiplier | `scum.MedicalSkillMultiplier` | Multiplier for XP gain from medical actions. Default 1, range 0 to 10. 1 keeps the normal amount. |
+| Melee weapons skill multiplier | `scum.MeleeWeaponsSkillMultiplier` | Multiplier for XP gain with melee weapons. Default 1, range 0 to 10. 1 keeps the normal amount. |
+| Motorcycle skill multiplier | `scum.MotorcycleSkillMultiplier` | Multiplier for XP gain when riding a motorcycle. Default 1, range 0 to 10. 1 keeps the normal amount. |
+| Rifles skill multiplier | `scum.RiflesSkillMultiplier` | Multiplier for XP gain when shooting rifles. Default 1, range 0 to 10. 1 keeps the normal amount. |
+| Running skill multiplier | `scum.RunningSkillMultiplier` | Multiplier for XP gain while running. Default 1, range 0 to 10. 1 keeps the normal amount. |
+| Sniping skill multiplier | `scum.SnipingSkillMultiplier` | Multiplier for XP gain during sniper training. Default 1, range 0 to 10. 1 keeps the normal amount. |
+| Stealth skill multiplier | `scum.StealthSkillMultiplier` | Multiplier for XP gain when sneaking. Default 1, range 0 to 10. 1 keeps the normal amount. |
+| Survival skill multiplier | `scum.SurvivalSkillMultiplier` | Multiplier for XP gain in survival training. Default 1, range 0 to 10. 1 keeps the normal amount. |
+| Thievery skill multiplier | `scum.ThieverySkillMultiplier` | Multiplier for XP gain when stealing. Default 1, range 0 to 10. 1 keeps the normal amount. |
+| Enable selected skills promotion | `scum.EnableSelectedSkillsPromotion` | Enable or disable experience gain boosts from skills related to the current campaign. |
+
+### SCUM: Features: Quests
+
+8 settings in `ServerSettings.ini`, shown under **Features: Quests** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Quests enabled | `scum.QuestsEnabled` | Whether the quest system is active (on = active). |
+| Quests global cycle duration | `scum.QuestsGlobalCycleDuration` | Duration of the quest cycle. Default 23:59:59, range 00:00:01 to 2400:00:00. Written as hours:minutes:seconds (HH:MM:SS). |
+| Max quests per cycle per trader | `scum.MaxQuestsPerCyclePerTrader` | Maximum number of quests that can be accepted per merchant per cycle. Default 3, range 1 to 64. |
+| Max simultaneous quests per trader | `scum.MaxSimultaneousQuestsPerTrader` | Maximum number of quests accepted simultaneously per merchant. Default 1, range 1 to 64. |
+| Quests trader refill cooldown | `scum.QuestsTraderRefillCooldown` | Cooldown for new quests from merchants. Default 03:00:00, range 00:00:01 to 2400:00:00. Written as hours:minutes:seconds (HH:MM:SS). |
+| Quests phone refill cooldown | `scum.QuestsPhoneRefillCooldown` | Cooldown for new quests on smartphones. Default 01:00:00, range 00:00:01 to 2400:00:00. Written as hours:minutes:seconds (HH:MM:SS). |
+| Quests notice board refill cooldown | `scum.QuestsNoticeBoardRefillCooldown` | Cooldown for new quests on notice boards. Default 02:00:00, range 00:00:01 to 2400:00:00. Written as hours:minutes:seconds (HH:MM:SS). |
+| Quest requirements block tradeable items | `scum.QuestRequirementsBlockTradeableItems` | Whether the purchase of quest-relevant items is blocked (on = blocked). |
+
+### SCUM: Features: Turret targets
+
+6 settings in `ServerSettings.ini`, shown under **Features: Turret targets** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Turrets attack prisoners | `scum.TurretsAttackPrisoners` | Whether gun turrets attack prisoners (on = yes). |
+| Turrets attack puppets | `scum.TurretsAttackPuppets` | Whether turrets attack zombies (on = yes). |
+| Turrets attack vehicles | `scum.TurretsAttackVehicles` | Whether turrets attack vehicles (on = yes). |
+| Turrets attack sentries | `scum.TurretsAttackSentries` | Whether turrets attack Mechs (on = yes). |
+| Turrets attack animals | `scum.TurretsAttackAnimals` | Whether gun turrets attack animals (on = yes). |
+| Turrets attack armed NPCs | `scum.TurretsAttackArmedNPCs` | Whether turrets attack human NPCs (on = yes). |
+
+### SCUM: Features: Player rules & HUD
+
+19 settings in `ServerSettings.ini`, shown under **Features: Player rules & HUD** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Stamina drain on jump multiplier | `scum.StaminaDrainOnJumpMultiplier` | Multiplier for stamina costs when jumping (higher = more stamina costs). Default 1, range 0 to 5. 1 keeps the normal amount. |
+| Stamina drain on climb multiplier | `scum.StaminaDrainOnClimbMultiplier` | Multiplier for stamina costs when climbing (higher = more stamina costs). Default 1, range 0 to 5. 1 keeps the normal amount. |
+| Disable exhaustion | `scum.DisableExhaustion` | Whether exhaustion can be accumulated (on = disables exhaustion). |
+| Body simulation speed multiplier | `scum.BodySimulationSpeedMultiplier` | Multiplier for body simulation speed (digestion, etc.). Default 3.84, range 0.1 to 8. |
+| Maintain items expiration time | `scum.MaintainItemsExpirationTime` | Expiration time of maintenance items (beds, etc.) before they expire if no interaction has taken place. Default 360:00:00, range 00:00:01 to 2400:00:00. Written as hours:minutes:seconds (HH:MM:SS). |
+| Killbox defuse failure bonus | `scum.KillboxDefuseFailureBonus` | Additional time in seconds for failed killbox defusing attempts. Default 0.2 seconds, range 0 to 5 seconds. |
+| Bedroll visibility timer | `scum.BedrollVisibilityTimer` | Time a sleeping bag is visible to other players after a player logs out. Default 1 second, range 1 to 43200 seconds. |
+| Enable BCU locking | `scum.EnableBCULocking` | Whether the BCU lock can be used (on = activated). |
+| Name change cooldown | `scum.NameChangeCooldown` | Cooldown time before a character name change is possible again. Default 168 hours, range 0 to 720 hours. |
+| Name change cost | `scum.NameChangeCost` | Price for changing the character's name. Default 1000, range 0 to 1000000000. |
+| Enable new player protection | `scum.EnableNewPlayerProtection` | Enable or disable protection for new players (on = enabled). |
+| New player protection duration | `scum.NewPlayerProtectionDuration` | Duration of protection for new players. Default 120 minutes, range 120 to 1140 minutes. |
+| Allow automatic parachute opening | `scum.AllowAutomaticParachuteOpening` | Whether the parachute opens automatically shortly before the ground (on = automatic opening activated). |
+| Hide quick access bar | `scum.HideQuickAccessBar` | Switch on to hide the quickbar slots in every player's HUD. |
+| Hide life indicators | `scum.HideLifeIndicators` | Switch on to hide the character stats (health, stamina and so on) in every player's HUD. |
+| Enable digital deluxe starter pack | `scum.EnableDigitalDeluxeStarterPack` | Whether the Deluxe Survival Pack (formerly Digital Deluxe Starter Pack) is usable (on = usable). |
+| Enable digital deluxe free gold card | `scum.EnableDigitalDeluxeFreeGoldCard` | Whether the Free Gold Card from the Digital Deluxe Starter Pack can be received (on = can be received). |
+| Net watchdog | `scum.EnableNetWatchdog` | Protects the server against players who get around the ping limits. Default off. |
+| Enable network object logging | `scum.EnableNetworkObjectLogging` | Enables logging of active network objects to SaveFiles/Logs/network_objects. Useful for diagnosing network object leaks. May slightly reduce server performance and should be kept disabled unless a leak is being investigated. |
+
+## StarRupture
+
+StarRupture keeps its server settings in `DSSettings.txt` in the server's install folder, next to `StarRuptureServerEOS.exe`. The panel writes it when it creates the server, because the game never makes it. It is JSON with five settings, and every value is written as text.
+
+- `DSSettings.txt`: The world's name, whether to create a new world or load the saved one at start, which save to load, and how often to autosave.
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#starrupture).
+
+The first start builds the world ("Create a new world on start" is Yes). After that, set it to **No** and "Load the saved world on start" to **Yes**, or the world is made again at every start.
+The game fixes the player limit at 4. It has no difficulty or rules settings in any file.
+Passwords are not set by the panel. The game reads them from `Password.json` (admin) and `PlayerPassword.json` (join) in the server folder, and will only accept a value made by a website (starrupture-utilities.com), not the password typed in plain text. Without `PlayerPassword.json` anyone who knows the address can join.
+Forward UDP only for the game port. The same number also answers on TCP for the in-game Manage Server screen, which has a reported security hole, so leave TCP closed.
+
+### StarRupture: World
+
+4 settings in `DSSettings.txt`, shown under **World** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| World name | `SessionName` | The name of your world. It is also the name of the folder the world is saved in (StarRupture\Saved\SaveGames), so a new name starts a new, empty world and the old one stays on disk. Keep it short: 20 characters is the longest one server setup documents. |
+| Create a new world on start | `StartNewGame` | Yes builds a brand-new world every time the server starts. Use it once for the first start, then change it to No, and set "Load the saved world on start" to Yes, or the world is made again at every start. Choices: `true` (Yes: create a new world), `false` (No: keep the existing world). |
+| Load the saved world on start | `LoadSavedGame` | Yes loads the save named below when the server starts, so your world comes back after a restart or a crash. With No the server loads nothing: it waits with no world, or builds a new one if "Create a new world on start" is Yes. Choices: `true` (Yes: load the saved world), `false` (No: do not load a save). |
+| Save file to load | `SaveGameName` | The file inside the world's save folder to load, including .sav. It is case-sensitive. The server's own autosave is AutoSave0.sav; older autosaves are numbered after it. |
+
+### StarRupture: Saving
+
+1 setting in `DSSettings.txt`, shown under **Saving** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Autosave every (seconds) | `SaveGameInterval` | How often the world is saved by itself, in seconds. Server hosts suggest 180 to 600 (3 to 10 minutes); a very short time can cause lag each time the save is written. |
+
+## Unturned
+
+Unturned's server keeps its start-up commands in `Commands.dat`, in the `Servers\<name>\Server` folder inside the server's folder, and the Steam Workshop items it installs in `WorkshopDownloadConfig.json` next to the server's `Config.txt`. The panel starts `Unturned.exe` with `-batchmode -nographics +InternetServer/<name>`, where `<name>` is the server's folder name under `Servers`.
+
+- `Commands.dat`: The server's start-up commands, one per line: name, map, player limit, port, difficulty, password and Steam login token.
+- `WorkshopDownloadConfig.json`: Which Steam Workshop items (maps and other mods) the server downloads and keeps updated when it starts.
+
+The game rules (zombies, loot, hunger, damage and so on) are in `Config.txt`, which the game makes the first time the server runs. The Settings tab does not edit it, because its block format is not one the panel can read safely: open it in a text editor. The **Difficulty** setting (`Mode` in Commands.dat) chooses which starting values the rules use, and a value you type in Config.txt wins. Settings are best changed while the server is stopped.
+The server's name, port and the `Cheats` and `PvE` lines are in Commands.dat too, but not in the form: a name usually has spaces, which the form would wrap in quotation marks, `Cheats` and `PvE` are lines with no value, and the port is chosen when the server is created.
+There is no launch-options form for this game. The game takes the server's folder name from the end of the launch line (`+InternetServer/<name>`), and the form adds new arguments at the end, which would become part of that name.
+**Save before you stop.** Unturned has no autosave. It saves when it gets its `Shutdown` command, and, according to its code, when its console window is closed. The panel closes the window and ends the process after a short wait, so check on your own server that a Stop keeps your progress (stop it, start it again, see whether your last changes are there).
+To be listed in the Internet server list the server needs a **Steam login token** (a GSLT) for Unturned, app 304930, from steamcommunity.com/dev/managegameservers. Without one the game still prints a 17-digit Server Code in its log.
+Players do not install anything for Workshop items: they download them when they join. A big map (Buak is about 1 GB) makes the first join slow. When an item is updated the server counts down (ten minutes by default) and shuts itself down so it can restart on the new version, so set the panel to restart the server when it stops on its own.
+Keep the server's folder path short. Windows stops at 260 characters for a whole file path, and Workshop maps and plugins create long ones. The game then silently skips part of a map and the OpenMod plugin framework fails to start. The log says "Could not find a part of the path" when this happens.
+The server uses two UDP ports: the one shown, and the next one up. Forward both if players join by address from outside your network.
+
+### Unturned (Commands.dat): Rules
+
+2 settings in `Commands.dat`, shown under **Rules** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Difficulty | `Mode` | Which difficulty the server runs. It picks the starting values of the game rules in Config.txt (hunger, loot, zombies and so on) for settings you have not changed there. Changes apply when the server starts. Choices: `Easy`, `Normal`, `Hard`. |
+| Camera views allowed | `Perspective` | Which camera views players may use. The game accepts First, Third, Both and Vehicle. Choices: `First` (First person only), `Third` (Third person only), `Both` (First or third person), `Vehicle`. |
+
+### Unturned (Commands.dat): World
+
+1 setting in `Commands.dat`, shown under **World** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Map | `Map` | Which map the server loads. Give the name of the map's folder. For a Steam Workshop map, add its id to the Workshop items file (WorkshopDownloadConfig.json) and type its folder name here (the server log says Discovered level "..." once it has downloaded it). A name with a space in it cannot be written by this form; edit the file by hand for those. Choices: `PEI`, `Washington`, `Yukon`, `Russia`, `Germany`. Another value can be typed. |
+
+### Unturned (Commands.dat): Players
+
+4 settings in `Commands.dat`, shown under **Players** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Max players | `MaxPlayers` | The most players connected at once, from 1 to 200 (the game's limit). The game's own default is 8. |
+| Join queue size | `Queue_Size` | How many players may wait in line to join when the server is full, from 0 to 64. |
+| Ping limit before a kick | `Timeout` | Players whose ping is above this many milliseconds are kicked. The game accepts 50 to 10000; the Unturned wiki gives 750 as the default. |
+| Password | `Password` | What players type to join. Leave the line out for a server anyone can join. Avoid spaces: this form puts a value with spaces inside quotation marks, and whether the game reads those as part of the password is not documented. |
+
+### Unturned (Commands.dat): Network
+
+1 setting in `Commands.dat`, shown under **Network** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Steam login token | `GSLT` | A Game Server Login Token for Unturned (app 304930) from steamcommunity.com/dev/managegameservers. Without one the game does not list the server in the Internet server list. It is secret: treat it like a password. |
+
+### Unturned (WorkshopDownloadConfig.json): Items
+
+2 settings in `WorkshopDownloadConfig.json`, shown under **Items** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Workshop items to install | `File_IDs` | The Steam Workshop file ids the server installs and keeps updated every time it starts, as a list in square brackets such as [1753134636, 1702240229]. The id is the number after ?id= in the item's Workshop address. Dependencies are installed too, and a collection's id installs its items. Players download them when they join. |
+| Skip the dependencies of these items | `Ignore_Children_File_IDs` | For the ids in this list, the items they name as dependencies are not installed automatically. Useful when an author lists other items only to advertise them. An empty list [] skips nothing. |
+
+### Unturned (WorkshopDownloadConfig.json): Downloads
+
+3 settings in `WorkshopDownloadConfig.json`, shown under **Downloads** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Reuse items already downloaded | `Use_Cached_Downloads` | Loads items that are already installed instead of downloading them again when they have not changed. Leave on unless you are chasing a corrupt download. |
+| How long Steam answers are reused | `Query_Cache_Max_Age_Seconds` | How old a saved answer from Steam may be, in seconds, before the server asks again. 0 turns the saving off. A higher number notices updates later but survives a failed query better. |
+| Steam query retries | `Max_Query_Retries` | How many times a failed question to Steam is tried again. After that the server quits, so a very low number can stop the server over a short internet problem. |
+
+### Unturned (WorkshopDownloadConfig.json): Updates
+
+4 settings in `WorkshopDownloadConfig.json`, shown under **Updates** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Watch the items for updates | `Should_Monitor_Updates` | Checks the installed items for updates while the server runs. When one is found the server counts down and shuts itself down so that it can be started again with the new version. |
+| Countdown after an update | `Shutdown_Update_Detected_Timer` | How many seconds the server waits after finding an update before it shuts down (600 is ten minutes). The server has to be started again afterwards, so set the panel to restart it when it stops on its own. |
+| Update warning in chat | `Shutdown_Update_Detected_Message` | The message players see in chat when the countdown starts. {0} is replaced by the time left. |
+| Message when kicked for an update | `Shutdown_Kick_Message` | The message shown to players who are still connected when the server shuts down for an update. |

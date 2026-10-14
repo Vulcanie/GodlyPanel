@@ -26,6 +26,11 @@ Settings that live in a game's own settings file are in the [game settings guide
 - [Conan Exiles](#conan-exiles)
 - [Palworld](#palworld)
 - [Minecraft (Java)](#minecraft-java)
+- [Abiotic Factor](#abiotic-factor)
+- [Don't Starve Together](#dont-starve-together)
+- [Icarus](#icarus)
+- [SCUM](#scum)
+- [StarRupture](#starrupture)
 
 ## Valheim
 
@@ -459,7 +464,7 @@ Example: `-ReliablePort=8888`
 
 The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
 
-### `-multihome`
+### Satisfactory: `-multihome`
 
 **Bind address** (Network). The network address the server listens on, for a PC with more than one. Leave it off to use them all.
 
@@ -637,7 +642,7 @@ Example: `-servername servertest`
 
 The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
 
-### `-adminpassword`
+### Project Zomboid: `-adminpassword`
 
 **Admin password** (Server). The password of the built-in admin account. Used the first time the server runs to make that account.
 
@@ -739,7 +744,7 @@ Example: `-ClusterDirOverride="D:\ARK\cluster"`
 
 **Game log** (Dash arguments). Writes the in-game log (chat and tribe events) to a file.
 
-### `-NoBattlEye`
+### ARK: Survival Ascended / Evolved: `-NoBattlEye`
 
 **No BattlEye** (Dash arguments). Turns BattlEye anti-cheat off. Players must then also start their game without it.
 
@@ -759,7 +764,7 @@ This game has no Launch options form. To change an argument, open the server's s
 
 Example: `-Port=7777`
 
-### `-QueryPort`
+### Conan Exiles: `-QueryPort`
 
 **Query port** (Network). The UDP port the server list asks for details on.
 
@@ -801,7 +806,7 @@ This game has no Launch options form. To change an argument, open the server's s
 
 Example: `-port=8211`
 
-### `-players`
+### Palworld: `-players`
 
 **Max players** (Server). The most players that can be on at once. Overrides the setting in the settings file.
 
@@ -819,11 +824,11 @@ Example: `-publicip=203.0.113.9`
 
 Example: `-publicport=8211`
 
-### `-useperfthreads`
+### Palworld: `-useperfthreads`
 
 **Performance threads** (Performance). Uses extra threads for better performance on a PC with many cores.
 
-### `-NoAsyncLoadingThread`
+### Palworld: `-NoAsyncLoadingThread`
 
 **No async loading thread** (Performance). Loads assets on the main thread. Used together with -useperfthreads and -UseMultithreadForDS.
 
@@ -874,3 +879,419 @@ Example: `-jar server.jar`
 ### `nogui`
 
 **No window** (Files). Starts the server without its small control window, since the panel shows the console.
+
+## Abiotic Factor
+
+Abiotic Factor's server name, ports, passwords and player limit are arguments on the command that starts it; the rules of the world are in SandboxSettings.ini (the Settings tab). Changes apply the next time the server starts. These arguments are on the `AbioticFactorServer-Win64-Shipping.exe` line of the server's start script.
+
+The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
+
+### Abiotic Factor: `-log`
+
+**Show the log window** (Required). Shows the server's log in its own console window. Keep it: without it the server has no window at all, and the panel can then only force it to stop instead of asking it to close.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Abiotic Factor: `-PORT`
+
+**Game port** (Network). The port players connect to (UDP). Needs port forwarding. Change it from the server's Ports section so the panel can check for clashes.
+
+Example: `-PORT=8950`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Abiotic Factor: `-QueryPort`
+
+**Query port** (Network). The port used to advertise the server on Steam and answer the server list (UDP). The developer calls it recommended but not strictly required. Each Abiotic Factor server on a PC needs its own, or the game can not start its Steam connection.
+
+Example: `-QueryPort=8952`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Abiotic Factor: `-SteamServerName`
+
+**Server name** (Server). The name shown in the in-game server browser.
+
+Example: `-SteamServerName="My Server"`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `-ServerPassword`
+
+**Server password** (Server). What players type to join. Leave it off for a server anyone can join.
+
+Example: `-ServerPassword="secret"`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Abiotic Factor: `-AdminPassword`
+
+**Admin password** (Server). Lets a player become an admin in the game by typing this password. It is separate from the server password. Leave it off to turn password admin off; admins then have to be listed in Admin.ini by Steam ID, which works for Steam players only.
+
+Example: `-AdminPassword="adminpass"`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `-MaxServerPlayers`
+
+**Max players** (Server). The most players that can be on at once, from 1 to 24. More than 6 is not recommended: players get a warning pop-up before they join.
+
+Example: `-MaxServerPlayers=6`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `-WorldSaveName`
+
+**World save name** (Saves and logs). The name of the world's save folder (in AbioticFactor\Saved\SaveGames\Server\Worlds). A name that does not exist yet starts a new world, and the old one stays on disk and returns if you switch back. The game's own default is Cascade.
+
+Example: `-WorldSaveName=Cascade`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `-SandboxIniPath`
+
+**Sandbox settings file** (Files). Where the world rules file is read from, counted from the server's AbioticFactor\Saved folder. The panel sets it so the Settings tab edits the file the server really reads. Without it the game looks in the world's own folder.
+
+Example: `-SandboxIniPath=Config/WindowsServer/SandboxSettings.ini`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-AdminIniPath`
+
+**Admin list file** (Files). Where the admin list (Admin.ini) is read from, counted from the server's AbioticFactor\Saved folder. The panel leaves it off, so the game uses SaveGames\Server\Admin.ini, which is the file the Settings tab shows.
+
+Example: `-AdminIniPath=Config\WindowsServer\Server1Admin.ini`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-PlatformLimited`
+
+**Limit platforms (no crossplay)** (Network). Turns crossplay off and lets only one kind of player in. Leave it off for full crossplay between Steam, Xbox and PlayStation.
+
+Values: `PC` (Steam players only), `Playstation` (PlayStation players only), `Xbox` (Xbox and Microsoft Store players only).
+
+Example: `-PlatformLimited=PC`
+
+### `-LANOnly`
+
+**Local network only** (Network). Runs the server for your local network. Players find it with the in-game server browser set to LAN Only. Port 14001 must not be blocked on your network, because it is used to find servers.
+
+### Abiotic Factor: `-MultiHome`
+
+**Bind address** (Network). Makes the server listen on one IP address, for a PC with more than one network card or address. The developer's issue tracker says it only takes effect together with -UseLocalIPs. Leave it off to use them all.
+
+Example: `-MultiHome=192.168.1.20`
+
+### `-UseLocalIPs`
+
+**Also listen on local addresses** (Network). Like the bind address, but without choosing one: the server also listens on local addresses. A fix to try if players on your own network cannot connect. It may stop players from the internet from joining, so take it off again if they can not.
+
+### Abiotic Factor: `-useperfthreads`
+
+**Use performance threads** (Performance). Makes the server use the CPU's performance threads. Optional; the developer's example start file includes it and their wiki says it is currently recommended.
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Abiotic Factor: `-NoAsyncLoadingThread`
+
+**Pause to load new areas** (Performance). Makes the server stop and load new areas in one go instead of gradually in the background. The developer's example start file includes it, but their wiki says it is not recommended after community feedback, so the panel leaves it off.
+
+### `-newconsole`
+
+**Open its own console window** (Required). Opens the server in a console window of its own. The developer's example start file uses it together with -log. The panel does not add it, because -log already gives the server a console window.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Abiotic Factor: `-NOSTEAM`
+
+**Do not use** (Do not use). Never use this. The developer warns against it and the server logs that it will not work correctly with it.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+## Don't Starve Together
+
+The panel runs one Don't Starve Together world (the overworld, called the Master shard): no Caves. The server's name, password and rules are in `cluster.ini` (the Settings tab); the launch line says where the data is kept and which ports are used. Changes apply the next time the server starts. These arguments are on the `dontstarve_dedicated_server_nullrenderer_x64.exe` line of the server's start script.
+
+The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
+
+### `-console`
+
+**Server console** (Required). Lets Lua commands be typed into the server's console window. The game says this argument is deprecated in favour of the console_enabled setting, but still accepts it, and Klei's own start scripts still use it.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-persistent_storage_root`
+
+**Data folder** (Files). The base folder where the server keeps its settings, saves and logs. It has to be an absolute path. The panel keeps it inside the server's own folder so two servers never share one.
+
+Example: `-persistent_storage_root "%~dp0data"`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-conf_dir`
+
+**Config folder name** (Files). The folder name under the data folder that holds the clusters. One folder name, no slashes. The panel's backups and logs look here.
+
+Example: `-conf_dir DoNotStarveTogether`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-cluster`
+
+**Cluster folder** (Files). The folder with cluster.ini and the shard folders. One cluster is one world with its shards. The panel's settings, backups and logs look in this folder.
+
+Example: `-cluster Cluster_1`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-shard`
+
+**Shard folder** (Files). Which shard of the cluster this program runs; it is the name of the shard's folder. The panel runs only the Master (the overworld).
+
+Example: `-shard Master`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Don't Starve Together: `-port`
+
+**Game port** (Network). The UDP port players connect to. It overrides server_port in server.ini. The game accepts 1024 to 65535 for online servers; for an offline server on your own network it documents 10998 to 11018. Change it from the server's Ports section so the panel can check for clashes.
+
+Example: `-port 8930`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `-steam_master_server_port`
+
+**Steam server port** (Network). An internal port Steam uses (UDP). It must be different for every Don't Starve Together server on this PC. Change it from the server's Ports section so the panel can check for clashes.
+
+Example: `-steam_master_server_port 27016`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `-steam_authentication_port`
+
+**Steam login port** (Network). An internal port Steam uses to check players in (UDP). It must be different for every Don't Starve Together server on this PC. The panel keeps it two above the game port; if you change the game port, change this one to match.
+
+Example: `-steam_authentication_port 8766`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `-bind_ip`
+
+**Listen address** (Network). The network address the server listens on for players. Advanced; most people never need it. It is not the same setting as the shard link address in cluster.ini.
+
+Example: `-bind_ip 0.0.0.0`
+
+### `-backup_log_count`
+
+**Old log files to keep** (Files). How many of the previous runs' log files the game keeps in the shard's backup folder. The game does not document its own default.
+
+Example: `-backup_log_count 10`
+
+### `-ugc_directory`
+
+**Mod download folder** (Files). Where Steam Workshop mods are downloaded. By default each shard keeps its own copy under ugc_mods in the server's folder. A relative path starts from the bin64 folder.
+
+Example: `-ugc_directory ../ugc_mods`
+
+### `-skip_update_server_mods`
+
+**Skip mod updates at start** (Advanced). Starts without checking for or downloading Workshop mod updates. The server normally updates its mods every time it starts, which can make a start slower.
+
+### `-only_update_server_mods`
+
+**Only update the mods** (Advanced). Downloads and updates the mods, then quits without starting the world. It is not offered in the form: left on the line, the server would never start.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-offline`
+
+**Offline** (Network). Starts the server offline: not in the server list, local network only, no cluster token needed. Use the Offline server setting in cluster.ini instead, so it shows on the Settings tab.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Don't Starve Together: `-players`
+
+**Max players** (Server). The most players allowed to join, 1 to 64. It overrides max_players in cluster.ini, so the panel leaves it off and uses that setting.
+
+Example: `-players 8`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-tick`
+
+**Network tick rate** (Network). How many times a second the server sends updates to players, 15 to 60. It overrides tick_rate in cluster.ini; the panel leaves it off.
+
+Example: `-tick 15`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-disabledatacollection`
+
+**Turn off data collection** (Advanced). Stops the server sending the data Klei collects. Klei says the online services need that data, so the server can then only run offline.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-monitor_parent_process`
+
+**Exit with the program that started it** (Advanced). The process id of the program that started the server. Klei's Linux start script passes its own id here; the game does not document what it does with it, so the panel does not use it.
+
+Example: `-monitor_parent_process 1234`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+## Icarus
+
+Icarus' server name and ports are given on the command that starts it; the rest of its options are in `ServerSettings.ini` (the Settings tab). Difficulty is not in any file: it is part of the world, chosen when the world is created. Changes apply the next time the server starts. These arguments are on the `IcarusServer-Win64-Shipping.exe` line of the server's start script.
+
+The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
+
+### Icarus: `-Log`
+
+**Show server window** (Required). Opens a window that shows the server's log while it runs; the official guide says nothing is visible without it. Written -Log. (-LOG=`<file>` is a different argument that sends the log to another file under Saved\Logs; the Logs tab reads Saved\Logs\Icarus.log, so leave that one alone.)
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Icarus: `-SteamServerName`
+
+**Server name** (Server). The name shown in the in-game server browser, 64 characters at most. This is the only way to set it: SessionName in the settings file does nothing.
+
+Example: `-SteamServerName="My Icarus Server"`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Icarus: `-PORT`
+
+**Game port** (Network). The UDP port players connect to. Change it from the server's Ports section so the panel can check for clashes and open the firewall. Two servers on one PC need different ports.
+
+Example: `-PORT=17777`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Icarus: `-QueryPort`
+
+**Query port** (Network). The UDP port Steam asks for the server's details on. Change it from the server's Ports section. Two servers on one PC need different query ports.
+
+Example: `-QueryPort=27015`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Icarus: `-MULTIHOME`
+
+**Bind address** (Network). Makes the server use one specific IP address of this PC. Only useful on a PC with several network cards or addresses; leave it off to use them all.
+
+Example: `-MULTIHOME=192.168.1.20`
+
+### `-ResumeProspect`
+
+**Resume the last world** (World at startup). Reopens the last world the server ran when it starts. The settings file already does this unless its ResumeProspect is turned off.
+
+### `-LoadProspect`
+
+**Open a saved world** (World at startup). Opens a saved world by its name when the server starts. Set it as LoadProspect in ServerSettings.ini instead.
+
+Example: `-LoadProspect=MyWorld`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-CreateProspect`
+
+**Create a world** (World at startup). Makes and starts a new world when the server starts: world type, difficulty (1 easy to 4 extreme), hardcore (true or false) and save name, in one quoted piece. Leaving it on the line can make a new world on every start. Set it as CreateProspect in ServerSettings.ini instead.
+
+Example: `-CreateProspect="Tier1_Forest_Recon_0 3 false MyWorld"`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-UserDir`
+
+**Data folder** (Saves and logs). Moves the Saved folder (settings, saved worlds, logs) somewhere else. The panel looks for them inside the server's own folder, so leave it off.
+
+Example: `-UserDir="D:\IcarusData"`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-saveddirsuffix`
+
+**Saved folder suffix** (Saves and logs). Adds a suffix to the Saved folder's name, to keep two servers from sharing saves. The panel looks for the plain Saved folder, so leave it off.
+
+Example: `-saveddirsuffix=player2`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-ABSLOG`
+
+**Log file (full path)** (Saves and logs). Writes the log to a file at this full path. The Logs tab reads Saved\Logs, so it would then show nothing.
+
+Example: `-ABSLOG="C:\Logs\icarus.log"`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+## SCUM
+
+SCUM's settings are in `ServerSettings.ini` (the Settings tab). The launch line only gives the game port, the player limit and a few switches. Changes apply the next time the server starts. These arguments are on the `SCUMServer.exe` line of the server's start script.
+
+The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
+
+### SCUM: `-log`
+
+**Show the log window** (Saves and logs). Makes the server show its log in its console window. Steam's own launch entry for the server includes it.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### SCUM: `-port`
+
+**Game port** (Network). The UDP port players connect on. The game also takes the next two ports (a raw socket at +1 and the Steam server list query at +2), so keep three ports in a row free. Change it from the server's Ports section so the panel can check for clashes.
+
+Example: `-port=7780`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### SCUM: `-MaxPlayers`
+
+**Max players** (Server). The most players that can be online at once. It overrides the player limit in ServerSettings.ini. The SCUM wiki's example uses 64; sources disagree on the real upper limit.
+
+Example: `-MaxPlayers=64`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### SCUM: `-nobattleye`
+
+**Turn off anti-cheat (BattlEye)** (Advanced). Starts the server without the BattlEye anti-cheat. The SCUM wiki marks this as not recommended. Leave it off unless you know you need it.
+
+## StarRupture
+
+StarRupture's server is started by a few arguments on the command that starts it. Everything about the world itself is in DSSettings.txt instead. Changes apply the next time the server starts. These arguments are on the `StarRuptureServerEOS.exe` line of the server's start script.
+
+The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
+
+### StarRupture: `-Log`
+
+**Show the log window** (Required). Opens a console window with the server's log. The game's own start script uses it too.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### StarRupture: `-Port`
+
+**Game port** (Network). The port players connect to. The game uses it for gameplay over UDP; forward UDP only. Change it from the server's Ports section so the panel can check for clashes.
+
+Example: `-Port=7780`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### StarRupture: `-multihome`
+
+**Bind address** (Network). Makes the server listen on one network adapter's address, for a PC with a VPN, ZeroTier or several network cards. Leave it off to use them all.
+
+Example: `-multihome=192.168.1.20`
+
+### `-RCWebControlDisable`
+
+**Turn off the built-in web remote control** (Security). Switches off the web remote-control service built into the game's engine. Community server setups add this and the next argument as a precaution, because the game's built-in web server on the game port has a reported security hole.
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `-RCWebInterfaceDisable`
+
+**Turn off the built-in web remote screen** (Security). The partner of the argument above: it switches off the web page of the same remote-control service.
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.

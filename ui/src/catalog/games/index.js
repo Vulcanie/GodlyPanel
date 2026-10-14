@@ -7,4 +7,11 @@
 //   launch  its launch arguments (the shape of an entry of LAUNCH_ARGS in ../launchArgs.js), or null
 //   guide   { name, short, summary, files: { "<file name>": "what it is" }, notes: [] } for the game settings guide
 // and is listed here. The server side of the same game is in src/server/data/games/<id>.js.
-export const GAME_UI_MODULES = [];
+import abiotic from "./abiotic.js";
+import dst from "./dst.js";
+import icarus from "./icarus.js";
+import scum from "./scum.js";
+import starrupture from "./starrupture.js";
+import unturned from "./unturned.js";
+
+export const GAME_UI_MODULES = [abiotic, dst, icarus, scum, starrupture, unturned];

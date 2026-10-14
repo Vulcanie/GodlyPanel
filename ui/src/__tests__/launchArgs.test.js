@@ -134,3 +134,28 @@ describe("launch lines the panel writes", () => {
 	});
 });
 
+
+describe("a program name in quotes on the launch line", () => {
+	// Hand-made scripts often write start "Title" "Program.exe" -args. The quote after the program belongs to it, not to the first argument.
+	const def = launchDefFor("corekeeper");
+	const script = '@echo off\r\nstart /MIN "Core" "CoreKeeperServer.exe" -batchmode -port 27015 -worldname "My World" -maxplayers 8\r\n';
+
+	it("is written back unchanged when nothing is edited", () => {
+		expect(serializeLaunchArgs(parseLaunchArgs(script, def), {})).toBe(script);
+	});
+
+	it("keeps its closing quote when an argument is changed", () => {
+		const parsed = parseLaunchArgs(script, def);
+		const port = launchArgsEntries(parsed).find((e) => e.key === "port");
+		const out = serializeLaunchArgs(parsed, { [port.id]: "28000" });
+		expect(out).toBe(script.replace("-port 27015", "-port 28000"));
+	});
+
+	it("keeps it when an argument is added", () => {
+		const parsed = parseLaunchArgs(script, def);
+		const seed = launchArgsEntries(parsed).find((e) => e.key === "worldseed");
+		const out = serializeLaunchArgs(parsed, { [seed.id]: "42" });
+		expect(out).toContain('"CoreKeeperServer.exe" -batchmode');
+		expect(out).toContain("-worldseed 42");
+	});
+});
