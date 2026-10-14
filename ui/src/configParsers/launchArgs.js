@@ -50,7 +50,11 @@ export function parseLaunchArgs(text, def) {
 	if (at === -1) return { lines, eol, at: -1, prefix: "", items: [], def };
 
 	const found = def.program.exec(lines[at]);
-	const prefix = lines[at].slice(0, found.index + found[0].length);
+	let prefixEnd = found.index + found[0].length;
+	// A program written in quotes ("Game.exe") has its closing quote right after the match; that quote is part of the program, not
+	// the start of the first argument.
+	if (lines[at][prefixEnd] === '"' && lines[at].slice(0, found.index).split('"').length % 2 === 0) prefixEnd += 1;
+	const prefix = lines[at].slice(0, prefixEnd);
 	const tokens = tokenize(lines[at].slice(prefix.length));
 	const args = editable(def);
 	const items = [];

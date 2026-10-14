@@ -6,4 +6,11 @@
 //   launchOptions  true when the game's start script gets a "Launch options" form on the Settings tab
 // and is listed here. The settings, launch arguments and wording the interface shows for the same game are in
 // ui/src/catalog/games/<type>.js.
-export const GAME_MODULES = [];
+import abiotic from "./abiotic.js";
+import dst from "./dst.js";
+import icarus from "./icarus.js";
+import scum from "./scum.js";
+import starrupture from "./starrupture.js";
+import unturned from "./unturned.js";
+
+export const GAME_MODULES = [abiotic, dst, icarus, scum, starrupture, unturned];
