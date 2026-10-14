@@ -102,6 +102,9 @@ jobs:
           cache: npm
           cache-dependency-path: ui/package-lock.json
 
+      # The interface tests import some of the panel's own modules, which need the panel's packages.
+      - run: npm ci
+
       - run: npm --prefix ui ci
 
       - run: npm --prefix ui test
