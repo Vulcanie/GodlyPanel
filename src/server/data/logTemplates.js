@@ -1,3 +1,4 @@
+import { GAME_MODULES } from "./games/index.js";
 // Where each game writes its own log. A `dir` entry is a folder of logs (the newest
 // few are offered); a `file` entry is one file. Folders that don't exist are
 // skipped. `base` and `rel` work as in backupTemplates.js.
@@ -37,3 +38,7 @@ export const LOG_TEMPLATES = {
 		{ kind: "dir", base: "working", rel: "crash-reports", label: "Crash reports" },
 	],
 };
+
+// Games added one module each (see games/index.js).
+for (const m of GAME_MODULES) if (m.logs) LOG_TEMPLATES[m.template.type] = m.logs;
+

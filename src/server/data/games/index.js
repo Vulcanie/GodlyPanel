@@ -1,0 +1,9 @@
+// Games added one module each. A game's module (src/server/data/games/<id>.js) default-exports
+//   { template, backup, logs, launchOptions }
+//   template       the same recipe as an entry of GAME_TEMPLATES in ../gameTemplates.js
+//   backup         { paths: [...] } for ../backupTemplates.js (what a backup of this game's server keeps)
+//   logs           [...] for ../logTemplates.js (the log files the Logs tab reads)
+//   launchOptions  true when the game's start script gets a "Launch options" form on the Settings tab
+// and is listed here. The settings, launch arguments and wording the interface shows for the same game are in
+// ui/src/catalog/games/<type>.js.
+export const GAME_MODULES = [];

@@ -22,8 +22,9 @@
 /** @typedef {{ flag: string, key?: string, kind?: "value"|"bool"|"attached", style?: "space"|"equals", label: string, description: string, group: string, options?: Array<string|[string,string]>, allowCustom?: boolean, edit?: boolean, managed?: boolean, example?: string }} LaunchArg */
 /** @typedef {{ title: string, program: RegExp, style: "space"|"plus"|"equals", where: string, intro: string, args: LaunchArg[], editable: boolean }} LaunchDef */
 
-const A = (arg) => ({ kind: "value", edit: true, ...arg });
-const FLAG = (arg) => ({ kind: "bool", edit: true, ...arg });
+
+import { A, FLAG } from "./launchHelpers.js";
+import { GAME_UI_MODULES } from "./games/index.js";
 
 /** @type {Record<string, LaunchDef>} */
 export const LAUNCH_ARGS = {
@@ -295,6 +296,9 @@ export const LAUNCH_ARGS = {
 		],
 	},
 };
+
+// Games added one module each (see games/index.js).
+for (const m of GAME_UI_MODULES) if (m.launch) LAUNCH_ARGS[m.type] = m.launch;
 
 const ALIASES = { palword: "palworld" };
 

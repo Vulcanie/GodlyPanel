@@ -7,6 +7,7 @@
 import { LAUNCH_ARGS } from "../catalog/launchArgs.js";
 import { CONFIG_CATALOG } from "../configCatalog.js";
 import { slugify } from "./guides.js";
+import { GAME_UI_MODULES } from "../catalog/games/index.js";
 
 // ──────────────────────────────── Shared helpers ────────────────────────────────
 
@@ -230,6 +231,9 @@ const GAME_INFO = {
 		notes: [],
 	},
 };
+
+// Games added one module each (see ../catalog/games/index.js).
+for (const m of GAME_UI_MODULES) if (m.guide) GAME_INFO[m.type] = m.guide;
 
 /** The groups of one file in the order the form shows them: the catalog's groupOrder first, then the rest as they first appear. */
 function groupsOf(file) {
