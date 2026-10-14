@@ -275,7 +275,12 @@ function killPid(pid, { force = false } = {}) {
 // image name used to close every program with that name on the PC, so stopping one
 // Valheim server stopped all of them. A same-named program from somewhere else is left
 // alone, and if that is all there is, Stop says so instead of acting on it.
-async function gracefulThenForceKill(server, graceMs = 15000, pollMs = 2000) {
+// How long a closing server gets before it is forced. Satisfactory saves its whole world on the way out and needs longer.
+export function stopGraceMs(server) {
+	return server?.type === "satisfactory" ? 30_000 : 15_000;
+}
+
+async function gracefulThenForceKill(server, graceMs = stopGraceMs(server), pollMs = 2000) {
 	const found = await findServerProcesses(server);
 	const { owned, foreign } = found;
 	if (owned.length === 0) {
@@ -323,7 +328,7 @@ async function gracefulThenForceKill(server, graceMs = 15000, pollMs = 2000) {
 // Close request first, then a forced kill of the whole tree if it's still
 // running after the grace window. By process id, so it can only ever affect the
 // program the panel started.
-async function stopByPid(server, pid, graceMs = 15000, pollMs = 2000) {
+async function stopByPid(server, pid, graceMs = stopGraceMs(server), pollMs = 2000) {
 	const kill = (force) =>
 		new Promise((resolve) => {
 			execFile("taskkill", ["/PID", String(pid), ...(force ? ["/T", "/F"] : [])], { windowsHide: true }, () => resolve());

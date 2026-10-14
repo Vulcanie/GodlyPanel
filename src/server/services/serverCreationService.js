@@ -543,6 +543,21 @@ async function runJob(jobId, template, params) {
 			}
 		}
 
+		for (const file of template.copyInstalledFiles ?? []) {
+			// A file the game ships inside its own install, copied to where it is read from and edited. Never over one already there.
+			const from = path.win32.join(installDir, file.from);
+			const to = path.win32.join(installDir, file.to);
+			const exists = await fs.access(to).then(() => true, () => false);
+			if (exists) continue;
+			try {
+				await fs.mkdir(path.dirname(to), { recursive: true });
+				await fs.copyFile(from, to);
+				log(`Copied the game's own ${path.win32.basename(from)} to ${to}`);
+			} catch (e) {
+				log(`(Couldn't copy ${from}: ${e.message}. The game uses its built-in copy.)`);
+			}
+		}
+
 		if (template.copyStaticAssets) {
 			const templatesRoot = resolveResource("templates");
 			for (const asset of template.copyStaticAssets) {

@@ -90,7 +90,6 @@ export const LAUNCH_ARGS = {
 			A({ flag: "+server.maxplayers", label: "Max players", group: "Server", example: "50", description: "The most players that can be on at once." }),
 			A({ flag: "+server.identity", label: "Identity (folder name)", group: "Server", managed: true, example: '"server"', description: "The name of the folder under server\\ that holds this server's world and settings. Changing it makes a fresh server in a new folder." }),
 			A({ flag: "+server.pve", label: "PvE", group: "Server", example: "true", options: ["true", "false"], description: "Stops players from damaging each other." }),
-			A({ flag: "+server.secure", label: "Anti-cheat", group: "Server", example: "true", options: ["true", "false"], description: "Easy Anti-Cheat. Leave it on for a public server." }),
 			A({ flag: "+server.ip", label: "Bind address", group: "Network", managed: true, example: "0.0.0.0", description: "The network address the server listens on. 0.0.0.0 means every address on this PC." }),
 			A({ flag: "+server.port", label: "Game port", group: "Network", managed: true, example: "28015", description: "The port players connect to (UDP). Change it from the server's Ports section so the panel can check for clashes." }),
 			A({ flag: "+server.queryport", label: "Query port", group: "Network", managed: true, example: "28017", description: "The port the server list asks for details on (UDP)." }),

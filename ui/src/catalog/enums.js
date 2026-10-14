@@ -71,7 +71,6 @@ export const SEVEN_DAYS_CHOICES = {
 
 export const RUST_CHOICES = {
 	"server.level": { choices: ["Procedural Map", "Barren", "HapisIsland", "CraggyIsland", "SavasIsland", "SavasIsland_koth"], allowCustom: true },
-	"server.secure": [["true", "On (Easy Anti-Cheat)"], ["false", "Off"]],
 };
 
 export const SOTF_CHOICES = {

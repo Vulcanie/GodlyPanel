@@ -57,7 +57,8 @@ try {
 	const parserType = getFileParser(game, file);
 	const parser = PARSERS[parserType];
 	const ctx = { structuredPaths: getStructuredPaths(game, file), catalogKeys: getCatalogKeys(game, file), launchDef: getLaunchDef(game) };
-	const text = fs.readFileSync(path, "utf8");
+	// The panel hands the form a file without its byte-order mark, so the comparison does too.
+	const text = fs.readFileSync(path, "utf8").replace(new RegExp(`^${String.fromCharCode(0xfeff)}`), "");
 	const parsed = parser.parse(text, ctx);
 	if (parsed.at === -1) {
 		console.error(`No launch line for ${game} was found in ${path}.`);

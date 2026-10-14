@@ -9,6 +9,7 @@ import {
 } from "./catalog/enums.js";
 import { sevenDaysSettings, sevenDaysGroupOrder } from "./catalog/sevenDays.js";
 import { vrisingSettings, vrisingGroupOrder } from "./catalog/vrising.js";
+import { vrisingWorldSettings, vrisingWorldGroupOrder } from "./catalog/vrisingWorld.js";
 import { sotfSettings, sotfGroupOrder } from "./catalog/sotf.js";
 import { rustSettings, rustGroupOrder } from "./catalog/rust.js";
 import { subsistenceSettings, subsistenceGroupOrder, SUBSISTENCE_SECTION } from "./catalog/subsistence.js";
@@ -989,6 +990,15 @@ export const CONFIG_CATALOG = {
 				sectionLabels: {},
 				settings: { ...vrisingSettings },
 				groupOrder: vrisingGroupOrder,
+			},
+			"ServerGameSettings.json": {
+				parser: "json",
+				excludePaths: [],
+				structuredPaths: [],
+				sectionLabels: {},
+				settings: { ...vrisingWorldSettings },
+				groupOrder: vrisingWorldGroupOrder,
+				mayBeMissing: "V Rising uses the rules it ships with until this file is in the save folder. Copy VRisingServer_Data\\StreamingAssets\\Settings\\ServerGameSettings.json to save-data\\Settings\\ in the server's folder, then reload this page.",
 			},
 			"Launch options": launchFile("vrising"),
 		},

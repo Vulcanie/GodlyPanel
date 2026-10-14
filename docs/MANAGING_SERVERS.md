@@ -34,7 +34,7 @@ servers go:
 - **Stop** asks the game to save and exit where it has a way to do that: a console command
   (RCON) for most games, Telnet for 7 Days to Die, or a polite "please close" request to the
   program for games with no console (Valheim, Enshrouded and similar). If the game hasn't
-  exited after 15 seconds the panel forces it closed. The tile shows **Stopping…** meanwhile.
+  exited after 15 seconds (30 for Satisfactory, which saves its whole world on the way out) the panel forces it closed. The tile shows **Stopping…** meanwhile.
 - **Restart** is a stop followed by a start.
 
 While something is in progress the server won't accept a second action; it says what it's
