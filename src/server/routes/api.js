@@ -336,6 +336,11 @@ router.post("/server/:serverName/presets/:id/apply", async (req, res) => {
 	}
 });
 
+// A byte-order mark in front of a settings file (V Rising's own default has one) makes the form's JSON.parse fail, so the form is
+// sent the text without it and the mark is put back when the file is saved.
+const BOM = String.fromCharCode(0xfeff);
+const BOM_AT_START = new RegExp(`^${BOM}`);
+
 // Get content of a specific config file
 router.get("/config/:serverName", async (req, res) => {
 	const target = configPathFor(req.server, req.query.file);
@@ -343,7 +348,7 @@ router.get("/config/:serverName", async (req, res) => {
 		return res.status(400).json({ error: "Valid config file must be specified." });
 	}
 	try {
-		res.json({ content: await readManagedFile(target) });
+		res.json({ content: (await readManagedFile(target)).replace(BOM_AT_START, "") });
 	} catch (err) {
 		sendFileError(res, err, `the config for ${req.server.name}`);
 	}
@@ -360,7 +365,8 @@ router.post("/config/:serverName", async (req, res) => {
 		return res.status(400).json({ error: "The file could not be saved because its text wasn't sent in the expected form. Reload the page and try again." });
 	}
 	try {
-		await writeManagedFile(target, content);
+		const hadMark = await readManagedFile(target).then((t) => t.startsWith(BOM), () => false);
+		await writeManagedFile(target, hadMark && !content.startsWith(BOM) ? `${BOM}${content}` : content);
 		res.json({ success: true, message: `${fileName ?? "Config"} saved successfully!` });
 	} catch (err) {
 		sendFileError(res, err, `the config for ${req.server.name}`);

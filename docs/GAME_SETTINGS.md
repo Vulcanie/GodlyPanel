@@ -1250,7 +1250,7 @@ How the world itself plays (zombie numbers, loot, the speed of the seasons) is i
 
 ### Project Zomboid: Server
 
-11 settings in `servertest.ini`, shown under **Server** on the Settings tab.
+18 settings in `servertest.ini`, shown under **Server** on the Settings tab.
 
 | Setting | Name in the file | What it does |
 | --- | --- | --- |
@@ -1265,10 +1265,17 @@ How the world itself plays (zombie numbers, loot, the speed of the seasons) is i
 | Accounts per Steam user | `MaxAccountsPerUser` | How many characters one Steam account may have on the server. 0 means no limit. |
 | Allow special characters in names | `AllowNonAsciiUsername` | Lets usernames use letters outside the English alphabet. |
 | Map | `Map` | The map(s) the server loads, separated by semicolons. Muldraugh, KY is the main map. |
+| World seed | `Seed` | The seed the world is generated from. To change it for an existing world, put the new value here and delete map_worldgen.bin in the save folder. |
+| Show coordinates | `ShowCoordinates` | Shows each player's coordinates in the lower right corner of their screen. |
+| Turn off the scoreboard | `DisableScoreboard` | Turns off the players scoreboard. |
+| Steam names on the scoreboard | `SteamScoreboard` | Shows players' Steam names and pictures in the players list. |
+| Hide admins in the player list | `HideAdminsInPlayerList` | Keeps admins out of the list of players. |
+| Reset ID (do not change) | `ResetID` | Tells the server whether it has had a soft reset. If it no longer matches a player's saved copy, they must make a new character. Back it up and leave it alone. |
+| Server player ID (do not change) | `ServerPlayerID` | Tells a character apart from one made on another server or in single player. If it no longer matches, the player must make a new character. Back it up and leave it alone. |
 
 ### Project Zomboid: Network
 
-16 settings in `servertest.ini`, shown under **Network** on the Settings tab.
+18 settings in `servertest.ini`, shown under **Network** on the Settings tab.
 
 | Setting | Name in the file | What it does |
 | --- | --- | --- |
@@ -1281,17 +1288,19 @@ How the world itself plays (zombie numbers, loot, the speed of the seasons) is i
 | Open ports automatically (UPnP) | `UPnP` | Asks the router to open the server's ports. Many routers refuse, so open them yourself. |
 | Valve Anti-Cheat | `SteamVAC` | Turns Valve Anti-Cheat on. |
 | Ping limit | `PingLimit` | Players with a higher ping are removed. 0 means no limit. |
-| Speed limit | `SpeedLimit` | The fastest a player may move before the server assumes they are cheating. |
+| Speed limit | `SpeedLimit` | The fastest a player may move before the server assumes they are cheating, from 10 to 150. The default is 70. |
 | Kick fast players | `KickFastPlayers` | Removes players who move faster than the speed limit. |
 | Check game files match | `DoLuaChecksum` | Removes players whose game files don't match the server's, which blocks most cheats and mismatched mods. |
 | Refuse joins when overloaded | `DenyLoginOnOverloadedServer` | Turns players away while the server is struggling to keep up. |
 | Login queue | `LoginQueueEnabled` | Lines players up to join one at a time, which keeps a busy server from stalling. |
 | Login queue timeout (seconds) | `LoginQueueConnectTimeout` | How long a player at the front of the queue has to finish connecting. |
 | Announced address | `server_browser_announced_ip` | The address shown in the server browser, for servers behind a router that has a different outside address. |
+| Packets per player per second | `MaxPacketsPerSecond` | The most network packets the server will handle from each player each second, from 100 to 1000. Lower protects against floods, but too low kicks honest players. |
+| Statistics update period (seconds) | `MultiplayerStatisticsPeriod` | How often the server updates its multiplayer statistics, from 0 to 10. 0 turns them off. |
 
 ### Project Zomboid: Gameplay
 
-30 settings in `servertest.ini`, shown under **Gameplay** on the Settings tab.
+35 settings in `servertest.ini`, shown under **Gameplay** on the Settings tab.
 
 | Setting | Name in the file | What it does |
 | --- | --- | --- |
@@ -1322,13 +1331,18 @@ How the world itself plays (zombie numbers, loot, the speed of the seasons) is i
 | Hide players behind you | `HidePlayersBehindYou` | Hides players who are out of your line of sight. |
 | PvP melee damage (%) | `PVPMeleeDamageModifier` | How much damage melee attacks do to other players, as a percentage. |
 | PvP firearm damage (%) | `PVPFirearmDamageModifier` | How much damage guns do to other players, as a percentage. |
-| Melee while being hit | `PVPMeleeWhileHitReaction` | Whether a player who is staggering from a hit can still swing. |
+| Melee while being hit | `PVPMeleeWhileHitReaction` | Lets a player hit again while they are staggering from being struck by another player. |
 | Vehicle noise attraction | `CarEngineAttractionModifier` | How strongly engine noise draws zombies. 1 is normal. |
-| Players on the map | `MapRemotePlayerVisibility` | Whether players can see each other on the map. |
+| Players on the map | `MapRemotePlayerVisibility` | Whether, and which, other players show on each player's in-game map. Choices: `1` (Hidden), `2` (Friends), `3` (Friends and nearby players), `4` (Everyone). |
+| Safety disconnect delay (seconds) | `SafetyDisconnectDelay` | How long a player's character stays in the world after they disconnect while the safety system is on, from 0 to 60. |
+| Move zombie control between players | `SwitchZombiesOwnershipEachUpdate` | Hands control of zombies to a different nearby player on every update, to spread the work between players. |
+| Fast-forward leaves animals alone | `UltraSpeedDoesnotAffectToAnimals` | Keeps animals at normal speed when an admin speeds up the game. |
+| Physics hit reactions | `UsePhysicsHitReaction` | Uses the physics hit reaction when a character is hit. |
+| Mute invisible players on radio | `DisableRadioInvisible` | Stops radio transmissions from invisible players. |
 
 ### Project Zomboid: Loot and building
 
-9 settings in `servertest.ini`, shown under **Loot and building** on the Settings tab.
+12 settings in `servertest.ini`, shown under **Loot and building** on the Settings tab.
 
 | Setting | Name in the file | What it does |
 | --- | --- | --- |
@@ -1341,10 +1355,13 @@ How the world itself plays (zombie numbers, loot, the speed of the seasons) is i
 | Sledgehammers destroy buildings | `AllowDestructionBySledgehammer` | Lets players tear down walls and furniture with a sledgehammer. |
 | Sledgehammers only in safehouses | `SledgehammerOnlyInSafehouse` | Players can only use the sledgehammer inside a safehouse they belong to. |
 | Blood stain lifetime (days) | `BloodSplatLifespanDays` | How many days blood stains last. 0 means they stay forever. |
+| No vehicle towing | `DisableVehicleTowing` | Turns off towing vehicles. |
+| No trailer towing | `DisableTrailerTowing` | Turns off towing trailers. |
+| No towing burnt vehicles | `DisableBurntTowing` | Turns off towing burnt-out vehicles. |
 
 ### Project Zomboid: Safehouses
 
-9 settings in `servertest.ini`, shown under **Safehouses** on the Settings tab.
+14 settings in `servertest.ini`, shown under **Safehouses** on the Settings tab.
 
 | Setting | Name in the file | What it does |
 | --- | --- | --- |
@@ -1355,18 +1372,27 @@ How the world itself plays (zombie numbers, loot, the speed of the seasons) is i
 | Others may loot | `SafehouseAllowLoot` | People who aren't members can take things from a safehouse. |
 | Respawn in a safehouse | `SafehouseAllowRespawn` | Members can choose to respawn in their safehouse after dying. |
 | Days survived to claim | `SafehouseDaySurvivedToClaim` | How many days a character must have survived before they can claim a safehouse. |
-| Safehouse expiry (hours) | `SafeHouseRemovalTime` | How many hours a safehouse can sit unused before it is released. 0 means never. |
+| Safehouse expiry (hours) | `SafeHouseRemovalTime` | A player is removed from a safehouse they haven't visited for this many real hours. The default is 144 (six days). |
 | Protect only while the owner is away | `DisableSafehouseWhenPlayerConnected` | A safehouse's protection only applies while its members are offline. |
+| Safehouses stop loot respawning | `SafehousePreventsLootRespawn` | Items don't respawn inside buildings players have claimed as a safehouse. |
+| Claim non-residential buildings | `SafehouseAllowNonResidential` | Lets players claim buildings that aren't homes, such as shops. |
+| Disguises don't work in safehouses | `SafehouseDisableDisguises` | Turns off name disguises inside safehouses. |
+| Biggest safehouse area | `MaxSafezoneSize` | The largest area, in squares, a safehouse may cover. The default is 20000. |
+| Safehouse is ordinary while its owner is on | `DisableSafehouseWhenOwnerConnected` | While an owner of the safehouse is connected it acts like a normal house, so it is only secure when its owners are offline. |
 
 ### Project Zomboid: Factions
 
-3 settings in `servertest.ini`, shown under **Factions** on the Settings tab.
+7 settings in `servertest.ini`, shown under **Factions** on the Settings tab.
 
 | Setting | Name in the file | What it does |
 | --- | --- | --- |
 | Factions | `Faction` | Lets players form factions. |
 | Days survived to start a faction | `FactionDaySurvivedToCreate` | How many days a character must have survived before they can make a faction. |
 | Players needed for a faction tag | `FactionPlayersRequiredForTag` | How many members a faction needs before it may show a tag over their heads. |
+| War | `War` | Turns on the war feature between factions. |
+| War start delay (seconds) | `WarStartDelay` | How long before a war starts, at least 60. |
+| War length (seconds) | `WarDuration` | How long a war lasts, at least 60. |
+| Safehouse hit points in a war | `WarSafehouseHitPoints` | The limit of hit points a safehouse has during a war. |
 
 ### Project Zomboid: Saving
 
@@ -1393,7 +1419,7 @@ How the world itself plays (zombie numbers, loot, the speed of the seasons) is i
 
 ### Project Zomboid: Discord
 
-4 settings in `servertest.ini`, shown under **Discord** on the Settings tab.
+8 settings in `servertest.ini`, shown under **Discord** on the Settings tab.
 
 | Setting | Name in the file | What it does |
 | --- | --- | --- |
@@ -1401,10 +1427,14 @@ How the world itself plays (zombie numbers, loot, the speed of the seasons) is i
 | Discord bot token | `DiscordToken` | The secret token of the Discord bot. |
 | Discord channel name | `DiscordChannel` | The name of the channel the chat goes to. |
 | Discord channel ID | `DiscordChannelID` | The ID of the channel the chat goes to. |
+| Discord chat channel name | `DiscordChatChannel` | The name of the Discord channel the in-game chat is sent to. |
+| Discord log channel name | `DiscordLogChannel` | The name of the Discord channel the server's logs are sent to. |
+| Discord commands channel name | `DiscordCommandChannel` | The name of the Discord channel commands are taken from. |
+| Slack webhook address | `WebhookAddress` | The Slack incoming webhook address the server posts to. |
 
 ### Project Zomboid: Moderation
 
-10 settings in `servertest.ini`, shown under **Moderation** on the Settings tab.
+22 settings in `servertest.ini`, shown under **Moderation** on the Settings tab.
 
 | Setting | Name in the file | What it does |
 | --- | --- | --- |
@@ -1418,6 +1448,35 @@ How the world itself plays (zombie numbers, loot, the speed of the seasons) is i
 | Radios off for overseers | `DisableRadioOverseer` | Overseers can't use radios. |
 | Radios off for moderators | `DisableRadioModerator` | Moderators can't use radios. |
 | Radios off for observers | `DisableRadioObserver` | Observers can't use radios. |
+| Log PVP to admin chat | `PVPLogToolChat` | Shows player-versus-player fights in the admins' chat. |
+| Log PVP to a file | `PVPLogToolFile` | Writes player-versus-player fights to a log file. |
+| Name disguises | `UsernameDisguises` | Lets players hide their name above their head with a mask or similar. |
+| Hide disguised names | `HideDisguisedUserName` | Hides the name of a disguised player in the scoreboard and chat as well. |
+| Remove from the whitelist on death | `DropOffWhiteListAfterDeath` | Takes a player's account off the whitelist when they die, so on a closed server they can't make a new character. |
+| Announce animal deaths | `AnnounceAnimalDeath` | Posts a message in the chat every time an animal dies. |
+| Banned words file | `BadWordListFile` | The file listing words that aren't allowed in chat, one per line. |
+| Allowed words file | `GoodWordListFile` | The file listing words that are allowed even though they contain a banned word, one per line. |
+| When someone uses a banned word | `BadWordPolicy` | What happens to a player who writes a banned word in chat. Choices: `1` (Ban them), `2` (Kick them), `3` (Only record it in the database), `4` (Mute them). |
+| Banned word replacement | `BadWordReplacement` | The text shown in place of a banned word. |
+| Longest chat message | `ChatMessageCharacterLimit` | The most characters a chat message may have, from 64 to 1024. |
+| Chat slow mode (seconds) | `ChatMessageSlowModeTime` | How many seconds a player must wait between chat messages, from 1 to 30. |
+
+### Project Zomboid: Anti-cheat
+
+10 settings in `servertest.ini`, shown under **Anti-cheat** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Anti-cheat: safety system | `AntiCheatSafety` | How the server reacts to safety-system cheating. Leave at the game's default unless you know what a level does. |
+| Anti-cheat: speed | `AntiCheatSpeed` | How the server reacts to a character moving too fast. Leave at the game's default unless you know what a level does. |
+| Anti-cheat: walking through walls | `AntiCheatNoClip` | How the server reacts to a character passing through solid objects. Leave at the game's default unless you know what a level does. |
+| Anti-cheat: hits | `AntiCheatHit` | How the server reacts to impossible hits. Leave at the game's default unless you know what a level does. |
+| Anti-cheat: bad packets | `AntiCheatPacketException` | How the server reacts to broken network packets. Leave at the game's default unless you know what a level does. |
+| Anti-cheat: permissions | `AntiCheatPermission` | How the server reacts to a player using powers they don't have. Leave at the game's default unless you know what a level does. |
+| Anti-cheat: experience | `AntiCheatXP` | How the server reacts to impossible experience gains. Leave at the game's default unless you know what a level does. |
+| Anti-cheat: safehouses | `AntiCheatSafeHouse` | How the server reacts to safehouse cheating. Leave at the game's default unless you know what a level does. |
+| Anti-cheat: players | `AntiCheatPlayer` | How the server reacts to player-data cheating. Leave at the game's default unless you know what a level does. |
+| Anti-cheat: file check | `AntiCheatChecksum` | How the server reacts to a player whose game files don't match. Leave at the game's default unless you know what a level does. |
 
 ### Project Zomboid: Mods
 
@@ -1470,8 +1529,8 @@ The rules of the world itself (clan size, blood drain, castle rules and similar)
 
 | Setting | Name in the file | What it does |
 | --- | --- | --- |
-| Game rules preset | `GameSettingsPreset` | A named set of world rules from the game, such as StandardPvP. Leave empty to use the game's default. Choices: empty (the game's default), `StandardPvP`, `StandardPvE`, `Relaxed`, `Hard`, `Casual`. Another value can be typed. |
-| Difficulty preset | `GameDifficultyPreset` | A named difficulty from the game. Leave empty for the game's default. Choices: `Difficulty_Easy`, `Difficulty_Normal`, `Difficulty_Brutal`. Another value can be typed. |
+| Game rules preset | `GameSettingsPreset` | A named set of world rules from the game, such as StandardPvP. Leave empty to use the game's default. Choices: empty (the game's default), `StandardPvE` (Standard PvE), `StandardPvP` (Standard PvP), `StandardPvP_NoSiege` (Standard PvP No Siege), `StandardPvP_WeekendSiege` (Standard PvP Weekend Siege), `StandardPvP_DailySiege` (Standard PvP Daily Siege), `SoloPvP` (Solo PvP), `DuoPvP` (Duo PvP), `DuoPvP_NoSiege` (Duo PvP No Siege), `DuoPvP_WeekendSiege` (Duo PvP Weekend Siege), `DuoPvP_DailySiege` (Duo PvP Daily Siege), `TrioPvP` (Trio PvP), `TrioPvP_NoSiege` (Trio PvP No Siege), `TrioPvP_WeekendSiege` (Trio PvP Weekend Siege), `TrioPvP_DailySiege` (Trio PvP Daily Siege), `HardcorePvP` (Hardcore PvP), `HardcoreDuoPvP` (Hardcore Duo PvP), `HardcoreTrioPvP` (Hardcore Trio PvP), `Level30PvE` (Level 30 PvE), `Level30PvP` (Level 30 PvP), `Level40PvE` (Level 40 PvE), `Level40PvP` (Level 40 PvP), `Level50PvE` (Level 50 PvE), `Level50PvP` (Level 50 PvP), `Level60PvE` (Level 60 PvE), `Level60PvP` (Level 60 PvP), `Level70PvE` (Level 70 PvE), `Level70PvP` (Level 70 PvP), `Level80PvE` (Level 80 PvE), `Level80PvP` (Level 80 PvP), `Level90PvE` (Level 90 PvE), `Level90PvP` (Level 90 PvP). Another value can be typed. |
+| Difficulty preset | `GameDifficultyPreset` | A named difficulty from the game. Leave empty for the game's default. Choices: `Difficulty_Easy` (Easy), `Difficulty_Normal` (Normal), `Difficulty_Brutal` (Brutal). Another value can be typed. |
 | Debug events: admins only | `AdminOnlyDebugEvents` | Only admins may trigger debug events. |
 | Debug events: off | `DisableDebugEvents` | Turns debug events off for everybody. |
 
