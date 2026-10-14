@@ -145,7 +145,7 @@ try {
 	await shot("server-advanced");
 	// The window card used to fold open from the Settings page; it is a plain card now, and the ports live in Network.
 	await page.getByTestId("tab-network").click();
-	await settle(1000);
+	await page.getByText("Ports players need").first().waitFor({ timeout: 20000 }).catch(() => {}); // the firewall check runs real netsh/PowerShell on Windows
 	check("the ports and the firewall check are on the Network tab", (await visible("Ports players need")) && (await page.getByRole("main").getByText("Ports", { exact: true }).first().isVisible()));
 	await shot("server-network");
 	check("no script errors during any of it", errors.length === 0, errors.join(" | "));
