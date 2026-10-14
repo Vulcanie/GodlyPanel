@@ -241,4 +241,30 @@ describe("settings seen in real installs", () => {
 		const keys = keysOf("minecraft", "server.properties");
 		for (const k of ["pause-when-empty-seconds", "management-server-enabled", "management-server-secret", "entity-broadcast-range-percentage", "enable-code-of-conduct"]) expect(keys.has(k), k).toBe(true);
 	});
+
+	it("lists the V Rising presets the game ships, and none it doesn't", () => {
+		const values = getFileCatalog("vrising", "ServerHostSettings.json").settings.GameSettingsPreset.options.map((o) => o.value);
+		for (const v of ["", "StandardPvE", "StandardPvP", "Level50PvE", "HardcorePvP", "TrioPvP_NoSiege"]) expect(values, v).toContain(v);
+		for (const v of ["Relaxed", "Hard", "Casual"]) expect(values, v).not.toContain(v);
+		expect(values).toHaveLength(new Set(values).size);
+	});
+
+	it("does not give Conan Exiles 7 Days to Die's land claim settings, and does explain its weekly PvP schedule", () => {
+		const keys = keysOf("conan", "ServerSettings.ini");
+		for (const k of ["LandClaimCount", "DynamicMeshEnabled", "TwitchServerPermission", "PlayerKillingMode"]) expect(keys.has(k), k).toBe(false);
+		for (const k of ["PVPEnabledMonday", "PVPTimeSundayEnd", "PVPBuildingDamageTimeFridayStart"]) expect(keys.has(k), k).toBe(true);
+	});
+
+	it("uses the names Palworld's own default file has", () => {
+		const keys = keysOf("Palword", "PalWorldSettings.ini");
+		for (const k of ["bAutoResetGuildNoOnlinePlayers", "MaxBuildingLimitNumPerPlayer", "RESTAPIEnabled", "PalEggDefaultHatchingTime"]) expect(keys.has(k), k).toBe(true);
+		for (const k of ["AutoResetGuildNoOnlinePlayers", "MaxBuildingLimitNumRate", "AdminRconPassword"]) expect(keys.has(k), k).toBe(false);
+	});
+
+	it("explains Project Zomboid's anti-cheat and chat settings, with the game's own choices for banned words", () => {
+		const settings = getFileCatalog("zomboid", "servertest.ini").settings;
+		for (const k of ["AntiCheatSpeed", "ChatMessageSlowModeTime", "PVPLogToolChat", "Seed", "War"]) expect(settings[k], k).toBeTruthy();
+		expect(settings.BadWordPolicy.options.map((o) => o.value)).toEqual(["1", "2", "3", "4"]);
+		expect(settings.MapRemotePlayerVisibility.options.map((o) => o.value)).toEqual(["1", "2", "3", "4"]);
+	});
 });
