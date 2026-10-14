@@ -72,17 +72,21 @@ try {
 	const fileKeys = new Set(entries.flatMap((e) => [e.key, e.path].filter(Boolean)));
 	const missingFromFile = catalogKeys.filter((k) => ![...fileKeys].some((fk) => fk === bare(k) || fk === k));
 	const undocumentedList = groups.flatMap((g) => g.settings).filter((s) => !s.documented).map((s) => ({ key: s.path ?? s.key, section: s.section ?? s.topLevel ?? "", value: String(s.value).slice(0, 60) }));
+	// A key can be "explained" only by the game's own comment in the file (7 Days does this); this list is what the catalog itself lacks.
+	const inCatalog = new Set(catalogKeys.flatMap((k) => [k, bare(k)]));
+	const notInCatalog = entries.filter((e) => !inCatalog.has(e.key) && !inCatalog.has(e.path ?? e.key)).map((e) => e.path ?? e.key);
 	const badChoice = groups
 		.flatMap((g) => g.settings)
 		.filter((s) => s.options && !s.allowCustom && s.value !== "" && !s.options.some((o) => o.value === String(s.value)))
 		.map((s) => ({ key: s.key, value: String(s.value), choices: s.options.map((o) => o.value) }));
 
-	const report = { game, file, parser: parserType, settingsInFile: entries.length, explained: entries.length - undocumented, undocumented: undocumentedList, catalogKeysNotInFile: missingFromFile, valuesOutsideDropdown: badChoice, inFileSample: [...inFile].slice(0, 5) };
+	const report = { game, file, parser: parserType, settingsInFile: entries.length, explained: entries.length - undocumented, undocumented: undocumentedList, notInCatalog, catalogKeysNotInFile: missingFromFile, valuesOutsideDropdown: badChoice, inFileSample: [...inFile].slice(0, 5) };
 	if (asJson) console.log(JSON.stringify(report, null, 2));
 	else {
 		console.log(`${game} / ${file} (${parserType}): ${report.settingsInFile} settings in the file, ${report.explained} explained by the catalog.`);
 		console.log(`\nIn the file but NOT explained (${undocumentedList.length}):`);
 		for (const u of undocumentedList) console.log(`  ${u.section ? `[${u.section}] ` : ""}${u.key} = ${u.value}`);
+		if (notInCatalog.length > undocumentedList.length) console.log(`\nIn the file with no catalog entry of its own (${notInCatalog.length}; some are explained only by the file's own comments):\n  ${notInCatalog.join(", ")}`);
 		console.log(`\nExplained by the catalog but NOT in the file (${missingFromFile.length}):`);
 		for (const k of missingFromFile) console.log(`  ${k}`);
 		console.log(`\nValues the dropdown doesn't offer (${badChoice.length}):`);

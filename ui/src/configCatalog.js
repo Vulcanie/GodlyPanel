@@ -11,6 +11,7 @@ import { sevenDaysSettings, sevenDaysGroupOrder } from "./catalog/sevenDays.js";
 import { vrisingSettings, vrisingGroupOrder } from "./catalog/vrising.js";
 import { sotfSettings, sotfGroupOrder } from "./catalog/sotf.js";
 import { rustSettings, rustGroupOrder } from "./catalog/rust.js";
+import { subsistenceSettings, subsistenceGroupOrder, SUBSISTENCE_SECTION } from "./catalog/subsistence.js";
 import { zomboidSettings, zomboidGroupOrder } from "./catalog/zomboid.js";
 import { LAUNCH_ARGS, launchDefFor } from "./catalog/launchArgs.js";
 
@@ -20,6 +21,7 @@ const arkServerSettings = rows([
 	["DifficultyOffset", "Difficulty Offset", "Overall difficulty (0-1). Raises the level range of wild dinos and loot quality as it increases.", "General"],
 	["OverrideOfficialDifficulty", "Max Difficulty Multiplier", "Caps how high wild dino levels and loot quality can scale, independent of Difficulty Offset.", "General"],
 	["ServerAdminPassword", "Admin Password", "Password required to use admin commands in-game.", "General"],
+	["ImplantSuicideCD", "Implant Suicide Cooldown (s)", "How many seconds a player must wait between uses of the implant's suicide option. The default is 28800 (8 hours).", "General"],
 	["ServerPassword", "Server Password", "Password players must enter to join the server. Leave blank for a public server.", "General"],
 	["ServerPVE", "PvE Mode", "When enabled, players cannot damage each other or each other's structures.", "General"],
 	["ShowMapPlayerLocation", "Show Player Location On Map", "Shows each player's position on the in-game map at all times.", "General"],
@@ -39,31 +41,11 @@ const arkServerSettings = rows([
 	["TamingSpeedMultiplier", "Taming Speed Multiplier", "Multiplies how fast dinos are tamed.", "Taming & Breeding"],
 	["AllowAnyoneBabyImprintCuddle", "Allow Anyone to Imprint Babies", "Lets any tribe member (not just the imprinted player) cuddle/care for a baby.", "Taming & Breeding"],
 	["DisableImprintDinoBuff", "Disable Imprint Stat Bonus", "Removes the stat bonus dinos normally get from being well-imprinted.", "Taming & Breeding"],
-	["MatingIntervalMultiplier", "Mating Interval Multiplier", "Multiplies the cooldown between a dino's mating attempts (lower = more frequent).", "Taming & Breeding"],
-	["EggHatchSpeedMultiplier", "Egg Hatch Speed Multiplier", "Multiplies how fast fertilized eggs hatch.", "Taming & Breeding"],
-	["BabyMatureSpeedMultiplier", "Baby Maturation Speed Multiplier", "Multiplies how fast baby dinos grow to adulthood.", "Taming & Breeding"],
-	["BabyFoodConsumptionSpeedMultiplier", "Baby Food Consumption Multiplier", "Multiplies how fast baby dinos consume food.", "Taming & Breeding"],
-	["BabyCuddleIntervalMultiplier", "Baby Cuddle Interval Multiplier", "Multiplies the time between required imprint cuddle/care events (lower = more frequent).", "Taming & Breeding"],
-	["BabyCuddleGracePeriodMultiplier", "Baby Cuddle Grace Period Multiplier", "Multiplies the grace period allowed before a missed cuddle hurts imprint quality.", "Taming & Breeding"],
-	["BabyCuddleLoseImprintQualitySpeedMultiplier", "Imprint Quality Loss Speed Multiplier", "Multiplies how fast imprint quality drops after a missed cuddle.", "Taming & Breeding"],
-	["BabyImprintingStatScaleMultiplier", "Imprint Stat Bonus Multiplier", "Multiplies the stat bonus a dino gets per percent of imprint quality.", "Taming & Breeding"],
-	["BabyImprintAmountMultiplier", "Imprint Gain Per Cuddle Multiplier", "Multiplies how much imprint percentage is gained per successful cuddle.", "Taming & Breeding"],
-	["LayEggIntervalMultiplier", "Egg Laying Interval Multiplier", "Multiplies the interval between a female dino laying eggs.", "Taming & Breeding"],
 
 	["HarvestAmountMultiplier", "Harvest Amount Multiplier", "Multiplies the amount of resources gathered per harvest action.", "Harvesting & Resources"],
 	["ResourcesRespawnPeriodMultiplier", "Resource Respawn Time Multiplier", "Multiplies how long it takes harvested resource nodes to respawn.", "Harvesting & Resources"],
 	["ItemStackSizeMultiplier", "Item Stack Size Multiplier", "Multiplies the max stack size for stackable items.", "Harvesting & Resources"],
 	["ClampItemSpoilingTimes", "Clamp Spoiling Times to Official Values", "Prevents item spoil timers from exceeding official-server maximums.", "Harvesting & Resources"],
-	["GlobalSpoilingTimeMultiplier", "Spoiling Time Multiplier", "Multiplies how long perishable items take to spoil.", "Harvesting & Resources"],
-	["GlobalItemDecompositionTimeMultiplier", "Dropped Item Decay Multiplier", "Multiplies how long dropped items last before disappearing.", "Harvesting & Resources"],
-	["GlobalCorpseDecompositionTimeMultiplier", "Corpse Decay Multiplier", "Multiplies how long corpses last before disappearing.", "Harvesting & Resources"],
-	["ResourceNoReplenishRadiusPlayers", "No-Respawn Radius Around Players", "Multiplies the radius around players where resources won't respawn.", "Harvesting & Resources"],
-	["ResourceNoReplenishRadiusStructures", "No-Respawn Radius Around Structures", "Multiplies the radius around structures where resources won't respawn.", "Harvesting & Resources"],
-	["CropGrowthSpeedMultiplier", "Crop Growth Speed Multiplier", "Multiplies how fast planted crops grow.", "Harvesting & Resources"],
-	["CropDecaySpeedMultiplier", "Crop Decay Speed Multiplier", "Multiplies how fast unharvested crops decay.", "Harvesting & Resources"],
-	["FuelConsumptionIntervalMultiplier", "Fuel Consumption Multiplier", "Multiplies how quickly fuel is consumed by generators/forges/etc.", "Harvesting & Resources"],
-	["SupplyCrateLootQualityMultiplier", "Supply Crate Loot Quality Multiplier", "Multiplies the quality of items found in supply crate drops.", "Harvesting & Resources"],
-	["FishingLootQualityMultiplier", "Fishing Loot Quality Multiplier", "Multiplies the quality of items caught while fishing.", "Harvesting & Resources"],
 
 	["MaxTamedDinos", "Max Tamed Dinos (Server)", "Maximum number of tamed dinos allowed on the whole server.", "Dinos & Wild Population"],
 	["MaxTamedDinos_SoftTameLimit", "Soft Tame Limit", "Tamed dino count at which the server starts warning/preventing further taming.", "Dinos & Wild Population"],
@@ -471,10 +453,12 @@ const minecraftSettings = withChoices(
 	["max-build-height", "Max Build Height", "Maximum height players can build to.", "World"],
 	["view-distance", "View Distance (chunks)", "How many chunks in each direction the server sends to clients.", "World"],
 	["simulation-distance", "Simulation Distance (chunks)", "How many chunks around each player are actively simulated (mobs, redstone, etc).", "World"],
+	["entity-broadcast-range-percentage", "Entity Visibility Range (%)", "How far away players are sent mobs and other entities, as a percentage of normal. Lower saves bandwidth and CPU.", "World"],
 	["spawn-protection", "Spawn Protection Radius", "Radius around the world spawn point that only operators can build in.", "World"],
 
 	["white-list", "Enable Whitelist", "Restricts joining to players on the whitelist.", "Access Control"],
 	["enforce-whitelist", "Enforce Whitelist Live", "Immediately kicks players removed from the whitelist instead of waiting for their next join.", "Access Control"],
+	["enable-code-of-conduct", "Show Code of Conduct", "Shows players the server's code of conduct, from its codeofconduct folder, before they join.", "Access Control"],
 	["online-mode", "Online Mode", "Verifies players against Mojang/Microsoft accounts. Turning this off allows unauthenticated (cracked) clients.", "Access Control"],
 	["enforce-secure-profile", "Enforce Secure Chat Profile", "Requires players to have a Mojang-signed chat profile to join.", "Access Control"],
 	["prevent-proxy-connections", "Prevent Proxy Connections", "Blocks connections detected as coming through a proxy/VPN.", "Access Control"],
@@ -487,6 +471,15 @@ const minecraftSettings = withChoices(
 	["enable-rcon", "Enable RCON", "Enables the RCON remote console interface used by this dashboard to query/control the server.", "Admin & Networking"],
 	["rcon.port", "RCON Port", "Network port the RCON interface listens on.", "Admin & Networking"],
 	["rcon.password", "RCON Password", "Password required to authenticate to the RCON interface.", "Admin & Networking"],
+	["pause-when-empty-seconds", "Pause When Empty (seconds)", "How many seconds the server waits with nobody on before it pauses the world to save resources. 0 never pauses.", "Admin & Networking"],
+	["management-server-enabled", "Enable Management Server", "Turns on the server's management interface, a remote connection other tools can use to run the server. GodlyPanel doesn't need it.", "Admin & Networking"],
+	["management-server-host", "Management Server Address", "The address the management interface listens on. localhost keeps it to this PC.", "Admin & Networking"],
+	["management-server-port", "Management Server Port", "The port the management interface listens on. 0 lets the game pick one.", "Admin & Networking"],
+	["management-server-secret", "Management Server Secret", "The secret a tool must give to use the management interface. Keep it private.", "Admin & Networking"],
+	["management-server-tls-enabled", "Management Server Encryption", "Encrypts the management connection (TLS). Leave it on unless a tool you use can't cope with it.", "Admin & Networking"],
+	["management-server-tls-keystore", "Management Server Keystore", "The keystore file holding the certificate for the encrypted management connection.", "Admin & Networking"],
+	["management-server-tls-keystore-password", "Management Server Keystore Password", "The password of that keystore. Keep it private.", "Admin & Networking"],
+	["management-server-allowed-origins", "Management Server Allowed Origins", "Web addresses allowed to talk to the management interface from a browser. Leave empty for none.", "Admin & Networking"],
 	["enable-query", "Enable Query Protocol", "Enables the GameSpy4 query protocol used by some server-list tools.", "Admin & Networking"],
 	["query.port", "Query Port", "Network port the query protocol listens on.", "Admin & Networking"],
 	["enable-status", "Enable Server List Ping", "Allows the server to respond to the multiplayer server-list ping.", "Admin & Networking"],
@@ -819,9 +812,10 @@ export const CONFIG_CATALOG = {
 		files: {
 			"UDKDedServerSettings.ini": {
 				parser: "ini",
-				excludeSections: ["IniVersion"],
-				sectionLabels: {},
-				settings: {},
+				excludeSections: ["IniVersion", "Configuration"],
+				sectionLabels: { [SUBSISTENCE_SECTION]: "Server settings" },
+				settings: { ...prefixKeys(SUBSISTENCE_SECTION, subsistenceSettings) },
+				groupOrder: subsistenceGroupOrder,
 			},
 		},
 	},

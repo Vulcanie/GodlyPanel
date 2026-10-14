@@ -52,13 +52,14 @@ ARK has far more options than are listed here. In particular `Game.ini` also hol
 
 ### ARK (GameUserSettings.ini): General
 
-18 settings in `GameUserSettings.ini`, shown under **General** on the Settings tab.
+19 settings in `GameUserSettings.ini`, shown under **General** on the Settings tab.
 
 | Setting | Name in the file | What it does |
 | --- | --- | --- |
 | Difficulty Offset | `DifficultyOffset` in `[ServerSettings]` | Overall difficulty (0-1). Raises the level range of wild dinos and loot quality as it increases. |
 | Max Difficulty Multiplier | `OverrideOfficialDifficulty` in `[ServerSettings]` | Caps how high wild dino levels and loot quality can scale, independent of Difficulty Offset. |
 | Admin Password | `ServerAdminPassword` in `[ServerSettings]` | Password required to use admin commands in-game. |
+| Implant Suicide Cooldown (s) | `ImplantSuicideCD` in `[ServerSettings]` | How many seconds a player must wait between uses of the implant's suicide option. The default is 28800 (8 hours). |
 | Server Password | `ServerPassword` in `[ServerSettings]` | Password players must enter to join the server. Leave blank for a public server. |
 | PvE Mode | `ServerPVE` in `[ServerSettings]` | When enabled, players cannot damage each other or each other's structures. |
 | Show Player Location On Map | `ShowMapPlayerLocation` in `[ServerSettings]` | Shows each player's position on the in-game map at all times. |
@@ -77,27 +78,17 @@ ARK has far more options than are listed here. In particular `Game.ini` also hol
 
 ### ARK (GameUserSettings.ini): Taming & Breeding
 
-13 settings in `GameUserSettings.ini`, shown under **Taming & Breeding** on the Settings tab.
+3 settings in `GameUserSettings.ini`, shown under **Taming & Breeding** on the Settings tab.
 
 | Setting | Name in the file | What it does |
 | --- | --- | --- |
 | Taming Speed Multiplier | `TamingSpeedMultiplier` in `[ServerSettings]` | Multiplies how fast dinos are tamed. |
 | Allow Anyone to Imprint Babies | `AllowAnyoneBabyImprintCuddle` in `[ServerSettings]` | Lets any tribe member (not just the imprinted player) cuddle/care for a baby. |
 | Disable Imprint Stat Bonus | `DisableImprintDinoBuff` in `[ServerSettings]` | Removes the stat bonus dinos normally get from being well-imprinted. |
-| Mating Interval Multiplier | `MatingIntervalMultiplier` in `[ServerSettings]` | Multiplies the cooldown between a dino's mating attempts (lower = more frequent). |
-| Egg Hatch Speed Multiplier | `EggHatchSpeedMultiplier` in `[ServerSettings]` | Multiplies how fast fertilized eggs hatch. |
-| Baby Maturation Speed Multiplier | `BabyMatureSpeedMultiplier` in `[ServerSettings]` | Multiplies how fast baby dinos grow to adulthood. |
-| Baby Food Consumption Multiplier | `BabyFoodConsumptionSpeedMultiplier` in `[ServerSettings]` | Multiplies how fast baby dinos consume food. |
-| Baby Cuddle Interval Multiplier | `BabyCuddleIntervalMultiplier` in `[ServerSettings]` | Multiplies the time between required imprint cuddle/care events (lower = more frequent). |
-| Baby Cuddle Grace Period Multiplier | `BabyCuddleGracePeriodMultiplier` in `[ServerSettings]` | Multiplies the grace period allowed before a missed cuddle hurts imprint quality. |
-| Imprint Quality Loss Speed Multiplier | `BabyCuddleLoseImprintQualitySpeedMultiplier` in `[ServerSettings]` | Multiplies how fast imprint quality drops after a missed cuddle. |
-| Imprint Stat Bonus Multiplier | `BabyImprintingStatScaleMultiplier` in `[ServerSettings]` | Multiplies the stat bonus a dino gets per percent of imprint quality. |
-| Imprint Gain Per Cuddle Multiplier | `BabyImprintAmountMultiplier` in `[ServerSettings]` | Multiplies how much imprint percentage is gained per successful cuddle. |
-| Egg Laying Interval Multiplier | `LayEggIntervalMultiplier` in `[ServerSettings]` | Multiplies the interval between a female dino laying eggs. |
 
 ### ARK (GameUserSettings.ini): Harvesting & Resources
 
-14 settings in `GameUserSettings.ini`, shown under **Harvesting & Resources** on the Settings tab.
+4 settings in `GameUserSettings.ini`, shown under **Harvesting & Resources** on the Settings tab.
 
 | Setting | Name in the file | What it does |
 | --- | --- | --- |
@@ -105,16 +96,6 @@ ARK has far more options than are listed here. In particular `Game.ini` also hol
 | Resource Respawn Time Multiplier | `ResourcesRespawnPeriodMultiplier` in `[ServerSettings]` | Multiplies how long it takes harvested resource nodes to respawn. |
 | Item Stack Size Multiplier | `ItemStackSizeMultiplier` in `[ServerSettings]` | Multiplies the max stack size for stackable items. |
 | Clamp Spoiling Times to Official Values | `ClampItemSpoilingTimes` in `[ServerSettings]` | Prevents item spoil timers from exceeding official-server maximums. |
-| Spoiling Time Multiplier | `GlobalSpoilingTimeMultiplier` in `[ServerSettings]` | Multiplies how long perishable items take to spoil. |
-| Dropped Item Decay Multiplier | `GlobalItemDecompositionTimeMultiplier` in `[ServerSettings]` | Multiplies how long dropped items last before disappearing. |
-| Corpse Decay Multiplier | `GlobalCorpseDecompositionTimeMultiplier` in `[ServerSettings]` | Multiplies how long corpses last before disappearing. |
-| No-Respawn Radius Around Players | `ResourceNoReplenishRadiusPlayers` in `[ServerSettings]` | Multiplies the radius around players where resources won't respawn. |
-| No-Respawn Radius Around Structures | `ResourceNoReplenishRadiusStructures` in `[ServerSettings]` | Multiplies the radius around structures where resources won't respawn. |
-| Crop Growth Speed Multiplier | `CropGrowthSpeedMultiplier` in `[ServerSettings]` | Multiplies how fast planted crops grow. |
-| Crop Decay Speed Multiplier | `CropDecaySpeedMultiplier` in `[ServerSettings]` | Multiplies how fast unharvested crops decay. |
-| Fuel Consumption Multiplier | `FuelConsumptionIntervalMultiplier` in `[ServerSettings]` | Multiplies how quickly fuel is consumed by generators/forges/etc. |
-| Supply Crate Loot Quality Multiplier | `SupplyCrateLootQualityMultiplier` in `[ServerSettings]` | Multiplies the quality of items found in supply crate drops. |
-| Fishing Loot Quality Multiplier | `FishingLootQualityMultiplier` in `[ServerSettings]` | Multiplies the quality of items caught while fishing. |
 
 ### ARK (GameUserSettings.ini): Dinos & Wild Population
 
@@ -628,7 +609,7 @@ Mods and plugins add settings in files of their own (a `config` folder, a plugin
 
 ### Minecraft: World
 
-9 settings in `server.properties`, shown under **World** on the Settings tab.
+10 settings in `server.properties`, shown under **World** on the Settings tab.
 
 | Setting | Name in the file | What it does |
 | --- | --- | --- |
@@ -640,16 +621,18 @@ Mods and plugins add settings in files of their own (a `config` folder, a plugin
 | Max Build Height | `max-build-height` in `[root]` | Maximum height players can build to. |
 | View Distance (chunks) | `view-distance` in `[root]` | How many chunks in each direction the server sends to clients. |
 | Simulation Distance (chunks) | `simulation-distance` in `[root]` | How many chunks around each player are actively simulated (mobs, redstone, etc). |
+| Entity Visibility Range (%) | `entity-broadcast-range-percentage` in `[root]` | How far away players are sent mobs and other entities, as a percentage of normal. Lower saves bandwidth and CPU. |
 | Spawn Protection Radius | `spawn-protection` in `[root]` | Radius around the world spawn point that only operators can build in. |
 
 ### Minecraft: Access Control
 
-9 settings in `server.properties`, shown under **Access Control** on the Settings tab.
+10 settings in `server.properties`, shown under **Access Control** on the Settings tab.
 
 | Setting | Name in the file | What it does |
 | --- | --- | --- |
 | Enable Whitelist | `white-list` in `[root]` | Restricts joining to players on the whitelist. |
 | Enforce Whitelist Live | `enforce-whitelist` in `[root]` | Immediately kicks players removed from the whitelist instead of waiting for their next join. |
+| Show Code of Conduct | `enable-code-of-conduct` in `[root]` | Shows players the server's code of conduct, from its codeofconduct folder, before they join. |
 | Online Mode | `online-mode` in `[root]` | Verifies players against Mojang/Microsoft accounts. Turning this off allows unauthenticated (cracked) clients. |
 | Enforce Secure Chat Profile | `enforce-secure-profile` in `[root]` | Requires players to have a Mojang-signed chat profile to join. |
 | Prevent Proxy Connections | `prevent-proxy-connections` in `[root]` | Blocks connections detected as coming through a proxy/VPN. |
@@ -660,7 +643,7 @@ Mods and plugins add settings in files of their own (a `config` folder, a plugin
 
 ### Minecraft: Admin & Networking
 
-23 settings in `server.properties`, shown under **Admin & Networking** on the Settings tab.
+32 settings in `server.properties`, shown under **Admin & Networking** on the Settings tab.
 
 | Setting | Name in the file | What it does |
 | --- | --- | --- |
@@ -668,6 +651,15 @@ Mods and plugins add settings in files of their own (a `config` folder, a plugin
 | Enable RCON | `enable-rcon` in `[root]` | Enables the RCON remote console interface used by this dashboard to query/control the server. |
 | RCON Port | `rcon.port` in `[root]` | Network port the RCON interface listens on. |
 | RCON Password | `rcon.password` in `[root]` | Password required to authenticate to the RCON interface. |
+| Pause When Empty (seconds) | `pause-when-empty-seconds` in `[root]` | How many seconds the server waits with nobody on before it pauses the world to save resources. 0 never pauses. |
+| Enable Management Server | `management-server-enabled` in `[root]` | Turns on the server's management interface, a remote connection other tools can use to run the server. GodlyPanel doesn't need it. |
+| Management Server Address | `management-server-host` in `[root]` | The address the management interface listens on. localhost keeps it to this PC. |
+| Management Server Port | `management-server-port` in `[root]` | The port the management interface listens on. 0 lets the game pick one. |
+| Management Server Secret | `management-server-secret` in `[root]` | The secret a tool must give to use the management interface. Keep it private. |
+| Management Server Encryption | `management-server-tls-enabled` in `[root]` | Encrypts the management connection (TLS). Leave it on unless a tool you use can't cope with it. |
+| Management Server Keystore | `management-server-tls-keystore` in `[root]` | The keystore file holding the certificate for the encrypted management connection. |
+| Management Server Keystore Password | `management-server-tls-keystore-password` in `[root]` | The password of that keystore. Keep it private. |
+| Management Server Allowed Origins | `management-server-allowed-origins` in `[root]` | Web addresses allowed to talk to the management interface from a browser. Leave empty for none. |
 | Enable Query Protocol | `enable-query` in `[root]` | Enables the GameSpy4 query protocol used by some server-list tools. |
 | Query Port | `query.port` in `[root]` | Network port the query protocol listens on. |
 | Enable Server List Ping | `enable-status` in `[root]` | Allows the server to respond to the multiplayer server-list ping. |
@@ -851,7 +843,7 @@ A setting the file does not list keeps the game's own default. To use another va
 
 ### 7 Days to Die: World
 
-10 settings in `serverconfig.xml`, shown under **World** on the Settings tab.
+11 settings in `serverconfig.xml`, shown under **World** on the Settings tab.
 
 | Setting | Name in the file | What it does |
 | --- | --- | --- |
@@ -859,6 +851,7 @@ A setting the file does not list keeps the game's own default. To use another va
 | World seed | `WorldGenSeed` | The text that decides what a random world (RWG) looks like. The same seed and size always give the same world. |
 | World size | `WorldGenSize` | How large a random world is, in blocks. Bigger worlds take far longer to make and use more memory. |
 | Save name | `GameName` | The name of the save. Each name keeps its own game, so changing it starts a new game. |
+| Difficulty and rules code | `SandboxCode` | In newer versions of the game, the difficulty, day length, loot, zombie, blood moon and similar rules are one code instead of separate settings. To change it, open the game's new-game screen, press Sandbox options, adjust them, press Copy code and paste the result here. |
 | Game mode | `GameMode` | The rules of the game. GameModeSurvival is the normal game. |
 | Real minutes per game day | `DayNightLength` | How long a whole in-game day lasts in real minutes. |
 | Daylight hours | `DayLightLength` | How many of the 24 in-game hours are daylight. The rest is night. |
@@ -933,7 +926,7 @@ A setting the file does not list keeps the game's own default. To use another va
 
 ### 7 Days to Die: Performance
 
-6 settings in `serverconfig.xml`, shown under **Performance** on the Settings tab.
+7 settings in `serverconfig.xml`, shown under **Performance** on the Settings tab.
 
 | Setting | Name in the file | What it does |
 | --- | --- | --- |
@@ -942,11 +935,12 @@ A setting the file does not list keeps the game's own default. To use another va
 | Dynamic mesh: claim buffer | `DynamicMeshLandClaimBuffer` | How many chunks around a land claim the dynamic mesh covers. |
 | Dynamic mesh: item cache | `DynamicMeshMaxItemCache` | How many mesh items the server keeps ready. More is faster but uses more memory. |
 | Map chunks per player | `MaxUncoveredMapChunksPerPlayer` | How many map chunks one player may uncover. Lower it to keep the save small. |
+| Reset unvisited chunks (days) | `MaxChunkAge` | How many in-game days an area must go unvisited before it returns to its original state. Land claims and bedrolls nearby protect it. -1 never resets it. |
 | Save size limit (MB) | `SaveDataLimit` | The most disk space one world's save may use. -1 for no limit. |
 
 ### 7 Days to Die: Remote console
 
-13 settings in `serverconfig.xml`, shown under **Remote console** on the Settings tab.
+17 settings in `serverconfig.xml`, shown under **Remote console** on the Settings tab.
 
 | Setting | Name in the file | What it does |
 | --- | --- | --- |
@@ -955,9 +949,13 @@ A setting the file does not list keeps the game's own default. To use another va
 | Telnet password | `TelnetPassword` | The remote console's password. Leave it empty if the console is not reachable from outside this PC. |
 | Telnet failed logins allowed | `TelnetFailedLoginLimit` | How many wrong passwords are allowed before the sender is blocked. |
 | Telnet block time (seconds) | `TelnetFailedLoginsBlocktime` | How long a sender is blocked after too many wrong passwords. |
-| Web control panel | `ControlPanelEnabled` | Turns on the game's own web page for running the server. GodlyPanel doesn't need it. |
-| Web control panel port | `ControlPanelPort` | The port of the game's web page. |
-| Web control panel password | `ControlPanelPassword` | The password of the game's web page. |
+| Web dashboard | `WebDashboardEnabled` | Turns on the game's own web page for watching and running the server. GodlyPanel doesn't need it. Newer versions of the game; older ones call it the web control panel. |
+| Web dashboard port | `WebDashboardPort` | The port of the game's web page. Open it in your router only if you want people outside this PC to reach it. |
+| Web dashboard address | `WebDashboardUrl` | The full address people use to reach the web dashboard (for example https://example.com:1234/), when it sits behind a reverse proxy. Leave empty to use the server's own address and the port above. |
+| Draw the map for the web dashboard | `EnableMapRendering` | Makes the game turn the parts of the map players explore into pictures, which the web dashboard shows. It costs some CPU and disk, so leave it off if you don't use the dashboard. |
+| Web control panel (older game versions) | `ControlPanelEnabled` | Turns on the game's own web page for running the server. GodlyPanel doesn't need it. Newer versions of the game use the web dashboard instead. |
+| Web control panel port (older game versions) | `ControlPanelPort` | The port of the game's web page. |
+| Web control panel password (older game versions) | `ControlPanelPassword` | The password of the game's web page. |
 | Console window | `TerminalWindowEnabled` | Shows the game's own console window. Leave it off when the panel hides the window. |
 | Admin file | `AdminFileName` | The file that lists the admins, in the save folder. |
 | Hide command log | `HideCommandExecutionLog` | How much of the commands run in the console are kept out of the log. |
@@ -972,9 +970,45 @@ Subsistence keeps its settings in `UDKGame\Config\UDKDedServerSettings.ini` insi
 
 Subsistence has no documented settings in the panel yet. The Settings tab shows what is in the file, using any comment the game wrote beside a line as its explanation, but nothing here is explained by the panel.
 
-### Subsistence: UDKDedServerSettings.ini
+### Subsistence: Server
 
-The panel has no explanations for `UDKDedServerSettings.ini` yet. The Settings tab still shows every setting in the file, and the game's own comments beside them where there are any.
+8 settings in `UDKDedServerSettings.ini`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server name | `ServerName` in `[ColdGame.ColdDedServerSettings]` | The name shown in the in-game server list. 64 characters at most. |
+| Description | `ServerDescription` in `[ColdGame.ColdDedServerSettings]` | A short text shown when a player clicks the server in the list. 256 characters at most. |
+| Hosted by | `HostedByName` in `[ColdGame.ColdDedServerSettings]` | The name shown in the server list as the one running the server. 64 characters at most. |
+| Password | `Password` in `[ColdGame.ColdDedServerSettings]` | What players must type to join. Leave empty to let anyone join. |
+| Admin password | `AdminPassword` in `[ColdGame.ColdDedServerSettings]` | The password admins use to sign in to the server from inside the game. |
+| Max players | `MaxPlayers` in `[ColdGame.ColdDedServerSettings]` | The most players that can be on at once, from 1 to 32. |
+| Save slot | `ProfileId` in `[ColdGame.ColdDedServerSettings]` | The server can keep five separate saves; this picks which one it uses, from 1 to 5. |
+| Mods | `Mods` in `[ColdGame.ColdDedServerSettings]` | The mods to run, separated by commas. Each is either a mod's id or a Steam Workshop item number (the number at the end of its Workshop page address). Workshop mods are downloaded and updated every time the server starts. |
+
+### Subsistence: World
+
+5 settings in `UDKDedServerSettings.ini`, shown under **World** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Difficulty | `Difficulty` in `[ColdGame.ColdDedServerSettings]` | How hard the game is. Choices: `easy` (Easy), `normal` (Normal), `hardcore` (Hardcore). |
+| Days per year | `DaysPerYear` in `[ColdGame.ColdDedServerSettings]` | How many in-game days make a year. Fewer means the seasons change faster. Choices: `12`, `24`, `36`, `48`, `60`, `90`, `120`, `200`, `365`. Another value can be typed. |
+| Start month | `MonthOverride` in `[ColdGame.ColdDedServerSettings]` | Starts the server in a particular month instead of the one stored in the save. The game puts this back to -1 after it starts, and uses the save's month from then on. Choices: `-1` (Use the save's month), `0` (January), `1` (February), `2` (March), `3` (April), `4` (May), `5` (June), `6` (July), `7` (August), `8` (September), `9` (October), `10` (November), `11` (December). |
+| Hunters | `HuntersEnabled` in `[ColdGame.ColdDedServerSettings]` | Turns on the hunters, the enemies that go after players. |
+| Hunter attacks | `HunterAttacks` in `[ColdGame.ColdDedServerSettings]` | How often the hunters attack. Choices: `0` (Normal attacks), `1` (Revenge attacks only), `2` (No attacks). |
+
+### Subsistence: Players and bases
+
+6 settings in `UDKDedServerSettings.ini`, shown under **Players and bases** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Players can hurt each other | `PvPDamage` in `[ColdGame.ColdDedServerSettings]` | Lets players damage other players. |
+| Players can damage other bases | `PlayersCanDamagePlayerBases` in `[ColdGame.ColdDedServerSettings]` | Lets players damage buildings other players placed. |
+| Players can open other bases' storage | `PlayersCanAccessEnemyPlayerBaseItems` in `[ColdGame.ColdDedServerSettings]` | Lets players use another base's storage chests, refineries and similar items. Doors and windows are not affected. |
+| Protect bases while their owners are offline | `OfflineBaseProtection` in `[ColdGame.ColdDedServerSettings]` | Keeps a base from taking damage while nobody from it is online (within range of a base control unit or range extender). Protection starts 10 minutes after the last member signs off. It does not stop base decay. |
+| Hours offline before a base decays | `NumPlayerOfflineHoursBeforeBaseDecay` in `[ColdGame.ColdDedServerSettings]` | How many real hours a player and their team can be away before their base starts to decay. 0 means bases never decay. 96 is four days. A limit is recommended for public servers so old bases get cleared. |
+| Allow buildings to overlap | `AllowBuildableClipping` in `[ColdGame.ColdDedServerSettings]` | Lets players place buildings so they clip through each other. |
 
 ## RuneScape: Dragonwilds
 

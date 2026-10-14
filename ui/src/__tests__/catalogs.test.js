@@ -213,3 +213,32 @@ describe("launch lines of every game with a Launch options form", () => {
 		});
 	}
 });
+
+// Settings found in files the games wrote on a real PC (7 Days to Die V 3.2, Subsistence, Minecraft 26.x, ARK: Survival Ascended).
+describe("settings seen in real installs", () => {
+	const keysOf = (game, file) => new Set(Object.keys(getFileCatalog(game, file).settings).map((k) => k.split("::").pop()));
+
+	it("explains 7 Days to Die's web dashboard and sandbox code", () => {
+		const keys = keysOf("7days", "serverconfig.xml");
+		for (const k of ["WebDashboardEnabled", "WebDashboardPort", "WebDashboardUrl", "EnableMapRendering", "MaxChunkAge", "SandboxCode"]) expect(keys.has(k), k).toBe(true);
+	});
+
+	it("explains every Subsistence setting, with the choices the game's comments list", () => {
+		const settings = getFileCatalog("subsistence", "UDKDedServerSettings.ini").settings;
+		const section = "ColdGame.ColdDedServerSettings";
+		for (const k of ["ServerName", "Password", "AdminPassword", "MaxPlayers", "Difficulty", "HunterAttacks", "DaysPerYear", "MonthOverride", "PvPDamage", "OfflineBaseProtection", "Mods"]) expect(settings[`${section}::${k}`], k).toBeTruthy();
+		expect(settings[`${section}::Difficulty`].options.map((o) => o.value)).toEqual(["easy", "normal", "hardcore"]);
+		expect(settings[`${section}::HunterAttacks`].options.map((o) => o.value)).toEqual(["0", "1", "2"]);
+	});
+
+	it("keeps ARK's breeding and crop multipliers in Game.ini only, where the game writes them", () => {
+		expect(keysOf("ark", "GameUserSettings.ini").has("MatingIntervalMultiplier")).toBe(false);
+		expect(keysOf("ark", "Game.ini").has("MatingIntervalMultiplier")).toBe(true);
+		expect(keysOf("ark", "GameUserSettings.ini").has("ImplantSuicideCD")).toBe(true);
+	});
+
+	it("explains Minecraft's management server and pause settings", () => {
+		const keys = keysOf("minecraft", "server.properties");
+		for (const k of ["pause-when-empty-seconds", "management-server-enabled", "management-server-secret", "entity-broadcast-range-percentage", "enable-code-of-conduct"]) expect(keys.has(k), k).toBe(true);
+	});
+});
