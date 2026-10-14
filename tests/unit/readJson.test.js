@@ -39,12 +39,16 @@ describe("reading a data file", () => {
 		assert.equal(await readJson(path.join(dir, "both-bad.json"), "fallback", { strict: true }), "fallback");
 	});
 
-	it("refuses to call an existing but unreadable file empty, when asked to be strict", { skip: !onWindows }, async () => {
+	it("refuses to call an existing but unreadable file empty, when asked to be strict", { skip: !onWindows }, async (t) => {
 		const file = path.join(dir, "locked.json");
 		fs.writeFileSync(file, '{"users":[1]}');
 		const sid = await currentUserSid();
 		icacls(file, "/deny", `*${sid}:(R)`);
 		try {
+			// An elevated account (a CI runner) can read past its own deny rule, so there is nothing to refuse.
+			let stillReadable = true;
+			try { fs.readFileSync(file); } catch { stillReadable = false; }
+			if (stillReadable) return t.skip("this account can read the file despite the deny rule");
 			await assert.rejects(readJson(file, null, { strict: true }), /can't read .*locked\.json.*file was not changed/s);
 			// Everything else keeps its old forgiving behaviour.
 			assert.equal(await readJson(file, "fallback"), "fallback");

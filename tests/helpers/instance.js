@@ -85,6 +85,9 @@ export class Api {
 				...headers,
 			},
 			body: body === undefined ? undefined : JSON.stringify(body),
+		}).catch((e) => {
+			// "fetch failed" alone says nothing about why; the cause (reset, refused, timed out) does.
+			throw new Error(`${method} ${url}: ${e.message} (${e.cause?.code ?? e.cause?.message ?? "no cause"})`, { cause: e });
 		});
 		const set = res.headers.get("set-cookie");
 		if (set && cookie === undefined) this.cookie = set.split(";")[0];
