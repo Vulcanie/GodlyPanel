@@ -77,18 +77,30 @@ export class Api {
 
 	async call(method, url, body, { cookie, headers } = {}) {
 		const useCookie = cookie ?? this.cookie;
-		const res = await fetch(this.base + url, {
-			method,
-			headers: {
-				"Content-Type": "application/json",
-				...(useCookie ? { Cookie: useCookie } : {}),
-				...headers,
-			},
-			body: body === undefined ? undefined : JSON.stringify(body),
-		}).catch((e) => {
+		const send = () =>
+			fetch(this.base + url, {
+				method,
+				headers: {
+					"Content-Type": "application/json",
+					...(useCookie ? { Cookie: useCookie } : {}),
+					...headers,
+				},
+				body: body === undefined ? undefined : JSON.stringify(body),
+			});
+		let res;
+		try {
+			try {
+				res = await send();
+			} catch (e) {
+				// The panel closes a connection nobody has used for 5 seconds; a test that waited that long on something else (starting a
+				// fake game on a slow machine) finds it reset when it reuses it. Nothing reached the panel, so ask again once.
+				if (e.cause?.code !== "ECONNRESET") throw e;
+				res = await send();
+			}
+		} catch (e) {
 			// "fetch failed" alone says nothing about why; the cause (reset, refused, timed out) does.
 			throw new Error(`${method} ${url}: ${e.message} (${e.cause?.code ?? e.cause?.message ?? "no cause"})`, { cause: e });
-		});
+		}
 		const set = res.headers.get("set-cookie");
 		if (set && cookie === undefined) this.cookie = set.split(";")[0];
 		const text = await res.text();
