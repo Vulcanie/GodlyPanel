@@ -415,7 +415,7 @@ Example: `-maxplayers 8`
 
 ### `-worldseed`
 
-**World seed** (World). A number that decides what a new world looks like. 0 makes a random one.
+**World seed** (World). Any text or number that decides what a new world looks like; the same seed always makes the same world. Leave it off for a random one.
 
 Example: `-worldseed 0`
 
@@ -429,9 +429,9 @@ Example: `-worldmode 0`
 
 ### `-gameid`
 
-**Game ID** (Server). A code players can join with through Steam's relay. Leave it off to have one made.
+**Game ID** (Server). A code players can join with through Steam's relay. It must be 28 letters and numbers (a code of another length is ignored and a random one is made). Leave it off to have one made.
 
-Example: `-gameid ABCDEF`
+Example: `-gameid ABCDEFGHJKLMNPQRSTUVWXYZ2345`
 
 ### `-season`
 

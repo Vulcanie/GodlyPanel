@@ -80,6 +80,7 @@ export const SOTF_CHOICES = {
 };
 
 export const VRISING_CHOICES = {
-	GameDifficultyPreset: { choices: ["Difficulty_Easy", "Difficulty_Normal", "Difficulty_Brutal"], allowCustom: true },
-	GameSettingsPreset: { choices: ["", "StandardPvP", "StandardPvE", "Relaxed", "Hard", "Casual"], allowCustom: true },
+	// The presets the game ships in VRisingServer_Data\StreamingAssets (checked against server version 1.1).
+	GameDifficultyPreset: { choices: [["Difficulty_Easy", "Easy"], ["Difficulty_Normal", "Normal"], ["Difficulty_Brutal", "Brutal"]], allowCustom: true },
+	GameSettingsPreset: { choices: [["", "None (the game's default rules)"], ["StandardPvE", "Standard PvE"], ["StandardPvP", "Standard PvP"], ["StandardPvP_NoSiege", "Standard PvP No Siege"], ["StandardPvP_WeekendSiege", "Standard PvP Weekend Siege"], ["StandardPvP_DailySiege", "Standard PvP Daily Siege"], ["SoloPvP", "Solo PvP"], ["DuoPvP", "Duo PvP"], ["DuoPvP_NoSiege", "Duo PvP No Siege"], ["DuoPvP_WeekendSiege", "Duo PvP Weekend Siege"], ["DuoPvP_DailySiege", "Duo PvP Daily Siege"], ["TrioPvP", "Trio PvP"], ["TrioPvP_NoSiege", "Trio PvP No Siege"], ["TrioPvP_WeekendSiege", "Trio PvP Weekend Siege"], ["TrioPvP_DailySiege", "Trio PvP Daily Siege"], ["HardcorePvP", "Hardcore PvP"], ["HardcoreDuoPvP", "Hardcore Duo PvP"], ["HardcoreTrioPvP", "Hardcore Trio PvP"], ["Level30PvE", "Level 30 PvE"], ["Level30PvP", "Level 30 PvP"], ["Level40PvE", "Level 40 PvE"], ["Level40PvP", "Level 40 PvP"], ["Level50PvE", "Level 50 PvE"], ["Level50PvP", "Level 50 PvP"], ["Level60PvE", "Level 60 PvE"], ["Level60PvP", "Level 60 PvP"], ["Level70PvE", "Level 70 PvE"], ["Level70PvP", "Level 70 PvP"], ["Level80PvE", "Level 80 PvE"], ["Level80PvP", "Level 80 PvP"], ["Level90PvE", "Level 90 PvE"], ["Level90PvP", "Level 90 PvP"]], allowCustom: true },
 };

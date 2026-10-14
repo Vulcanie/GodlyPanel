@@ -1,10 +1,10 @@
-import { rows } from "./rows.js";
+import { rows, withChoices } from "./rows.js";
 
 // Project Zomboid: Server\<name>.ini in the server's zomboid folder. Plain key=value lines. The game fills in anything the file
 // doesn't list with its own default, and writes the rest of its options into the file the first time it runs.
 // (How the world itself plays, such as zombie numbers and loot, lives in <name>_SandboxVars.lua, which this form doesn't edit.)
 
-export const zomboidSettings = rows([
+export const zomboidSettings = withChoices(rows([
 	["PublicName", "Server name", "The name shown in the in-game server browser.", "Server"],
 	["PublicDescription", "Description", "The text under the name in the server browser. Write \\n where you want a new line.", "Server"],
 	["Password", "Password", "What players type to join. Leave empty for a server anyone can join.", "Server"],
@@ -28,7 +28,7 @@ export const zomboidSettings = rows([
 	["UPnP", "Open ports automatically (UPnP)", "Asks the router to open the server's ports. Many routers refuse, so open them yourself.", "Network"],
 	["SteamVAC", "Valve Anti-Cheat", "Turns Valve Anti-Cheat on.", "Network"],
 	["PingLimit", "Ping limit", "Players with a higher ping are removed. 0 means no limit.", "Network"],
-	["SpeedLimit", "Speed limit", "The fastest a player may move before the server assumes they are cheating.", "Network"],
+	["SpeedLimit", "Speed limit", "The fastest a player may move before the server assumes they are cheating, from 10 to 150. The default is 70.", "Network"],
 	["KickFastPlayers", "Kick fast players", "Removes players who move faster than the speed limit.", "Network"],
 	["DoLuaChecksum", "Check game files match", "Removes players whose game files don't match the server's, which blocks most cheats and mismatched mods.", "Network"],
 	["DenyLoginOnOverloadedServer", "Refuse joins when overloaded", "Turns players away while the server is struggling to keep up.", "Network"],
@@ -63,9 +63,9 @@ export const zomboidSettings = rows([
 	["HidePlayersBehindYou", "Hide players behind you", "Hides players who are out of your line of sight.", "Gameplay"],
 	["PVPMeleeDamageModifier", "PvP melee damage (%)", "How much damage melee attacks do to other players, as a percentage.", "Gameplay"],
 	["PVPFirearmDamageModifier", "PvP firearm damage (%)", "How much damage guns do to other players, as a percentage.", "Gameplay"],
-	["PVPMeleeWhileHitReaction", "Melee while being hit", "Whether a player who is staggering from a hit can still swing.", "Gameplay"],
+	["PVPMeleeWhileHitReaction", "Melee while being hit", "Lets a player hit again while they are staggering from being struck by another player.", "Gameplay"],
 	["CarEngineAttractionModifier", "Vehicle noise attraction", "How strongly engine noise draws zombies. 1 is normal.", "Gameplay"],
-	["MapRemotePlayerVisibility", "Players on the map", "Whether players can see each other on the map.", "Gameplay"],
+	["MapRemotePlayerVisibility", "Players on the map", "Whether, and which, other players show on each player's in-game map.", "Gameplay"],
 
 	["HoursForLootRespawn", "Loot respawn (hours)", "How many hours before loot in containers is refilled. 0 means never.", "Loot and building"],
 	["MaxItemsForLootRespawn", "Loot respawn: busy limit", "Containers with more items than this aren't refilled.", "Loot and building"],
@@ -84,7 +84,7 @@ export const zomboidSettings = rows([
 	["SafehouseAllowLoot", "Others may loot", "People who aren't members can take things from a safehouse.", "Safehouses"],
 	["SafehouseAllowRespawn", "Respawn in a safehouse", "Members can choose to respawn in their safehouse after dying.", "Safehouses"],
 	["SafehouseDaySurvivedToClaim", "Days survived to claim", "How many days a character must have survived before they can claim a safehouse.", "Safehouses"],
-	["SafeHouseRemovalTime", "Safehouse expiry (hours)", "How many hours a safehouse can sit unused before it is released. 0 means never.", "Safehouses"],
+	["SafeHouseRemovalTime", "Safehouse expiry (hours)", "A player is removed from a safehouse they haven't visited for this many real hours. The default is 144 (six days).", "Safehouses"],
 	["DisableSafehouseWhenPlayerConnected", "Protect only while the owner is away", "A safehouse's protection only applies while its members are offline.", "Safehouses"],
 
 	["Faction", "Factions", "Lets players form factions.", "Factions"],
@@ -117,6 +117,61 @@ export const zomboidSettings = rows([
 	["DisableRadioOverseer", "Radios off for overseers", "Overseers can't use radios.", "Moderation"],
 	["DisableRadioModerator", "Radios off for moderators", "Moderators can't use radios.", "Moderation"],
 	["DisableRadioObserver", "Radios off for observers", "Observers can't use radios.", "Moderation"],
-]);
+	["Seed", "World seed", "The seed the world is generated from. To change it for an existing world, put the new value here and delete map_worldgen.bin in the save folder.", "Server"],
+	["ShowCoordinates", "Show coordinates", "Shows each player's coordinates in the lower right corner of their screen.", "Server"],
+	["DisableScoreboard", "Turn off the scoreboard", "Turns off the players scoreboard.", "Server"],
+	["SteamScoreboard", "Steam names on the scoreboard", "Shows players' Steam names and pictures in the players list.", "Server"],
+	["HideAdminsInPlayerList", "Hide admins in the player list", "Keeps admins out of the list of players.", "Server"],
+	["ResetID", "Reset ID (do not change)", "Tells the server whether it has had a soft reset. If it no longer matches a player's saved copy, they must make a new character. Back it up and leave it alone.", "Server"],
+	["ServerPlayerID", "Server player ID (do not change)", "Tells a character apart from one made on another server or in single player. If it no longer matches, the player must make a new character. Back it up and leave it alone.", "Server"],
+	["PVPLogToolChat", "Log PVP to admin chat", "Shows player-versus-player fights in the admins' chat.", "Moderation"],
+	["PVPLogToolFile", "Log PVP to a file", "Writes player-versus-player fights to a log file.", "Moderation"],
+	["UsernameDisguises", "Name disguises", "Lets players hide their name above their head with a mask or similar.", "Moderation"],
+	["HideDisguisedUserName", "Hide disguised names", "Hides the name of a disguised player in the scoreboard and chat as well.", "Moderation"],
+	["DropOffWhiteListAfterDeath", "Remove from the whitelist on death", "Takes a player's account off the whitelist when they die, so on a closed server they can't make a new character.", "Moderation"],
+	["AnnounceAnimalDeath", "Announce animal deaths", "Posts a message in the chat every time an animal dies.", "Moderation"],
+	["BadWordListFile", "Banned words file", "The file listing words that aren't allowed in chat, one per line.", "Moderation"],
+	["GoodWordListFile", "Allowed words file", "The file listing words that are allowed even though they contain a banned word, one per line.", "Moderation"],
+	["BadWordPolicy", "When someone uses a banned word", "What happens to a player who writes a banned word in chat.", "Moderation"],
+	["BadWordReplacement", "Banned word replacement", "The text shown in place of a banned word.", "Moderation"],
+	["ChatMessageCharacterLimit", "Longest chat message", "The most characters a chat message may have, from 64 to 1024.", "Moderation"],
+	["ChatMessageSlowModeTime", "Chat slow mode (seconds)", "How many seconds a player must wait between chat messages, from 1 to 30.", "Moderation"],
+	["MaxPacketsPerSecond", "Packets per player per second", "The most network packets the server will handle from each player each second, from 100 to 1000. Lower protects against floods, but too low kicks honest players.", "Network"],
+	["MultiplayerStatisticsPeriod", "Statistics update period (seconds)", "How often the server updates its multiplayer statistics, from 0 to 10. 0 turns them off.", "Network"],
+	["SafetyDisconnectDelay", "Safety disconnect delay (seconds)", "How long a player's character stays in the world after they disconnect while the safety system is on, from 0 to 60.", "Gameplay"],
+	["SwitchZombiesOwnershipEachUpdate", "Move zombie control between players", "Hands control of zombies to a different nearby player on every update, to spread the work between players.", "Gameplay"],
+	["UltraSpeedDoesnotAffectToAnimals", "Fast-forward leaves animals alone", "Keeps animals at normal speed when an admin speeds up the game.", "Gameplay"],
+	["UsePhysicsHitReaction", "Physics hit reactions", "Uses the physics hit reaction when a character is hit.", "Gameplay"],
+	["DisableRadioInvisible", "Mute invisible players on radio", "Stops radio transmissions from invisible players.", "Gameplay"],
+	["DisableVehicleTowing", "No vehicle towing", "Turns off towing vehicles.", "Loot and building"],
+	["DisableTrailerTowing", "No trailer towing", "Turns off towing trailers.", "Loot and building"],
+	["DisableBurntTowing", "No towing burnt vehicles", "Turns off towing burnt-out vehicles.", "Loot and building"],
+	["SafehousePreventsLootRespawn", "Safehouses stop loot respawning", "Items don't respawn inside buildings players have claimed as a safehouse.", "Safehouses"],
+	["SafehouseAllowNonResidential", "Claim non-residential buildings", "Lets players claim buildings that aren't homes, such as shops.", "Safehouses"],
+	["SafehouseDisableDisguises", "Disguises don't work in safehouses", "Turns off name disguises inside safehouses.", "Safehouses"],
+	["MaxSafezoneSize", "Biggest safehouse area", "The largest area, in squares, a safehouse may cover. The default is 20000.", "Safehouses"],
+	["DisableSafehouseWhenOwnerConnected", "Safehouse is ordinary while its owner is on", "While an owner of the safehouse is connected it acts like a normal house, so it is only secure when its owners are offline.", "Safehouses"],
+	["War", "War", "Turns on the war feature between factions.", "Factions"],
+	["WarStartDelay", "War start delay (seconds)", "How long before a war starts, at least 60.", "Factions"],
+	["WarDuration", "War length (seconds)", "How long a war lasts, at least 60.", "Factions"],
+	["WarSafehouseHitPoints", "Safehouse hit points in a war", "The limit of hit points a safehouse has during a war.", "Factions"],
+	["DiscordChatChannel", "Discord chat channel name", "The name of the Discord channel the in-game chat is sent to.", "Discord"],
+	["DiscordLogChannel", "Discord log channel name", "The name of the Discord channel the server's logs are sent to.", "Discord"],
+	["DiscordCommandChannel", "Discord commands channel name", "The name of the Discord channel commands are taken from.", "Discord"],
+	["WebhookAddress", "Slack webhook address", "The Slack incoming webhook address the server posts to.", "Discord"],
+	["AntiCheatSafety", "Anti-cheat: safety system", "How the server reacts to safety-system cheating. Leave at the game's default unless you know what a level does.", "Anti-cheat"],
+	["AntiCheatSpeed", "Anti-cheat: speed", "How the server reacts to a character moving too fast. Leave at the game's default unless you know what a level does.", "Anti-cheat"],
+	["AntiCheatNoClip", "Anti-cheat: walking through walls", "How the server reacts to a character passing through solid objects. Leave at the game's default unless you know what a level does.", "Anti-cheat"],
+	["AntiCheatHit", "Anti-cheat: hits", "How the server reacts to impossible hits. Leave at the game's default unless you know what a level does.", "Anti-cheat"],
+	["AntiCheatPacketException", "Anti-cheat: bad packets", "How the server reacts to broken network packets. Leave at the game's default unless you know what a level does.", "Anti-cheat"],
+	["AntiCheatPermission", "Anti-cheat: permissions", "How the server reacts to a player using powers they don't have. Leave at the game's default unless you know what a level does.", "Anti-cheat"],
+	["AntiCheatXP", "Anti-cheat: experience", "How the server reacts to impossible experience gains. Leave at the game's default unless you know what a level does.", "Anti-cheat"],
+	["AntiCheatSafeHouse", "Anti-cheat: safehouses", "How the server reacts to safehouse cheating. Leave at the game's default unless you know what a level does.", "Anti-cheat"],
+	["AntiCheatPlayer", "Anti-cheat: players", "How the server reacts to player-data cheating. Leave at the game's default unless you know what a level does.", "Anti-cheat"],
+	["AntiCheatChecksum", "Anti-cheat: file check", "How the server reacts to a player whose game files don't match. Leave at the game's default unless you know what a level does.", "Anti-cheat"],
+]), {
+	MapRemotePlayerVisibility: [["1", "Hidden"], ["2", "Friends"], ["3", "Friends and nearby players"], ["4", "Everyone"]],
+	BadWordPolicy: [["1", "Ban them"], ["2", "Kick them"], ["3", "Only record it in the database"], ["4", "Mute them"]],
+});
 
-export const zomboidGroupOrder = ["Server", "Network", "Gameplay", "Loot and building", "Safehouses", "Factions", "Saving", "Voice", "Discord", "Moderation", "Mods"];
+export const zomboidGroupOrder = ["Server", "Network", "Gameplay", "Loot and building", "Safehouses", "Factions", "Saving", "Voice", "Discord", "Moderation", "Anti-cheat", "Mods"];
