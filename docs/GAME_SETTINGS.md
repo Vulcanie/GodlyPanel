@@ -361,11 +361,53 @@ The remote console (RCON) settings are in `Game.ini` beside it. The panel manage
 
 ### Conan Exiles: PvP Rules & Schedule
 
-18 settings in `ServerSettings.ini`, shown under **PvP Rules & Schedule** on the Settings tab.
+60 settings in `ServerSettings.ini`, shown under **PvP Rules & Schedule** on the Settings tab.
 
 | Setting | Name in the file | What it does |
 | --- | --- | --- |
 | PvP Enabled | `PVPEnabled` in `[ServerSettings]` | Turns on player-vs-player combat server-wide. |
+| PvP on Monday | `PVPEnabledMonday` in `[ServerSettings]` | Allows player-versus-player combat on Monday when PvP is limited to the schedule. |
+| PvP starts on Monday | `PVPTimeMondayStart` in `[ServerSettings]` | The time PvP starts on Monday, written as hours and minutes on a 24-hour clock without a colon (1800 is 6 pm). |
+| PvP ends on Monday | `PVPTimeMondayEnd` in `[ServerSettings]` | The time PvP ends on Monday, written the same way (2200 is 10 pm). |
+| PvP on Tuesday | `PVPEnabledTuesday` in `[ServerSettings]` | Allows player-versus-player combat on Tuesday when PvP is limited to the schedule. |
+| PvP starts on Tuesday | `PVPTimeTuesdayStart` in `[ServerSettings]` | The time PvP starts on Tuesday, written as hours and minutes on a 24-hour clock without a colon (1800 is 6 pm). |
+| PvP ends on Tuesday | `PVPTimeTuesdayEnd` in `[ServerSettings]` | The time PvP ends on Tuesday, written the same way (2200 is 10 pm). |
+| PvP on Wednesday | `PVPEnabledWednesday` in `[ServerSettings]` | Allows player-versus-player combat on Wednesday when PvP is limited to the schedule. |
+| PvP starts on Wednesday | `PVPTimeWednesdayStart` in `[ServerSettings]` | The time PvP starts on Wednesday, written as hours and minutes on a 24-hour clock without a colon (1800 is 6 pm). |
+| PvP ends on Wednesday | `PVPTimeWednesdayEnd` in `[ServerSettings]` | The time PvP ends on Wednesday, written the same way (2200 is 10 pm). |
+| PvP on Thursday | `PVPEnabledThursday` in `[ServerSettings]` | Allows player-versus-player combat on Thursday when PvP is limited to the schedule. |
+| PvP starts on Thursday | `PVPTimeThursdayStart` in `[ServerSettings]` | The time PvP starts on Thursday, written as hours and minutes on a 24-hour clock without a colon (1800 is 6 pm). |
+| PvP ends on Thursday | `PVPTimeThursdayEnd` in `[ServerSettings]` | The time PvP ends on Thursday, written the same way (2200 is 10 pm). |
+| PvP on Friday | `PVPEnabledFriday` in `[ServerSettings]` | Allows player-versus-player combat on Friday when PvP is limited to the schedule. |
+| PvP starts on Friday | `PVPTimeFridayStart` in `[ServerSettings]` | The time PvP starts on Friday, written as hours and minutes on a 24-hour clock without a colon (1800 is 6 pm). |
+| PvP ends on Friday | `PVPTimeFridayEnd` in `[ServerSettings]` | The time PvP ends on Friday, written the same way (2200 is 10 pm). |
+| PvP on Saturday | `PVPEnabledSaturday` in `[ServerSettings]` | Allows player-versus-player combat on Saturday when PvP is limited to the schedule. |
+| PvP starts on Saturday | `PVPTimeSaturdayStart` in `[ServerSettings]` | The time PvP starts on Saturday, written as hours and minutes on a 24-hour clock without a colon (1800 is 6 pm). |
+| PvP ends on Saturday | `PVPTimeSaturdayEnd` in `[ServerSettings]` | The time PvP ends on Saturday, written the same way (2200 is 10 pm). |
+| PvP on Sunday | `PVPEnabledSunday` in `[ServerSettings]` | Allows player-versus-player combat on Sunday when PvP is limited to the schedule. |
+| PvP starts on Sunday | `PVPTimeSundayStart` in `[ServerSettings]` | The time PvP starts on Sunday, written as hours and minutes on a 24-hour clock without a colon (1800 is 6 pm). |
+| PvP ends on Sunday | `PVPTimeSundayEnd` in `[ServerSettings]` | The time PvP ends on Sunday, written the same way (2200 is 10 pm). |
+| Building damage on Monday | `PVPBuildingDamageEnabledMonday` in `[ServerSettings]` | Allows players to damage each other's buildings on Monday when building damage is limited to the schedule. |
+| Building damage starts on Monday | `PVPBuildingDamageTimeMondayStart` in `[ServerSettings]` | The time building damage starts on Monday, written as hours and minutes without a colon (1800 is 6 pm). |
+| Building damage ends on Monday | `PVPBuildingDamageTimeMondayEnd` in `[ServerSettings]` | The time building damage ends on Monday, written the same way. |
+| Building damage on Tuesday | `PVPBuildingDamageEnabledTuesday` in `[ServerSettings]` | Allows players to damage each other's buildings on Tuesday when building damage is limited to the schedule. |
+| Building damage starts on Tuesday | `PVPBuildingDamageTimeTuesdayStart` in `[ServerSettings]` | The time building damage starts on Tuesday, written as hours and minutes without a colon (1800 is 6 pm). |
+| Building damage ends on Tuesday | `PVPBuildingDamageTimeTuesdayEnd` in `[ServerSettings]` | The time building damage ends on Tuesday, written the same way. |
+| Building damage on Wednesday | `PVPBuildingDamageEnabledWednesday` in `[ServerSettings]` | Allows players to damage each other's buildings on Wednesday when building damage is limited to the schedule. |
+| Building damage starts on Wednesday | `PVPBuildingDamageTimeWednesdayStart` in `[ServerSettings]` | The time building damage starts on Wednesday, written as hours and minutes without a colon (1800 is 6 pm). |
+| Building damage ends on Wednesday | `PVPBuildingDamageTimeWednesdayEnd` in `[ServerSettings]` | The time building damage ends on Wednesday, written the same way. |
+| Building damage on Thursday | `PVPBuildingDamageEnabledThursday` in `[ServerSettings]` | Allows players to damage each other's buildings on Thursday when building damage is limited to the schedule. |
+| Building damage starts on Thursday | `PVPBuildingDamageTimeThursdayStart` in `[ServerSettings]` | The time building damage starts on Thursday, written as hours and minutes without a colon (1800 is 6 pm). |
+| Building damage ends on Thursday | `PVPBuildingDamageTimeThursdayEnd` in `[ServerSettings]` | The time building damage ends on Thursday, written the same way. |
+| Building damage on Friday | `PVPBuildingDamageEnabledFriday` in `[ServerSettings]` | Allows players to damage each other's buildings on Friday when building damage is limited to the schedule. |
+| Building damage starts on Friday | `PVPBuildingDamageTimeFridayStart` in `[ServerSettings]` | The time building damage starts on Friday, written as hours and minutes without a colon (1800 is 6 pm). |
+| Building damage ends on Friday | `PVPBuildingDamageTimeFridayEnd` in `[ServerSettings]` | The time building damage ends on Friday, written the same way. |
+| Building damage on Saturday | `PVPBuildingDamageEnabledSaturday` in `[ServerSettings]` | Allows players to damage each other's buildings on Saturday when building damage is limited to the schedule. |
+| Building damage starts on Saturday | `PVPBuildingDamageTimeSaturdayStart` in `[ServerSettings]` | The time building damage starts on Saturday, written as hours and minutes without a colon (1800 is 6 pm). |
+| Building damage ends on Saturday | `PVPBuildingDamageTimeSaturdayEnd` in `[ServerSettings]` | The time building damage ends on Saturday, written the same way. |
+| Building damage on Sunday | `PVPBuildingDamageEnabledSunday` in `[ServerSettings]` | Allows players to damage each other's buildings on Sunday when building damage is limited to the schedule. |
+| Building damage starts on Sunday | `PVPBuildingDamageTimeSundayStart` in `[ServerSettings]` | The time building damage starts on Sunday, written as hours and minutes without a colon (1800 is 6 pm). |
+| Building damage ends on Sunday | `PVPBuildingDamageTimeSundayEnd` in `[ServerSettings]` | The time building damage ends on Sunday, written the same way. |
 | Restrict PvP to Scheduled Hours | `RestrictPVPTime` in `[ServerSettings]` | Limits PvP combat to the weekly schedule set below. |
 | Restrict Building Damage to Scheduled Hours | `RestrictPVPBuildingDamageTime` in `[ServerSettings]` | Limits PvP structure damage to the weekly schedule set below. |
 | Disable Building During Restricted PvP | `DisableBuildingDuringTimeRestrictedPVP` in `[ServerSettings]` | Prevents construction while scheduled PvP building-damage hours are active. |
@@ -383,6 +425,17 @@ The remote console (RCON) settings are in `Game.ini` beside it. The panel manage
 | Restrict Avatar Summoning to Scheduled Hours | `RestrictAvatarSummoningTime` in `[ServerSettings]` | Limits Avatar summoning to specific hours. |
 | Avatar Lifetime (sec) | `AvatarLifetime` in `[ServerSettings]` | How long a summoned Avatar remains active. |
 | Avatar Summon Cast Time (sec) | `AvatarSummonTime` in `[ServerSettings]` | Time required to complete the Avatar summoning ritual. |
+
+### Conan Exiles: Gameplay
+
+4 settings in `ServerSettings.ini`, shown under **Gameplay** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Avatar summoning opens on weekdays | `AvatarSummoningTimeWeekdayStart` in `[ServerSettings]` | The time of day the avatars can be summoned from on weekdays, written as hours and minutes without a colon. 0 for both start and end means no limit. |
+| Avatar summoning closes on weekdays | `AvatarSummoningTimeWeekdayEnd` in `[ServerSettings]` | The time of day the avatars can be summoned until on weekdays, written as hours and minutes without a colon. 0 for both start and end means no limit. |
+| Avatar summoning opens at weekends | `AvatarSummoningTimeWeekendStart` in `[ServerSettings]` | The time of day the avatars can be summoned from on weekends, written as hours and minutes without a colon. 0 for both start and end means no limit. |
+| Avatar summoning closes at weekends | `AvatarSummoningTimeWeekendEnd` in `[ServerSettings]` | The time of day the avatars can be summoned until on weekends, written as hours and minutes without a colon. 0 for both start and end means no limit. |
 
 ### Conan Exiles: Player Stats & Combat
 
@@ -511,28 +564,9 @@ The remote console (RCON) settings are in `Game.ini` beside it. The panel manage
 | Animal Pen Crafting Time Multiplier | `AnimalPenCraftingTimeMultiplier` in `[ServerSettings]` | Multiplies how long animal pen breeding/crafting takes. |
 | Feed Box Range Multiplier | `FeedBoxRangeMultiplier` in `[ServerSettings]` | Multiplies the range a feed box can supply food to nearby pets/pens. |
 
-### Conan Exiles: Land Claims
-
-12 settings in `ServerSettings.ini`, shown under **Land Claims** on the Settings tab.
-
-| Setting | Name in the file | What it does |
-| --- | --- | --- |
-| Max Land Claims Per Player | `LandClaimCount` in `[ServerSettings]` | Maximum number of land claim keystones a single player can place. |
-| Land Claim Size (blocks) | `LandClaimSize` in `[ServerSettings]` | Radius protected by a single land claim keystone. |
-| Land Claim Dead Zone | `LandClaimDeadZone` in `[ServerSettings]` | Minimum distance required between keystones placed by non-allied players. |
-| Land Claim Expiry Time (days) | `LandClaimExpiryTime` in `[ServerSettings]` | Real-world days a player can be offline before their land claims expire. |
-| Land Claim Decay Mode | `LandClaimDecayMode` in `[ServerSettings]` | Controls how offline land claim protection decays: slow linear, fast exponential, or none. |
-| Land Claim Durability Multiplier (Online) | `LandClaimOnlineDurabilityModifier` in `[ServerSettings]` | Multiplies protected block hardness while the owner is online. |
-| Land Claim Durability Multiplier (Offline) | `LandClaimOfflineDurabilityModifier` in `[ServerSettings]` | Multiplies protected block hardness while the owner is offline. |
-| Land Claim Offline Delay (min) | `LandClaimOfflineDelay` in `[ServerSettings]` | Minutes after logout before offline durability modifiers take effect. |
-| Enable Dynamic Mesh | `DynamicMeshEnabled` in `[ServerSettings]` | Enables the dynamic mesh (destructible terrain smoothing) system. |
-| Dynamic Mesh: Land Claims Only | `DynamicMeshLandClaimOnly` in `[ServerSettings]` | Restricts the dynamic mesh system to only apply within land claims. |
-| Dynamic Mesh Land Claim Buffer | `DynamicMeshLandClaimBuffer` in `[ServerSettings]` | Chunk radius around land claims included in dynamic mesh processing. |
-| Dynamic Mesh Max Item Cache | `DynamicMeshMaxItemCache` in `[ServerSettings]` | How many items dynamic mesh processing can cache concurrently. Higher uses more RAM. |
-
 ### Conan Exiles: Admin & Misc
 
-34 settings in `ServerSettings.ini`, shown under **Admin & Misc** on the Settings tab.
+30 settings in `ServerSettings.ini`, shown under **Admin & Misc** on the Settings tab.
 
 | Setting | Name in the file | What it does |
 | --- | --- | --- |
@@ -557,11 +591,7 @@ The remote console (RCON) settings are in `Game.ini` beside it. The panel manage
 | Allow Players From Oceania | `RegionAllowOceania` in `[ServerSettings]` | Allows players connecting from the Oceania region. |
 | Allow Players From South America | `RegionAllowSouthAmerica` in `[ServerSettings]` | Allows players connecting from the South America region. |
 | Region Block List | `RegionBlockList` in `[ServerSettings]` | Comma-separated list of regions to explicitly block. |
-| Twitch Integration Permission Level | `TwitchServerPermission` in `[ServerSettings]` | Permission level required to use Twitch integration commands. |
-| Allow Twitch Blood Moon Trigger | `TwitchBloodMoonAllowed` in `[ServerSettings]` | Allows Twitch viewers to trigger a Blood Moon event via integration. |
 | Max Death Map Markers | `MaxDeathMapMarkers` in `[ServerSettings]` | Maximum number of death location markers kept on the map per player. |
-| Party Shared Kill XP Range | `PartySharedKillRange` in `[ServerSettings]` | Distance within which party members share kill XP and quest credit. |
-| Player Killing Mode | `PlayerKillingMode` in `[ServerSettings]` | Controls who players are allowed to kill: no one, allies only, strangers only, or everyone. |
 | Health Bar Visibility Distance | `HealthbarVisibilityDistance` in `[ServerSettings]` | Maximum distance at which enemy health bars are visible. |
 | Building PvP Whitelist | `BuildingPVPWhitelist` in `[ServerSettings]` | List of structure/item IDs exempt from normal PvP building damage rules. |
 | Validate Pathing With Raycast | `ValidatePhysNavWalkWithRaycast` in `[ServerSettings]` | Enables extra raycast validation for NPC pathing/navigation. |
@@ -1020,7 +1050,7 @@ The file also holds an owner ID and a server GUID. The game makes them itself on
 
 ### Dragonwilds: General
 
-4 settings in `DedicatedServer.ini`, shown under **General** on the Settings tab.
+6 settings in `DedicatedServer.ini`, shown under **General** on the Settings tab.
 
 | Setting | Name in the file | What it does |
 | --- | --- | --- |
@@ -1028,6 +1058,8 @@ The file also holds an owner ID and a server GUID. The game makes them itself on
 | World Password | `WorldPassword` in `[/Script/Dominion.DedicatedServerSettings]` | Password players must enter to join the server. Leave blank for a public server. |
 | Admin Password | `AdminPassword` in `[/Script/Dominion.DedicatedServerSettings]` | Password required to gain admin privileges in-game. |
 | Default World/Save Name | `DefaultWorldName` in `[/Script/Dominion.DedicatedServerSettings]` | Name of the save file this server loads/creates. |
+| Who can join | `PlatformPolicy` in `[/Script/Dominion.DedicatedServerSettings]` | Which platforms' players may join. Crossplay lets players from every platform in. |
+| Send crash reports | `bAllowSendingCrashDumps` in `[/Script/Dominion.DedicatedServerSettings]` | Lets the server send a crash report to the game's makers when it crashes. |
 
 ## Windrose
 
@@ -1039,7 +1071,7 @@ The file also holds identifiers the game makes itself (a version, a deployment, 
 
 ### Windrose: General
 
-6 settings in `ServerDescription.json`, shown under **General** on the Settings tab.
+8 settings in `ServerDescription.json`, shown under **General** on the Settings tab.
 
 | Setting | Name in the file | What it does |
 | --- | --- | --- |
@@ -1049,6 +1081,8 @@ The file also holds identifiers the game makes itself (a version, a deployment, 
 | Max Players | `ServerDescription_Persistent.MaxPlayerCount` | Maximum number of players allowed on the server. |
 | Server Region | `ServerDescription_Persistent.UserSelectedRegion` | Region selected for this server, used for matchmaking/latency. |
 | Auto-Load Latest Backup If Save Is Broken | `ServerDescription_Persistent.AutoLoadLatestBackupIfHasBroken` | Automatically restores the most recent backup if the current save fails to load. |
+| Invite code | `ServerDescription_Persistent.InviteCode` | The code players type into the game to find and join this server. The game makes it; leave it as it is. |
+| Allow several servers from one install | `ServerDescription_Persistent.CanLaunchMultipleServerInstances` | Lets more than one copy of the server run from the same install at the same time. |
 
 ### Windrose: Networking
 
@@ -1083,6 +1117,7 @@ Palworld has many more options than are listed here. Anything without an explana
 
 | Setting | Name in the file | What it does |
 | --- | --- | --- |
+| Region | `Region` | The region the server is listed under. Leave empty for the default. |
 | Server Name | `ServerName` | The name shown for this server in the in-game server browser. |
 | Server Description | `ServerDescription` | Short description shown in the server browser. |
 | Server Password | `ServerPassword` | Password players must enter to join the server. |
@@ -1093,14 +1128,52 @@ Palworld has many more options than are listed here. Anything without an explana
 | Max Co-op Players | `CoopPlayerMaxNum` | Maximum players allowed in a single co-op guild/base. |
 | Enable RCON | `RCONEnabled` | Enables the remote console (RCON) interface. |
 | RCON Port | `RCONPort` | Network port the RCON interface listens on. |
-| RCON Admin Password | `AdminRconPassword` | Password required to authenticate to the RCON interface. |
 
 ### Palworld: Gameplay
 
-50 settings in `PalWorldSettings.ini`, shown under **Gameplay** on the Settings tab.
+88 settings in `PalWorldSettings.ini`, shown under **Gameplay** on the Settings tab.
 
 | Setting | Name in the file | What it does |
 | --- | --- | --- |
+| Randomizer Mode | `RandomizerType` | Shuffles which pals appear where, and what they are. None leaves the world as normal. Choices: `None`, `Region`, `All`. Another value can be typed. |
+| Randomizer Seed | `RandomizerSeed` | The text that decides how the randomizer shuffles. The same seed gives the same shuffle. |
+| Randomize Pal Levels | `bIsRandomizerPalLevelRandom` | Gives randomized pals random levels too. |
+| Pal Hunger Rate | `PalStomachDecreaceRate` | How fast pals get hungry. 1 is normal; lower is slower. |
+| Pal Stamina Drain Rate | `PalStaminaDecreaceRate` | How fast pals use up stamina. 1 is normal; lower is slower. |
+| Pal Health Regeneration | `PalAutoHPRegeneRate` | How fast pals heal on their own. 1 is normal. |
+| Pal Health Regeneration While Sleeping | `PalAutoHpRegeneRateInSleep` | How fast pals heal while sleeping in their bed. 1 is normal. |
+| Structure Health Multiplier | `BuildObjectHpRate` | Multiplies how much damage structures can take before they break. 1 is normal. |
+| Bases Per Guild | `BaseCampMaxNumInGuild` | The most bases one guild may have. |
+| Egg Hatching Time (hours) | `PalEggDefaultHatchingTime` | How long the biggest eggs take to hatch, in hours. Smaller eggs take less. 0 hatches them at once. |
+| Pick Up Other Guilds' Death Drops | `bCanPickupOtherGuildDeathPenaltyDrop` | Lets players pick up what members of another guild dropped when they died. |
+| Penalty For Staying Away | `bEnableNonLoginPenalty` | Applies a penalty to a player's pals and base while they have not logged in for a long time. |
+| Fast Travel | `bEnableFastTravel` | Lets players fast travel between map points. |
+| Fast Travel To Bases Only | `bEnableFastTravelOnlyBaseCamp` | Limits fast travel to a player's own bases. |
+| Choose Start Location On The Map | `bIsStartLocationSelectByMap` | Lets new players pick where they start on the map. |
+| Characters Stay In The World After Logging Out | `bExistPlayerAfterLogout` | A player's character stays in the world after they log out, where others can attack it. |
+| Hide Other Guilds' Base Borders | `bInvisibleOtherGuildBaseCampAreaFX` | Hides the visual border around bases that belong to other guilds. |
+| Show Join And Leave Messages | `bIsShowJoinLeftMessage` | Shows a message in chat when players join or leave. |
+| Item Spoil Speed | `ItemCorruptionMultiplier` | Multiplies how fast food and other items spoil. 1 is normal. |
+| Ranch Work Speed | `MonsterFarmActionSpeedRate` | Multiplies how fast pals work at the ranch. 1 is normal. |
+| Fishing Difficulty | `FishingDifficultyRate` | How hard fishing is. 1 is normal; higher is harder. |
+| Locked Technologies | `DenyTechnologyList` | Technologies players can't unlock, written as a list of their names. |
+| Guild Rejoin Cooldown (minutes) | `GuildRejoinCooldownMinutes` | How long a player must wait before joining a guild again after leaving one. |
+| Guild Leader Away Limit (days) | `AutoTransferMasterThresholdDays` | How many days a guild leader may be away before leadership passes to another member. |
+| Show PvP Items At Bases On The Map | `bDisplayPvPItemNumOnWorldMap_BaseCamp` | Shows how many PvP items each base holds on the world map. |
+| Show PvP Items Carried By Players On The Map | `bDisplayPvPItemNumOnWorldMap_Player` | Shows how many PvP items each player carries on the world map. |
+| Extra Item Dropped On A PvP Kill | `AdditionalDropItemWhenPlayerKillingInPvPMode` | The item a player drops in addition to their own when they are killed by another player. |
+| Extra Item Count On A PvP Kill | `AdditionalDropItemNumWhenPlayerKillingInPvPMode` | How many of that item are dropped. |
+| Drop An Extra Item On A PvP Kill | `bAdditionalDropItemWhenPlayerKillingInPvPMode` | Makes a player who is killed by another player drop the extra item below as well. |
+| Voice Chat | `bEnableVoiceChat` | Turns on in-game voice chat. |
+| Voice Chat Full Volume Distance | `VoiceChatMaxVolumeDistance` | How close players must be to hear each other at full volume. |
+| Voice Chat Silence Distance | `VoiceChatZeroVolumeDistance` | How far apart players must be before they can't hear each other at all. |
+| Allow Upgrading Health | `bAllowEnhanceStat_Health` | Lets players spend points on health. |
+| Allow Upgrading Attack | `bAllowEnhanceStat_Attack` | Lets players spend points on attack. |
+| Allow Upgrading Stamina | `bAllowEnhanceStat_Stamina` | Lets players spend points on stamina. |
+| Allow Upgrading Carry Weight | `bAllowEnhanceStat_Weight` | Lets players spend points on how much they can carry. |
+| Allow Upgrading Work Speed | `bAllowEnhanceStat_WorkSpeed` | Lets players spend points on work speed. |
+| Show Who Built A Structure | `bEnableBuildingPlayerUIdDisplay` | Shows which player built a structure. |
+| Enemy Camps Near Bases | `bAllowEnemyCampSpawnNearBaseCamp` | Lets enemy camps appear near players' bases. |
 | Difficulty | `Difficulty` | Overall server difficulty preset. Choices: `None`, `Casual`, `Normal`, `Hard`. Another value can be typed. |
 | Day Speed Rate | `DayTimeSpeedRate` | Multiplies how fast in-game daytime passes. |
 | Night Speed Rate | `NightTimeSpeedRate` | Multiplies how fast in-game nighttime passes. |
@@ -1133,7 +1206,7 @@ Palworld has many more options than are listed here. Anything without an explana
 | Max Base Camps | `BaseCampMaxNum` | Maximum number of base camps allowed server-wide. |
 | Max Pal Workers Per Base | `BaseCampWorkerMaxNum` | Maximum number of Pals that can work at a single base camp. |
 | Max Players Per Guild | `GuildPlayerMaxNum` | Maximum number of players allowed in a single guild. |
-| Auto-Reset Guilds With No Online Players | `AutoResetGuildNoOnlinePlayers` | Automatically disbands/resets guilds that have had no online members for a while. |
+| Auto-Reset Guilds With No Online Players | `bAutoResetGuildNoOnlinePlayers` | Automatically disbands/resets guilds that have had no online members for a while. |
 | Auto-Reset Guild Timer (hrs) | `AutoResetGuildTimeNoOnlinePlayers` | Hours with no online guild members before an auto-reset triggers. |
 | Pal Work Speed Rate | `WorkSpeedRate` | Multiplies how fast working Pals complete tasks. |
 | Auto-Save Interval (min) | `AutoSaveSpan` | Minutes between automatic world saves. |
@@ -1141,7 +1214,6 @@ Palworld has many more options than are listed here. Anything without an explana
 | PvP Enabled | `bIsPvP` | Turns on player-vs-player combat server-wide. |
 | Hardcore Mode | `bHardcore` | Enables permadeath-style hardcore rules. |
 | Pals Can Be Lost On Death | `bPalLost` | Allows Pals to be permanently lost if their owner dies. |
-| Allow Character Recreation In Hardcore | `CharacterRecreateInHardcore` | Allows creating a new character after a hardcore death instead of being locked out. |
 | Allow Character Recreation In Hardcore | `bCharacterRecreateInHardcore` | Allows creating a new character after a hardcore death instead of being locked out. |
 | Enable Build Area Limit | `bBuildAreaLimit` | Restricts building to a limited area around base camps. |
 | Item Weight Rate | `ItemWeightRate` | Multiplies the carry weight of items. |
@@ -1154,10 +1226,17 @@ Palworld has many more options than are listed here. Anything without an explana
 
 ### Palworld: Admin
 
-8 settings in `PalWorldSettings.ini`, shown under **Admin** on the Settings tab.
+15 settings in `PalWorldSettings.ini`, shown under **Admin** on the Settings tab.
 
 | Setting | Name in the file | What it does |
 | --- | --- | --- |
+| Dropped Items With Physics | `PhysicsActiveDropItemMaxNum` | How many dropped items may use physics at once. -1 means no limit. |
+| Droppings Limit | `DropItemMaxNum_UNKO` | The most pal droppings that may lie in the world at once. |
+| Allow Client Mods | `bAllowClientMod` | Lets players join with mods installed on their own game. |
+| Check Player Accounts | `bUseAuth` | Checks that players are signed in to their platform account. Leave it on for a public server. |
+| Ban List Address | `BanListURL` | Where the server downloads its list of globally banned players from. |
+| Enable REST API | `RESTAPIEnabled` | Turns on the server's REST API, a web interface other tools use to run the server. The panel does not need it. |
+| REST API Port | `RESTAPIPort` | The port the REST API listens on. Keep it closed in your router unless you really need it. |
 | Show Player List | `bShowPlayerList` | Shows the connected player list to clients. |
 | Chat Messages Per Minute Limit | `ChatPostLimitPerMinute` | Maximum chat messages a player can send per minute (spam protection). |
 | Allowed Crossplay Platforms | `CrossplayPlatforms` | Platforms allowed to crossplay together on this server. |
@@ -1165,7 +1244,7 @@ Palworld has many more options than are listed here. Anything without an explana
 | Log Format | `LogFormatType` | Output format used for server logs. Choices: `Text` (Plain text), `Json` (JSON). |
 | Supply Drop Interval (min) | `SupplyDropSpan` | Minutes between scheduled supply drop events. |
 | Enable Predator Boss Pals | `EnablePredatorBossPal` | Enables the special Predator boss Pal variants. |
-| Max Building Limit Rate | `MaxBuildingLimitNumRate` | Multiplies the server-wide building count limit. |
+| Max Buildings Per Player | `MaxBuildingLimitNumPerPlayer` | The most structures one player may build. 0 means no limit. |
 
 ## Rust
 
