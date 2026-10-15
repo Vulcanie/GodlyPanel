@@ -120,7 +120,7 @@ describe("SCUM: launch arguments", () => {
 	const def = scum.launch;
 
 	it("gives every argument a label, an explanation and a group, with a flag nobody else uses", () => {
-		expect(def.args.length).toBe(4);
+		expect(def.args.length).toBe(5);
 		for (const arg of def.args) {
 			expect(arg.label?.trim(), arg.flag).toBeTruthy();
 			expect(arg.description.length, arg.flag).toBeGreaterThan(15);
@@ -132,8 +132,8 @@ describe("SCUM: launch arguments", () => {
 		expect(new Set(keys).size).toBe(keys.length);
 	});
 
-	it("has exactly the arguments the dossier verifies (and no -QueryPort)", () => {
-		expect(def.args.map((a) => a.flag)).toEqual(["-log", "-port", "-MaxPlayers", "-nobattleye"]);
+	it("has exactly the arguments the dossier and the real-install check verify", () => {
+		expect(def.args.map((a) => a.flag)).toEqual(["-log", "-port", "-QueryPort", "-MaxPlayers", "-nobattleye"]);
 		expect(def.style).toBe("equals");
 		expect(def.editable).toBe(true);
 	});

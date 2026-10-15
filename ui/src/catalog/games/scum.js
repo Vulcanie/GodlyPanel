@@ -51,7 +51,16 @@ export default {
 				managed: true,
 				example: "7780",
 				description:
-					"The UDP port players connect on. The game also takes the next two ports (a raw socket at +1 and the Steam server list query at +2), so keep three ports in a row free. Change it from the server's Ports section so the panel can check for clashes.",
+					"The UDP port players connect on. The game also opens a TCP port two above it, so keep that one free too. Change it from the server's Ports section so the panel can check for clashes.",
+			}),
+			A({
+				flag: "-QueryPort",
+				label: "Query port",
+				group: "Network",
+				managed: true,
+				example: "7880",
+				description:
+					"The UDP port the Steam server list asks for the server's details on. Without it the game uses 27015, which another server on the same PC may already have. Change it from the server's Ports section so the panel can check for clashes.",
 			}),
 			A({
 				flag: "-MaxPlayers",
@@ -79,6 +88,7 @@ export default {
 			"The game reads the file only when it starts, and a running server can write over changes made to it, so stop the server before editing.",
 			"The player and admin lists (`AdminUsers.ini`, `ExclusiveUsers.ini`, `WhitelistedUsers.ini`, `BannedUsers.ini`), the trader prices (`EconomyOverride.json`), the raid windows (`RaidTimes.json`), the scheduled messages (`Notifications.json`) and the `Loot` folder are in the same folder. The Settings tab does not edit them.",
 			"SCUM has no official mod support (the developer said on 30 September 2026 that it will not arrive in 2026). Loot, trader and raid-time changes are made with those files.",
+			"SCUM writes the server password in plain text into its own log (`SCUM.log`), so do not post that log where others can read it.",
 			"The game changes its list of settings about once a month. A setting the file has that the panel does not explain is still shown.",
 		],
 	},

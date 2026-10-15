@@ -12,6 +12,7 @@ const params = (extra = {}) => ({
 	sessionName: "Friends Island",
 	serverPassword: "secret1",
 	port: 7870,
+	queryPort: 7880,
 	installDir: "C:\\Servers\\scum",
 	steamCmdExe: "C:\\steamcmd\\steamcmd.exe",
 	instanceSlug: "my-scum-server",
@@ -42,17 +43,18 @@ describe("SCUM module", () => {
 		assert.ok(!template.fields.includes("mods"));
 	});
 
-	it("has one UDP game port that does not clash with another game's default or the ports beside it", () => {
-		assert.deepEqual(template.ports.map((p) => p.key), ["port"]);
+	it("has a UDP game port and a UDP query port that do not clash with another game's default or the ports beside them", () => {
+		assert.deepEqual(template.ports.map((p) => p.key), ["port", "queryPort"]);
 		const port = template.ports[0].default;
 		assert.match(template.ports[0].label, /UDP/);
 		const taken = [7015, 7777, 8888, 8766, 9876, 15637, 16261, 25565, 26000, 27015, 27016, 28015, 8211, 8890, 8892, 8900, 8910, 8920, 7780];
-		const mine = [port, ...implicitPortsOf(template).map((i) => port + i.offset)];
+		const mine = [port, template.ports[1].default, ...implicitPortsOf(template).map((i) => port + i.offset)];
 		for (const m of mine) assert.ok(!taken.includes(m), `${m} is another game's default`);
 	});
 
-	it("keeps the two ports after the game port free: the raw socket and the Steam query players join on", () => {
+	it("keeps the one more port the game opens beside its game port (TCP, game port + 2: seen on a real install)", () => {
 		const offsets = implicitPortsOf(template).map((i) => i.offset);
+		// The panel adds a precaution port at +1 to every game's list; the +2 is SCUM's own.
 		assert.deepEqual(offsets, [1, 2]);
 	});
 });
@@ -79,18 +81,23 @@ describe("SCUM start script", () => {
 		assert.equal(Number(/-port=(\d+)/.exec(launch)[1]), entry.port);
 	});
 
-	it("does not add -nobattleye or -QueryPort, and keeps the name and password out of the script", () => {
+	it("passes the query port, does not add -nobattleye, and keeps the name and password out of the script", () => {
 		assert.ok(!/nobattleye/i.test(script));
-		assert.ok(!/QueryPort/i.test(script));
+		assert.match(script, / -QueryPort=\d+ /);
 		assert.ok(!script.includes("secret1"));
 		assert.ok(!script.includes("Friends Island"));
 	});
 
-	it("takes the port and the player limit from the form", () => {
-		const custom = template.buildStartScript(params({ port: 7900, maxPlayers: 20 }));
-		assert.match(custom, / -port=7900 -MaxPlayers=20$/m);
+	it("takes the ports and the player limit from the form", () => {
+		const custom = template.buildStartScript(params({ port: 7900, queryPort: 7910, maxPlayers: 20 }));
+		assert.match(custom, / -port=7900 -QueryPort=7910 -MaxPlayers=20$/m);
 		assert.match(template.buildStartScript(params({ maxPlayers: "abc" })), / -MaxPlayers=64$/m);
 		assert.match(template.buildStartScript(params({ maxPlayers: 500 })), / -MaxPlayers=128$/m);
+	});
+
+	it("starts the server without the administrator prompt, because its program asks for one and a panel that is not elevated then cannot see or stop it (seen on a real install)", () => {
+		assert.ok(lines.includes("set __COMPAT_LAYER=RunAsInvoker"));
+		assert.ok(lines.indexOf("set __COMPAT_LAYER=RunAsInvoker") < lines.findIndex((l) => l.startsWith("start ")));
 	});
 
 	it("never lets a character cmd acts on from the server name into the script", () => {
@@ -159,10 +166,19 @@ describe("SCUM server entry", () => {
 		assert.equal(entry.autoUpdate, false);
 	});
 
-	it("has no query port of its own (players join on the game port + 2) and no RCON", () => {
-		assert.equal(entry.queryPort, undefined);
+	it("records the query port the script gives, and has no RCON", () => {
+		assert.equal(entry.queryPort, 7880);
 		assert.equal(entry.rconPort, undefined);
 		assert.equal(entry.rconPassword, undefined);
+	});
+});
+
+describe("SCUM first start", () => {
+	it("warns that the game rewrites its settings file on the very first start", async () => {
+		const out = await template.postWrite(params());
+		assert.equal(out.warnings.length, 1);
+		assert.match(out.warnings[0], /first start/i);
+		assert.match(out.warnings[0], /second/i);
 	});
 });
 
