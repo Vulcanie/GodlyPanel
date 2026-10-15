@@ -17,18 +17,23 @@ const LAUNCH_HIDDEN_SCRIPT = resolveResource("scripts/launch-hidden.ps1");
 // a real, documented one. This is a much simpler protocol than Source RCON
 // (no auth handshake needed for a local, passwordless connection), so a raw
 // TCP socket is enough — no need for the rcon-client package here.
-function sendTelnetSave(server, timeoutMs = 8000) {
+//
+// A game that wants a different command (Soulmask: "saveworld 1") says so in the entry's telnetSaveCommand. A command with a line
+// break in it would send a second command, so such a value is ignored.
+export function sendTelnetSave(server, timeoutMs = 8000, settleMs = 5000) {
+	const wanted = typeof server.telnetSaveCommand === "string" ? server.telnetSaveCommand.trim() : "";
+	const command = wanted && !/[\r\n\u0000]/.test(wanted) ? wanted : "saveworld";
 	return new Promise((resolve) => {
 		const socket = net.createConnection(
 			{ host: server.host, port: server.telnetPort },
 			() => {
-				socket.write("saveworld\n");
+				socket.write(`${command}\n`);
 				// No reliable "save finished" signal over telnet — same grace
 				// window used for the RCON save commands below.
 				setTimeout(() => {
 					socket.destroy();
 					resolve();
-				}, 5000);
+				}, settleMs);
 			},
 		);
 

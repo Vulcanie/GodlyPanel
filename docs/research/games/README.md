@@ -22,3 +22,13 @@ is left unexplained rather than guessed.
 
 Known limits of the panel for these games: it runs one process per server, so DST has the overworld only (no Caves shard); Stop asks the
 window to close and then forces it after 15 seconds (30 for Satisfactory), so DST's `c_shutdown()` and Icarus's slow save are not used.
+
+## Status (batch 2, 2026-10-15)
+
+| Game | Settings | Launch args | Mods | Run against a real install |
+|---|---|---|---|---|
+| Soulmask | none (its rates file has no explanation anywhere) | 28 | Workshop IDs (`-mod`) | **Yes**: the Shipping exe stays running, not elevated, the local console answers `saveworld 1`. Closing the window alone does not save, so the panel now sends `saveworld 1` before a stop (`telnetSaveCommand`) |
+| Garry's Mod | 145 (`server.cfg`) + 2 (`autoexec.cfg`) | 19 | one Workshop collection | **Mostly**: `srcds.exe` stays running, `server.cfg` runs, Stop is clean. Fixed: the console log is `console.log`, not `console.txt` |
+| Barotrauma | none (its settings are XML attributes no parser reads) | 15 | manual (`LocalMods`) | No |
+| Space Engineers | none | 11 | none | No. Built, **not registered**: the panel can't write a world or config yet |
+| Necesse | research only | | | No |

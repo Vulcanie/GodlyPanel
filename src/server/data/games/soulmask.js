@@ -12,10 +12,9 @@ import { parseWorkshopIds } from "./dst.js";
 // - The Shipping program is started directly, from the install folder, with SteamAppId set: that is what the dedicated-server guide's
 //   own serve.bat, the Server Manager and WindowsGSM do. The root WSServer.exe is a wrapper that those tools avoid. WHICH of the two
 //   stays running is not confirmed by any source; the Shipping one is what the panel starts, so it is what it tracks.
-// - STOPPING: the game only saves safely on a command typed into its local telnet console (EchoPort: `saveworld 1`, then `quit`),
-//   which the panel has no way to send. The panel closes the window and then force-kills the program, and the game's own docs warn
-//   that closing it "may lead to data rollback". The world reaches the disk every -backup seconds (900 here), so a Stop can lose up to
-//   that much play. The guide for the game says so.
+// - STOPPING: the game saves safely on a command typed into its local telnet console (EchoPort: `saveworld 1`). The panel sends that
+//   before it closes the window (telnetPort and telnetSaveCommand in the entry; closing the window alone does not save: checked on a real
+//   install). A crash can still lose what came after the last write to disk, every -backup seconds (900 here).
 // - Mods are Steam Workshop mods by id: `-mod="ID1,ID2"` on the line, only when the form's mods field is filled.
 
 const SHIPPING_PATH = "WS\\Binaries\\Win64\\WSServer-Win64-Shipping.exe";
@@ -110,6 +109,10 @@ const template = {
 		port: p.port,
 		queryPort: p.queryPort,
 		echoPort: p.echoPort,
+		// The game's local text console. The panel sends this before a stop so the world is saved first (a plain close of the window
+		// does not save: checked on a real install).
+		telnetPort: p.echoPort,
+		telnetSaveCommand: "saveworld 1",
 		sessionName: p.sessionName || p.name,
 		serverPassword: p.serverPassword,
 		startScriptPath: `${p.installDir}\\${p.startScriptFilename}`,

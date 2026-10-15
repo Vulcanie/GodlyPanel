@@ -27,11 +27,11 @@ describe("Soulmask module", () => {
 		expect(entry.configPath).toBeUndefined();
 	});
 
-	it("says in the guide that the panel cannot save the world before it stops it", () => {
+	it("says in the guide that the panel saves the world through the console before a stop, and what a crash can still lose", () => {
 		const text = soulmaskUi.guide.notes.join(" ");
-		expect(soulmaskUi.guide.notes[0]).toMatch(/Stopping can lose recent progress/);
+		expect(soulmaskUi.guide.notes[0]).toMatch(/Stop saves the world first/);
 		expect(text).toMatch(/saveworld 1/);
-		expect(text).toMatch(/cannot send/);
+		expect(text).not.toMatch(/cannot send/);
 		expect(text).toMatch(/-backup/);
 	});
 

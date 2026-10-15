@@ -36,6 +36,7 @@ Some games are set up by the arguments on the command that starts them, not by a
 - [Unturned](#unturned)
 - [Soulmask](#soulmask)
 - [Garry's Mod](#garrys-mod)
+- [Barotrauma](#barotrauma)
 
 ## ARK: Survival Ascended / Evolved
 
@@ -3015,7 +3016,7 @@ Soulmask is set up by the arguments on the command that starts it (the **Launch 
 
 - Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#soulmask).
 
-**Stopping can lose recent progress.** The game saves safely only when told to through its local text console: connect to `127.0.0.1` on the Console Port (18888 by default) with a Telnet client, type `saveworld 1`, then `quit 30`. The panel cannot send those commands. It closes the server's window and then ends the program, and the game's own guide warns that closing it directly may roll the world back to the last time it was written to disk. That is every `-backup` seconds (900, 15 minutes, as the panel starts it): lower it in the Launch options to lose less, or save by hand before stopping. Windows needs its optional Telnet client turned on for this.
+**Stop saves the world first.** The game saves safely only when told to through its local text console, so before it closes the server the panel sends `saveworld 1` to the Console Port (18888 by default; this PC only), waits a few seconds, and then closes the window. Closing the window alone does not save (checked on a real install). A crash or a power cut can still lose everything since the last write to disk, which happens every `-backup` seconds (900, 15 minutes, as the panel starts it): lower it in the Launch options to lose less.
 The world rules (experience, drop and growth rates, raids, difficulty) are in `WS\Saved\GameplaySettings\GameXishu.json`, which the game makes on its first start. The panel does not offer a form for it, because nothing it could find explains what each setting does. The file holds every setting three times, in groups `0`, `1` and `2`; a dedicated server reads group `1`. Stop the server before editing it by hand. It is included in the panel's backups.
 The server is started as a PvE server (`-pve`). For PvP, turn off **PvE mode** and turn on **PvP mode** in the Launch options. Both change some of the game's settings.
 The server takes a few minutes to start (two to five) before it is listed. The first lines of `WS.log` should show `Game Server API initialized`; if Steam fails to start there, the three Steam DLLs the panel copied into `WS\Binaries\Win64` may be missing or out of date.
@@ -3305,3 +3306,17 @@ The values of the Sandbox rules and limits come from the Facepunch wiki's list, 
 | Voice heard by distance | `ttt_locational_voice` | On makes players hear each other's voice only when close. Starts off. Choices: `0` (Off), `1` (On). |
 | Bots start as spectators | `ttt_bots_are_spectators` | On makes bots join as spectators. Starts off. Choices: `0` (Off), `1` (On). |
 | Highlight admins | `ttt_highlight_admins` | On shows admins in the scoreboard. Starts on. Choices: `0` (Off), `1` (On). |
+
+## Barotrauma
+
+Barotrauma's server keeps its settings in `serversettings.xml` in the server's install folder, next to `DedicatedServer.exe`. The server's name, ports, player limit, password and whether it is listed publicly are given on the command that starts it, and those are the **Launch options** on the Settings tab.
+
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#barotrauma).
+
+**The panel does not write or edit `serversettings.xml`.** The server makes it the first time it starts. Every setting in it is an attribute of one `<serversettings>` element, which the Settings tab has no editor for, so open it in a text editor with the server stopped. The server writes the file again whenever an admin changes a setting in the game and when it shuts down, so a change made while it runs is lost. The server also drops any attribute it does not know when it writes the file.
+**The panel cannot stop the server cleanly.** The server only takes its `exit`, `quit` or `close` command typed into its own console window, and it ignores input from other programs. Stop closes the window and then ends the process. A campaign is saved when it is created and at the end of every round, so stopping in the middle of a round loses that round. Stop between rounds, or type `exit` in the server's window yourself. What a closed window does to the settings file is not known.
+**Saves are not in the server's folder.** Campaign saves are in `%LocalAppData%\Daedalic Entertainment GmbH\Barotrauma\Multiplayer` of the Windows user that runs the panel, shared with every other Barotrauma server on this PC and with the game itself. The panel's default backup keeps only the files in the server's folder (the settings, the player permissions, the ban list and the mods you added). To keep the saves too, set the server's backup folders yourself and include that folder.
+A server that is not listed publicly has no query port open, so the panel can only tell that it is running, not how many players are on. Players join a server that is not listed by its IP address and game port.
+Players and server must run the same game version. Update the server (the Update button) after the game updates.
+Mods are Steam Workshop packages. The server downloads nothing by itself: copy each mod's folder (the one with a `filelist.xml` in it) into a `LocalMods` folder in the server's install folder, and list it in `config_player.xml` as `<package path="LocalMods/<folder>/filelist.xml" />` under `<regularpackages>`, in load order (a mod's required mods first), with the server stopped. Players need the same mods; with `AllowModDownloads` on (its default) they can fetch them from the server.
+The player and admin permissions are in `Data\clientpermissions.xml`, also edited by hand with the server stopped.

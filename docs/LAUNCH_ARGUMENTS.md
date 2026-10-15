@@ -33,6 +33,7 @@ Settings that live in a game's own settings file are in the [game settings guide
 - [StarRupture](#starrupture)
 - [Soulmask](#soulmask)
 - [Garry's Mod](#garrys-mod)
+- [Barotrauma](#barotrauma)
 
 ## Valheim
 
@@ -52,7 +53,7 @@ Not offered in the Launch options form; the panel sets it and it is best left al
 
 Not offered in the Launch options form; the panel sets it and it is best left alone.
 
-### `-name`
+### Valheim: `-name`
 
 **Server name** (Server). The name shown in the server list. The password can't be part of it.
 
@@ -76,7 +77,7 @@ Example: `-world "Dedicated"`
 
 Example: `-password "secret"`
 
-### `-public`
+### Valheim: `-public`
 
 **Listed publicly** (Server). Whether the server appears in Valheim's server browser. Without this argument the default is 1 (listed).
 
@@ -1594,7 +1595,7 @@ The panel puts this on the line when it creates the server. It is in the Launch 
 
 ### `-condebug`
 
-**Write the console to a file** (Saves and logs). Writes everything the console prints to console.txt in the garrysmod folder. The Logs tab reads that file.
+**Write the console to a file** (Saves and logs). Writes everything the console prints to console.log in the garrysmod folder. The Logs tab reads that file.
 
 Not offered in the Launch options form; the panel sets it and it is best left alone.
 
@@ -1625,3 +1626,133 @@ Not offered in the Launch options form; the panel sets it and it is best left al
 ### `-insecure`
 
 **Turn off Valve Anti-Cheat** (Advanced). Starts the server without Valve Anti-Cheat (VAC). Servers run with it unless this is on the line.
+
+## Barotrauma
+
+Barotrauma's server name, ports, player limit and password are given on the command that starts it, and they override the same settings in `serversettings.xml`. The rest of its options are in that file, which the server writes itself and the Settings tab cannot edit. Changes apply the next time the server starts. These arguments are on the `DedicatedServer.exe` line of the server's start script.
+
+The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
+
+### Barotrauma: `-name`
+
+**Server name** (Server). The name shown in the server list and the lobby. The game cuts a name longer than 60 characters. It overrides the name in serversettings.xml.
+
+Example: `-name "My Sub Crew"`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Barotrauma: `-port`
+
+**Game port** (Network). The UDP port players connect to. The game's own default is 27015. Change it from the server's Ports section so the panel can check for clashes and open the firewall.
+
+Example: `-port 27215`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Barotrauma: `-queryport`
+
+**Query port** (Network). The UDP port Steam's server list asks for the server's details on. The game's own default is 27016. The server only opens it while it is listed publicly. Change it from the server's Ports section so the panel can check for clashes.
+
+Example: `-queryport 27217`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Barotrauma: `-public`
+
+**Listed publicly** (Server). Whether the server appears in the in-game server list. The panel starts a new server as not listed. Without this argument the server uses the setting in serversettings.xml.
+
+Values: `True` (Listed in the public server list), `False` (Not listed (players join by IP address)).
+
+Example: `-public False`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Barotrauma: `-maxplayers`
+
+**Max players** (Server). The number of player slots. The game allows 1 to 16 and uses a limit of 10 when nothing else says otherwise.
+
+Example: `-maxplayers 10`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Barotrauma: `-password`
+
+**Join password** (Server). What players type to join. It overrides the password in serversettings.xml. It is written on this line, so anyone who can open the start script or see the server's process list can read it. To remove the password, clear this and add the 'No password' switch.
+
+Example: `-password "secret"`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `-nopassword`
+
+**No password** (Server). Clears the join password, even one saved in serversettings.xml. The panel puts it on the line when the server has no password. When both this and -password are on the line, the one that comes last wins.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-upnp`
+
+**Open the ports automatically (UPnP)** (Network). Asks the router to forward the server's ports by itself. The official wiki warns that this does not work on every router, so forward the ports by hand if players cannot connect.
+
+Values: `True` (Ask the router to open the ports), `False` (Do not).
+
+Example: `-upnp True`
+
+### `-enableupnp`
+
+**Open the ports automatically (UPnP), long spelling** (Network). The same as -upnp: the game reads both spellings with the same code. Use -upnp in the form.
+
+Values: `True` (Ask the router to open the ports), `False` (Do not).
+
+Example: `-enableupnp True`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-playstyle`
+
+**Play style label** (Server). The label shown in the server list so players know what to expect. The names are the game's own, and a value it does not know falls back to Serious.
+
+Values: `Serious`, `Casual`, `Roleplay`, `Rampage`, `SomethingDifferent` (Something different).
+
+Example: `-playstyle Casual`
+
+### `-banafterwrongpassword`
+
+**Ban after wrong password** (Access). Whether a player who types the wrong password too many times is banned. The number of tries is the MaxPasswordRetriesBeforeBan setting in serversettings.xml (3 in the game's code). Always give a value after it.
+
+Values: `True` (Ban a player who gets the password wrong too many times), `False` (Never ban for wrong passwords).
+
+Example: `-banafterwrongpassword True`
+
+### `-karma`
+
+**Karma system** (Access). Turns the karma system on: players who grief lose karma and can be kicked or banned automatically. Off in the game's own defaults.
+
+Values: `True` (On), `False` (Off).
+
+Example: `-karma True`
+
+### `-karmaenabled`
+
+**Karma system, long spelling** (Access). The same as -karma; this is the spelling the game's own Host Server menu uses. Use -karma in the form.
+
+Values: `True` (On), `False` (Off).
+
+Example: `-karmaenabled True`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-karmapreset`
+
+**Karma preset** (Access). Which set of karma rules is used. They come from the game's Data\karmasettings.xml, which has these three presets. It only matters when karma is turned on.
+
+Values: `default` (Default), `strict` (Strict), `custom` (Custom).
+
+Example: `-karmapreset default`
+
+### `-language`
+
+**Server language** (Server). The language shown for the server in the server list. It is only used when it matches a name in the game's Data\languageoptions.xml; anything else is ignored.
+
+Values: `undefined`, `undefined`, `undefined`, `undefined`, `undefined`, `undefined`, `undefined`, `undefined`, `undefined`, `undefined`, `undefined`, `undefined`, `undefined`, `undefined`, `undefined`, `undefined`, `undefined`, `undefined`, `undefined`, `undefined`. Other values are accepted too.
+
+Example: `-language English`

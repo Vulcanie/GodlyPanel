@@ -9,7 +9,7 @@ import { deriveLaunch } from "../../src/server/services/batchLaunch.js";
 import { cmdSafe } from "../../src/server/services/windowlessLauncher.js";
 
 // Soulmask, from the research dossier: everything is on the launch line, the Shipping program is started directly with
-// SteamAppId set, and the panel can not send the telnet commands the game saves safely with.
+// SteamAppId set, and the panel saves it through its local telnet console before a stop.
 
 const { template: t, backup, logs, launchOptions } = soulmask;
 
@@ -215,8 +215,10 @@ describe("Soulmask server entry", () => {
 		assert.ok(line.includes(entry.processName));
 	});
 
-	it("has no RCON or telnet port recorded, because the panel could not talk to either", () => {
-		for (const key of ["rconPort", "rconPassword", "telnetPort", "adminPassword", "configPath", "configPaths"]) assert.equal(entry[key], undefined, key);
+	it("records the local console as the telnet port, with the save command it answers (checked on a real install), and no RCON", () => {
+		assert.equal(entry.telnetPort, entry.echoPort);
+		assert.equal(entry.telnetSaveCommand, "saveworld 1");
+		for (const key of ["rconPort", "rconPassword", "adminPassword", "configPath", "configPaths"]) assert.equal(entry[key], undefined, key);
 	});
 });
 
