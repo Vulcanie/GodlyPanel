@@ -225,7 +225,7 @@ describe("Garry's Mod backups and logs", () => {
 	});
 
 	it("lists the console log the launch line asks for", () => {
-		assert.deepEqual(logs.map((l) => [l.kind, l.base, l.rel]), [["file", "working", "garrysmod/console.txt"]]);
+		assert.deepEqual(logs.map((l) => [l.kind, l.base, l.rel]), [["file", "working", "garrysmod/console.log"]]);
 		assert.match(launchLine(template.buildStartScript(params())), / -condebug$/);
 	});
 });

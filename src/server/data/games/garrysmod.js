@@ -213,7 +213,7 @@ export default {
 			{ base: "working", rel: "garrysmod/addons", label: "Addons added by hand" },
 		],
 	},
-	// console.txt: everything the console prints, written because the launch line has -condebug (the Facepunch wiki says it goes in the garrysmod folder).
-	logs: [{ kind: "file", base: "working", rel: "garrysmod/console.txt", label: "Console log" }],
+	// console.log: everything the console prints, written because the launch line has -condebug (the Facepunch wiki says it goes in the garrysmod folder).
+	logs: [{ kind: "file", base: "working", rel: "garrysmod/console.log", label: "Console log" }],
 	launchOptions: true,
 };
