@@ -14,6 +14,8 @@ import starrupture from "./starrupture.js";
 import soulmask from "./soulmask.js";
 import garrysmod from "./garrysmod.js";
 import barotrauma from "./barotrauma.js";
+import necesse from "./necesse.js";
+import l4d2 from "./l4d2.js";
 import unturned from "./unturned.js";
 
-export const GAME_MODULES = [abiotic, dst, icarus, scum, starrupture, unturned, soulmask, garrysmod, barotrauma];
+export const GAME_MODULES = [abiotic, dst, icarus, scum, starrupture, unturned, soulmask, garrysmod, barotrauma, necesse, l4d2];

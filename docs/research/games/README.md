@@ -31,4 +31,5 @@ window to close and then forces it after 15 seconds (30 for Satisfactory), so DS
 | Garry's Mod | 145 (`server.cfg`) + 2 (`autoexec.cfg`) | 19 | one Workshop collection | **Mostly**: `srcds.exe` stays running, `server.cfg` runs, Stop is clean. Fixed: the console log is `console.log`, not `console.txt` |
 | Barotrauma | none (its settings are XML attributes no parser reads) | 15 | manual (`LocalMods`) | No |
 | Space Engineers | none | 11 | none | No. Built, **not registered**: the panel can't write a world or config yet |
-| Necesse | research only | | | No |
+| Necesse | none (its config shape fits no parser) | 16 | jar files in a mods folder | No. No graceful stop: its `quit` command cannot be sent |
+| Left 4 Dead 2 | 110 (`server.cfg`) | 15 | Workshop addon ids | No |

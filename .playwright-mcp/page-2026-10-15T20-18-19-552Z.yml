@@ -1,0 +1,137 @@
+- generic [active] [ref=f2e1]:
+  - main [ref=f2e4]:
+    - heading "Left 4 Dead 2 Dedicated Server" [level=1] [ref=f2e5]
+    - generic [ref=f2e6]:
+      - link "Jump to navigation" [ref=f2e7] [cursor=pointer]:
+        - /url: "#mw-head"
+      - link "Jump to search" [ref=f2e8] [cursor=pointer]:
+        - /url: "#searchInput"
+      - paragraph [ref=f2e11]:
+        - text: There is currently no text in this page. You can
+        - link "search for this page title" [ref=f2e12] [cursor=pointer]:
+          - /url: /wiki/Special:Search/Left_4_Dead_2_Dedicated_Server
+        - text: in other pages, or
+        - link "search the related logs" [ref=f2e14] [cursor=pointer]:
+          - /url: https://developer.valvesoftware.com/w/index.php?title=Special:Log&page=Left_4_Dead_2_Dedicated_Server
+        - text: ", but you do not have permission to create this page."
+  - generic:
+    - heading "Navigation menu" [level=2] [ref=f2e15]
+    - generic [ref=f2e16]:
+      - navigation "Personal tools" [ref=f2e17]:
+        - list [ref=f2e19]:
+          - listitem [ref=f2e20]:
+            - link "Create account" [ref=f2e21] [cursor=pointer]:
+              - /url: /w/index.php?title=Special:CreateAccount&returnto=Left+4+Dead+2+Dedicated+Server
+          - listitem [ref=f2e22]:
+            - link "Log in" [ref=f2e23] [cursor=pointer]:
+              - /url: /w/index.php?title=Special:UserLogin&returnto=Left+4+Dead+2+Dedicated+Server
+      - navigation "Namespaces" [ref=f2e25]:
+        - list [ref=f2e26]:
+          - listitem [ref=f2e27]:
+            - link "Page" [ref=f2e28] [cursor=pointer]:
+              - /url: /w/index.php?title=Left_4_Dead_2_Dedicated_Server&action=edit&redlink=1
+          - listitem [ref=f2e29]:
+            - link "Discussion" [ref=f2e30] [cursor=pointer]:
+              - /url: /w/index.php?title=Talk:Left_4_Dead_2_Dedicated_Server&action=edit&redlink=1
+      - search [ref=f2e32]:
+        - generic [ref=f2e33]:
+          - heading "Search" [level=3] [ref=f2e34]
+          - generic [ref=f2e36]:
+            - searchbox "Search Valve Developer Community" [ref=f2e37]
+            - button "Search" [ref=f2e38] [cursor=pointer]
+            - button "Go" [ref=f2e39] [cursor=pointer]
+    - generic [ref=f2e40]:
+      - banner [ref=f2e41]:
+        - link "Visit the main page" [ref=f2e42] [cursor=pointer]:
+          - /url: /wiki/Main_Page
+      - navigation "Navigation" [ref=f2e43]:
+        - list [ref=f2e45]:
+          - listitem [ref=f2e46]:
+            - link "Main Page" [ref=f2e47] [cursor=pointer]:
+              - /url: /wiki/Main_Page
+          - listitem [ref=f2e48]:
+            - link "Source SDK index" [ref=f2e49] [cursor=pointer]:
+              - /url: /wiki/SDK_Docs
+          - listitem [ref=f2e50]:
+            - link "Recent changes" [ref=f2e51] [cursor=pointer]:
+              - /url: /wiki/Special:RecentChanges
+          - listitem [ref=f2e52]:
+            - link "Random page" [ref=f2e53] [cursor=pointer]:
+              - /url: /wiki/Special:RandomRootpage
+      - navigation [ref=f2e54]:
+        - heading "Workshop" [level=3] [ref=f2e55]
+        - list [ref=f2e57]:
+          - listitem [ref=f2e58]:
+            - link "Half-Life SDK" [ref=f2e59] [cursor=pointer]:
+              - /url: /wiki/Half-Life_SDK
+          - listitem [ref=f2e60]:
+            - 'link "Half-Life: Alyx Tools" [ref=f2e61] [cursor=pointer]':
+              - /url: /wiki/Half-Life:_Alyx_Workshop_Tools
+          - listitem [ref=f2e62]:
+            - link "Dota 2 Tools" [ref=f2e63] [cursor=pointer]:
+              - /url: /wiki/Dota_2_Workshop_Tools
+          - listitem [ref=f2e64]:
+            - link "SteamVR Tools" [ref=f2e65] [cursor=pointer]:
+              - /url: /wiki/SteamVR/Environments
+          - listitem [ref=f2e66]:
+            - link "Counter-Strike 2 Tools" [ref=f2e67] [cursor=pointer]:
+              - /url: /wiki/Counter-Strike_2_Workshop_Tools
+      - navigation [ref=f2e68]:
+        - heading "Support" [level=3] [ref=f2e69]
+        - list [ref=f2e71]:
+          - listitem [ref=f2e72]:
+            - link "Community portal" [ref=f2e73] [cursor=pointer]:
+              - /url: /wiki/Valve_Developer_Community:Community_portal
+          - listitem [ref=f2e74]:
+            - link "Getting help" [ref=f2e75] [cursor=pointer]:
+              - /url: /wiki/Help:Contents
+          - listitem [ref=f2e76]:
+            - link "Source SDK FAQ" [ref=f2e77] [cursor=pointer]:
+              - /url: /wiki/Category:Source_SDK_FAQ
+          - listitem [ref=f2e78]:
+            - link "Level Design FAQ" [ref=f2e79] [cursor=pointer]:
+              - /url: /wiki/Category:Level_Design_FAQ
+      - navigation [ref=f2e80]:
+        - heading "Steam Community" [level=3] [ref=f2e81]
+        - list [ref=f2e83]:
+          - listitem [ref=f2e84]:
+            - link "Source SDK Hub" [ref=f2e85] [cursor=pointer]:
+              - /url: http://steamcommunity.com/app/211
+          - listitem [ref=f2e86]:
+            - link "Source SDK Discussion" [ref=f2e87] [cursor=pointer]:
+              - /url: https://steamcommunity.com/app/211/discussions
+          - listitem [ref=f2e88]:
+            - link "Steam" [ref=f2e89] [cursor=pointer]:
+              - /url: http://www.steampowered.com
+      - navigation [ref=f2e90]:
+        - heading "Tools" [level=3] [ref=f2e91]
+        - list [ref=f2e93]:
+          - listitem [ref=f2e94]:
+            - link "What links here" [ref=f2e95] [cursor=pointer]:
+              - /url: /wiki/Special:WhatLinksHere/Left_4_Dead_2_Dedicated_Server
+          - listitem [ref=f2e96]:
+            - link "Special pages" [ref=f2e97] [cursor=pointer]:
+              - /url: /wiki/Special:SpecialPages
+          - listitem [ref=f2e98]:
+            - link "Printable version" [ref=f2e99] [cursor=pointer]:
+              - /url: javascript:print();
+          - listitem [ref=f2e100]:
+            - link "Page information" [ref=f2e101] [cursor=pointer]:
+              - /url: /w/index.php?title=Left_4_Dead_2_Dedicated_Server&action=info
+  - contentinfo [ref=f2e102]:
+    - list
+    - list:
+      - listitem [ref=f2e103]:
+        - link "About Valve Developer Community" [ref=f2e104] [cursor=pointer]:
+          - /url: /wiki/Valve_Developer_Community:About
+      - listitem [ref=f2e105]:
+        - link "Terms of Use" [ref=f2e106] [cursor=pointer]:
+          - /url: /wiki/Valve_Developer_Community:Terms_of_use
+      - listitem [ref=f2e107]:
+        - link "Third Party Legal Notices" [ref=f2e108] [cursor=pointer]:
+          - /url: Valve Developer Community:Third Party Legal Notices
+    - list [ref=f2e109]:
+      - listitem [ref=f2e110]:
+        - link [ref=f2e111] [cursor=pointer]:
+          - /url: https://www.mediawiki.org/
+          - img "Powered by MediaWiki" [ref=f2e112]

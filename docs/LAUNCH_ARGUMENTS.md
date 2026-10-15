@@ -34,6 +34,8 @@ Settings that live in a game's own settings file are in the [game settings guide
 - [Soulmask](#soulmask)
 - [Garry's Mod](#garrys-mod)
 - [Barotrauma](#barotrauma)
+- [Necesse](#necesse)
+- [Left 4 Dead 2](#left-4-dead-2)
 
 ## Valheim
 
@@ -1393,7 +1395,7 @@ The panel puts this on the line when it creates the server. It is in the Launch 
 
 Example: `-GongHuiMaxMember=10`
 
-### `-mod`
+### Soulmask: `-mod`
 
 **Workshop mods** (Server). Steam Workshop mod ids, separated by commas with no spaces, in this order: put a mod other mods need before them. The server downloads them when it starts, and every player must have the same mods. A broken mod can stop the server from starting; take it off the list to recover. Keep the list inside quotation marks.
 
@@ -1519,7 +1521,7 @@ The **Launch options** form on this game's Settings tab edits the arguments belo
 
 Not offered in the Launch options form; the panel sets it and it is best left alone.
 
-### `-game`
+### Garry's Mod: `-game`
 
 **Game folder** (Required). Tells srcds which game to run. For Garry's Mod this has to be garrysmod. The Facepunch examples for Windows leave it out, but the Linux example and the community guides include it, so the panel always writes it.
 
@@ -1535,7 +1537,7 @@ Example: `-port 27145`
 
 The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
 
-### `-strictportbind`
+### Garry's Mod: `-strictportbind`
 
 **Stop if the port is taken** (Network). If the port is already in use, the server quits with an error instead of quietly using another port. Without it a second server would take the next free port and players would not find it.
 
@@ -1553,7 +1555,7 @@ Example: `-ip 0.0.0.0`
 
 Example: `-tickrate 66`
 
-### `+maxplayers`
+### Garry's Mod: `+maxplayers`
 
 **Max players** (Server). The number of player slots. The most the game allows is set by the game and gamemode; the Facepunch examples use 12 to 32.
 
@@ -1571,7 +1573,7 @@ Example: `+gamemode sandbox`
 
 The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
 
-### `+map`
+### Garry's Mod: `+map`
 
 **Start map** (World). The map the server starts on: the map file's name without .bsp, from garrysmod/maps or from an addon. For a Workshop map, use the file name given on its Workshop page.
 
@@ -1579,7 +1581,7 @@ Example: `+map gm_construct`
 
 The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
 
-### `+sv_setsteamaccount`
+### Garry's Mod: `+sv_setsteamaccount`
 
 **Game Server Login Token** (Server). The Game Server Login Token for this server. Facepunch says every server should have one: without it the server ranks very low in the server list, and an invalid or expired one stops the server from starting. Create one at steamcommunity.com/dev/managegameservers with app ID 4000, one token per server. Treat it like a password.
 
@@ -1593,7 +1595,7 @@ Example: `+host_workshop_collection 157384458`
 
 The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
 
-### `-condebug`
+### Garry's Mod: `-condebug`
 
 **Write the console to a file** (Saves and logs). Writes everything the console prints to console.log in the garrysmod folder. The Logs tab reads that file.
 
@@ -1623,7 +1625,7 @@ Not offered in the Launch options form; the panel sets it and it is best left al
 
 **No crash message boxes** (Advanced). Stops some of the error message boxes Windows would show if the server crashes, so an unattended server is not left waiting for someone to click.
 
-### `-insecure`
+### Garry's Mod: `-insecure`
 
 **Turn off Valve Anti-Cheat** (Advanced). Starts the server without Valve Anti-Cheat (VAC). Servers run with it unless this is on the line.
 
@@ -1756,3 +1758,217 @@ Example: `-karmapreset default`
 Values: `undefined`, `undefined`, `undefined`, `undefined`, `undefined`, `undefined`, `undefined`, `undefined`, `undefined`, `undefined`, `undefined`, `undefined`, `undefined`, `undefined`, `undefined`, `undefined`, `undefined`, `undefined`, `undefined`, `undefined`. Other values are accepted too.
 
 Example: `-language English`
+
+## Necesse
+
+Necesse's world, port, player limit and password are given on the command that starts it, and they win over the same settings in `cfg\server.cfg`. That file is written by the server itself and is not offered here. The world's rules (difficulty, death penalty, raids) are in the world's save and are changed in the game with the admin commands. Changes apply the next time the server starts. These arguments are on the `java.exe` line of the server's start script.
+
+The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
+
+### `-nogui`
+
+**Text console** (Required). Runs the server as a text console instead of opening the server's own graphical window. A server run from a start script needs this.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-localdir`
+
+**Keep data in the server's folder** (Required). Keeps the server's settings, saves and logs in the server's own folder instead of the Windows user's AppData\Roaming\Necesse, so each server on this PC has its own. The panel's backups and Logs tab read them there, so leave it on.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Necesse: `-mod`
+
+**Mods folder** (Required). The folder the server loads mod .jar files from. The panel makes a mods folder in the server's folder; copy mods into it while the server is stopped. Players need the same mods.
+
+Example: `-mod .\mods`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Necesse: `-world`
+
+**World name** (Server). Which saved world to load. If there is none with that name, a new one is made. A new name starts a new world and keeps the old one. Without this argument the server stops at start and asks questions in its console.
+
+Example: `-world "MyWorld"`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `-slots`
+
+**Player slots** (Server). The most players that can be on the server at once, from 1 to 250. More players need more memory and a faster PC.
+
+Example: `-slots 10`
+
+### Necesse: `-password`
+
+**Server password** (Server). What players type to join. Take the argument off the line for a server anyone can join. The owner can also change it in the game with /password.
+
+Example: `-password "secret"`
+
+### `-owner`
+
+**Owner player name** (Server). Anyone who joins using exactly this player name gets the owner's full rights (admin commands, giving others permissions with /permissions). It is a player name, not an account, so anyone who types it can claim it: set a password.
+
+Example: `-owner Alex`
+
+### `-motd`
+
+**Message of the day** (Server). The message shown to players when they join. Write \n for a new line. An admin can change it in the game with /motd.
+
+Example: `-motd "Welcome!"`
+
+### Necesse: `-port`
+
+**Game port** (Network). The UDP port players connect to; 14159 is the game's own default. Change it from the server's Ports section so the panel can check for clashes and open the firewall. Two servers on one PC need different ports.
+
+Example: `-port 14159`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Necesse: `-ip`
+
+**Bind address** (Network). Makes the server listen only on one IP address of this PC. Only useful on a PC with several network cards or addresses; leave it off to use them all.
+
+Example: `-ip 192.168.1.20`
+
+### `-pausewhenempty`
+
+**Pause when empty** (Performance). When on, the world stands still while nobody is online, so crops, settlers and timers do not run with no one there. Not on the line by default: the server then uses the value in its server.cfg (the game's own default file has it on).
+
+Values: `1` (Pause the world while nobody is online), `0` (Keep the world running).
+
+Example: `-pausewhenempty 1`
+
+### `-logging`
+
+**Write log files** (Saves and logs). Whether the server writes a log file each time it starts. On by default. The Logs tab reads the logs folder, so it shows nothing with this off.
+
+Values: `1` (Write a log file for each start), `0` (Do not write log files).
+
+Example: `-logging 1`
+
+### `-logs`
+
+**Log folder** (Saves and logs). Moves the log files to another folder. The Logs tab reads the logs folder in the server's folder, so it would then show nothing.
+
+Example: `-logs C:\necesse\logs`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-datadir`
+
+**Data folder** (Saves and logs). Sets the folder where the server keeps its cache, logs and saves. The panel uses -localdir instead, so its backups and Logs tab find them; leave this off.
+
+Example: `-datadir .\data`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-settings`
+
+**Settings file** (Saves and logs). A different file to read the server's settings from, instead of cfg\server.cfg. Anything given on the launch line still wins over it.
+
+Example: `-settings C:\necesse\server.cfg`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-ignoreseasons`
+
+**No seasonal content** (Advanced). Turns off seasonal content, such as the Christmas Present and Christmas Hat.
+
+## Left 4 Dead 2
+
+Left 4 Dead 2 is started with `+word value` console commands (the map, the player limit) and `-word` launch options (the port, the console). They are read when the server starts, so changes apply the next time it starts. None of them has to be last on the line. These arguments are on the `srcds.exe` line of the server's start script.
+
+The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
+
+### Left 4 Dead 2: `-console`
+
+**Console window** (Required). Runs the server in console mode: a text window you can type commands into. The panel always writes it.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Left 4 Dead 2: `-game`
+
+**Game folder** (Required). Tells srcds which game to run. For Left 4 Dead 2 this has to be left4dead2. The panel always writes it.
+
+Example: `-game left4dead2`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Left 4 Dead 2: `-port`
+
+**Game port** (Network). The port the server listens on and tells players to connect to (UDP). Source's remote console would use the same number over TCP. Change it from the server's Ports section so the panel can check for clashes.
+
+Example: `-port 27245`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Left 4 Dead 2: `-strictportbind`
+
+**Stop if the port is taken** (Network). If the port is already in use, the server quits with an error instead of quietly using another port. Without it a second server would take another port and players would not find it.
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Left 4 Dead 2: `-ip`
+
+**Listen address** (Network). The network address the server listens on. It has to be an address of this PC, or 0.0.0.0 for all of them. Only needed with several network cards; it has nothing to do with the address players use from outside.
+
+Example: `-ip 0.0.0.0`
+
+### `-nohltv`
+
+**No SourceTV** (Network). Turns SourceTV (the spectator broadcast) off and closes its port, which is usually 27020.
+
+### `-nomaster`
+
+**Hide from the server list** (Network). Keeps the server out of the master server list, so it does not show in the server browser. Players can still connect by address.
+
+### Left 4 Dead 2: `+maxplayers`
+
+**Max players** (Server). The number of player slots. The game supports 4 in Co-op and 8 in Versus; set 8 for Versus or Scavenge. It is only read when the server starts.
+
+Example: `+maxplayers 4`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Left 4 Dead 2: `+map`
+
+**Start map** (World). The map the server starts on: the first map of a campaign, such as c1m1_hotel (Dead Center) or c8m1_apartments (No Mercy), or the name of a map from an addon.
+
+Example: `+map c1m1_hotel`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `+exec`
+
+**Settings file** (Server). The settings file the server runs when it starts, from the left4dead2\cfg folder. The panel writes it, and the Settings tab edits it.
+
+Example: `+exec server.cfg`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `+sv_gametypes`
+
+**Allowed game modes** (Server). The game modes lobbies and players may start on this server, separated by commas without spaces. Valve's default list is coop, realism, survival, versus, scavenge, dash, holdout, shootzones. Leave it out to keep the default.
+
+Example: `+sv_gametypes coop,versus`
+
+### Left 4 Dead 2: `+sv_setsteamaccount`
+
+**Steam login token** (Server). A Steam Game Server Login Token for this server. It is optional: third-party guides say the server runs and accepts players without one, but without a valid one it may not be listed or may not use VAC. Create one at steamcommunity.com/dev/managegameservers with app ID 550, one token per server. Treat it like a password.
+
+Example: `+sv_setsteamaccount …`
+
+### Left 4 Dead 2: `-condebug`
+
+**Write the console to a file** (Saves and logs). Writes everything the console prints to console.log in the left4dead2 folder. The Logs tab reads that file.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-conclearlog`
+
+**Start console.log afresh** (Saves and logs). Empties console.log every time the server starts. It only works together with the option above.
+
+### Left 4 Dead 2: `-insecure`
+
+**Turn off Valve Anti-Cheat** (Advanced). Starts the server without Valve Anti-Cheat (VAC). Servers run with it unless this is on the line.

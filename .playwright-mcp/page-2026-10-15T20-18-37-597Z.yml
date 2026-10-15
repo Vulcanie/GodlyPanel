@@ -1,0 +1,435 @@
+- generic [active] [ref=f8e1]:
+  - main [ref=f8e4]:
+    - heading "Source Dedicated Server" [level=1] [ref=f8e5]
+    - generic [ref=f8e6]:
+      - link "Jump to navigation" [ref=f8e7] [cursor=pointer]:
+        - /url: "#mw-head"
+      - link "Jump to search" [ref=f8e8] [cursor=pointer]:
+        - /url: "#searchInput"
+      - generic [ref=f8e10]:
+        - generic [ref=f8e11]:
+          - img "English (en)" [ref=f8e14]
+          - link [ref=f8e17] [cursor=pointer]:
+            - /url: /wiki/Es/Source_Dedicated_Server
+            - img "Español (es)" [ref=f8e18]
+          - link [ref=f8e21] [cursor=pointer]:
+            - /url: /wiki/Ru/Source_Dedicated_Server
+            - img "Русский (ru)" [ref=f8e22]
+          - link [ref=f8e25] [cursor=pointer]:
+            - /url: /wiki/Tr/Source_Dedicated_Server
+            - img "Türkçe (tr)" [ref=f8e26]
+          - link [ref=f8e29] [cursor=pointer]:
+            - /url: /wiki/Zh/Source_Dedicated_Server
+            - img "中文 (zh)" [ref=f8e30]
+          - generic [ref=f8e31] [cursor=pointer]:
+            - generic:
+              - img "Translate (Translate)"
+        - navigation [ref=f8e33]:
+          - button "hide" [ref=f8e34]
+          - generic [ref=f8e35]:
+            - heading "Contents" [level=2] [ref=f8e36]
+            - generic [ref=f8e37]:
+              - text: "["
+              - generic [ref=f8e38] [cursor=pointer]: hide
+              - text: "]"
+          - list [ref=f8e39]:
+            - listitem [ref=f8e40]:
+              - link "1 Hardware requirements" [ref=f8e41] [cursor=pointer]:
+                - /url: "#Hardware_requirements"
+                - generic [ref=f8e42]: "1"
+                - generic [ref=f8e43]: Hardware requirements
+            - listitem [ref=f8e44]:
+              - link "2 Connectivity" [ref=f8e45] [cursor=pointer]:
+                - /url: "#Connectivity"
+                - generic [ref=f8e46]: "2"
+                - generic [ref=f8e47]: Connectivity
+            - listitem [ref=f8e48]:
+              - link "3 Installation" [ref=f8e49] [cursor=pointer]:
+                - /url: "#Installation"
+                - generic [ref=f8e50]: "3"
+                - generic [ref=f8e51]: Installation
+              - list [ref=f8e52]:
+                - listitem [ref=f8e53]:
+                  - link "3.1 For modders" [ref=f8e54] [cursor=pointer]:
+                    - /url: "#For_modders"
+                    - generic [ref=f8e55]: "3.1"
+                    - generic [ref=f8e56]: For modders
+            - listitem [ref=f8e57]:
+              - link "4 Configuring and running the server" [ref=f8e58] [cursor=pointer]:
+                - /url: "#Configuring_and_running_the_server"
+                - generic [ref=f8e59]: "4"
+                - generic [ref=f8e60]: Configuring and running the server
+            - listitem [ref=f8e61]:
+              - link "5 See also" [ref=f8e62] [cursor=pointer]:
+                - /url: "#See_also"
+                - generic [ref=f8e63]: "5"
+                - generic [ref=f8e64]: See also
+            - listitem [ref=f8e65]:
+              - link "6 External links" [ref=f8e66] [cursor=pointer]:
+                - /url: "#External_links"
+                - generic [ref=f8e67]: "6"
+                - generic [ref=f8e68]: External links
+        - paragraph [ref=f8e69]:
+          - text: The Source Dedicated Server (or SRCDS) is a tool that runs the server component of a
+          - link [ref=f8e71] [cursor=pointer]:
+            - /url: /wiki/Source
+            - img "Source" [ref=f8e72]
+          - link "Source" [ref=f8e73] [cursor=pointer]:
+            - /url: /wiki/Source
+          - text: game without the client component.
+        - paragraph [ref=f8e74]: In other words, it simulates the game without drawing it. SRCDS is chiefly used by server providers who want to serve up as many games from the same computer as they can.
+        - paragraph [ref=f8e75]: This page, however, is aimed at mod developers who want to run SRCDS on their home computer. Doing this is a must if you are creating a multiplayer mod as the behaviour of dedicated servers differs from that of listenservers (those started from the main menu) in some areas. Crashes that only happen on a dedicated server are entirely possible!
+        - heading "Hardware requirements" [level=2] [ref=f8e76]
+        - paragraph [ref=f8e77]: CPU - Depends on how many clients connected to the servers. To run a Source dedicated server you need at least a 1.0GHz Intel CPU or equivalent, many newer and mid-range CPU usually perform better. This will run a basic server with 20 slots at a good level of performance.
+        - paragraph [ref=f8e78]: "Memory: To run a normal server you will need at least 512MB RAM, you might need to restart the server every once in a while to clean up the memory. 1GB is enough to run over 60 player slots total. Please note that newer versions of Windows, such as Windows 10/11 (or some Linux distros) for example, it's highly recommended you to have at least 4GB RAM or more."
+        - paragraph [ref=f8e79]: "Bandwidth: Bandwidth is used a lot—more specifically, upload bandwidth. Here is a list of how fast your connection must be to run a certain number of players at lowest settings. (When talking about bandwidth for servers we always talk about upload, not download.) Note: these numbers are theoretical, your results may vary slightly!"
+        - heading "Connectivity" [level=2] [ref=f8e80]
+        - paragraph [ref=f8e81]: No matter which type of server you are using, your computer must be able to receive unsolicited incoming connections. This is exactly what routers and software firewalls exist to prevent, so if you are using either you will have to reconfigure. Refer to the manufacturer instructions for how to do this.
+        - paragraph [ref=f8e82]: "The ports SRCDS officially requires are:"
+        - list [ref=f8e83]:
+          - listitem [ref=f8e84]:
+            - text: 27015 TCP/UDP (game transmission, pings and
+            - link "RCON" [ref=f8e85] [cursor=pointer]:
+              - /url: /wiki/RCON
+            - text: ) - Can be changed using -port on startup
+          - listitem [ref=f8e86]:
+            - text: 27020 UDP (
+            - link "SourceTV" [ref=f8e87] [cursor=pointer]:
+              - /url: /wiki/SourceTV
+            - text: transmission) - Can be changed using +tv_port on startup
+          - listitem [ref=f8e88]: 27005 UDP (Client Port) - Can be changed using -clientport on startup
+          - listitem [ref=f8e89]: 26900 UDP (Steam Port, outgoing) - Can be changed using -sport on startup
+        - paragraph [ref=f8e90]: SRCDS has also been spotted opening connections on 27005 and 51840 UDP, but these may be outbound only.
+        - generic [ref=f8e91]:
+          - img "Tip.png" [ref=f8e93]
+          - strong [ref=f8e94]: "Tip:"
+          - generic [ref=f8e95]:
+            - text: Pinging your own server will fail with some routers and/or ISPs. The most reliable way to test whether your connection is open is either to get a friend to try connecting, or to install the
+            - link "Microsoft Network Monitor" [ref=f8e96] [cursor=pointer]:
+              - /url: https://www.microsoft.com/en-gb/download/details.aspx?id=4865
+            - text: (apply the filter
+            - code [ref=f8e97]: Udp.Port == 27015
+            - text: ) and watch for requests coming in from random people around the world. Note that the heartbeats you will see being sent to the two master servers do not mean that the connection is open.
+        - generic [ref=f8e98]:
+          - img "Note.png" [ref=f8e100]
+          - strong [ref=f8e101]: "Note:"
+          - generic [ref=f8e102]: A residential internet connection may not have the upload capacity to support large games.
+        - generic [ref=f8e103]:
+          - img "Note.png" [ref=f8e105]
+          - strong [ref=f8e106]: "Note:"
+          - generic [ref=f8e107]: Using service providers which use CGNAT (such as mobile providers or an increasing amount of residential providers) may make it impossible to host any kind of server.
+        - generic [ref=f8e108]:
+          - img "Note.png" [ref=f8e110]
+          - strong [ref=f8e111]: "Note:"
+          - generic [ref=f8e112]:
+            - text: Servers won't respond to
+            - link "queries" [ref=f8e113] [cursor=pointer]:
+              - /url: /wiki/Server_queries
+            - text: until a map is loaded.
+        - generic [ref=f8e114]:
+          - img "Note.png" [ref=f8e116]
+          - strong [ref=f8e117]: "Note:"
+          - generic [ref=f8e118]: A residential internet connection may not have the upload capacity to support large games.
+        - generic [ref=f8e119]:
+          - img "Note.png" [ref=f8e121]
+          - strong [ref=f8e122]: "Note:"
+          - generic [ref=f8e123]:
+            - text: If you receive the error "Could not establish connection to Steam servers." with a result number of 18 or 106,
+            - link "you need to go here" [ref=f8e124] [cursor=pointer]:
+              - /url: https://steamcommunity.com/dev/managegameservers
+            - text: and either regenerate your token, or create a new one and replace it in your sv_setsteamaccount startup parameter
+        - heading "Installation" [level=2] [ref=f8e125]
+        - paragraph [ref=f8e126]:
+          - text: See
+          - link "SteamCMD" [ref=f8e127] [cursor=pointer]:
+            - /url: /wiki/SteamCMD
+          - text: for installation instructions.
+        - heading "For modders" [level=3] [ref=f8e128]
+        - generic [ref=f8e129]:
+          - img "Note.png" [ref=f8e131]
+          - strong [ref=f8e132]: "Note:"
+          - generic [ref=f8e133]:
+            - text: The HLDS Update Tool does not provide
+            - link "Lost Coast" [ref=f8e134] [cursor=pointer]:
+              - /url: /wiki/Lost_Coast
+            - text: ", even though"
+            - link "SDK Base" [ref=f8e135] [cursor=pointer]:
+              - /url: /wiki/SDK_Base
+            - text: does. Multiplayer mods should either not use anything from Lost Coast, or include what they do use in their dedicated server download.
+        - generic [ref=f8e136]:
+          - img "Note.png" [ref=f8e138]
+          - strong [ref=f8e139]: "Note:"
+          - generic [ref=f8e140]: The appid for Source 2006 server is 205. The appid for Source 2007 server is 310. The appid for Source 2013 server is 244310.
+        - list [ref=f8e141]:
+          - listitem [ref=f8e142]:
+            - text: Install
+            - link "SteamCMD" [ref=f8e143] [cursor=pointer]:
+              - /url: /wiki/SteamCMD
+          - listitem [ref=f8e144]:
+            - text: Run the update tool with
+            - code [ref=f8e145]: +login anonymous +app_update [appid]
+            - text: . The appid you should use is listed in a note above. Optionally, add
+            - code [ref=f8e146]: +force_install_dir <path>
+            - text: to download to a custom location; it must appear before the
+            - code [ref=f8e147]: +app_update
+            - text: command.
+          - listitem [ref=f8e148]:
+            - text: To start the server, run
+            - code [ref=f8e149]:
+              - text: orangebox\srcds.exe -console -game
+              - link "<vproject>" [ref=f8e150] [cursor=pointer]:
+                - /url: /wiki/Game_Directory
+            - text: .
+        - generic [ref=f8e151]:
+          - img "Tip.png" [ref=f8e153]
+          - strong [ref=f8e154]: "Tip:"
+          - generic [ref=f8e155]:
+            - text: If you already have the game client installed, you can cancel the tool with
+            - generic [ref=f8e156]: Ctrl+C
+            - text: once it starts downloading materials in step 1. You can skip the bulk of the downloading by extracting the GCFs already on your system with
+            - link "GCFScape" [ref=f8e158] [cursor=pointer]:
+              - /url: /wiki/GCFScape
+            - text: instead.
+            - list [ref=f8e159]:
+              - listitem [ref=f8e160]: You will need to extract sounds, materials and models; do the "source X" GCFs before the "source 2007 X" ones.
+              - listitem [ref=f8e161]:
+                - text: You should end up with
+                - code [ref=f8e162]: <server_path>\hl2
+                - text: from your GCFs and
+                - code [ref=f8e163]: <server_path>\orangebox
+                - text: from the update tool.
+              - listitem [ref=f8e164]: You may want to run the update tool again after extracting to make sure that everything is correct.
+        - heading "Configuring and running the server" [level=2] [ref=f8e165]
+        - paragraph [ref=f8e166]:
+          - text: Navigate to the folder you just installed your server in. There should be a bunch of files and folders, including a directory with the name of the game you have just installed, e.g.
+          - code [ref=f8e167]: hl2mp
+          - text: for
+          - 'link "HL2: Deathmatch" [ref=f8e168] [cursor=pointer]':
+            - /url: /wiki/Half-Life_2:_Deathmatch
+          - text: . The configuration files are located in the
+          - code [ref=f8e169]: <game>/cfg/
+          - text: e.g.
+          - code [ref=f8e170]: hl2mp/cfg/
+          - text: directory.
+        - paragraph [ref=f8e171]:
+          - text: "Edit the main configuration file:"
+          - code [ref=f8e172]: <game>/cfg/server.cfg
+          - text: . Change the
+          - code [ref=f8e173]: hostname
+          - text: line (this is the name people will see in the server browser) and other options to your liking.
+        - paragraph [ref=f8e174]: "Open a terminal where you have installed the server and start the server:"
+        - generic [ref=f8e175]: ./srcds_run (or ./srcds.exe on Windows) -game <game> +map <map> +maxplayers X -autoupdate
+        - paragraph [ref=f8e176]: "On Windows:"
+        - generic [ref=f8e177]: ./srcds.exe -game <game> +map <map> +maxplayers X -autoupdate
+        - paragraph [ref=f8e178]: "For example:"
+        - generic [ref=f8e179]: ./srcds_run -game hl2mp +map dm_lockdown +maxplayers 8 -autoupdate
+        - paragraph [ref=f8e180]
+        - paragraph [ref=f8e181]
+        - generic [ref=f8e182]:
+          - img "Note.png" [ref=f8e184]
+          - strong [ref=f8e185]: "Note:"
+          - generic [ref=f8e186]:
+            - text: "On OS Linux, if server stop on this message when launched:"
+            - generic [ref=f8e187]: "Failed to open bin/dedicated_srv.so (bin/libstdc++.so.6: version `CXXABI_1.3.8' not found (required by bin/dedicated_srv.so))"
+            - paragraph [ref=f8e188]:
+              - text: ...go in server
+              - code [ref=f8e189]: /bin
+              - text: folder and look file
+              - code [ref=f8e190]: libstdc++.so.6
+              - text: ", rename or delete this file. I understand that this file is extra, coming from valve. You not need that."
+        - heading "See also" [level=2] [ref=f8e191]
+        - list [ref=f8e192]:
+          - listitem [ref=f8e193]:
+            - link "SteamCMD" [ref=f8e194] [cursor=pointer]:
+              - /url: /wiki/SteamCMD
+          - listitem [ref=f8e195]:
+            - link "HLDSUpdateTool" [ref=f8e196] [cursor=pointer]:
+              - /url: /wiki/HLDSUpdateTool
+          - listitem [ref=f8e197]:
+            - link "Half-Life Dedicated Server" [ref=f8e198] [cursor=pointer]:
+              - /url: /wiki/Half-Life_Dedicated_Server
+          - listitem [ref=f8e199]:
+            - link "Server plugins" [ref=f8e200] [cursor=pointer]:
+              - /url: /wiki/Server_plugins
+          - listitem [ref=f8e201]:
+            - link "Open Source Server Plugin List" [ref=f8e202] [cursor=pointer]:
+              - /url: /wiki/Open_Source_Server_Plugin_List
+          - listitem [ref=f8e203]:
+            - link "Command Line Options#Source Games" [ref=f8e204] [cursor=pointer]:
+              - /url: /wiki/Command_Line_Options#Source_Games
+        - heading "External links" [level=2] [ref=f8e205]
+        - list [ref=f8e206]:
+          - listitem [ref=f8e207]:
+            - link "Setting up a Standalone Dedicated Server" [ref=f8e208] [cursor=pointer]:
+              - /url: https://support.steampowered.com/kb_article.php?ref=6758-TCMF-2234
+          - listitem [ref=f8e209]:
+            - link "Setting up a Steam Source Dedicated Server" [ref=f8e210] [cursor=pointer]:
+              - /url: https://support.steampowered.com/kb_article.php?ref=7017-UJBN-6785
+          - listitem [ref=f8e211]:
+            - link "Optimizing a Dedicated Server" [ref=f8e212] [cursor=pointer]:
+              - /url: https://support.steampowered.com/kb_article.php?ref=5386-HMJI-5162
+          - listitem [ref=f8e213]:
+            - link "Official Source DS (Windows) forum" [ref=f8e214] [cursor=pointer]:
+              - /url: http://forums.steampowered.com/forums/forumdisplay.php?f=44
+          - listitem [ref=f8e215]:
+            - link "Official Source DS (Linux) forum" [ref=f8e216] [cursor=pointer]:
+              - /url: http://forums.steampowered.com/forums/forumdisplay.php?f=45
+      - generic [ref=f8e218]:
+        - link "Categories" [ref=f8e219] [cursor=pointer]:
+          - /url: /wiki/Special:Categories
+        - text: ":"
+        - list [ref=f8e220]:
+          - listitem [ref=f8e221]:
+            - link "Steam" [ref=f8e222] [cursor=pointer]:
+              - /url: /wiki/Category:Steam
+          - listitem [ref=f8e223]:
+            - link "Steam Applications" [ref=f8e224] [cursor=pointer]:
+              - /url: /wiki/Category:Steam_Applications
+          - listitem [ref=f8e225]:
+            - link "Networking" [ref=f8e226] [cursor=pointer]:
+              - /url: /wiki/Category:Networking
+          - listitem [ref=f8e227]:
+            - link "Dedicated Server" [ref=f8e228] [cursor=pointer]:
+              - /url: /wiki/Category:Dedicated_Server
+  - generic:
+    - heading "Navigation menu" [level=2] [ref=f8e229]
+    - generic [ref=f8e230]:
+      - navigation "Personal tools" [ref=f8e231]:
+        - list [ref=f8e233]:
+          - listitem [ref=f8e234]:
+            - link "Create account" [ref=f8e235] [cursor=pointer]:
+              - /url: /w/index.php?title=Special:CreateAccount&returnto=Source+Dedicated+Server
+          - listitem [ref=f8e236]:
+            - link "Log in" [ref=f8e237] [cursor=pointer]:
+              - /url: /w/index.php?title=Special:UserLogin&returnto=Source+Dedicated+Server
+      - navigation "Namespaces" [ref=f8e239]:
+        - list [ref=f8e240]:
+          - listitem [ref=f8e241]:
+            - link "Page" [ref=f8e242] [cursor=pointer]:
+              - /url: /wiki/Source_Dedicated_Server
+          - listitem [ref=f8e243]:
+            - link "Discussion" [ref=f8e244] [cursor=pointer]:
+              - /url: /w/index.php?title=Talk:Source_Dedicated_Server&action=edit&redlink=1
+      - generic [ref=f8e245]:
+        - navigation "Views" [ref=f8e246]:
+          - list [ref=f8e247]:
+            - listitem [ref=f8e248]:
+              - link "Read" [ref=f8e249] [cursor=pointer]:
+                - /url: /wiki/Source_Dedicated_Server
+            - listitem [ref=f8e250]:
+              - link "View source" [ref=f8e251] [cursor=pointer]:
+                - /url: /w/index.php?title=Source_Dedicated_Server&action=edit
+            - listitem [ref=f8e252]:
+              - link "View history" [ref=f8e253] [cursor=pointer]:
+                - /url: /w/index.php?title=Source_Dedicated_Server&action=history
+        - navigation "More" [ref=f8e254] [cursor=pointer]:
+          - button "More" [ref=f8e255]
+        - search [ref=f8e258]:
+          - generic [ref=f8e259]:
+            - heading "Search" [level=3] [ref=f8e260]
+            - generic [ref=f8e262]:
+              - searchbox "Search Valve Developer Community" [ref=f8e263]
+              - button "Search" [ref=f8e264] [cursor=pointer]
+              - button "Go" [ref=f8e265] [cursor=pointer]
+    - generic [ref=f8e266]:
+      - banner [ref=f8e267]:
+        - link "Visit the main page" [ref=f8e268] [cursor=pointer]:
+          - /url: /wiki/Main_Page
+      - navigation "Navigation" [ref=f8e269]:
+        - list [ref=f8e271]:
+          - listitem [ref=f8e272]:
+            - link "Main Page" [ref=f8e273] [cursor=pointer]:
+              - /url: /wiki/Main_Page
+          - listitem [ref=f8e274]:
+            - link "Source SDK index" [ref=f8e275] [cursor=pointer]:
+              - /url: /wiki/SDK_Docs
+          - listitem [ref=f8e276]:
+            - link "Recent changes" [ref=f8e277] [cursor=pointer]:
+              - /url: /wiki/Special:RecentChanges
+          - listitem [ref=f8e278]:
+            - link "Random page" [ref=f8e279] [cursor=pointer]:
+              - /url: /wiki/Special:RandomRootpage
+      - navigation [ref=f8e280]:
+        - heading "Workshop" [level=3] [ref=f8e281]
+        - list [ref=f8e283]:
+          - listitem [ref=f8e284]:
+            - link "Half-Life SDK" [ref=f8e285] [cursor=pointer]:
+              - /url: /wiki/Half-Life_SDK
+          - listitem [ref=f8e286]:
+            - 'link "Half-Life: Alyx Tools" [ref=f8e287] [cursor=pointer]':
+              - /url: /wiki/Half-Life:_Alyx_Workshop_Tools
+          - listitem [ref=f8e288]:
+            - link "Dota 2 Tools" [ref=f8e289] [cursor=pointer]:
+              - /url: /wiki/Dota_2_Workshop_Tools
+          - listitem [ref=f8e290]:
+            - link "SteamVR Tools" [ref=f8e291] [cursor=pointer]:
+              - /url: /wiki/SteamVR/Environments
+          - listitem [ref=f8e292]:
+            - link "Counter-Strike 2 Tools" [ref=f8e293] [cursor=pointer]:
+              - /url: /wiki/Counter-Strike_2_Workshop_Tools
+      - navigation [ref=f8e294]:
+        - heading "Support" [level=3] [ref=f8e295]
+        - list [ref=f8e297]:
+          - listitem [ref=f8e298]:
+            - link "Community portal" [ref=f8e299] [cursor=pointer]:
+              - /url: /wiki/Valve_Developer_Community:Community_portal
+          - listitem [ref=f8e300]:
+            - link "Getting help" [ref=f8e301] [cursor=pointer]:
+              - /url: /wiki/Help:Contents
+          - listitem [ref=f8e302]:
+            - link "Source SDK FAQ" [ref=f8e303] [cursor=pointer]:
+              - /url: /wiki/Category:Source_SDK_FAQ
+          - listitem [ref=f8e304]:
+            - link "Level Design FAQ" [ref=f8e305] [cursor=pointer]:
+              - /url: /wiki/Category:Level_Design_FAQ
+      - navigation [ref=f8e306]:
+        - heading "Steam Community" [level=3] [ref=f8e307]
+        - list [ref=f8e309]:
+          - listitem [ref=f8e310]:
+            - link "Source SDK Hub" [ref=f8e311] [cursor=pointer]:
+              - /url: http://steamcommunity.com/app/211
+          - listitem [ref=f8e312]:
+            - link "Source SDK Discussion" [ref=f8e313] [cursor=pointer]:
+              - /url: https://steamcommunity.com/app/211/discussions
+          - listitem [ref=f8e314]:
+            - link "Steam" [ref=f8e315] [cursor=pointer]:
+              - /url: http://www.steampowered.com
+      - navigation [ref=f8e316]:
+        - heading "Tools" [level=3] [ref=f8e317]
+        - list [ref=f8e319]:
+          - listitem [ref=f8e320]:
+            - link "What links here" [ref=f8e321] [cursor=pointer]:
+              - /url: /wiki/Special:WhatLinksHere/Source_Dedicated_Server
+          - listitem [ref=f8e322]:
+            - link "Related changes" [ref=f8e323] [cursor=pointer]:
+              - /url: /wiki/Special:RecentChangesLinked/Source_Dedicated_Server
+          - listitem [ref=f8e324]:
+            - link "Special pages" [ref=f8e325] [cursor=pointer]:
+              - /url: /wiki/Special:SpecialPages
+          - listitem [ref=f8e326]:
+            - link "Printable version" [ref=f8e327] [cursor=pointer]:
+              - /url: javascript:print();
+          - listitem [ref=f8e328]:
+            - link "Permanent link" [ref=f8e329] [cursor=pointer]:
+              - /url: /w/index.php?title=Source_Dedicated_Server&oldid=509501
+          - listitem [ref=f8e330]:
+            - link "Page information" [ref=f8e331] [cursor=pointer]:
+              - /url: /w/index.php?title=Source_Dedicated_Server&action=info
+  - contentinfo [ref=f8e332]:
+    - list [ref=f8e333]:
+      - listitem [ref=f8e334]: This page was last edited on 26 June 2026, at 01:33.
+    - list:
+      - listitem [ref=f8e335]:
+        - link "About Valve Developer Community" [ref=f8e336] [cursor=pointer]:
+          - /url: /wiki/Valve_Developer_Community:About
+      - listitem [ref=f8e337]:
+        - link "Terms of Use" [ref=f8e338] [cursor=pointer]:
+          - /url: /wiki/Valve_Developer_Community:Terms_of_use
+      - listitem [ref=f8e339]:
+        - link "Third Party Legal Notices" [ref=f8e340] [cursor=pointer]:
+          - /url: Valve Developer Community:Third Party Legal Notices
+    - list [ref=f8e341]:
+      - listitem [ref=f8e342]:
+        - link [ref=f8e343] [cursor=pointer]:
+          - /url: https://www.mediawiki.org/
+          - img "Powered by MediaWiki" [ref=f8e344]

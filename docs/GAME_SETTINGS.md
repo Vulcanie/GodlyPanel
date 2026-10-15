@@ -37,6 +37,8 @@ Some games are set up by the arguments on the command that starts them, not by a
 - [Soulmask](#soulmask)
 - [Garry's Mod](#garrys-mod)
 - [Barotrauma](#barotrauma)
+- [Necesse](#necesse)
+- [Left 4 Dead 2](#left-4-dead-2)
 
 ## ARK: Survival Ascended / Evolved
 
@@ -3320,3 +3322,241 @@ A server that is not listed publicly has no query port open, so the panel can on
 Players and server must run the same game version. Update the server (the Update button) after the game updates.
 Mods are Steam Workshop packages. The server downloads nothing by itself: copy each mod's folder (the one with a `filelist.xml` in it) into a `LocalMods` folder in the server's install folder, and list it in `config_player.xml` as `<package path="LocalMods/<folder>/filelist.xml" />` under `<regularpackages>`, in load order (a mod's required mods first), with the server stopped. Players need the same mods; with `AllowModDownloads` on (its default) they can fetch them from the server.
 The player and admin permissions are in `Data\clientpermissions.xml`, also edited by hand with the server stopped.
+
+## Necesse
+
+Necesse's server is a Java program (`Server.jar`, with its own Java in the `jre` folder) in the server's install folder. Its world, port, player limit and password are given on the command that starts it, and those are the **Launch options** on the Settings tab. The server's other options are in `cfg\server.cfg`, which it writes itself.
+
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#necesse).
+
+**The panel cannot stop the server cleanly.** The server saves the world when `quit` is typed into its own console window, and it does not save when it is simply closed or ended. The panel has no way to type into a console, so Stop asks the process to close and ends it after 15 seconds. Before you press Stop (or update, or restart), open the server's window, which the panel keeps minimized on the taskbar rather than hidden, type `quit` and wait for the window to close.
+**The panel does not write or edit `cfg\server.cfg`.** It is a block of `key = value,` lines with `//` comments that the panel's file readers cannot handle, and the server writes it again when it stops. Open it in a text editor with the server stopped. Settings given on the launch line (port, slots, password, ...) win over the file. Other keys in it include `maxClientLatencySeconds` (how long a laggy player is tolerated), `worldBorderSize` (-1 for none), `droppedItemsLifeMinutes` (0 for forever) and `MOTD`.
+**The world's rules are not in a file you can edit while it runs.** Difficulty, death penalty, raid frequency, hunger and the like are stored in `worldSettings.cfg` inside the world's `.zip` in the `saves` folder, which the panel does not touch. Change them in the game as the owner or an admin with the `/difficulty`, `/deathpenalty` and `/raids` commands (and `/settings`), or unzip the save with the server stopped, edit the file and zip it again under its exact original name.
+**Nobody is an admin until you add `-owner <your player name>`** in the Launch options. Anyone who joins with exactly that name gets the owner's full rights, so keep a password on the server. Other players can be given rights in the game with `/permissions`.
+There is no query port, so the panel can tell that the server is running but not how many players are on. Players join by direct IP and the game port (UDP 14159 by default) from the game's Multiplayer menu. Open that port in Windows Firewall and on your router.
+**Mods** are plain `.jar` files. Copy them into the `mods` folder in the server's install folder while the server is stopped (the launch line points at it with `-mod .\mods`). The server does not download Steam Workshop mods itself: subscribe in your own Steam client and copy the jars from `steamapps\workshop\content\1169040\<item id>`. Players need the same mods, and a mod built for another game version can stop the server from starting; delete the newest jar to recover. Back up the saves before adding or removing mods.
+
+## Left 4 Dead 2
+
+Left 4 Dead 2 is set up with console variables ("convars"): lines of a name and a value in `server.cfg`, in the `left4dead2\cfg` folder of the server. The game does not ship that file, so the panel writes it with the server's name, the password and the setting that lets friends join directly. The map, the player limit and the port are on the launch line.
+
+- `server.cfg`: Every setting of the server: its name and password, who can join, the rules, the difficulty and Director tuning, voting, downloads, network limits, logging and the remote console. Only the lines you set are in the file.
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#left-4-dead-2).
+
+The game reads the file when it starts, so stop and start the server after changing a setting.
+Friends join with the console command `connect <your address>:<port>`. They must not use the matchmaking menu, because the game starts with `sv_allow_lobby_connect_only` on, which lets nobody in except through a lobby. The panel writes it off. If a friend gets a lobby error, they used matchmaking instead of `connect`.
+There is no world or save to back up: a round starts again from the campaign's first map. The backup keeps the settings, the ban lists and the addons folder.
+Many of the Difficulty tuning and Director settings are marked as cheat commands on Valve's list. Whether a line in `server.cfg` changes them was not tested, so a value you set there may have no effect. The mode of a map can also be changed by the map command or a lobby, whatever `mp_gamemode` says.
+The Steam login token is optional. Add it with the Steam login token argument in Launch options. It is a secret: do not share it.
+Mods: Steam Workshop addons given when the server is created are downloaded once into `left4dead2\addons` as `.vpk` files. Collections are not followed: give the addons' own ids. Every player needs the same addons or is refused. To add more later, copy their `.vpk` files into that folder. SourceMod and Metamod, the usual plugin tools, are not installed by the panel.
+The port in the Ports section is the game port: UDP for players and TCP for the remote console. The game also uses UDP 27020 (SourceTV and the Steam client). Two Source servers on one PC both want it, so the second one may take another number.
+The panel has no way to type into this server's console, so Stop closes its window and, after 15 seconds, ends the program. The game has nothing to save, so that is safe. Valve does not document a close command; the research found only indirect evidence that `quit` works.
+The Valve list that the settings come from is a 2021 dump of game version 2.2.2.1. The form leaves out the settings that list does not explain. A setting the file has that the panel does not explain is still shown.
+
+### Left 4 Dead 2: Server
+
+4 settings in `server.cfg`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server name | `hostname` | The name shown in the server browser and the server list. The panel writes it when it creates the server. |
+| Join password | `sv_password` | What players type to join. Leave it empty for a server anyone can join. |
+| Contact email | `sv_contact` | The email address of the person running the server, shown with the server's details. |
+| Server tags | `sv_tags` | Extra labels shown to players browsing for servers. Separate several with commas. |
+
+### Left 4 Dead 2: Joining
+
+7 settings in `server.cfg`, shown under **Joining** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Local network only | `sv_lan` | On makes a LAN server: it is not announced to Steam, players are not checked against Steam and only local addresses can join. Keep it off for a server friends join over the internet. Choices: `0` (Off), `1` (On). |
+| Only allow joining through a lobby | `sv_allow_lobby_connect_only` | On means players can only arrive through matchmaking (a lobby) and cannot connect directly. The game starts with this on; the panel writes it off, so friends can join with the console command connect or from the server browser. Choices: `0` (Direct joining allowed), `1` (Lobby only). |
+| Steam group | `sv_steamgroup` | The number of a Steam group to tie the server to. The group's number is on the group's admin profile page on the Steam community site. |
+| Steam group first | `sv_steamgroup_exclusive` | On means that while the server is empty only members of the Steam group can join; anyone can join once it has players. Choices: `0` (Off), `1` (On). |
+| Lobby search key | `sv_search_key` | When a lobby looks for a dedicated server it only takes servers with the same key. Use it to keep the server for your own lobbies. |
+| Shown player limit | `sv_visiblemaxplayers` | Changes the player limit that people browsing the server list see. -1 shows the real limit. |
+| Lobby reservation time (seconds) | `sv_reservation_timeout` | How many seconds a lobby's reservation of the server lasts before it runs out. |
+
+### Left 4 Dead 2: Game rules
+
+9 settings in `server.cfg`, shown under **Game rules** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Game mode | `mp_gamemode` | The mode being played. Valve's list notes it is changed by the map command (map `<name>` `<mode>`), so a map change or a lobby can override what is written here. Choices: `coop` (Co-op), `realism` (Realism), `versus` (Versus), `survival` (Survival), `scavenge` (Scavenge), `holdout` (Holdout). Another value can be typed. |
+| Difficulty | `z_difficulty` | How hard the game is. The game's menu calls Hard "Advanced" and Impossible "Expert". Choices: `Easy`, `Normal`, `Hard`, `Impossible`. |
+| Maximum survivors | `survivor_limit` | The most survivors there can be. Vanilla co-op servers hold 4 players (8 in Versus); more needs add-ons. |
+| Most player-controlled infected | `z_max_player_zombies` | The most humans who can play the infected team at the same time. |
+| Weapons after a rescue | `survivor_respawn_with_guns` | What a rescued survivor is carrying when they come back. Choices: `0` (Just a pistol), `1` (A weaker version of the last main weapon), `2` (The last main weapon). |
+| Disable rescuing dead survivors | `sv_rescue_disabled` | On means dead survivors can never be rescued. Choices: `0` (Off), `1` (On). |
+| Restart the campaign on a wipe | `sv_permawipe` | On restarts the campaign from the start if all the survivors die. Choices: `0` (Off), `1` (On). |
+| Players can pause | `sv_pausable` | Whether the game can be paused on the server. Choices: `0` (Off), `1` (On). |
+| Allow cheat commands | `sv_cheats` | Lets players use cheat commands. Keep it off on a server other people play on. Choices: `0` (Off), `1` (On). |
+
+### Left 4 Dead 2: Voice
+
+2 settings in `server.cfg`, shown under **Voice** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Everyone hears everyone | `sv_alltalk` | On lets every player hear every other player's voice, whatever team they are on. Choices: `0` (Off), `1` (On). |
+| Voice chat | `sv_voiceenable` | Turns voice chat on or off for the whole server. Choices: `0` (Off), `1` (On). |
+
+### Left 4 Dead 2: Difficulty tuning
+
+7 settings in `server.cfg`, shown under **Difficulty tuning** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Times a survivor can be downed | `survivor_max_incapacitated_count` | How many times a survivor can be incapacitated, instead of killed, before they need a health kit. |
+| Health after being revived | `survivor_revive_health` | The temporary health a survivor has after being revived. |
+| First-aid kit healing | `first_aid_heal_percent` | The share of a survivor's injuries a first-aid kit heals: 0.8 is 80 percent. Use a number from 0 to 1. |
+| Pills only below this health | `pain_pills_health_threshold` | Pain pills cannot be used unless the survivor's total health is below this number. |
+| Common infected health | `z_health` | The maximum health of an ordinary zombie. |
+| Tank health | `z_tank_health` | The maximum health of a Tank. |
+| Witch health | `z_witch_health` | The maximum health of a Witch. |
+
+### Left 4 Dead 2: Director
+
+19 settings in `server.cfg`, shown under **Director** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Common infected at once | `z_common_limit` | How many ordinary zombies can exist at the same time. More is harder and costs the server more CPU. |
+| No Tanks or Witches | `director_no_bosses` | On stops Tanks and Witches from spawning. Choices: `0` (Off), `1` (On). |
+| No hordes | `director_no_mobs` | On stops horde rushes. Choices: `0` (Off), `1` (On). |
+| No special infected | `director_no_specials` | On stops special infected from spawning. Choices: `0` (Off), `1` (On). |
+| No survivor bots | `director_no_survivor_bots` | On stops the survivor team being filled up with bots. Choices: `0` (Off), `1` (On). |
+| Endless panic events | `director_panic_forever` | On makes panic events (waves of zombies) never end. Choices: `0` (Off), `1` (On). |
+| Infected bots fill empty slots | `director_allow_infected_bots` | Lets bots fill empty places on the infected team. Choices: `0` (Off), `1` (On). |
+| Idle time before spectating (seconds) | `director_afk_timeout` | Players who do nothing for longer than this are moved to spectator mode. |
+| Players needed to start | `director_min_start_players` | Players are frozen until this many have joined; then the mission starts. |
+| Ready-up time (seconds) | `director_ready_duration` | If not 0, the survivor team has this long to get ready before starting out. |
+| Unfreeze time (seconds) | `director_unfreeze_time` | How many seconds to wait, after the first player has connected, before a team is unfrozen. |
+| Map transition wait (seconds) | `director_transition_timeout` | How many seconds the game waits for the survivors to cross into the next map. |
+| Pills become kits (not Expert) | `director_convert_pills` | Lets pain pills be turned into health kits or defibrillators on difficulties below Expert. Choices: `0` (Off), `1` (On). |
+| Pills become kits (Versus) | `director_vs_convert_pills` | What share of the pain pills become health kits in Versus: 0.5 is half. Use a number from 0 to 1. |
+| Survival setup time (seconds) | `director_survival_setup_time` | The time allowed to set up before a Survival round starts by itself. 0 means none. |
+| Allow an all-bot survivor team | `allow_all_bot_survivor_team` | Allows a survivor team made only of bots. A human player is still needed for the game to be active. Choices: `0` (Off), `1` (On). |
+| Allow a server of only bots | `sb_all_bot_game` | Allows a game with no human players at all. Choices: `0` (Off), `1` (On). |
+| Survivor bots may lead | `sb_allow_leading` | If not 0, survivor bots can lead the way and do not always wait behind the human leader. Choices: `0` (Off), `1` (On). |
+| Survivor bots hurt other survivors | `sb_friendlyfire` | Whether a survivor bot's bullets hurt the other survivors. Choices: `0` (Off), `1` (On). |
+
+### Left 4 Dead 2: Versus
+
+4 settings in `server.cfg`, shown under **Versus** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Versus force-start time (seconds) | `versus_force_start_time` | A Versus game is started after this long even if survivors are still inside the safe room. |
+| Versus Tank chance | `versus_tank_chance` | The chance of a Tank in a regular Versus map: 0.75 is 75 percent. Use a number from 0 to 1. |
+| Versus Witch chance | `versus_witch_chance` | The chance of a Witch in a regular Versus map: 0.75 is 75 percent. Use a number from 0 to 1. |
+| Losing team plays survivors first | `versus_winning_team_goes_last` | On means the team that is losing plays as the survivors first. Choices: `0` (Off), `1` (On). |
+
+### Left 4 Dead 2: Survival
+
+5 settings in `server.cfg`, shown under **Survival** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Most special infected alive | `survival_max_specials` | The most special infected alive at one time in Survival. |
+| Seconds between hordes | `survival_horde_stage_interval` | The seconds between horde attacks in Survival. |
+| Seconds between special infected | `survival_special_spawn_interval` | The seconds between waves of special infected in Survival. |
+| Seconds between Tanks | `survival_tank_stage_interval` | The seconds between Tank attacks in Survival. |
+| Restart delay (seconds) | `survival_round_restart_delay` | After a loss, the round restarts after this many seconds. |
+
+### Left 4 Dead 2: Scavenge
+
+4 settings in `server.cfg`, shown under **Scavenge** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Setup time (seconds) | `scavenge_round_setup_time` | The setup time before a Scavenge round starts. |
+| Starting clock (seconds) | `scavenge_round_initial_time` | The time on the clock when a Scavenge round starts. |
+| Time added per can (seconds) | `scavenge_score_bonus_time` | The time added to the clock every time a team scores. |
+| Can respawn delay (seconds) | `scavenge_item_respawn_delay` | After a scavenge item is destroyed, how many seconds until it comes back. |
+
+### Left 4 Dead 2: Voting
+
+14 settings in `server.cfg`, shown under **Voting** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Allow voting | `sv_allow_votes` | Lets players hold votes. Valve's list says the game's mod support is needed first. Choices: `0` (Off), `1` (On). |
+| Votes to kick players | `sv_vote_issue_kick_allowed` | Whether players can hold votes to kick other players. Choices: `0` (Off), `1` (On). |
+| Vote-kick ban length (minutes) | `sv_vote_kick_ban_duration` | How long a player who was voted out stays banned from the server. |
+| Votes to change difficulty | `sv_vote_issue_change_difficulty_allowed` | Whether players can hold votes to change the difficulty. Choices: `0` (Off), `1` (On). |
+| Votes to change map now | `sv_vote_issue_change_map_now_allowed` | Whether players can hold votes to change the map immediately. Choices: `0` (Off), `1` (On). |
+| Votes to change map after the round | `sv_vote_issue_change_map_later_allowed` | Whether players can hold votes to change the map after this round. Choices: `0` (Off), `1` (On). |
+| Votes to change campaign | `sv_vote_issue_change_mission_allowed` | Whether players can hold votes to change the campaign (mission). Choices: `0` (Off), `1` (On). |
+| Votes to restart | `sv_vote_issue_restart_game_allowed` | Whether players can hold votes to restart the game. Choices: `0` (Off), `1` (On). |
+| Time between one player's votes (seconds) | `sv_vote_creation_timer` | How often one player can call a vote. |
+| Cooldown after a failed vote (seconds) | `sv_vote_failure_timer` | A vote that fails cannot be called again for this long. |
+| Failed votes per player per map | `sv_vote_plr_map_limit` | The number of failed votes one player can call on each map. |
+| How long a vote stays open (seconds) | `sv_vote_timer_duration` | How long voting on an issue stays open. |
+| Delay before a passed vote acts | `sv_vote_command_delay` | How long after a vote passes until the action happens. |
+| Show who called the vote | `sv_vote_show_caller` | Shows the name of the person who called the vote. Choices: `0` (Off), `1` (On). |
+
+### Left 4 Dead 2: Files and downloads
+
+6 settings in `server.cfg`, shown under **Files and downloads** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| File consistency check | `sv_consistency` | Whether the server makes players' critical game files match its own. One Steam forum user reports that turning it off lets players join without the server's custom addons; that is not confirmed by Valve. Choices: `0` (Off), `1` (On). |
+| Kick for mismatched files | `sv_pure_kick_clients` | On kicks players whose files do not match; off only warns them. Choices: `0` (Only warn), `1` (Kick). |
+| Players can download from the server | `sv_allowdownload` | Lets players download files from the game server. Choices: `0` (Off), `1` (On). |
+| Players can upload files | `sv_allowupload` | Lets players upload their custom files, such as sprays. Choices: `0` (Off), `1` (On). |
+| Fast download web address | `sv_downloadurl` | The address of a web server that holds files players are missing, so they can fetch them from there. Whether it serves the addons in left4dead2/addons was not confirmed. |
+| Largest upload (MB) | `net_maxfilesize` | The largest file, in megabytes, a player may upload. |
+
+### Left 4 Dead 2: Network and performance
+
+16 settings in `server.cfg`, shown under **Network and performance** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Minimum data per player | `sv_minrate` | The least data per second the server allows for one player. 0 means unlimited. |
+| Maximum data per player | `sv_maxrate` | The most data per second the server allows for one player. 0 means unlimited. |
+| Minimum updates per second | `sv_minupdaterate` | The fewest updates per second the server allows for each player. |
+| Maximum updates per second | `sv_maxupdaterate` | The most updates per second the server allows for each player. |
+| Minimum command rate | `sv_mincmdrate` | Sets the lowest value for the number of packets per second a player's game sends. 0 means unlimited. |
+| Maximum command rate | `sv_maxcmdrate` | If the minimum command rate is above 0, this sets the highest value for the number of packets per second a player's game sends. |
+| Minimum interpolation ratio | `sv_client_min_interp_ratio` | Limits the players' cl_interp_ratio from below. -1 lets players set it to anything. |
+| Maximum interpolation ratio | `sv_client_max_interp_ratio` | Limits the players' cl_interp_ratio from above. It has no effect while the minimum is -1. |
+| Force client prediction | `sv_client_predict` | Can force the players' cl_predict setting: -1 lets each player choose, 0 forces it off, 1 forces it on. Choices: `-1` (Each player chooses), `0` (Force off), `1` (Force on). |
+| Idle disconnect time (seconds) | `sv_timeout` | How many seconds without any message from a player before they are dropped. |
+| Lag compensation | `sv_unlag` | Turns on lag compensation for players. Choices: `0` (Off), `1` (On). |
+| Longest lag compensation (seconds) | `sv_maxunlag` | The longest delay, in seconds, the server will make up for when checking a hit. |
+| Sleep when empty | `sv_hibernate_when_empty` | On puts the server into a very low CPU mode while nobody is connected. Choices: `0` (Off), `1` (On). |
+| Delay before sleeping (seconds) | `sv_hibernate_postgame_delay` | How many seconds to wait after the last player leaves before the server goes to sleep. |
+| Server-list queries per second | `sv_max_queries_sec` | The most server-browser queries per second the server answers from one address. |
+| Server-list queries per second, total | `sv_max_queries_sec_global` | The most server-browser queries per second the server answers from all addresses together. |
+
+### Left 4 Dead 2: Logging
+
+7 settings in `server.cfg`, shown under **Logging** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Write a log file | `sv_logfile` | Writes the server's information to its log file. Choices: `0` (Off), `1` (On). |
+| One log file | `sv_log_onefile` | Logs to a single file instead of a new one each time. Choices: `0` (Off), `1` (On). |
+| Log bans | `sv_logbans` | Writes the server's bans to its log. Choices: `0` (Off), `1` (On). |
+| Show the log in the console | `sv_logecho` | Also prints the log information in the server's console. Choices: `0` (Off), `1` (On). |
+| Write the log at every line | `sv_logflush` | Writes the log to the disk at every line. It is slow. Choices: `0` (Off), `1` (On). |
+| Log folder | `sv_logsdir` | The folder, inside the game folder, where the server's logs are kept. |
+| Log remote console use | `sv_rcon_log` | Writes a log of remote console (RCON) use. Choices: `0` (Off), `1` (On). |
+
+### Left 4 Dead 2: Remote console and bans
+
+6 settings in `server.cfg`, shown under **Remote console and bans** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Remote console password | `rcon_password` | The password for the server's remote console (RCON). Choose a long one: anyone with it controls the server. The panel does not use the remote console for this server. Changing it while the server runs disconnects everyone logged in remotely. |
+| Wrong passwords before a ban | `sv_rcon_maxfailures` | How many times one address may get the remote console password wrong before it is banned. |
+| Wrong passwords in the window | `sv_rcon_minfailures` | How many wrong remote console passwords within the time window below lead to a ban. |
+| Window for wrong passwords (seconds) | `sv_rcon_minfailuretime` | The number of seconds over which wrong remote console passwords are counted. |
+| Remote login ban length (minutes) | `sv_rcon_banpenalty` | How many minutes someone who fails the remote console login is banned for. |
+| Allow the banid command | `sv_banid_enabled` | Whether the server supports the banid command for banning players. Choices: `0` (Off), `1` (On). |
