@@ -10,6 +10,10 @@ describe("how long Stop waits before forcing a server closed", () => {
 		assert.equal(stopGraceMs({ type: "satisfactory" }), 30_000);
 	});
 
+	it("is 30 seconds for SCUM, whose clean exit took 13 to 15 seconds on a real install", () => {
+		assert.equal(stopGraceMs({ type: "scum" }), 30_000);
+	});
+
 	it("is 15 seconds for every other game, and for a server with no type", () => {
 		for (const type of ["valheim", "rust", "7days", "minecraft", undefined]) assert.equal(stopGraceMs({ type }), 15_000, String(type));
 	});

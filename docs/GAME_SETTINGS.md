@@ -2204,6 +2204,7 @@ SCUM keeps its settings in `SCUM\Saved\Config\WindowsServer\ServerSettings.ini` 
 The game reads the file only when it starts, and a running server can write over changes made to it, so stop the server before editing.
 The player and admin lists (`AdminUsers.ini`, `ExclusiveUsers.ini`, `WhitelistedUsers.ini`, `BannedUsers.ini`), the trader prices (`EconomyOverride.json`), the raid windows (`RaidTimes.json`), the scheduled messages (`Notifications.json`) and the `Loot` folder are in the same folder. The Settings tab does not edit them.
 SCUM has no official mod support (the developer said on 30 September 2026 that it will not arrive in 2026). Loot, trader and raid-time changes are made with those files.
+SCUM writes the server password in plain text into its own log (`SCUM.log`), so do not post that log where others can read it.
 The game changes its list of settings about once a month. A setting the file has that the panel does not explain is still shown.
 
 ### SCUM: General: Server identity & access

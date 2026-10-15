@@ -16,9 +16,9 @@ is left unexplained rather than guessed.
 | Unturned | 17 (`Commands.dat`, `WorkshopDownloadConfig.json`) | none (the server id must stay last on the line) | Workshop IDs field | **Yes**: created by the panel, `Commands.dat` applied (name, map, port, password), runs, Stop saves and exits cleanly |
 | Abiotic Factor | 50 (`SandboxSettings.ini` 48, `Admin.ini` 2) | 18 | none supported | **Yes**: the game reads the panel's sandbox file (`-SandboxIniPath`), both UDP ports bind, `Admin.ini` is created, Stop is a clean console exit |
 | Don't Starve Together | 18 (`cluster.ini`) | 18 | Workshop IDs written to the two Lua files | **Partly**: runs offline (no token), the panel's port flags are used, Stop shuts down cleanly. Not tried with a real cluster token; with no token a game port outside 10998 to 11018 does not bind (the creation warning says so) |
-| SCUM | 409 | 4 | none supported | No (15 GB download) |
-| Icarus | 12 | 11 | none supported | No (10 GB download) |
-| StarRupture | 5 | 5 | none supported | No (21 GB download) |
+| SCUM | 409 | 5 | none supported | **Yes**, 5 problems found and fixed: the server asks for administrator rights (now started un-elevated so the panel can see and stop it), wrong port list (now `-QueryPort` and a TCP port at +2), first start discards the panel-written settings file (warning added), clean exit needs about 15 s (30 s grace), password appears in its own log (noted) |
+| Icarus | 12 | 11 | none supported | **Yes**: the Shipping exe stays running, the game reads the pre-written settings file, the query port answers Steam queries (player counts), the game saves inside the install. Stop ends the process without a shutdown line in the game log |
+| StarRupture | 5 | 5 | none supported | **Mostly**: both executables run, settings read from the install root, Stop is clean, spaces in names work. Save location and save-on-stop could not be tested without a game client |
 
 Known limits of the panel for these games: it runs one process per server, so DST has the overworld only (no Caves shard); Stop asks the
 window to close and then forces it after 15 seconds (30 for Satisfactory), so DST's `c_shutdown()` and Icarus's slow save are not used.

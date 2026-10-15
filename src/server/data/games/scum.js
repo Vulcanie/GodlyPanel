@@ -50,21 +50,24 @@ const template = {
 	// No mods field: the developer has said official mod support will not come in 2026 and there is no Workshop.
 	fields: ["sessionName", "serverPassword"],
 	fieldMeta: { sessionName: { label: "Server Name (shown in the server browser)", type: "text" } },
-	// UDP. Players join on game port + 2 (the Steam query port), and the game also uses game port + 1. 7777 to 7779 belong to other
-	// games' defaults here, so this starts at 7870.
-	ports: [{ key: "port", label: "Game Port (UDP)", default: 7870 }],
-	implicitPorts: [
-		{ offset: 1, label: "its raw UDP socket" },
-		{ offset: 2, label: "the Steam server list query that players join on" },
+	// Seen on a real install: the game binds the UDP -port, a UDP Steam query port (27015 unless -QueryPort says otherwise, so the panel
+	// always gives one) and a TCP port at game port + 2. 7777 to 7779 belong to other games' defaults here, so this starts at 7870.
+	ports: [
+		{ key: "port", label: "Game Port (UDP)", default: 7870 },
+		{ key: "queryPort", label: "Query Port (UDP)", default: 7880 },
 	],
+	implicitPorts: [{ offset: 2, label: "its TCP port" }],
 	buildStartScriptFilename: () => "Start_SCUM.bat",
-	// Started from the install folder, as in the community guides. No -QueryPort (the game uses game port + 2 by itself) and no
-	// -nobattleye. -MaxPlayers is the wiki's own example line and overrides the limit in ServerSettings.ini.
+	// Started from the install folder, as in the community guides, without -nobattleye. -MaxPlayers is the wiki's own example line and
+	// overrides the limit in ServerSettings.ini. SCUMServer.exe asks Windows for administrator rights ("highestAvailable"); started
+	// that way a panel that is not elevated cannot see its path or stop it, so it is started as the person running the panel instead
+	// (RunAsInvoker, checked on a real install: it then starts in seconds and Stop works).
 	buildStartScript: (p) =>
 		[
 			"@echo off",
 			"cd /d \"%~dp0\"",
-			`start /MIN "${batSafe(p.name, "SCUM Server")}" ${EXE_PATH} -log -port=${p.port} -MaxPlayers=${playerLimit(p.maxPlayers)}`,
+			"set __COMPAT_LAYER=RunAsInvoker",
+			`start /MIN "${batSafe(p.name, "SCUM Server")}" ${EXE_PATH} -log -port=${p.port} -QueryPort=${p.queryPort} -MaxPlayers=${playerLimit(p.maxPlayers)}`,
 			"",
 		].join("\r\n"),
 	// The name, password and player limit. The game adds every other setting to the file itself.
@@ -78,12 +81,20 @@ const template = {
 			"",
 		].join("\r\n"),
 	}),
+	// Checked on a real install: on a brand-new save folder the first start throws away the settings file the panel wrote and writes the
+	// game's own defaults in its place (about 430 settings). From the second start it keeps the name, password and player limit.
+	postWrite: async () => ({
+		warnings: [
+			"SCUM replaces its settings file with the game's own defaults on its very first start. Start the server once, stop it, check the name, password and player limit on the Settings tab, and start it again; from the second start they are kept.",
+		],
+	}),
 	buildServerEntry: (p) => ({
 		name: p.name,
 		type: "scum",
 		method: "process",
 		host: "127.0.0.1",
 		port: p.port,
+		queryPort: p.queryPort,
 		sessionName: p.sessionName,
 		serverPassword: p.serverPassword,
 		configPath: `${p.installDir}\\${SETTINGS_REL}`,

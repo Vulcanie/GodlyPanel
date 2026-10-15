@@ -275,9 +275,9 @@ function killPid(pid, { force = false } = {}) {
 // image name used to close every program with that name on the PC, so stopping one
 // Valheim server stopped all of them. A same-named program from somewhere else is left
 // alone, and if that is all there is, Stop says so instead of acting on it.
-// How long a closing server gets before it is forced. Satisfactory saves its whole world on the way out and needs longer.
+// How long a closing server gets before it is forced. Satisfactory and SCUM save their whole world on the way out and need longer.
 export function stopGraceMs(server) {
-	return server?.type === "satisfactory" ? 30_000 : 15_000;
+	return server?.type === "satisfactory" || server?.type === "scum" ? 30_000 : 15_000;
 }
 
 async function gracefulThenForceKill(server, graceMs = stopGraceMs(server), pollMs = 2000) {

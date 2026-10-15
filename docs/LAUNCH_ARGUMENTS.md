@@ -1242,9 +1242,17 @@ Not offered in the Launch options form; the panel sets it and it is best left al
 
 ### SCUM: `-port`
 
-**Game port** (Network). The UDP port players connect on. The game also takes the next two ports (a raw socket at +1 and the Steam server list query at +2), so keep three ports in a row free. Change it from the server's Ports section so the panel can check for clashes.
+**Game port** (Network). The UDP port players connect on. The game also opens a TCP port two above it, so keep that one free too. Change it from the server's Ports section so the panel can check for clashes.
 
 Example: `-port=7780`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### SCUM: `-QueryPort`
+
+**Query port** (Network). The UDP port the Steam server list asks for the server's details on. Without it the game uses 27015, which another server on the same PC may already have. Change it from the server's Ports section so the panel can check for clashes.
+
+Example: `-QueryPort=7880`
 
 The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
 
