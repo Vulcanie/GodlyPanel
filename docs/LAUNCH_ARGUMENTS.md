@@ -31,6 +31,8 @@ Settings that live in a game's own settings file are in the [game settings guide
 - [Icarus](#icarus)
 - [SCUM](#scum)
 - [StarRupture](#starrupture)
+- [Soulmask](#soulmask)
+- [Garry's Mod](#garrys-mod)
 
 ## Valheim
 
@@ -770,7 +772,7 @@ Example: `-Port=7777`
 
 Example: `-QueryPort=27015`
 
-### `-RconPort`
+### Conan Exiles: `-RconPort`
 
 **Remote console port** (Network). The TCP port of the remote console. Only for the panel on this PC; never open it in your router.
 
@@ -1014,7 +1016,7 @@ The panel runs one Don't Starve Together world (the overworld, called the Master
 
 The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
 
-### `-console`
+### Don't Starve Together: `-console`
 
 **Server console** (Required). Lets Lua commands be typed into the server's console window. The game says this argument is deprecated in favour of the console_enabled setting, but still accepts it, and Klei's own start scripts still use it.
 
@@ -1295,3 +1297,323 @@ The panel puts this on the line when it creates the server. It is in the Launch 
 **Turn off the built-in web remote screen** (Security). The partner of the argument above: it switches off the web page of the same remote-control service.
 
 The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+## Soulmask
+
+Soulmask is set up by the arguments on the command that starts it: the name, the passwords, the player limit, the ports, PvE or PvP and how often the world is written to disk. The map's name comes first on the line (`Level01_Main` is the base game) and is not changed here. Changes apply the next time the server starts. These arguments are on the `WSServer-Win64-Shipping.exe` line of the server's start script.
+
+The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
+
+### `-server`
+
+**Server mode** (Required). Starts the game as a dedicated server. The guides call it required.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-forcepassthrough`
+
+**Engine switch (required)** (Required). The guides say this must be on the line and give no reason. Leave it as it is.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Soulmask: `-log`
+
+**Show server window** (Required). Keeps the server in a visible console window and writes the log to WS\Saved\Logs\WS.log. Without it the server runs in the background with no window at all, which also leaves the panel nothing to close.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-UTF8Output`
+
+**Readable non-English log text** (Required). Keeps log lines with non-Latin characters, such as some players' names, readable. The guide says to keep it.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Soulmask: `-SteamServerName`
+
+**Server name** (Server). The name shown in the server list.
+
+Example: `-SteamServerName="My Soulmask"`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Soulmask: `-MaxPlayers`
+
+**Player slots** (Server). The most players allowed at once. The wiki's sample uses 20. Some guides say about 70 is the most, but that is not confirmed, and the guide warns that too many players hurts performance.
+
+Example: `-MaxPlayers=20`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `-PSW`
+
+**Join password** (Server). What players type to join. Take the argument off the line for a server anyone can join.
+
+Example: `-PSW="friends"`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `-adminpsw`
+
+**Admin password** (Server). The password for admin powers in the game: press the ~ key, type gm key followed by the password, and the admin panel opens. Anyone who has it has full admin, so keep it private and never leave it empty.
+
+Example: `-adminpsw="gmpass"`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `-pve`
+
+**PvE mode (peaceful)** (Server). Runs the server by PvE rules. The guide says it also changes some of the game's settings, without listing which. Use this or -pvp, not both.
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `-pvp`
+
+**PvP mode (players fight)** (Server). Runs the server by PvP rules. The guide says it also changes some of the game's settings, without listing which. To use it, turn off -pve first: use one or the other.
+
+### `-serverpm`
+
+**Ban and allow lists** (Server). Which lists are switched on, as a number made by adding up: 1 only the accounts on the allow list may join, 2 accounts on the ban list are refused, 4 only the IP addresses on the allow list may join, 8 IP addresses on the ban list are refused, 16 the mute list. Without this argument every list is off after each restart, so bans do not last. 2 is the usual choice.
+
+Example: `-serverpm=2`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `-GongHuiMaxMember`
+
+**Tribe size limit** (Server). The most players in one tribe. When it is on the line it replaces the tribe size set in the game's own settings at the next start.
+
+Example: `-GongHuiMaxMember=10`
+
+### `-mod`
+
+**Workshop mods** (Server). Steam Workshop mod ids, separated by commas with no spaces, in this order: put a mod other mods need before them. The server downloads them when it starts, and every player must have the same mods. A broken mod can stop the server from starting; take it off the list to recover. Keep the list inside quotation marks.
+
+Example: `-mod="3331511657,3325592770"`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Soulmask: `-PORT`
+
+**Game port** (Network). The UDP port players connect to. Change it from the server's Ports section so the panel can check for clashes and open the firewall. Two servers on one PC need different ports.
+
+Example: `-PORT=8777`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Soulmask: `-QueryPort`
+
+**Query port** (Network). The UDP port the server list asks for the server's details on. Change it from the server's Ports section. Two servers on one PC need different query ports.
+
+Example: `-QueryPort=27015`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `-EchoPort`
+
+**Console port** (Network). The TCP port of the server's local text console, which only this PC can reach. Do not open it in the firewall or the router. It is not in the panel's Ports section, so change it here, and give each server on this PC its own.
+
+Example: `-EchoPort=18888`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Soulmask: `-MULTIHOME`
+
+**Listen address** (Network). Makes the server use one specific IP address of this PC. Only useful on a PC with several network cards; leave it off to use them all.
+
+Example: `-MULTIHOME=0.0.0.0`
+
+### `-rconpsw`
+
+**Remote console password** (Network). Turns on the game's remote console (RCON) and sets its password. Without it RCON is off. The panel cannot use this RCON; it is for outside tools. It also needs -rconaddr or -MULTIHOME.
+
+Example: `-rconpsw="rconpass"`
+
+### `-rconaddr`
+
+**Remote console address** (Network). The IP address the remote console listens on. If it is not given the -MULTIHOME address is used, and if neither is given the remote console stays off.
+
+Example: `-rconaddr=127.0.0.1`
+
+### Soulmask: `-rconport`
+
+**Remote console port** (Network). The TCP port the remote console listens on; 19000 when not given. Other PCs must also be listed under [Server.SafeIP] in WS\Saved\Config\WindowsServer\Engine.ini to connect. Do not open it to the internet without a strong password.
+
+Example: `-rconport=19000`
+
+### `-saving`
+
+**World snapshot interval (seconds)** (Saves and backups). How often the world is saved into the server's memory, ready to be written out. It is not on disk yet. The wiki's sample uses 600 (10 minutes); one guide says 300.
+
+Example: `-saving=600`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `-backup`
+
+**Write to disk every (seconds)** (Saves and backups). How often the world in memory is written to world.db on disk. This is what a Stop from the panel can lose: closing the window can roll the world back to the last write. The wiki's sample uses 900 (15 minutes); a smaller number loses less.
+
+Example: `-backup=900`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `-initbackup`
+
+**Back up the world at every start** (Saves and backups). Makes a copy of world.db each time the server starts. The server never deletes these copies, so clear them out by hand now and then.
+
+### `-backupinterval`
+
+**Extra backup copies (minutes)** (Saves and backups). Makes a backup copy of world.db on disk this often. The server never deletes the old copies, so clear them out by hand now and then to save disk space.
+
+Example: `-backupinterval=60`
+
+### `-coef`
+
+**Official settings template** (Advanced). Loads a named settings template that matches an official server. The names are the GameXishu_Template_`<name>`.json files in WS\Config\GameplaySettings. The game then saves its settings to GameXishu_`<name>`.json instead of GameXishu.json. Add it by editing the start script.
+
+Example: `-coef=PvE_10P_3x`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-serverid`
+
+**Server number** (Advanced). A whole number that identifies this server; each server in a cluster needs its own. Characters are tied to it: changing it after players have made characters makes them start over. Add it by editing the start script, and only before players join.
+
+Example: `-serverid=1`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-mainserverport`
+
+**Cluster: main server port** (Advanced). Makes this the main server of a cluster of servers, listening on this TCP port. Never open that port to the internet. Adding or removing it on a server that already has players changes how their data is saved. Add it by editing the start script.
+
+Example: `-mainserverport=20000`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-clientserverconnect`
+
+**Cluster: join a main server** (Advanced). Makes this a member of the cluster whose main server is at this address and port. Adding or removing it on a server that already has players changes how their data is saved. Add it by editing the start script.
+
+Example: `-clientserverconnect=192.168.1.5:20000`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+## Garry's Mod
+
+Garry's Mod is started with `+word value` console commands (the map, the gamemode, the player limit) and `-word` launch options (the port, the console). They are read when the server starts, so changes apply the next time it starts. None of them has to be last on the line. These arguments are on the `srcds.exe` line of the server's start script.
+
+The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
+
+### Garry's Mod: `-console`
+
+**Console window** (Required). Runs the server in console mode: a text window you can type commands into. The panel always writes it.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-game`
+
+**Game folder** (Required). Tells srcds which game to run. For Garry's Mod this has to be garrysmod. The Facepunch examples for Windows leave it out, but the Linux example and the community guides include it, so the panel always writes it.
+
+Example: `-game garrysmod`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Garry's Mod: `-port`
+
+**Game port** (Network). The port the server listens on and tells players to connect to (UDP). Source's remote console would use the same number over TCP. Change it from the server's Ports section so the panel can check for clashes.
+
+Example: `-port 27145`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `-strictportbind`
+
+**Stop if the port is taken** (Network). If the port is already in use, the server quits with an error instead of quietly using another port. Without it a second server would take the next free port and players would not find it.
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Garry's Mod: `-ip`
+
+**Listen address** (Network). The network address the server listens on. It has to be an address of this PC, or 0.0.0.0 for all of them. Only needed with several network cards; it has nothing to do with the address players use from outside.
+
+Example: `-ip 0.0.0.0`
+
+### `-tickrate`
+
+**Tick rate** (Performance). How many times a second the server updates the game. Facepunch recommends 30 to 128 and says the default is about 66.67. Higher is smoother and uses more CPU.
+
+Example: `-tickrate 66`
+
+### `+maxplayers`
+
+**Max players** (Server). The number of player slots. The most the game allows is set by the game and gamemode; the Facepunch examples use 12 to 32.
+
+Example: `+maxplayers 16`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `+gamemode`
+
+**Gamemode** (Server). The gamemode the server starts with, named by its folder in garrysmod/gamemodes (or in an addon). Sandbox and terrortown (Trouble in Terrorist Town) come with the game; a gamemode from the Workshop is named by its folder.
+
+Values: `undefined`, `undefined`. Other values are accepted too.
+
+Example: `+gamemode sandbox`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `+map`
+
+**Start map** (World). The map the server starts on: the map file's name without .bsp, from garrysmod/maps or from an addon. For a Workshop map, use the file name given on its Workshop page.
+
+Example: `+map gm_construct`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `+sv_setsteamaccount`
+
+**Game Server Login Token** (Server). The Game Server Login Token for this server. Facepunch says every server should have one: without it the server ranks very low in the server list, and an invalid or expired one stops the server from starting. Create one at steamcommunity.com/dev/managegameservers with app ID 4000, one token per server. Treat it like a password.
+
+Example: `+sv_setsteamaccount …`
+
+### `+host_workshop_collection`
+
+**Workshop collection** (Mods). The id of a Steam Workshop collection. The server downloads it and mounts all its addons every time it starts. The collection has to be Public or Unlisted. Players only download an addon's content from your server if it is marked for download in a Lua file.
+
+Example: `+host_workshop_collection 157384458`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `-condebug`
+
+**Write the console to a file** (Saves and logs). Writes everything the console prints to console.txt in the garrysmod folder. The Logs tab reads that file.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-disableluarefresh`
+
+**No Lua auto-refresh** (Performance). Stops the server reloading Lua files when they change on disk.
+
+### `-noworkshop`
+
+**Ignore Workshop addons** (Troubleshooting). Starts without the Workshop addons, to find out whether one of them is the problem.
+
+### `-noaddons`
+
+**Ignore hand-made addons** (Troubleshooting). Starts without the addons in the garrysmod/addons folder, to find out whether one of them is the problem.
+
+### `-noconclr`
+
+**No console colours** (Troubleshooting). Turns off the colour codes in the server console, so a program that shows its text does not show strange characters.
+
+### `-allowlocalhttp`
+
+**Allow web requests to the local network** (Advanced). Lets Lua scripts on the server fetch web pages from addresses like 192.168.x.x. Only for addons that need to talk to another program on your network.
+
+### `-nocrashdialog`
+
+**No crash message boxes** (Advanced). Stops some of the error message boxes Windows would show if the server crashes, so an unattended server is not left waiting for someone to click.
+
+### `-insecure`
+
+**Turn off Valve Anti-Cheat** (Advanced). Starts the server without Valve Anti-Cheat (VAC). Servers run with it unless this is on the line.

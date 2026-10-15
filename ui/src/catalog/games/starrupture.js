@@ -8,7 +8,7 @@ import { A, FLAG } from "../launchHelpers.js";
 const dsSettings = withChoices(
 	rows([
 		["SessionName", "World name", "The name of your world. It is also the name of the folder the world is saved in (StarRupture\\Saved\\SaveGames), so a new name starts a new, empty world and the old one stays on disk. Keep it short: 20 characters is the longest one server setup documents.", "World"],
-		["StartNewGame", "Create a new world on start", "Yes builds a brand-new world every time the server starts. Use it once for the first start, then change it to No, and set \"Load the saved world on start\" to Yes, or the world is made again at every start.", "World"],
+		["StartNewGame", "Create a new world on start", "Yes builds a brand-new world every time the server starts. Use it once for the first start, then change it to No, and set \"Load the saved world on start\" to Yes, or the world is made again at every start. Do not switch it off before a save exists: with nothing to load, the server keeps running with no world at all.", "World"],
 		["LoadSavedGame", "Load the saved world on start", "Yes loads the save named below when the server starts, so your world comes back after a restart or a crash. With No the server loads nothing: it waits with no world, or builds a new one if \"Create a new world on start\" is Yes.", "World"],
 		["SaveGameName", "Save file to load", "The file inside the world's save folder to load, including .sav. It is case-sensitive. The server's own autosave is AutoSave0.sav; older autosaves are numbered after it.", "World"],
 		["SaveGameInterval", "Autosave every (seconds)", "How often the world is saved by itself, in seconds. Server hosts suggest 180 to 600 (3 to 10 minutes); a very short time can cause lag each time the save is written.", "Saving"],
@@ -46,7 +46,7 @@ const guide = {
 		"The first start builds the world (\"Create a new world on start\" is Yes). After that, set it to **No** and \"Load the saved world on start\" to **Yes**, or the world is made again at every start.",
 		"The game fixes the player limit at 4. It has no difficulty or rules settings in any file.",
 		"Passwords are not set by the panel. The game reads them from `Password.json` (admin) and `PlayerPassword.json` (join) in the server folder, and will only accept a value made by a website (starrupture-utilities.com), not the password typed in plain text. Without `PlayerPassword.json` anyone who knows the address can join.",
-		"Forward UDP only for the game port. The same number also answers on TCP for the in-game Manage Server screen, which has a reported security hole, so leave TCP closed.",
+		"Forward UDP only for the game port. The same number can also answer on TCP for the in-game Manage Server screen, which has a reported security hole (the panel turns that web interface off in the start script), so leave TCP closed.",
 	],
 };
 

@@ -41,8 +41,11 @@ describe("Icarus template", () => {
 		assert.equal(t.displayName, "Icarus");
 		assert.equal(t.updateAppId, "2089300");
 		assert.equal(t.storeAppId, "1149460");
-		// There is no RCON, so the panel must not be told to stop it over one.
-		assert.equal(t.method, "process");
+		// There is no RCON, so the panel must not be told to stop it over one. Its query port does answer Steam queries (checked on a
+		// real install), which is how the panel sees it online and counts its players.
+		assert.equal(t.method, "gamedig");
+		assert.equal(t.queryProtocol, "icarus");
+		assert.equal(t.buildServerEntry(params()).queryProtocol, "icarus");
 		assert.equal(t.buildServerEntry(params()).rconPort, undefined);
 		assert.equal(t.sharedInstall, false);
 	});
