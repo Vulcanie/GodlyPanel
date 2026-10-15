@@ -1,0 +1,771 @@
+- generic [active] [ref=f10e1]:
+  - main [ref=f10e4]:
+    - heading "Dedicated Server Name Enumeration" [level=1] [ref=f10e5]
+    - generic [ref=f10e6]:
+      - link "Jump to navigation" [ref=f10e7] [cursor=pointer]:
+        - /url: "#mw-head"
+      - link "Jump to search" [ref=f10e8] [cursor=pointer]:
+        - /url: "#searchInput"
+      - generic [ref=f10e10]:
+        - generic [ref=f10e11]:
+          - img "English (en)" [ref=f10e14]
+          - link [ref=f10e17] [cursor=pointer]:
+            - /url: /wiki/Pl/Dedicated_Server_Name_Enumeration
+            - img "Polski (pl)" [ref=f10e18]
+          - generic [ref=f10e19]:
+            - generic:
+              - img "Translate (Translate)"
+        - paragraph [ref=f10e20]:
+          - text: This is a sortable table of a few categories of Valve-related dedicated server info (all games provided by the
+          - link "HLDSUpdateTool" [ref=f10e21] [cursor=pointer]:
+            - /url: /wiki/HLDSUpdateTool
+          - text: ", along with their mods), mostly for server administrators. The update name is used with the update tool's"
+          - code [ref=f10e22]: "-game"
+          - link "command line option" [ref=f10e23] [cursor=pointer]:
+            - /url: /wiki/Command_Line_Options
+          - text: . The launch name is used with the
+          - link "Source" [ref=f10e24] [cursor=pointer]:
+            - /url: /wiki/Source_Dedicated_Server
+          - text: and
+          - link "Goldsource" [ref=f10e25] [cursor=pointer]:
+            - /url: /wiki/Goldsource
+          - text: dedicated server's
+          - code [ref=f10e26]: "-game"
+          - link "command line option" [ref=f10e27] [cursor=pointer]:
+            - /url: /wiki/Command_Line_Options
+          - text: ", and the"
+          - code [ref=f10e28]: \gamedir\
+          - link "master server query protocol" [ref=f10e29] [cursor=pointer]:
+            - /url: /wiki/Master_Server_Query_Protocol
+          - text: filter. The path is the directory path (relative to the update tool
+          - code [ref=f10e30]: "-dir"
+          - text: ) and name of the main server executable. If the game is a mod and requires files from sources other than the update tool, it is external.
+        - table [ref=f10e31]:
+          - rowgroup [ref=f10e32]:
+            - row [ref=f10e33]:
+              - columnheader "Launch" [ref=f10e34] [cursor=pointer]
+              - columnheader "Update" [ref=f10e35] [cursor=pointer]
+              - columnheader "Title" [ref=f10e36] [cursor=pointer]
+              - columnheader "Path" [ref=f10e37] [cursor=pointer]
+              - columnheader "External" [ref=f10e38] [cursor=pointer]
+              - columnheader "Engine" [ref=f10e39] [cursor=pointer]
+            - row [ref=f10e40]:
+              - cell "bms" [ref=f10e41]
+              - cell "bms" [ref=f10e42]
+              - cell [ref=f10e43]:
+                - link "Black Mesa" [ref=f10e44] [cursor=pointer]:
+                  - /url: /wiki/Black_Mesa_(Source)
+              - cell [ref=f10e45]
+              - cell "No" [ref=f10e46]
+              - cell "Source" [ref=f10e47]
+            - row [ref=f10e48]:
+              - cell "cstrike" [ref=f10e49]
+              - cell "Counter-Strike Source" [ref=f10e50]
+              - cell [ref=f10e51]:
+                - 'link "Counter-Strike: Source" [ref=f10e52] [cursor=pointer]':
+                  - /url: /wiki/Counter-Strike:_Source
+              - cell [ref=f10e53]
+              - cell "No" [ref=f10e54]
+              - cell "Source" [ref=f10e55]
+            - row [ref=f10e56]:
+              - cell "cstrike" [ref=f10e57]
+              - cell "cssbeta" [ref=f10e58]
+              - cell [ref=f10e59]:
+                - 'link "Counter-Strike: Source" [ref=f10e60] [cursor=pointer]':
+                  - /url: /wiki/Counter-Strike:_Source
+                - text: Beta
+              - cell [ref=f10e61]
+              - cell "No" [ref=f10e62]
+              - cell "Source" [ref=f10e63]
+            - row [ref=f10e64]:
+              - cell "dod" [ref=f10e65]
+              - cell "dods" [ref=f10e66]
+              - cell [ref=f10e67]:
+                - 'link "Day of Defeat: Source" [ref=f10e68] [cursor=pointer]':
+                  - /url: /wiki/Day_of_Defeat:_Source
+              - cell [ref=f10e69]
+              - cell "No" [ref=f10e70]
+              - cell "Source" [ref=f10e71]
+            - row [ref=f10e72]:
+              - cell "hl1mp" [ref=f10e73]
+              - cell [ref=f10e74]
+              - cell [ref=f10e75]:
+                - 'link "Half-Life Deathmatch: Source" [ref=f10e76] [cursor=pointer]':
+                  - /url: /wiki/Half-Life_Deathmatch:_Source
+              - cell [ref=f10e77]
+              - cell "No" [ref=f10e78]
+              - cell "Source" [ref=f10e79]
+            - row [ref=f10e80]:
+              - cell "hl2mp" [ref=f10e81]
+              - cell "hl2mp" [ref=f10e82]
+              - cell [ref=f10e83]:
+                - 'link "Half-Life 2: Deathmatch" [ref=f10e84] [cursor=pointer]':
+                  - /url: /wiki/Half-Life_2:_Deathmatch
+              - cell [ref=f10e85]
+              - cell "No" [ref=f10e86]
+              - cell "Source" [ref=f10e87]
+            - row [ref=f10e88]:
+              - cell "tf" [ref=f10e89]
+              - cell "tf" [ref=f10e90]
+              - cell [ref=f10e91]:
+                - link "Team Fortress 2" [ref=f10e92] [cursor=pointer]:
+                  - /url: /wiki/Team_Fortress_2
+              - cell [ref=f10e93]
+              - cell "No" [ref=f10e94]
+              - cell "Source" [ref=f10e95]
+            - row [ref=f10e96]:
+              - cell "tf" [ref=f10e97]
+              - cell "tf_beta" [ref=f10e98]
+              - cell [ref=f10e99]:
+                - link "Team Fortress 2" [ref=f10e100] [cursor=pointer]:
+                  - /url: /wiki/Team_Fortress_2
+                - text: Beta
+              - cell [ref=f10e101]
+              - cell "No" [ref=f10e102]
+              - cell "Source" [ref=f10e103]
+            - row [ref=f10e104]:
+              - cell "left4dead" [ref=f10e105]
+              - cell "left4dead" [ref=f10e106]
+              - cell [ref=f10e107]:
+                - link "Left 4 Dead" [ref=f10e108] [cursor=pointer]:
+                  - /url: /wiki/Left_4_Dead
+              - cell [ref=f10e109]
+              - cell "No" [ref=f10e110]
+              - cell "Source" [ref=f10e111]
+            - row [ref=f10e112]:
+              - cell "left4dead" [ref=f10e113]
+              - cell "l4d_full" [ref=f10e114]
+              - cell [ref=f10e115]:
+                - link "Left 4 Dead" [ref=f10e116] [cursor=pointer]:
+                  - /url: /wiki/Left_4_Dead
+              - cell [ref=f10e117]
+              - cell "No" [ref=f10e118]
+              - cell "Source" [ref=f10e119]
+            - row [ref=f10e120]:
+              - cell "left4dead2" [ref=f10e121]
+              - cell "left4dead2" [ref=f10e122]
+              - cell [ref=f10e123]:
+                - link "Left 4 Dead 2" [ref=f10e124] [cursor=pointer]:
+                  - /url: /wiki/Left_4_Dead_2
+              - cell [ref=f10e125]
+              - cell "No" [ref=f10e126]
+              - cell "Source" [ref=f10e127]
+            - row [ref=f10e128]:
+              - cell [ref=f10e129]
+              - cell "left4dead2_demo" [ref=f10e130]
+              - cell [ref=f10e131]:
+                - link "Left 4 Dead 2" [ref=f10e132] [cursor=pointer]:
+                  - /url: /wiki/Left_4_Dead_2
+                - text: Demo
+              - cell [ref=f10e133]
+              - cell "No" [ref=f10e134]
+              - cell "Source" [ref=f10e135]
+            - row [ref=f10e136]:
+              - cell "cstrike" [ref=f10e137]
+              - cell "cstrike" [ref=f10e138]
+              - cell [ref=f10e139]:
+                - link "Counter-Strike" [ref=f10e140] [cursor=pointer]:
+                  - /url: /wiki/Counter-Strike
+              - cell [ref=f10e141]
+              - cell "No" [ref=f10e142]
+              - cell "GoldSrc" [ref=f10e143]
+            - row [ref=f10e144]:
+              - cell [ref=f10e145]
+              - cell "cstrike_beta" [ref=f10e146]
+              - cell [ref=f10e147]:
+                - link "Counter-Strike" [ref=f10e148] [cursor=pointer]:
+                  - /url: /wiki/Counter-Strike
+                - text: Beta
+              - cell [ref=f10e149]
+              - cell "No" [ref=f10e150]
+              - cell "GoldSrc" [ref=f10e151]
+            - row [ref=f10e152]:
+              - cell "czero" [ref=f10e153]
+              - cell "czero" [ref=f10e154]
+              - cell [ref=f10e155]:
+                - 'link "Counter-Strike: Condition Zero" [ref=f10e156] [cursor=pointer]':
+                  - /url: /wiki/Counter-Strike:_Condition_Zero
+              - cell [ref=f10e157]
+              - cell "No" [ref=f10e158]
+              - cell "GoldSrc" [ref=f10e159]
+            - row [ref=f10e160]:
+              - cell "dmc" [ref=f10e161]
+              - cell "dmc" [ref=f10e162]
+              - cell [ref=f10e163]:
+                - link "Deathmatch Classic" [ref=f10e164] [cursor=pointer]:
+                  - /url: /wiki/Deathmatch_Classic
+              - cell [ref=f10e165]
+              - cell "No" [ref=f10e166]
+              - cell "GoldSrc" [ref=f10e167]
+            - row [ref=f10e168]:
+              - cell "dod" [ref=f10e169]
+              - cell "dod" [ref=f10e170]
+              - cell [ref=f10e171]:
+                - link "Day of Defeat" [ref=f10e172] [cursor=pointer]:
+                  - /url: /wiki/Day_of_Defeat
+              - cell [ref=f10e173]
+              - cell "No" [ref=f10e174]
+              - cell "GoldSrc" [ref=f10e175]
+            - row [ref=f10e176]:
+              - cell "gearbox" [ref=f10e177]
+              - cell "gearbox" [ref=f10e178]
+              - cell [ref=f10e179]:
+                - 'link "Half-Life: Opposing Force" [ref=f10e180] [cursor=pointer]':
+                  - /url: /wiki/Opposing_Force
+              - cell [ref=f10e181]
+              - cell "No" [ref=f10e182]
+              - cell "GoldSrc" [ref=f10e183]
+            - row [ref=f10e184]:
+              - cell "ricochet" [ref=f10e185]
+              - cell "ricochet" [ref=f10e186]
+              - cell [ref=f10e187]:
+                - link "Ricochet" [ref=f10e188] [cursor=pointer]:
+                  - /url: /wiki/Ricochet
+              - cell [ref=f10e189]
+              - cell "No" [ref=f10e190]
+              - cell "GoldSrc" [ref=f10e191]
+            - row [ref=f10e192]:
+              - cell "tfc" [ref=f10e193]
+              - cell "tfc" [ref=f10e194]
+              - cell [ref=f10e195]:
+                - link "Team Fortress Classic" [ref=f10e196] [cursor=pointer]:
+                  - /url: /wiki/Team_Fortress_Classic
+              - cell [ref=f10e197]
+              - cell "No" [ref=f10e198]
+              - cell "GoldSrc" [ref=f10e199]
+            - row [ref=f10e200]:
+              - cell "valve" [ref=f10e201]
+              - cell "valve" [ref=f10e202]
+              - cell [ref=f10e203]:
+                - link "Half-Life" [ref=f10e204] [cursor=pointer]:
+                  - /url: /wiki/Half-Life
+              - cell [ref=f10e205]
+              - cell "No" [ref=f10e206]
+              - cell "GoldSrc" [ref=f10e207]
+            - row [ref=f10e208]:
+              - cell "mmdarkmessiah" [ref=f10e209]
+              - cell "darkmessiah" [ref=f10e210]
+              - cell [ref=f10e211]:
+                - link "Dark Messiah" [ref=f10e212] [cursor=pointer]:
+                  - /url: /wiki/Dark_Messiah
+              - cell [ref=f10e213]
+              - cell "No" [ref=f10e214]
+              - cell "Source" [ref=f10e215]
+            - row [ref=f10e216]:
+              - cell "garrysmod" [ref=f10e217]
+              - cell "garrysmod" [ref=f10e218]
+              - cell [ref=f10e219]:
+                - link "Garry's Mod" [ref=f10e220] [cursor=pointer]:
+                  - /url: /wiki/Garry%27s_Mod
+              - cell [ref=f10e221]
+              - cell "No" [ref=f10e222]
+              - cell "Source" [ref=f10e223]
+            - row [ref=f10e224]:
+              - cell "redorchestra" [ref=f10e225]
+              - cell "redorchestra" [ref=f10e226]
+              - cell [ref=f10e227]:
+                - 'link "Red Orchestra: Ostfront 41-45" [ref=f10e228] [cursor=pointer]':
+                  - /url: /w/index.php?title=Red_Orchestra:_Ostfront_41-45&action=edit&redlink=1
+              - cell [ref=f10e229]
+              - cell "No" [ref=f10e230]
+              - cell "Unreal" [ref=f10e231]
+            - row [ref=f10e232]:
+              - cell "redorchestra" [ref=f10e233]
+              - cell "redorchestra_beta" [ref=f10e234]
+              - cell [ref=f10e235]:
+                - 'link "Red Orchestra: Ostfront 41-45" [ref=f10e236] [cursor=pointer]':
+                  - /url: /w/index.php?title=Red_Orchestra:_Ostfront_41-45&action=edit&redlink=1
+                - text: Beta
+              - cell [ref=f10e237]
+              - cell "No" [ref=f10e238]
+              - cell "Unreal" [ref=f10e239]
+            - row [ref=f10e240]:
+              - cell [ref=f10e241]
+              - cell "darkesthour" [ref=f10e242]
+              - cell [ref=f10e243]:
+                - 'link "Darkest Hour: Europe ''44-''45" [ref=f10e244] [cursor=pointer]':
+                  - /url: /w/index.php?title=Darkest_Hour:_Europe_%2744-%2745&action=edit&redlink=1
+              - cell [ref=f10e245]
+              - cell "No" [ref=f10e246]
+              - cell "Unreal" [ref=f10e247]
+            - row [ref=f10e248]:
+              - cell [ref=f10e249]
+              - cell "marenostrum" [ref=f10e250]
+              - cell [ref=f10e251]:
+                - link "Mare Nostrum" [ref=f10e252] [cursor=pointer]:
+                  - /url: /w/index.php?title=Mare_Nostrum&action=edit&redlink=1
+              - cell [ref=f10e253]
+              - cell "No" [ref=f10e254]
+              - cell "Unreal" [ref=f10e255]
+            - row [ref=f10e256]:
+              - cell "ship" [ref=f10e257]
+              - cell "ship" [ref=f10e258]
+              - cell [ref=f10e259]:
+                - link "The Ship" [ref=f10e260] [cursor=pointer]:
+                  - /url: /wiki/The_Ship
+              - cell [ref=f10e261]
+              - cell "No" [ref=f10e262]
+              - cell "Source" [ref=f10e263]
+            - row [ref=f10e264]:
+              - cell [ref=f10e265]
+              - cell "sin" [ref=f10e266]
+              - cell [ref=f10e267]:
+                - link "SiN 1" [ref=f10e268] [cursor=pointer]:
+                  - /url: /wiki/SiN_1
+              - cell [ref=f10e269]
+              - cell "No" [ref=f10e270]
+              - cell "Quake" [ref=f10e271]
+            - row [ref=f10e272]:
+              - cell [ref=f10e273]
+              - cell "tshb" [ref=f10e274]
+              - cell [ref=f10e275]:
+                - 'link "ThreadSpace: Hyperbol" [ref=f10e276] [cursor=pointer]':
+                  - /url: /w/index.php?title=ThreadSpace:_Hyperbol&action=edit&redlink=1
+              - cell [ref=f10e277]
+              - cell "No" [ref=f10e278]
+              - cell [ref=f10e279]
+            - row [ref=f10e280]:
+              - cell "svencoop" [ref=f10e281]
+              - cell "valve" [ref=f10e282]
+              - cell [ref=f10e283]:
+                - link "Sven Co-op" [ref=f10e284] [cursor=pointer]:
+                  - /url: /wiki/Sven_Co-op
+              - cell [ref=f10e285]
+              - cell "Yes" [ref=f10e286]
+              - cell "GoldSrc" [ref=f10e287]
+            - row [ref=f10e288]:
+              - cell "firearms" [ref=f10e289]
+              - cell "valve" [ref=f10e290]
+              - cell [ref=f10e291]:
+                - link "Firearms" [ref=f10e292] [cursor=pointer]:
+                  - /url: /wiki/Firearms
+              - cell [ref=f10e293]
+              - cell "Yes" [ref=f10e294]
+              - cell "GoldSrc" [ref=f10e295]
+            - row [ref=f10e296]:
+              - cell "ns" [ref=f10e297]
+              - cell "valve" [ref=f10e298]
+              - cell [ref=f10e299]:
+                - link "Natural Selection" [ref=f10e300] [cursor=pointer]:
+                  - /url: /wiki/Natural_Selection
+              - cell [ref=f10e301]
+              - cell "Yes" [ref=f10e302]
+              - cell "GoldSrc" [ref=f10e303]
+            - row [ref=f10e304]:
+              - cell "action" [ref=f10e305]
+              - cell "valve" [ref=f10e306]
+              - cell [ref=f10e307]:
+                - link "Action Half-Life" [ref=f10e308] [cursor=pointer]:
+                  - /url: /wiki/Action_Half-Life
+              - cell [ref=f10e309]
+              - cell "Yes" [ref=f10e310]
+              - cell "GoldSrc" [ref=f10e311]
+            - row [ref=f10e312]:
+              - cell "brainbread" [ref=f10e313]
+              - cell "valve" [ref=f10e314]
+              - cell [ref=f10e315]:
+                - link "Brain Bread" [ref=f10e316] [cursor=pointer]:
+                  - /url: /wiki/Brain_Bread
+              - cell [ref=f10e317]
+              - cell "Yes" [ref=f10e318]
+              - cell "GoldSrc" [ref=f10e319]
+            - row [ref=f10e320]:
+              - cell "esf" [ref=f10e321]
+              - cell "valve" [ref=f10e322]
+              - cell [ref=f10e323]:
+                - link "Earth's Special Forces" [ref=f10e324] [cursor=pointer]:
+                  - /url: /wiki/Earth%27s_Special_Forces
+              - cell [ref=f10e325]
+              - cell "Yes" [ref=f10e326]
+              - cell "GoldSrc" [ref=f10e327]
+            - row [ref=f10e328]:
+              - cell "hostileintent" [ref=f10e329]
+              - cell "valve" [ref=f10e330]
+              - cell [ref=f10e331]:
+                - link "Hostile Intent" [ref=f10e332] [cursor=pointer]:
+                  - /url: /wiki/Hostile_Intent
+              - cell [ref=f10e333]
+              - cell "Yes" [ref=f10e334]
+              - cell "GoldSrc" [ref=f10e335]
+            - row [ref=f10e336]:
+              - cell "ios" [ref=f10e337]
+              - cell "valve" [ref=f10e338]
+              - cell [ref=f10e339]:
+                - link "International Online Soccer" [ref=f10e340] [cursor=pointer]:
+                  - /url: /wiki/International_Online_Soccer
+              - cell [ref=f10e341]
+              - cell "Yes" [ref=f10e342]
+              - cell "GoldSrc" [ref=f10e343]
+            - row [ref=f10e344]:
+              - cell "ts" [ref=f10e345]
+              - cell "valve" [ref=f10e346]
+              - cell [ref=f10e347]:
+                - link "The Specialists" [ref=f10e348] [cursor=pointer]:
+                  - /url: /wiki/The_Specialists
+              - cell [ref=f10e349]
+              - cell "Yes" [ref=f10e350]
+              - cell "GoldSrc" [ref=f10e351]
+            - row [ref=f10e352]:
+              - cell "hl2ctf" [ref=f10e353]
+              - cell [ref=f10e354]
+              - cell [ref=f10e355]:
+                - 'link "Half-Life 2: Capture The Flag" [ref=f10e356] [cursor=pointer]':
+                  - /url: /wiki/Half-Life_2:_Capture_The_Flag
+              - cell [ref=f10e357]
+              - cell "Yes" [ref=f10e358]
+              - cell "Source" [ref=f10e359]
+            - row [ref=f10e360]:
+              - cell "sourceforts" [ref=f10e361]
+              - cell "episode1 , hl2mp" [ref=f10e362]
+              - cell [ref=f10e363]:
+                - link "Source Forts" [ref=f10e364] [cursor=pointer]:
+                  - /url: /wiki/Sourceforts
+              - cell [ref=f10e365]
+              - cell "Yes" [ref=f10e366]
+              - cell "Source" [ref=f10e367]
+            - row [ref=f10e368]:
+              - cell "insurgency" [ref=f10e369]
+              - cell "insurgency" [ref=f10e370]
+              - cell [ref=f10e371]:
+                - link "Insurgency" [ref=f10e372] [cursor=pointer]:
+                  - /url: /wiki/Insurgency
+              - cell [ref=f10e373]
+              - cell "No" [ref=f10e374]
+              - cell "Source" [ref=f10e375]
+            - row [ref=f10e376]:
+              - cell "gesource" [ref=f10e377]
+              - cell "orangebox" [ref=f10e378]
+              - cell [ref=f10e379]:
+                - 'link "GoldenEye: Source" [ref=f10e380] [cursor=pointer]':
+                  - /url: /wiki/GoldenEye:_Source
+              - cell [ref=f10e381]
+              - cell "Yes" [ref=f10e382]
+              - cell "Source" [ref=f10e383]
+            - row [ref=f10e384]:
+              - cell "ff" [ref=f10e385]
+              - cell [ref=f10e386]
+              - cell [ref=f10e387]:
+                - link "Fortress Forever" [ref=f10e388] [cursor=pointer]:
+                  - /url: /wiki/Fortress_Forever
+              - cell [ref=f10e389]
+              - cell "Yes" [ref=f10e390]
+              - cell "Source" [ref=f10e391]
+            - row [ref=f10e392]:
+              - cell "hl2coop" [ref=f10e393]
+              - cell [ref=f10e394]
+              - cell [ref=f10e395]:
+                - 'link "Half-Life 2: Coop" [ref=f10e396] [cursor=pointer]':
+                  - /url: /w/index.php?title=Half-Life_2:_Coop&action=edit&redlink=1
+              - cell [ref=f10e397]
+              - cell "Yes" [ref=f10e398]
+              - cell "Source" [ref=f10e399]
+            - row [ref=f10e400]:
+              - cell [ref=f10e401]
+              - cell "ageofchivalry" [ref=f10e402]
+              - cell [ref=f10e403]:
+                - link "Age of Chivalry" [ref=f10e404] [cursor=pointer]:
+                  - /url: /wiki/Age_of_Chivalry
+              - cell [ref=f10e405]
+              - cell "No" [ref=f10e406]
+              - cell "Source" [ref=f10e407]
+            - row [ref=f10e408]:
+              - cell [ref=f10e409]
+              - cell "alienswarm" [ref=f10e410]
+              - cell [ref=f10e411]:
+                - link "Alien Swarm" [ref=f10e412] [cursor=pointer]:
+                  - /url: /wiki/Alien_Swarm
+              - cell [ref=f10e413]
+              - cell "No" [ref=f10e414]
+              - cell "Source" [ref=f10e415]
+            - row [ref=f10e416]:
+              - cell [ref=f10e417]
+              - cell "diprip" [ref=f10e418]
+              - cell [ref=f10e419]:
+                - link "D.I.P.R.I.P. Warm Up" [ref=f10e420] [cursor=pointer]:
+                  - /url: /wiki/D.I.P.R.I.P.
+              - cell [ref=f10e421]
+              - cell "No" [ref=f10e422]
+              - cell "Source" [ref=f10e423]
+            - row [ref=f10e424]:
+              - cell [ref=f10e425]
+              - cell "killingfloor" [ref=f10e426]
+              - cell [ref=f10e427]:
+                - link "Killing Floor" [ref=f10e428] [cursor=pointer]:
+                  - /url: /w/index.php?title=Killing_Floor&action=edit&redlink=1
+              - cell [ref=f10e429]
+              - cell "No" [ref=f10e430]
+              - cell "Unreal" [ref=f10e431]
+            - row [ref=f10e432]:
+              - cell [ref=f10e433]
+              - cell "killingfloor_beta" [ref=f10e434]
+              - cell [ref=f10e435]:
+                - link "Killing Floor" [ref=f10e436] [cursor=pointer]:
+                  - /url: /w/index.php?title=Killing_Floor&action=edit&redlink=1
+                - text: Beta
+              - cell [ref=f10e437]
+              - cell "No" [ref=f10e438]
+              - cell "Unreal" [ref=f10e439]
+            - row [ref=f10e440]:
+              - cell [ref=f10e441]
+              - cell "defencealliance2" [ref=f10e442]
+              - cell [ref=f10e443]:
+                - link "Defence Alliance 2" [ref=f10e444] [cursor=pointer]:
+                  - /url: /w/index.php?title=Defence_Alliance_2&action=edit&redlink=1
+              - cell [ref=f10e445]
+              - cell "No" [ref=f10e446]
+              - cell "Unreal" [ref=f10e447]
+            - row [ref=f10e448]:
+              - cell [ref=f10e449]
+              - cell "mondaynightcombat" [ref=f10e450]
+              - cell [ref=f10e451]:
+                - link "Monday Night Combat" [ref=f10e452] [cursor=pointer]:
+                  - /url: /w/index.php?title=Monday_Night_Combat&action=edit&redlink=1
+              - cell [ref=f10e453]
+              - cell "No" [ref=f10e454]
+              - cell "Unreal" [ref=f10e455]
+            - row [ref=f10e456]:
+              - cell [ref=f10e457]
+              - cell "dystopia" [ref=f10e458]
+              - cell [ref=f10e459]:
+                - link "Dystopia" [ref=f10e460] [cursor=pointer]:
+                  - /url: /wiki/Dystopia
+              - cell [ref=f10e461]
+              - cell "No" [ref=f10e462]
+              - cell "Source" [ref=f10e463]
+            - row [ref=f10e464]:
+              - cell [ref=f10e465]
+              - cell "esmod" [ref=f10e466]
+              - cell [ref=f10e467]:
+                - link "Eternal Silence" [ref=f10e468] [cursor=pointer]:
+                  - /url: /wiki/Eternal_Silence
+              - cell [ref=f10e469]
+              - cell "No" [ref=f10e470]
+              - cell "Source" [ref=f10e471]
+            - row [ref=f10e472]:
+              - cell [ref=f10e473]
+              - cell "pvkii" [ref=f10e474]
+              - cell [ref=f10e475]:
+                - link "Pirates Vikings & Knights II" [ref=f10e476] [cursor=pointer]:
+                  - /url: /wiki/Pirates,_Vikings,_and_Knights_II
+              - cell [ref=f10e477]
+              - cell "No" [ref=f10e478]
+              - cell "Source" [ref=f10e479]
+            - row [ref=f10e480]:
+              - cell [ref=f10e481]
+              - cell "smashball" [ref=f10e482]
+              - cell [ref=f10e483]:
+                - link "Smashball" [ref=f10e484] [cursor=pointer]:
+                  - /url: /w/index.php?title=Smashball&action=edit&redlink=1
+              - cell [ref=f10e485]
+              - cell "No" [ref=f10e486]
+              - cell "Source" [ref=f10e487]
+            - row [ref=f10e488]:
+              - cell [ref=f10e489]
+              - cell "synergy" [ref=f10e490]
+              - cell [ref=f10e491]:
+                - link "Synergy" [ref=f10e492] [cursor=pointer]:
+                  - /url: /wiki/Synergy
+              - cell [ref=f10e493]
+              - cell "No" [ref=f10e494]
+              - cell "Source" [ref=f10e495]
+            - row [ref=f10e496]:
+              - cell [ref=f10e497]
+              - cell "zps" [ref=f10e498]
+              - cell [ref=f10e499]:
+                - link "Zombie Panic! Source" [ref=f10e500] [cursor=pointer]:
+                  - /url: /wiki/Zombie_Panic!_Source
+              - cell [ref=f10e501]
+              - cell "No" [ref=f10e502]
+              - cell "Source" [ref=f10e503]
+            - row [ref=f10e504]:
+              - cell [ref=f10e505]
+              - cell "seriossamhdse" [ref=f10e506]
+              - cell [ref=f10e507]:
+                - link "Serious Sam HD" [ref=f10e508] [cursor=pointer]:
+                  - /url: /w/index.php?title=Serious_Sam_HD&action=edit&redlink=1
+              - cell [ref=f10e509]
+              - cell "No" [ref=f10e510]
+              - cell [ref=f10e511]
+            - row [ref=f10e512]:
+              - cell [ref=f10e513]
+              - cell "alienvspredator" [ref=f10e514]
+              - cell [ref=f10e515]:
+                - link "Aliens vs. Predator" [ref=f10e516] [cursor=pointer]:
+                  - /url: /w/index.php?title=Aliens_vs._Predator&action=edit&redlink=1
+              - cell [ref=f10e517]
+              - cell "No" [ref=f10e518]
+              - cell [ref=f10e519]
+            - row [ref=f10e520]:
+              - cell [ref=f10e521]
+              - cell "naturalselection2" [ref=f10e522]
+              - cell [ref=f10e523]:
+                - link "Natural Selection 2" [ref=f10e524] [cursor=pointer]:
+                  - /url: /wiki/Natural_Selection_2
+              - cell [ref=f10e525]
+              - cell "No" [ref=f10e526]
+              - cell [ref=f10e527]
+            - row [ref=f10e528]:
+              - cell "jbmod" [ref=f10e529]
+              - cell [ref=f10e530]
+              - cell [ref=f10e531]:
+                - link "JBMod" [ref=f10e532] [cursor=pointer]:
+                  - /url: /wiki/JBMod
+              - cell [ref=f10e533]
+              - cell "No" [ref=f10e534]
+              - cell "Source" [ref=f10e535]
+      - generic [ref=f10e537]:
+        - link "Categories" [ref=f10e538] [cursor=pointer]:
+          - /url: /wiki/Special:Categories
+        - text: ":"
+        - list [ref=f10e539]:
+          - listitem [ref=f10e540]:
+            - link "TODO rewrite lang to LanguageBar" [ref=f10e541] [cursor=pointer]:
+              - /url: /wiki/Category:TODO_rewrite_lang_to_LanguageBar
+          - listitem [ref=f10e542]:
+            - link "Steam Applications" [ref=f10e543] [cursor=pointer]:
+              - /url: /wiki/Category:Steam_Applications
+          - listitem [ref=f10e544]:
+            - link "Dedicated Server" [ref=f10e545] [cursor=pointer]:
+              - /url: /wiki/Category:Dedicated_Server
+  - generic:
+    - heading "Navigation menu" [level=2] [ref=f10e546]
+    - generic [ref=f10e547]:
+      - navigation "Personal tools" [ref=f10e548]:
+        - list [ref=f10e550]:
+          - listitem [ref=f10e551]:
+            - link "Create account" [ref=f10e552] [cursor=pointer]:
+              - /url: /w/index.php?title=Special:CreateAccount&returnto=Dedicated+Server+Name+Enumeration
+          - listitem [ref=f10e553]:
+            - link "Log in" [ref=f10e554] [cursor=pointer]:
+              - /url: /w/index.php?title=Special:UserLogin&returnto=Dedicated+Server+Name+Enumeration
+      - navigation "Namespaces" [ref=f10e556]:
+        - list [ref=f10e557]:
+          - listitem [ref=f10e558]:
+            - link "Page" [ref=f10e559] [cursor=pointer]:
+              - /url: /wiki/Dedicated_Server_Name_Enumeration
+          - listitem [ref=f10e560]:
+            - link "Discussion" [ref=f10e561] [cursor=pointer]:
+              - /url: /wiki/Talk:Dedicated_Server_Name_Enumeration
+      - generic [ref=f10e562]:
+        - navigation "Views" [ref=f10e563]:
+          - list [ref=f10e564]:
+            - listitem [ref=f10e565]:
+              - link "Read" [ref=f10e566] [cursor=pointer]:
+                - /url: /wiki/Dedicated_Server_Name_Enumeration
+            - listitem [ref=f10e567]:
+              - link "View source" [ref=f10e568] [cursor=pointer]:
+                - /url: /w/index.php?title=Dedicated_Server_Name_Enumeration&action=edit
+            - listitem [ref=f10e569]:
+              - link "View history" [ref=f10e570] [cursor=pointer]:
+                - /url: /w/index.php?title=Dedicated_Server_Name_Enumeration&action=history
+        - navigation "More" [ref=f10e571] [cursor=pointer]:
+          - button "More" [ref=f10e572]
+        - search [ref=f10e575]:
+          - generic [ref=f10e576]:
+            - heading "Search" [level=3] [ref=f10e577]
+            - generic [ref=f10e579]:
+              - searchbox "Search Valve Developer Community" [ref=f10e580]
+              - button "Search" [ref=f10e581] [cursor=pointer]
+              - button "Go" [ref=f10e582] [cursor=pointer]
+    - generic [ref=f10e583]:
+      - banner [ref=f10e584]:
+        - link "Visit the main page" [ref=f10e585] [cursor=pointer]:
+          - /url: /wiki/Main_Page
+      - navigation "Navigation" [ref=f10e586]:
+        - list [ref=f10e588]:
+          - listitem [ref=f10e589]:
+            - link "Main Page" [ref=f10e590] [cursor=pointer]:
+              - /url: /wiki/Main_Page
+          - listitem [ref=f10e591]:
+            - link "Source SDK index" [ref=f10e592] [cursor=pointer]:
+              - /url: /wiki/SDK_Docs
+          - listitem [ref=f10e593]:
+            - link "Recent changes" [ref=f10e594] [cursor=pointer]:
+              - /url: /wiki/Special:RecentChanges
+          - listitem [ref=f10e595]:
+            - link "Random page" [ref=f10e596] [cursor=pointer]:
+              - /url: /wiki/Special:RandomRootpage
+      - navigation [ref=f10e597]:
+        - heading "Workshop" [level=3] [ref=f10e598]
+        - list [ref=f10e600]:
+          - listitem [ref=f10e601]:
+            - link "Half-Life SDK" [ref=f10e602] [cursor=pointer]:
+              - /url: /wiki/Half-Life_SDK
+          - listitem [ref=f10e603]:
+            - 'link "Half-Life: Alyx Tools" [ref=f10e604] [cursor=pointer]':
+              - /url: /wiki/Half-Life:_Alyx_Workshop_Tools
+          - listitem [ref=f10e605]:
+            - link "Dota 2 Tools" [ref=f10e606] [cursor=pointer]:
+              - /url: /wiki/Dota_2_Workshop_Tools
+          - listitem [ref=f10e607]:
+            - link "SteamVR Tools" [ref=f10e608] [cursor=pointer]:
+              - /url: /wiki/SteamVR/Environments
+          - listitem [ref=f10e609]:
+            - link "Counter-Strike 2 Tools" [ref=f10e610] [cursor=pointer]:
+              - /url: /wiki/Counter-Strike_2_Workshop_Tools
+      - navigation [ref=f10e611]:
+        - heading "Support" [level=3] [ref=f10e612]
+        - list [ref=f10e614]:
+          - listitem [ref=f10e615]:
+            - link "Community portal" [ref=f10e616] [cursor=pointer]:
+              - /url: /wiki/Valve_Developer_Community:Community_portal
+          - listitem [ref=f10e617]:
+            - link "Getting help" [ref=f10e618] [cursor=pointer]:
+              - /url: /wiki/Help:Contents
+          - listitem [ref=f10e619]:
+            - link "Source SDK FAQ" [ref=f10e620] [cursor=pointer]:
+              - /url: /wiki/Category:Source_SDK_FAQ
+          - listitem [ref=f10e621]:
+            - link "Level Design FAQ" [ref=f10e622] [cursor=pointer]:
+              - /url: /wiki/Category:Level_Design_FAQ
+      - navigation [ref=f10e623]:
+        - heading "Steam Community" [level=3] [ref=f10e624]
+        - list [ref=f10e626]:
+          - listitem [ref=f10e627]:
+            - link "Source SDK Hub" [ref=f10e628] [cursor=pointer]:
+              - /url: http://steamcommunity.com/app/211
+          - listitem [ref=f10e629]:
+            - link "Source SDK Discussion" [ref=f10e630] [cursor=pointer]:
+              - /url: https://steamcommunity.com/app/211/discussions
+          - listitem [ref=f10e631]:
+            - link "Steam" [ref=f10e632] [cursor=pointer]:
+              - /url: http://www.steampowered.com
+      - navigation [ref=f10e633]:
+        - heading "Tools" [level=3] [ref=f10e634]
+        - list [ref=f10e636]:
+          - listitem [ref=f10e637]:
+            - link "What links here" [ref=f10e638] [cursor=pointer]:
+              - /url: /wiki/Special:WhatLinksHere/Dedicated_Server_Name_Enumeration
+          - listitem [ref=f10e639]:
+            - link "Related changes" [ref=f10e640] [cursor=pointer]:
+              - /url: /wiki/Special:RecentChangesLinked/Dedicated_Server_Name_Enumeration
+          - listitem [ref=f10e641]:
+            - link "Special pages" [ref=f10e642] [cursor=pointer]:
+              - /url: /wiki/Special:SpecialPages
+          - listitem [ref=f10e643]:
+            - link "Printable version" [ref=f10e644] [cursor=pointer]:
+              - /url: javascript:print();
+          - listitem [ref=f10e645]:
+            - link "Permanent link" [ref=f10e646] [cursor=pointer]:
+              - /url: /w/index.php?title=Dedicated_Server_Name_Enumeration&oldid=488970
+          - listitem [ref=f10e647]:
+            - link "Page information" [ref=f10e648] [cursor=pointer]:
+              - /url: /w/index.php?title=Dedicated_Server_Name_Enumeration&action=info
+  - contentinfo [ref=f10e649]:
+    - list [ref=f10e650]:
+      - listitem [ref=f10e651]: This page was last edited on 21 September 2025, at 08:16.
+    - list:
+      - listitem [ref=f10e652]:
+        - link "About Valve Developer Community" [ref=f10e653] [cursor=pointer]:
+          - /url: /wiki/Valve_Developer_Community:About
+      - listitem [ref=f10e654]:
+        - link "Terms of Use" [ref=f10e655] [cursor=pointer]:
+          - /url: /wiki/Valve_Developer_Community:Terms_of_use
+      - listitem [ref=f10e656]:
+        - link "Third Party Legal Notices" [ref=f10e657] [cursor=pointer]:
+          - /url: Valve Developer Community:Third Party Legal Notices
+    - list [ref=f10e658]:
+      - listitem [ref=f10e659]:
+        - link [ref=f10e660] [cursor=pointer]:
+          - /url: https://www.mediawiki.org/
+          - img "Powered by MediaWiki" [ref=f10e661]

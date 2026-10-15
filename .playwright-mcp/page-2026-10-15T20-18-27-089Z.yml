@@ -1,0 +1,1897 @@
+- generic [active] [ref=f4e1]:
+  - main [ref=f4e4]:
+    - heading "Dedicated Servers List" [level=1] [ref=f4e5]
+    - generic [ref=f4e6]:
+      - link "Jump to navigation" [ref=f4e7] [cursor=pointer]:
+        - /url: "#mw-head"
+      - link "Jump to search" [ref=f4e8] [cursor=pointer]:
+        - /url: "#searchInput"
+      - generic [ref=f4e10]:
+        - generic [ref=f4e11]:
+          - img "English (en)" [ref=f4e14]
+          - link [ref=f4e17] [cursor=pointer]:
+            - /url: /wiki/Pt-br/Dedicated_Servers_List
+            - img "Português do Brasil (pt-br)" [ref=f4e18]
+          - link [ref=f4e21] [cursor=pointer]:
+            - /url: /wiki/Ru/Dedicated_Servers_List
+            - img "Русский (ru)" [ref=f4e22]
+          - link [ref=f4e25] [cursor=pointer]:
+            - /url: /wiki/Zh/Dedicated_Servers_List
+            - img "中文 (zh)" [ref=f4e26]
+          - generic [ref=f4e27] [cursor=pointer]:
+            - generic:
+              - img "Translate (Translate)"
+        - link "← SteamCMD" [ref=f4e30] [cursor=pointer]:
+          - /url: /wiki/SteamCMD
+        - navigation [ref=f4e32]:
+          - button "hide" [ref=f4e33]
+          - generic [ref=f4e34]:
+            - heading "Contents" [level=2] [ref=f4e35]
+            - generic [ref=f4e36]:
+              - text: "["
+              - generic [ref=f4e37] [cursor=pointer]: hide
+              - text: "]"
+          - list [ref=f4e38]:
+            - listitem [ref=f4e39]:
+              - link "1 Windows Dedicated Servers" [ref=f4e40] [cursor=pointer]:
+                - /url: "#Windows_Dedicated_Servers"
+                - generic [ref=f4e41]: "1"
+                - generic [ref=f4e42]: Windows Dedicated Servers
+            - listitem [ref=f4e43]:
+              - link "2 Linux Dedicated Servers" [ref=f4e44] [cursor=pointer]:
+                - /url: "#Linux_Dedicated_Servers"
+                - generic [ref=f4e45]: "2"
+                - generic [ref=f4e46]: Linux Dedicated Servers
+        - paragraph [ref=f4e47]:
+          - text: This is a list of dedicated servers available on
+          - link "Steam" [ref=f4e48] [cursor=pointer]:
+            - /url: /wiki/Steam
+          - text: and
+          - link "SteamCMD" [ref=f4e49] [cursor=pointer]:
+            - /url: /wiki/SteamCMD
+          - text: . New dedicated servers are added regularly, as such this is not a complete list.
+          - link "SteamDB" [ref=f4e50] [cursor=pointer]:
+            - /url: https://steamdb.info/search/?a=app&q=server
+          - text: can be used to find all available servers.
+        - generic [ref=f4e52]:
+          - img "Icon-Bug.png" [ref=f4e54]
+          - strong [ref=f4e55]: "Bug:"
+          - generic [ref=f4e56]: Some apps can only be downloaded when logged in as anonymous. (e.g. CS:S will not work with a normal Steam account)
+        - generic [ref=f4e57]:
+          - img "Note.png" [ref=f4e59]
+          - strong [ref=f4e60]: "Note:"
+          - generic [ref=f4e61]: Items marked as Beta below may require -beta beta as part of their app_update argument... ex. +app_update "90 -beta beta"
+        - generic [ref=f4e62]:
+          - img "Tip.png" [ref=f4e64]
+          - strong [ref=f4e65]: "Tip:"
+          - generic [ref=f4e66]:
+            - text: To install multiple mods, separate their names with commas, e.g.
+            - code [ref=f4e67]: +app_set_config 90 mod czero,dod
+            - text: .
+        - heading "Windows Dedicated Servers" [level=2] [ref=f4e68]
+        - table [ref=f4e69]:
+          - rowgroup [ref=f4e70]:
+            - row [ref=f4e71]:
+              - columnheader "Server Name" [ref=f4e72] [cursor=pointer]
+              - columnheader "AppID" [ref=f4e73] [cursor=pointer]
+              - columnheader "SteamCMD Client" [ref=f4e74] [cursor=pointer]
+              - columnheader "Steam Client" [ref=f4e75] [cursor=pointer]
+              - columnheader "Anonymous Login" [ref=f4e76] [cursor=pointer]
+              - columnheader "Notes" [ref=f4e77] [cursor=pointer]
+          - rowgroup [ref=f4e78]:
+            - row [ref=f4e79]:
+              - cell [ref=f4e80]:
+                - link "7 Days to Die Dedicated Server" [ref=f4e81] [cursor=pointer]:
+                  - /url: /wiki/7_Days_to_Die_Dedicated_Server
+              - cell [ref=f4e82]:
+                - link "294420" [ref=f4e83] [cursor=pointer]:
+                  - /url: steam://install/294420
+              - cell "Yes" [ref=f4e84]
+              - cell "Yes" [ref=f4e85]
+              - cell "Yes" [ref=f4e86]
+              - cell [ref=f4e87]
+            - row [ref=f4e88]:
+              - cell [ref=f4e89]:
+                - link "American Truck Simulator Dedicated Server" [ref=f4e90] [cursor=pointer]:
+                  - /url: https://modding.scssoft.com/wiki/Documentation/Tools/Dedicated_Server
+              - cell "2239530" [ref=f4e91]
+              - cell "Yes" [ref=f4e92]
+              - cell "Yes" [ref=f4e93]
+              - cell "Yes" [ref=f4e94]
+              - cell [ref=f4e95]
+            - row [ref=f4e96]:
+              - cell "Assetto Corsa Dedicated Server" [ref=f4e97]
+              - cell [ref=f4e98]:
+                - link "302550" [ref=f4e99] [cursor=pointer]:
+                  - /url: steam://install/302550
+              - cell "Yes" [ref=f4e100]
+              - cell "Yes" [ref=f4e101]
+              - cell "No" [ref=f4e102]
+              - cell [ref=f4e103]
+            - row [ref=f4e104]:
+              - cell "ASTRONEER Dedicated Server" [ref=f4e105]
+              - cell [ref=f4e106]:
+                - link "728470" [ref=f4e107] [cursor=pointer]:
+                  - /url: steam://install/728470
+              - cell "Yes" [ref=f4e108]
+              - cell "Yes" [ref=f4e109]
+              - cell "Yes" [ref=f4e110]
+              - cell [ref=f4e111]
+            - row [ref=f4e112]:
+              - cell "Age of Chivalry Dedicated Server" [ref=f4e113]
+              - cell [ref=f4e114]:
+                - link "17515" [ref=f4e115] [cursor=pointer]:
+                  - /url: steam://install/17515
+              - cell "Yes" [ref=f4e116]
+              - cell "Yes" [ref=f4e117]
+              - cell "Yes" [ref=f4e118]
+              - cell [ref=f4e119]
+            - row [ref=f4e120]:
+              - cell "Alien Swarm Dedicated Server" [ref=f4e121]
+              - cell [ref=f4e122]:
+                - link "635" [ref=f4e123] [cursor=pointer]:
+                  - /url: steam://install/635
+              - cell "Yes" [ref=f4e124]
+              - cell "Yes" [ref=f4e125]
+              - cell "No" [ref=f4e126]
+              - cell "Windows version only." [ref=f4e127]
+            - row [ref=f4e128]:
+              - 'cell "Alien Swarm: Reactive Drop Dedicated Server" [ref=f4e129]'
+              - cell [ref=f4e130]:
+                - link "582400" [ref=f4e131] [cursor=pointer]:
+                  - /url: steam://install/582400
+              - cell "Yes" [ref=f4e132]
+              - cell "Yes" [ref=f4e133]
+              - cell "Yes" [ref=f4e134]
+              - cell [ref=f4e135]:
+                - text: Windows version only. Can
+                - link "run on Linux using Wine" [ref=f4e136] [cursor=pointer]:
+                  - /url: https://steamcommunity.com/sharedfiles/filedetails/?id=862024047
+                - text: .
+            - row [ref=f4e137]:
+              - cell "Aliens vs Predator Dedicated Server" [ref=f4e138]
+              - cell "34120" [ref=f4e139]
+              - cell "Yes" [ref=f4e140]
+              - cell "Yes" [ref=f4e141]
+              - cell "No" [ref=f4e142]
+              - cell [ref=f4e143]
+            - row [ref=f4e144]:
+              - cell "America's Army 3 Dedicated Server" [ref=f4e145]
+              - cell "13180" [ref=f4e146]
+              - cell "Yes" [ref=f4e147]
+              - cell "Yes" [ref=f4e148]
+              - cell "No" [ref=f4e149]
+              - cell [ref=f4e150]
+            - row [ref=f4e151]:
+              - cell "America's Army 3 Dedicated Server Beta" [ref=f4e152]
+              - cell "13160" [ref=f4e153]
+              - cell "No" [ref=f4e154]
+              - cell "Yes" [ref=f4e155]
+              - cell "No" [ref=f4e156]
+              - cell [ref=f4e157]
+            - row [ref=f4e158]:
+              - 'cell "America''s Army: Proving Grounds Dedicated Server" [ref=f4e159]'
+              - cell "203300" [ref=f4e160]
+              - cell "Yes" [ref=f4e161]
+              - cell "Yes" [ref=f4e162]
+              - cell "No" [ref=f4e163]
+              - cell [ref=f4e164]
+            - row [ref=f4e165]:
+              - cell [ref=f4e166]:
+                - 'link "ARK: Survival Evolved Dedicated Server" [ref=f4e167] [cursor=pointer]':
+                  - /url: https://ark.wiki.gg/wiki/Dedicated_server_setup
+              - cell [ref=f4e168]:
+                - link "376030" [ref=f4e169] [cursor=pointer]:
+                  - /url: steam://install/376030
+              - cell "Yes" [ref=f4e170]
+              - cell "Yes" [ref=f4e171]
+              - cell "Yes" [ref=f4e172]
+              - cell [ref=f4e173]
+            - row [ref=f4e174]:
+              - 'cell "ARK: Survival of the Fittest Dedicated Server" [ref=f4e175]'
+              - cell "445400" [ref=f4e176]
+              - cell "Yes" [ref=f4e177]
+              - cell "No" [ref=f4e178]
+              - cell "No" [ref=f4e179]
+              - cell [ref=f4e180]
+            - row [ref=f4e181]:
+              - cell "ARMA 2 Dedicated Server" [ref=f4e182]
+              - cell [ref=f4e183]:
+                - link "33905" [ref=f4e184] [cursor=pointer]:
+                  - /url: steam://install/33905
+              - cell "No" [ref=f4e185]
+              - cell "Yes" [ref=f4e186]
+              - cell "No" [ref=f4e187]
+              - cell [ref=f4e188]
+            - row [ref=f4e189]:
+              - 'cell "Arma 2: Operation Arrowhead Dedicated Server" [ref=f4e190]'
+              - cell [ref=f4e191]:
+                - link "33935" [ref=f4e192] [cursor=pointer]:
+                  - /url: steam://install/33935
+              - cell "No" [ref=f4e193]
+              - cell "Yes" [ref=f4e194]
+              - cell "No" [ref=f4e195]
+              - cell [ref=f4e196]
+            - row [ref=f4e197]:
+              - cell [ref=f4e198]:
+                - link "Arma 3 Dedicated Server" [ref=f4e199] [cursor=pointer]:
+                  - /url: http://community.bistudio.com/wiki/Arma_3_Dedicated_Server
+              - cell "233780" [ref=f4e200]
+              - cell "Yes" [ref=f4e201]
+              - cell "Yes" [ref=f4e202]
+              - cell "No" [ref=f4e203]
+              - cell "Game Purchase Required" [ref=f4e204]
+            - row [ref=f4e205]:
+              - cell [ref=f4e206]:
+                - 'link "Black Mesa: Deathmatch" [ref=f4e207] [cursor=pointer]':
+                  - /url: /wiki/Black_Mesa
+                - text: Dedicated Server
+              - cell "346680" [ref=f4e208]
+              - cell "Yes" [ref=f4e209]
+              - cell "Yes*" [ref=f4e210]
+              - cell "Yes" [ref=f4e211]
+              - cell "Downloading on Steam GUI client requires game purchase." [ref=f4e212]
+            - row [ref=f4e213]:
+              - cell [ref=f4e214]:
+                - link "Blade Symphony Dedicated Server" [ref=f4e215] [cursor=pointer]:
+                  - /url: http://www.blade-symphony.com/server-guide/
+              - cell "228780" [ref=f4e216]
+              - cell "Yes" [ref=f4e217]
+              - cell "No" [ref=f4e218]
+              - cell "No" [ref=f4e219]
+              - cell "Game Purchase Required" [ref=f4e220]
+            - row [ref=f4e221]:
+              - cell "Breach Dedicated Server" [ref=f4e222]
+              - cell "72310" [ref=f4e223]
+              - cell "Yes" [ref=f4e224]
+              - cell "Yes" [ref=f4e225]
+              - cell "No" [ref=f4e226]
+              - cell [ref=f4e227]
+            - row [ref=f4e228]:
+              - cell "BrainBread 2 Dedicated Server" [ref=f4e229]
+              - cell [ref=f4e230]:
+                - link "475370" [ref=f4e231] [cursor=pointer]:
+                  - /url: steam://install/475370
+              - cell "Yes" [ref=f4e232]
+              - cell "Yes" [ref=f4e233]
+              - cell "No" [ref=f4e234]
+              - cell [ref=f4e235]
+            - row [ref=f4e236]:
+              - cell [ref=f4e237]:
+                - link "Brink Dedicated Server" [ref=f4e238] [cursor=pointer]:
+                  - /url: /wiki/Brink_Dedicated_Server
+              - cell "72780" [ref=f4e239]
+              - cell "Yes" [ref=f4e240]
+              - cell "Yes" [ref=f4e241]
+              - cell "No" [ref=f4e242]
+              - cell [ref=f4e243]
+            - row [ref=f4e244]:
+              - cell "BlazeRush Dedicated Server" [ref=f4e245]
+              - cell "332850" [ref=f4e246]
+              - cell "Yes" [ref=f4e247]
+              - cell "Yes" [ref=f4e248]
+              - cell "Yes" [ref=f4e249]
+              - cell [ref=f4e250]
+            - row [ref=f4e251]:
+              - cell "Capsa Dedicated Server" [ref=f4e252]
+              - cell [ref=f4e253]:
+                - link "667230" [ref=f4e254] [cursor=pointer]:
+                  - /url: steam://install/667230
+              - cell "Yes" [ref=f4e255]
+              - cell "Yes" [ref=f4e256]
+              - cell "No" [ref=f4e257]
+              - cell [ref=f4e258]
+            - row [ref=f4e259]:
+              - 'cell "Call of Duty: Modern Warfare 3 Dedicated Server" [ref=f4e260]'
+              - cell [ref=f4e261]:
+                - link "42750" [ref=f4e262] [cursor=pointer]:
+                  - /url: steam://install/42750
+              - cell "Yes" [ref=f4e263]
+              - cell "Yes" [ref=f4e264]
+              - cell "No" [ref=f4e265]
+              - cell [ref=f4e266]
+            - row [ref=f4e267]:
+              - 'cell "Chivalry: Deadliest Warrior Dedicated server" [ref=f4e268]'
+              - cell "258680" [ref=f4e269]
+              - cell "Yes" [ref=f4e270]
+              - cell "Yes" [ref=f4e271]
+              - cell "No" [ref=f4e272]
+              - cell [ref=f4e273]
+            - row [ref=f4e274]:
+              - 'cell "Chivalry: Medieval Warfare Dedicated Server" [ref=f4e275]'
+              - cell "220070" [ref=f4e276]
+              - cell "Yes" [ref=f4e277]
+              - cell "Yes" [ref=f4e278]
+              - cell "No" [ref=f4e279]
+              - cell [ref=f4e280]
+            - row [ref=f4e281]:
+              - cell "Conan Exiles Dedicated Server" [ref=f4e282]
+              - cell [ref=f4e283]:
+                - link "443030" [ref=f4e284] [cursor=pointer]:
+                  - /url: steam://install/443030
+              - cell "Yes" [ref=f4e285]
+              - cell "No" [ref=f4e286]
+              - cell "Yes" [ref=f4e287]
+              - cell [ref=f4e288]
+            - row [ref=f4e289]:
+              - cell "Contagion Dedicated Server" [ref=f4e290]
+              - cell "238430" [ref=f4e291]
+              - cell "Yes" [ref=f4e292]
+              - cell "No" [ref=f4e293]
+              - cell "No" [ref=f4e294]
+              - cell "Windows server only" [ref=f4e295]
+            - row [ref=f4e296]:
+              - cell "Counter-Strike 1.6 Dedicated Server" [ref=f4e297]
+              - cell "90" [ref=f4e298]
+              - cell "Yes" [ref=f4e299]
+              - cell "No" [ref=f4e300]
+              - cell "Yes" [ref=f4e301]
+              - cell [ref=f4e302]
+            - row [ref=f4e303]:
+              - cell [ref=f4e304]:
+                - link "Counter-Strike Global Offensive Dedicated Server" [ref=f4e305] [cursor=pointer]:
+                  - /url: /wiki/Counter-Strike:_Global_Offensive_Dedicated_Servers
+              - cell [ref=f4e306]:
+                - link "740" [ref=f4e307] [cursor=pointer]:
+                  - /url: steam://install/740
+              - cell "Yes" [ref=f4e308]
+              - cell "Yes" [ref=f4e309]
+              - cell "Yes" [ref=f4e310]
+              - cell "Game Purchase Required for public server." [ref=f4e311]
+            - row [ref=f4e312]:
+              - 'cell "Counter-Strike: Condition Zero Dedicated Server" [ref=f4e313]'
+              - cell "90" [ref=f4e314]
+              - cell "Yes" [ref=f4e315]
+              - cell "No" [ref=f4e316]
+              - cell "Yes" [ref=f4e317]
+              - cell "+app_set_config \"90 mod czero\"" [ref=f4e318]
+            - row [ref=f4e319]:
+              - 'cell "Counter-Strike: Source Dedicated Server" [ref=f4e320]'
+              - cell "232330" [ref=f4e321]
+              - cell "Yes" [ref=f4e322]
+              - cell "No" [ref=f4e323]
+              - cell "Yes" [ref=f4e324]
+              - cell [ref=f4e325]
+            - row [ref=f4e326]:
+              - cell "D.I.P.R.I.P. Dedicated Server" [ref=f4e327]
+              - cell "17535" [ref=f4e328]
+              - cell "Yes" [ref=f4e329]
+              - cell "Yes" [ref=f4e330]
+              - cell "Yes" [ref=f4e331]
+              - cell [ref=f4e332]
+            - row [ref=f4e333]:
+              - cell "Dark Messiah of Might & Magic Dedicated Server" [ref=f4e334]
+              - cell "2145" [ref=f4e335]
+              - cell "Yes" [ref=f4e336]
+              - cell "Yes" [ref=f4e337]
+              - cell "No" [ref=f4e338]
+              - cell [ref=f4e339]
+            - row [ref=f4e340]:
+              - cell "Darkest Hour Dedicated Server" [ref=f4e341]
+              - cell "1290" [ref=f4e342]
+              - cell "Yes" [ref=f4e343]
+              - cell "Yes" [ref=f4e344]
+              - cell "No" [ref=f4e345]
+              - cell [ref=f4e346]
+            - row [ref=f4e347]:
+              - cell "Day of Defeat Dedicated Server" [ref=f4e348]
+              - cell "90" [ref=f4e349]
+              - cell "Yes" [ref=f4e350]
+              - cell "No" [ref=f4e351]
+              - cell "Yes" [ref=f4e352]
+              - cell "+app_set_config \"90 mod dod\"" [ref=f4e353]
+            - row [ref=f4e354]:
+              - 'cell "Day of Defeat: Source Dedicated Server" [ref=f4e355]'
+              - cell "232290" [ref=f4e356]
+              - cell "Yes" [ref=f4e357]
+              - cell "No" [ref=f4e358]
+              - cell "Yes" [ref=f4e359]
+              - cell [ref=f4e360]
+            - row [ref=f4e361]:
+              - cell "Day of Infamy Dedicated Server" [ref=f4e362]
+              - cell "462310" [ref=f4e363]
+              - cell "Yes" [ref=f4e364]
+              - cell "No" [ref=f4e365]
+              - cell "Yes" [ref=f4e366]
+              - cell [ref=f4e367]
+            - row [ref=f4e368]:
+              - cell "Deathmatch Classic Dedicated Server" [ref=f4e369]
+              - cell "90" [ref=f4e370]
+              - cell "Yes" [ref=f4e371]
+              - cell "No" [ref=f4e372]
+              - cell "Yes" [ref=f4e373]
+              - cell "+app_set_config \"90 mod dmc\"" [ref=f4e374]
+            - row [ref=f4e375]:
+              - cell "Dino D-Day Dedicated Server" [ref=f4e376]
+              - cell [ref=f4e377]:
+                - link "70010" [ref=f4e378] [cursor=pointer]:
+                  - /url: steam://install/70010
+              - cell "Yes" [ref=f4e379]
+              - cell "Yes" [ref=f4e380]
+              - cell "No" [ref=f4e381]
+              - cell [ref=f4e382]
+            - row [ref=f4e383]:
+              - cell "Dayz Dedicated Server" [ref=f4e384]
+              - cell [ref=f4e385]:
+                - link "223350" [ref=f4e386] [cursor=pointer]:
+                  - /url: steam://install/223350
+              - cell "Yes" [ref=f4e387]
+              - cell "Yes" [ref=f4e388]
+              - cell "No" [ref=f4e389]
+              - cell [ref=f4e390]
+            - row [ref=f4e391]:
+              - cell [ref=f4e392]:
+                - link "Double Action Dedicated Server" [ref=f4e393] [cursor=pointer]:
+                  - /url: http://www.doubleactiongame.com/serverguide
+              - cell "317800" [ref=f4e394]
+              - cell "Yes" [ref=f4e395]
+              - cell "No" [ref=f4e396]
+              - cell "Yes" [ref=f4e397]
+              - cell [ref=f4e398]
+            - row [ref=f4e399]:
+              - cell "Dystopia Dedicated Server" [ref=f4e400]
+              - cell "17585" [ref=f4e401]
+              - cell "Yes" [ref=f4e402]
+              - cell "Yes" [ref=f4e403]
+              - cell "Yes" [ref=f4e404]
+              - cell [ref=f4e405]
+            - row [ref=f4e406]:
+              - cell "Eco Dedicated Server" [ref=f4e407]
+              - cell "739590" [ref=f4e408]
+              - cell "Yes" [ref=f4e409]
+              - cell "Yes" [ref=f4e410]
+              - cell "Yes" [ref=f4e411]
+              - cell [ref=f4e412]
+            - row [ref=f4e413]:
+              - cell "Eden Star Dedicated Server" [ref=f4e414]
+              - cell "419790" [ref=f4e415]
+              - cell "Yes" [ref=f4e416]
+              - cell "Yes" [ref=f4e417]
+              - cell "Yes" [ref=f4e418]
+              - cell [ref=f4e419]
+            - row [ref=f4e420]:
+              - cell "E.Y.E - Dedicated Server" [ref=f4e421]
+              - cell "91720" [ref=f4e422]
+              - cell "Yes" [ref=f4e423]
+              - cell "Yes" [ref=f4e424]
+              - cell "No" [ref=f4e425]
+              - cell [ref=f4e426]
+            - row [ref=f4e427]:
+              - cell "Empires Dedicated Server" [ref=f4e428]
+              - cell "460040" [ref=f4e429]
+              - cell "Yes" [ref=f4e430]
+              - cell "Yes" [ref=f4e431]
+              - cell "Yes" [ref=f4e432]
+              - cell [ref=f4e433]
+            - row [ref=f4e434]:
+              - cell "Enshrouded Dedicated Server" [ref=f4e435]
+              - cell "2278520" [ref=f4e436]
+              - cell "Yes" [ref=f4e437]
+              - cell "Yes" [ref=f4e438]
+              - cell "Yes" [ref=f4e439]
+              - cell [ref=f4e440]
+            - row [ref=f4e441]:
+              - cell "Eternal Silence Dedicated Server" [ref=f4e442]
+              - cell "17555" [ref=f4e443]
+              - cell "Yes" [ref=f4e444]
+              - cell "Yes" [ref=f4e445]
+              - cell "Yes" [ref=f4e446]
+              - cell [ref=f4e447]
+            - row [ref=f4e448]:
+              - cell [ref=f4e449]:
+                - link "Euro Truck Simulator 2 Dedicated Server" [ref=f4e450] [cursor=pointer]:
+                  - /url: https://modding.scssoft.com/wiki/Documentation/Tools/Dedicated_Server
+              - cell "1948160" [ref=f4e451]
+              - cell "Yes" [ref=f4e452]
+              - cell "Yes" [ref=f4e453]
+              - cell "Yes" [ref=f4e454]
+              - cell [ref=f4e455]
+            - row [ref=f4e456]:
+              - cell "Fistful of Frags Server" [ref=f4e457]
+              - cell "295230" [ref=f4e458]
+              - cell "Yes" [ref=f4e459]
+              - cell "No" [ref=f4e460]
+              - cell "Yes" [ref=f4e461]
+              - cell [ref=f4e462]
+            - row [ref=f4e463]:
+              - cell "The Forest Dedicated Server" [ref=f4e464]
+              - cell "556450" [ref=f4e465]
+              - cell "Yes" [ref=f4e466]
+              - cell "Yes" [ref=f4e467]
+              - cell "Yes" [ref=f4e468]
+              - cell "Windows version only" [ref=f4e469]
+            - row [ref=f4e470]:
+              - cell "Fortress Forever Dedicated Server" [ref=f4e471]
+              - cell "329710" [ref=f4e472]
+              - cell "Yes" [ref=f4e473]
+              - cell "Yes" [ref=f4e474]
+              - cell "Yes" [ref=f4e475]
+              - cell [ref=f4e476]
+            - row [ref=f4e477]:
+              - cell [ref=f4e478]:
+                - link "Garry's Mod Dedicated Server" [ref=f4e479] [cursor=pointer]:
+                  - /url: https://wiki.facepunch.com/gmod/Downloading_a_Dedicated_Server
+              - cell "4020" [ref=f4e480]
+              - cell "Yes" [ref=f4e481]
+              - cell "No" [ref=f4e482]
+              - cell "Yes" [ref=f4e483]
+              - cell [ref=f4e484]
+            - row [ref=f4e485]:
+              - cell "GTR Evolution Demo Dedicated Server" [ref=f4e486]
+              - cell "8730" [ref=f4e487]
+              - cell "Yes" [ref=f4e488]
+              - cell "Yes" [ref=f4e489]
+              - cell "No" [ref=f4e490]
+              - cell [ref=f4e491]
+            - row [ref=f4e492]:
+              - 'cell "Half-Life 2: Deathmatch Dedicated Server" [ref=f4e493]'
+              - cell "232370" [ref=f4e494]
+              - cell "Yes" [ref=f4e495]
+              - cell "No" [ref=f4e496]
+              - cell "Yes" [ref=f4e497]
+              - cell [ref=f4e498]
+            - row [ref=f4e499]:
+              - 'cell "Half-Life Deathmatch: Source Dedicated server" [ref=f4e500]'
+              - cell "255470" [ref=f4e501]
+              - cell "Yes" [ref=f4e502]
+              - cell "Yes" [ref=f4e503]
+              - cell "Yes" [ref=f4e504]
+              - cell [ref=f4e505]
+            - row [ref=f4e506]:
+              - cell [ref=f4e507]:
+                - link "Half-Life Dedicated Server" [ref=f4e508] [cursor=pointer]:
+                  - /url: /wiki/Half-Life_Dedicated_Server
+              - cell [ref=f4e509]:
+                - link "90" [ref=f4e510] [cursor=pointer]:
+                  - /url: steam://install/90
+              - cell "Yes" [ref=f4e511]
+              - cell "Yes" [ref=f4e512]
+              - cell "Yes" [ref=f4e513]
+              - cell [ref=f4e514]
+            - row [ref=f4e515]:
+              - 'cell "Half-Life: Opposing Force Dedicated Server" [ref=f4e516]'
+              - cell "90" [ref=f4e517]
+              - cell "Yes" [ref=f4e518]
+              - cell "No" [ref=f4e519]
+              - cell "Yes" [ref=f4e520]
+              - cell "+app_set_config \"90 mod gearbox\"" [ref=f4e521]
+            - row [ref=f4e522]:
+              - cell "Homefront Dedicated Server" [ref=f4e523]
+              - cell [ref=f4e524]:
+                - link "55280" [ref=f4e525] [cursor=pointer]:
+                  - /url: steam://install/55280
+              - cell "Yes" [ref=f4e526]
+              - cell "Yes" [ref=f4e527]
+              - cell "No" [ref=f4e528]
+              - cell [ref=f4e529]
+            - row [ref=f4e530]:
+              - cell "Hurtworld dedicated server" [ref=f4e531]
+              - cell "405100" [ref=f4e532]
+              - cell "Yes" [ref=f4e533]
+              - cell "No" [ref=f4e534]
+              - cell "Yes" [ref=f4e535]
+              - cell [ref=f4e536]:
+                - link "Bat file" [ref=f4e537] [cursor=pointer]:
+                  - /url: https://github.com/jamiebatch452/Useful-Files/blob/master/hurtworldserver.bat
+                - text: for server.
+            - row [ref=f4e538]:
+              - cell "Icarus Dedicated Server" [ref=f4e539]
+              - cell "2089300" [ref=f4e540]
+              - cell "Yes" [ref=f4e541]
+              - cell "Yes" [ref=f4e542]
+              - cell "Yes" [ref=f4e543]
+              - cell [ref=f4e544]
+            - row [ref=f4e545]:
+              - 'cell "Insurgency: Sandstorm Dedicated Server" [ref=f4e546]'
+              - cell "581330" [ref=f4e547]
+              - cell "Yes" [ref=f4e548]
+              - cell "Yes" [ref=f4e549]
+              - cell "Yes" [ref=f4e550]
+              - cell [ref=f4e551]
+            - row [ref=f4e552]:
+              - cell [ref=f4e553]:
+                - link "Insurgency Dedicated Server" [ref=f4e554] [cursor=pointer]:
+                  - /url: /wiki/Insurgency_2014_Dedicated_Server
+              - cell [ref=f4e555]:
+                - link "237410" [ref=f4e556] [cursor=pointer]:
+                  - /url: steam://install/237410
+              - cell "Yes" [ref=f4e557]
+              - cell "Yes" [ref=f4e558]
+              - cell "Yes" [ref=f4e559]
+              - cell [ref=f4e560]
+            - row [ref=f4e561]:
+              - 'cell "Insurgency: Modern Infantry Combat Dedicated Server" [ref=f4e562]'
+              - cell [ref=f4e563]:
+                - link "17705" [ref=f4e564] [cursor=pointer]:
+                  - /url: steam://install/17705
+              - cell "Yes" [ref=f4e565]
+              - cell "Yes" [ref=f4e566]
+              - cell "Yes" [ref=f4e567]
+              - cell [ref=f4e568]
+            - row [ref=f4e569]:
+              - 'cell "Just Cause 2: Multiplayer Dedicated Server" [ref=f4e570]'
+              - cell [ref=f4e571]:
+                - link "261140" [ref=f4e572] [cursor=pointer]:
+                  - /url: steam://install/261140
+              - cell "Yes" [ref=f4e573]
+              - cell "Yes" [ref=f4e574]
+              - cell "Yes" [ref=f4e575]
+              - cell [ref=f4e576]
+            - row [ref=f4e577]:
+              - cell "JBMod Dedicated Server" [ref=f4e578]
+              - cell [ref=f4e579]:
+                - link "2181210" [ref=f4e580] [cursor=pointer]:
+                  - /url: steam://install/2181210
+              - cell "Yes" [ref=f4e581]
+              - cell "No" [ref=f4e582]
+              - cell "Yes" [ref=f4e583]
+              - cell [ref=f4e584]
+            - row [ref=f4e585]:
+              - cell [ref=f4e586]:
+                - link "Killing Floor Beta Dedicated Server" [ref=f4e587] [cursor=pointer]:
+                  - /url: http://wiki.tripwireinteractive.com/index.php?title=Dedicated_Server_(KillingFloor)
+              - cell "1273" [ref=f4e588]
+              - cell "Yes" [ref=f4e589]
+              - cell "Yes" [ref=f4e590]
+              - cell "No" [ref=f4e591]
+              - cell [ref=f4e592]
+            - row [ref=f4e593]:
+              - cell [ref=f4e594]:
+                - link "Killing Floor Dedicated Server Windows" [ref=f4e595] [cursor=pointer]:
+                  - /url: http://wiki.tripwireinteractive.com/index.php?title=Dedicated_Server_(KillingFloor)
+              - cell "215350" [ref=f4e596]
+              - cell "Yes" [ref=f4e597]
+              - cell "No" [ref=f4e598]
+              - cell "No" [ref=f4e599]
+              - cell "Please create a new account or use a pre-existing one, account doesn't need to own the game; or else you will get the dreaded \"ERROR! Failed to install app '215360' (No subscription)\"" [ref=f4e600]
+            - row [ref=f4e601]:
+              - cell [ref=f4e602]:
+                - link "Killing Floor 2 Dedicated Server Windows" [ref=f4e603] [cursor=pointer]:
+                  - /url: http://wiki.tripwireinteractive.com/index.php?title=Dedicated_Server_(Killing_Floor_2)
+              - cell "232130" [ref=f4e604]
+              - cell "Yes" [ref=f4e605]
+              - cell "Yes" [ref=f4e606]
+              - cell "Yes" [ref=f4e607]
+              - cell [ref=f4e608]
+            - row [ref=f4e609]:
+              - cell "Kingdoms Rise Dedicated Server" [ref=f4e610]
+              - cell "265360" [ref=f4e611]
+              - cell "Yes" [ref=f4e612]
+              - cell "Yes" [ref=f4e613]
+              - cell "Yes" [ref=f4e614]
+              - cell [ref=f4e615]
+            - row [ref=f4e616]:
+              - cell "Lambda Wars Dedicated Server" [ref=f4e617]
+              - cell [ref=f4e618]:
+                - link "319060" [ref=f4e619] [cursor=pointer]:
+                  - /url: steam://install/319060
+              - cell "Yes" [ref=f4e620]
+              - cell "Yes" [ref=f4e621]
+              - cell "No" [ref=f4e622]
+              - cell [ref=f4e623]
+            - row [ref=f4e624]:
+              - cell "Left 4 Dead 2 Dedicated Server" [ref=f4e625]
+              - cell [ref=f4e626]:
+                - link "222860" [ref=f4e627] [cursor=pointer]:
+                  - /url: steam://install/222860
+              - cell "Yes" [ref=f4e628]
+              - cell "Yes" [ref=f4e629]
+              - cell "Yes" [ref=f4e630]
+              - cell [ref=f4e631]
+            - row [ref=f4e632]:
+              - cell "Left 4 Dead Dedicated Server" [ref=f4e633]
+              - cell [ref=f4e634]:
+                - link "222840" [ref=f4e635] [cursor=pointer]:
+                  - /url: steam://install/222840
+              - cell "Yes" [ref=f4e636]
+              - cell "Yes" [ref=f4e637]
+              - cell "Yes" [ref=f4e638]
+              - cell [ref=f4e639]
+            - row [ref=f4e640]:
+              - 'cell "Life is Feudal: Your Own Dedicated Server" [ref=f4e641]'
+              - cell [ref=f4e642]:
+                - link "320850" [ref=f4e643] [cursor=pointer]:
+                  - /url: steam://install/320850
+              - cell "Yes" [ref=f4e644]
+              - cell "Yes" [ref=f4e645]
+              - cell "Yes" [ref=f4e646]
+              - cell [ref=f4e647]
+            - row [ref=f4e648]:
+              - cell "Mare Nostrum Dedicated Server" [ref=f4e649]
+              - cell "?" [ref=f4e650]
+              - cell "No" [ref=f4e651]
+              - cell "Yes" [ref=f4e652]
+              - cell "No" [ref=f4e653]
+              - cell [ref=f4e654]
+            - row [ref=f4e655]:
+              - cell [ref=f4e656]:
+                - 'link "Military Conflict: Vietnam Dedicated Server" [ref=f4e657] [cursor=pointer]':
+                  - /url: http://wiki.militaryconflictvietnam.com/index.php?title=Dedicated_Server
+              - cell [ref=f4e658]:
+                - link "1136190" [ref=f4e659] [cursor=pointer]:
+                  - /url: steam://install/1136190
+              - cell "Yes" [ref=f4e660]
+              - cell "Yes" [ref=f4e661]
+              - cell "Yes" [ref=f4e662]
+              - cell [ref=f4e663]
+            - row [ref=f4e664]:
+              - cell "Monday Night Combat Dedicated Server" [ref=f4e665]
+              - cell [ref=f4e666]:
+                - link "63220" [ref=f4e667] [cursor=pointer]:
+                  - /url: steam://install/63220
+              - cell "Yes" [ref=f4e668]
+              - cell "Yes" [ref=f4e669]
+              - cell "No" [ref=f4e670]
+              - cell [ref=f4e671]
+            - row [ref=f4e672]:
+              - cell "Mod and Play Dedicated Server" [ref=f4e673]
+              - cell [ref=f4e674]:
+                - link "1301040" [ref=f4e675] [cursor=pointer]:
+                  - /url: steam://install/1301040
+              - cell "Yes" [ref=f4e676]
+              - cell "Yes" [ref=f4e677]
+              - cell "Yes" [ref=f4e678]
+              - cell [ref=f4e679]
+            - row [ref=f4e680]:
+              - cell [ref=f4e681]:
+                - link "Natural Selection 2 Dedicated Server" [ref=f4e682] [cursor=pointer]:
+                  - /url: http://wiki.unknownworlds.com/ns2/Dedicated_Server
+              - cell "4940" [ref=f4e683]
+              - cell "Yes" [ref=f4e684]
+              - cell "Yes" [ref=f4e685]
+              - cell "No" [ref=f4e686]
+              - cell [ref=f4e687]
+            - row [ref=f4e688]:
+              - cell "Nexuiz Dedicated Server" [ref=f4e689]
+              - cell "96810" [ref=f4e690]
+              - cell "Yes" [ref=f4e691]
+              - cell "Yes" [ref=f4e692]
+              - cell "No" [ref=f4e693]
+              - cell [ref=f4e694]
+            - row [ref=f4e695]:
+              - cell [ref=f4e696]:
+                - link "No More Room in Hell Dedicated Server" [ref=f4e697] [cursor=pointer]:
+                  - /url: http://www.nomoreroominhell.com/wiki/Dedicated_Server_Setup
+              - cell "317670" [ref=f4e698]
+              - cell "Yes" [ref=f4e699]
+              - cell "No" [ref=f4e700]
+              - cell "No" [ref=f4e701]
+              - cell [ref=f4e702]
+            - row [ref=f4e703]:
+              - cell "NEOTOKYO Dedicated Server" [ref=f4e704]
+              - cell "313600" [ref=f4e705]
+              - cell "Yes" [ref=f4e706]
+              - cell "No" [ref=f4e707]
+              - cell "Yes" [ref=f4e708]
+              - cell [ref=f4e709]
+            - row [ref=f4e710]:
+              - cell [ref=f4e711]:
+                - 'link "NS2: Combat Dedicated Server" [ref=f4e712] [cursor=pointer]':
+                  - /url: http://wiki.unknownworlds.com/ns2/Dedicated_Server
+              - cell "313900" [ref=f4e713]
+              - cell "Yes" [ref=f4e714]
+              - cell "No" [ref=f4e715]
+              - cell "Yes" [ref=f4e716]
+              - cell [ref=f4e717]
+            - row [ref=f4e718]:
+              - cell "Nuclear Dawn Dedicated Server" [ref=f4e719]
+              - cell [ref=f4e720]:
+                - link "111710" [ref=f4e721] [cursor=pointer]:
+                  - /url: steam://install/111710
+              - cell "Yes" [ref=f4e722]
+              - cell "Yes" [ref=f4e723]
+              - cell "Yes" [ref=f4e724]
+              - cell [ref=f4e725]
+            - row [ref=f4e726]:
+              - cell [ref=f4e727]:
+                - link "Out of Reach Dedicated Server" [ref=f4e728] [cursor=pointer]:
+                  - /url: http://outofreach.gamepedia.com/Dedicated_Servers_Installation
+              - cell "406800" [ref=f4e729]
+              - cell "Yes" [ref=f4e730]
+              - cell "No" [ref=f4e731]
+              - cell "Yes" [ref=f4e732]
+              - cell [ref=f4e733]
+            - row [ref=f4e734]:
+              - cell "Painkiller Hell & Damnation Dedicated Server" [ref=f4e735]
+              - cell "230030" [ref=f4e736]
+              - cell "Yes" [ref=f4e737]
+              - cell "Yes" [ref=f4e738]
+              - cell "No" [ref=f4e739]
+              - cell [ref=f4e740]
+            - row [ref=f4e741]:
+              - cell [ref=f4e742]:
+                - link "Palworld Dedicated Server" [ref=f4e743] [cursor=pointer]:
+                  - /url: https://tech.palworldgame.com/dedicated-server-guide
+              - cell [ref=f4e744]:
+                - link "2394010" [ref=f4e745] [cursor=pointer]:
+                  - /url: steam://install/2394010
+              - cell "Yes" [ref=f4e746]
+              - cell "Yes" [ref=f4e747]
+              - cell "Yes" [ref=f4e748]
+              - cell [ref=f4e749]
+            - row [ref=f4e750]:
+              - cell "Pirates, Vikings, and Knights II Dedicated Server" [ref=f4e751]
+              - cell [ref=f4e752]:
+                - link "17575" [ref=f4e753] [cursor=pointer]:
+                  - /url: steam://install/17575
+              - cell "Yes" [ref=f4e754]
+              - cell "Yes" [ref=f4e755]
+              - cell "Yes" [ref=f4e756]
+              - cell [ref=f4e757]
+            - row [ref=f4e758]:
+              - cell "Primal Carnage Dedicated Server" [ref=f4e759]
+              - cell [ref=f4e760]:
+                - link "224620" [ref=f4e761] [cursor=pointer]:
+                  - /url: steam://install/224620
+              - cell "Yes" [ref=f4e762]
+              - cell "No" [ref=f4e763]
+              - cell "No" [ref=f4e764]
+              - cell [ref=f4e765]
+            - row [ref=f4e766]:
+              - cell [ref=f4e767]:
+                - link "Project Zomboid Dedicated Server" [ref=f4e768] [cursor=pointer]:
+                  - /url: http://pzwiki.net/wiki/Multiplayer_FAQ
+              - cell [ref=f4e769]:
+                - link "108600" [ref=f4e770] [cursor=pointer]:
+                  - /url: steam://install/108600
+              - cell "Yes" [ref=f4e771]
+              - cell "No" [ref=f4e772]
+              - cell "No" [ref=f4e773]
+              - cell "Game Purchase Required" [ref=f4e774]
+            - row [ref=f4e775]:
+              - cell "RACE 07 Dedicated Server" [ref=f4e776]
+              - cell [ref=f4e777]:
+                - link "8610" [ref=f4e778] [cursor=pointer]:
+                  - /url: steam://install/8610
+              - cell "Yes" [ref=f4e779]
+              - cell "Yes" [ref=f4e780]
+              - cell "No" [ref=f4e781]
+              - cell [ref=f4e782]
+            - row [ref=f4e783]:
+              - cell "RACE 07 Demo - Crowne Plaza Edition Dedicated Server" [ref=f4e784]
+              - cell [ref=f4e785]:
+                - link "8680" [ref=f4e786] [cursor=pointer]:
+                  - /url: steam://install/8680
+              - cell "Yes" [ref=f4e787]
+              - cell "No" [ref=f4e788]
+              - cell "No" [ref=f4e789]
+              - cell [ref=f4e790]
+            - row [ref=f4e791]:
+              - cell "RACE 07 Demo Dedicated Server" [ref=f4e792]
+              - cell [ref=f4e793]:
+                - link "4270" [ref=f4e794] [cursor=pointer]:
+                  - /url: steam://install/4270
+              - cell "Yes" [ref=f4e795]
+              - cell "No" [ref=f4e796]
+              - cell "No" [ref=f4e797]
+              - cell [ref=f4e798]
+            - row [ref=f4e799]:
+              - 'cell "RACE On - Demo: Dedicated Server" [ref=f4e800]'
+              - cell [ref=f4e801]:
+                - link "8770" [ref=f4e802] [cursor=pointer]:
+                  - /url: steam://install/8770
+              - cell "Yes" [ref=f4e803]
+              - cell "Yes" [ref=f4e804]
+              - cell "No" [ref=f4e805]
+              - cell [ref=f4e806]
+            - row [ref=f4e807]:
+              - cell "Ravaged Dedicated Server" [ref=f4e808]
+              - cell [ref=f4e809]:
+                - link "223160" [ref=f4e810] [cursor=pointer]:
+                  - /url: steam://install/223160
+              - cell "Yes" [ref=f4e811]
+              - cell "Yes" [ref=f4e812]
+              - cell "No" [ref=f4e813]
+              - cell [ref=f4e814]
+            - row [ref=f4e815]:
+              - cell "Red Orchestra 2 Dedicated Server" [ref=f4e816]
+              - cell [ref=f4e817]:
+                - link "212542" [ref=f4e818] [cursor=pointer]:
+                  - /url: steam://install/212542
+              - cell "Yes" [ref=f4e819]
+              - cell "No" [ref=f4e820]
+              - cell "No" [ref=f4e821]
+              - cell [ref=f4e822]
+            - row [ref=f4e823]:
+              - cell "Red Orchestra Windows Dedicated Server" [ref=f4e824]
+              - cell [ref=f4e825]:
+                - link "223240" [ref=f4e826] [cursor=pointer]:
+                  - /url: steam://install/223240
+              - cell "Yes" [ref=f4e827]
+              - cell "Yes" [ref=f4e828]
+              - cell "No" [ref=f4e829]
+              - cell [ref=f4e830]
+            - row [ref=f4e831]:
+              - cell "Reflex Dedicated Server" [ref=f4e832]
+              - cell [ref=f4e833]:
+                - link "329740" [ref=f4e834] [cursor=pointer]:
+                  - /url: steam://install/329740
+              - cell "Yes" [ref=f4e835]
+              - cell "No" [ref=f4e836]
+              - cell "Yes" [ref=f4e837]
+              - cell [ref=f4e838]
+            - row [ref=f4e839]:
+              - cell "Reign Of Kings Dedicated Server" [ref=f4e840]
+              - cell [ref=f4e841]:
+                - link "381690" [ref=f4e842] [cursor=pointer]:
+                  - /url: steam://install/381690
+              - cell "Yes" [ref=f4e843]
+              - cell "Yes" [ref=f4e844]
+              - cell "No" [ref=f4e845]
+              - cell [ref=f4e846]
+            - row [ref=f4e847]:
+              - cell "Ricochet Dedicated Server" [ref=f4e848]
+              - cell [ref=f4e849]:
+                - link "90" [ref=f4e850] [cursor=pointer]:
+                  - /url: steam://install/90
+              - cell "Yes" [ref=f4e851]
+              - cell "No" [ref=f4e852]
+              - cell "Yes" [ref=f4e853]
+              - cell "+app_set_config \"90 mod ricochet\"" [ref=f4e854]
+            - row [ref=f4e855]:
+              - cell [ref=f4e856]:
+                - link "Rust Dedicated Server" [ref=f4e857] [cursor=pointer]:
+                  - /url: /wiki/Rust_Dedicated_Server
+              - cell "258550" [ref=f4e858]
+              - cell "Yes" [ref=f4e859]
+              - cell "No" [ref=f4e860]
+              - cell "Yes" [ref=f4e861]
+              - cell "Not Working on Linux with SteamCMD" [ref=f4e862]
+            - row [ref=f4e863]:
+              - cell [ref=f4e864]:
+                - link "Satisfactory Dedicated Server" [ref=f4e865] [cursor=pointer]:
+                  - /url: https://satisfactory.wiki.gg/wiki/Dedicated_servers
+              - cell [ref=f4e866]:
+                - link "1690800" [ref=f4e867] [cursor=pointer]:
+                  - /url: steam://install/1690800
+              - cell "Yes" [ref=f4e868]
+              - cell "Yes" [ref=f4e869]
+              - cell "Yes" [ref=f4e870]
+              - cell [ref=f4e871]
+            - row [ref=f4e872]:
+              - cell "Serious Sam 3 Dedicated Server" [ref=f4e873]
+              - cell [ref=f4e874]:
+                - link "41080" [ref=f4e875] [cursor=pointer]:
+                  - /url: steam://install/41080
+              - cell "Yes" [ref=f4e876]
+              - cell "Yes" [ref=f4e877]
+              - cell "No" [ref=f4e878]
+              - cell [ref=f4e879]
+            - row [ref=f4e880]:
+              - cell "Serious Sam HD Dedicated Server" [ref=f4e881]
+              - cell [ref=f4e882]:
+                - link "41005" [ref=f4e883] [cursor=pointer]:
+                  - /url: steam://install/41005
+              - cell "Yes" [ref=f4e884]
+              - cell "Yes" [ref=f4e885]
+              - cell "No" [ref=f4e886]
+              - cell [ref=f4e887]
+            - row [ref=f4e888]:
+              - 'cell "Serious Sam Classics: Revolution Dedicated Server" [ref=f4e889]'
+              - cell [ref=f4e890]:
+                - link "41005" [ref=f4e891] [cursor=pointer]:
+                  - /url: steam://install/41005
+              - cell "Yes" [ref=f4e892]
+              - cell "Yes" [ref=f4e893]
+              - cell "No" [ref=f4e894]
+              - cell [ref=f4e895]
+            - row [ref=f4e896]:
+              - 'cell "Serious Sam HD: The Second Encounter Dedicated Server" [ref=f4e897]'
+              - cell [ref=f4e898]:
+                - link "41015" [ref=f4e899] [cursor=pointer]:
+                  - /url: steam://install/41015
+              - cell "Yes" [ref=f4e900]
+              - cell "No" [ref=f4e901]
+              - cell "Yes" [ref=f4e902]
+              - cell [ref=f4e903]
+            - row [ref=f4e904]:
+              - cell "Sniper Elite 3 Dedicated Server" [ref=f4e905]
+              - cell [ref=f4e906]:
+                - link "266910" [ref=f4e907] [cursor=pointer]:
+                  - /url: steam://install/266910
+              - cell "Yes" [ref=f4e908]
+              - cell "Yes" [ref=f4e909]
+              - cell "No" [ref=f4e910]
+              - cell [ref=f4e911]
+            - row [ref=f4e912]:
+              - cell "Sniper Elite V2 Dedicated Server" [ref=f4e913]
+              - cell [ref=f4e914]:
+                - link "208050" [ref=f4e915] [cursor=pointer]:
+                  - /url: steam://install/208050
+              - cell "Yes" [ref=f4e916]
+              - cell "Yes" [ref=f4e917]
+              - cell "No" [ref=f4e918]
+              - cell [ref=f4e919]
+            - row [ref=f4e920]:
+              - cell "Source SDK Base 2006 MP Dedicated Server" [ref=f4e921]
+              - cell [ref=f4e922]:
+                - link "205" [ref=f4e923] [cursor=pointer]:
+                  - /url: steam://install/205
+              - cell "Yes" [ref=f4e924]
+              - cell "Yes" [ref=f4e925]
+              - cell "Yes" [ref=f4e926]
+              - cell [ref=f4e927]:
+                - generic [ref=f4e929]:
+                  - img "Icon-Bug.png" [ref=f4e931]
+                  - strong [ref=f4e932]: "Bug:"
+                  - generic [ref=f4e933]:
+                    - text: Linux files missing
+                    - 'generic "{{{tested}}} param of Template:Bug was not set, see Template:Bug for more info" [ref=f4e935]':
+                      - text: "[todo tested in"
+                      - link "?" [ref=f4e936] [cursor=pointer]:
+                        - /url: /wiki/Template:BugNotice#Parameters
+                      - text: "]"
+            - row [ref=f4e937]:
+              - cell "Source 2007 Dedicated Server" [ref=f4e938]
+              - cell [ref=f4e939]:
+                - link "310" [ref=f4e940] [cursor=pointer]:
+                  - /url: steam://install/310
+              - cell "Yes" [ref=f4e941]
+              - cell "Yes" [ref=f4e942]
+              - cell "Yes" [ref=f4e943]
+              - cell [ref=f4e944]
+            - row [ref=f4e945]:
+              - cell "Source Dedicated Server" [ref=f4e946]
+              - cell [ref=f4e947]:
+                - link "205" [ref=f4e948] [cursor=pointer]:
+                  - /url: steam://install/205
+              - cell "Yes" [ref=f4e949]
+              - cell "Yes" [ref=f4e950]
+              - cell "Yes" [ref=f4e951]
+              - cell [ref=f4e952]
+            - row [ref=f4e953]:
+              - cell "Source SDK Base 2013 Dedicated Server" [ref=f4e954]
+              - cell [ref=f4e955]:
+                - link "244310" [ref=f4e956] [cursor=pointer]:
+                  - /url: steam://install/244310
+              - cell "Yes" [ref=f4e957]
+              - cell "Yes" [ref=f4e958]
+              - cell "Yes" [ref=f4e959]
+              - cell [ref=f4e960]
+            - row [ref=f4e961]:
+              - cell "Sons Of The Forest Dedicated Server" [ref=f4e962]
+              - cell [ref=f4e963]:
+                - link "2465200" [ref=f4e964] [cursor=pointer]:
+                  - /url: steam://install/2465200
+              - cell "Yes" [ref=f4e965]
+              - cell "Yes" [ref=f4e966]
+              - cell "Yes" [ref=f4e967]
+              - cell [ref=f4e968]
+            - row [ref=f4e969]:
+              - cell "Space Engineers Dedicated Server" [ref=f4e970]
+              - cell [ref=f4e971]:
+                - link "298740" [ref=f4e972] [cursor=pointer]:
+                  - /url: steam://install/298740
+              - cell "Yes" [ref=f4e973]
+              - cell "Yes" [ref=f4e974]
+              - cell "Yes" [ref=f4e975]
+              - cell [ref=f4e976]
+            - row [ref=f4e977]:
+              - cell [ref=f4e978]:
+                - link "Squad Dedicated Server" [ref=f4e979] [cursor=pointer]:
+                  - /url: http://squad.gamepedia.com/Server_Configuration
+              - cell [ref=f4e980]:
+                - link "4103240" [ref=f4e981] [cursor=pointer]:
+                  - /url: steam://install/403240
+              - cell "Yes" [ref=f4e982]
+              - cell "Yes" [ref=f4e983]
+              - cell "Yes" [ref=f4e984]
+              - cell [ref=f4e985]
+            - row [ref=f4e986]:
+              - cell [ref=f4e987]:
+                - link "Starbound Dedicated server" [ref=f4e988] [cursor=pointer]:
+                  - /url: http://starbounder.org/Guide:Setting_Up_Multiplayer
+              - cell [ref=f4e989]:
+                - link "211820" [ref=f4e990] [cursor=pointer]:
+                  - /url: steam://install/211820
+              - cell "Yes" [ref=f4e991]
+              - cell "Yes" [ref=f4e992]
+              - cell "No" [ref=f4e993]
+              - cell "Game Purchase Required" [ref=f4e994]
+            - row [ref=f4e995]:
+              - cell "Starvoid Dedicated Server" [ref=f4e996]
+              - cell [ref=f4e997]:
+                - link "210370" [ref=f4e998] [cursor=pointer]:
+                  - /url: steam://install/210370
+              - cell "Yes" [ref=f4e999]
+              - cell "Yes" [ref=f4e1000]
+              - cell "No" [ref=f4e1001]
+              - cell "Game Purchase Required" [ref=f4e1002]
+            - row [ref=f4e1003]:
+              - cell "STCC - The Game Demo Dedicated Server" [ref=f4e1004]
+              - cell [ref=f4e1005]:
+                - link "8710" [ref=f4e1006] [cursor=pointer]:
+                  - /url: steam://install/8710
+              - cell "Yes" [ref=f4e1007]
+              - cell "Yes" [ref=f4e1008]
+              - cell "No" [ref=f4e1009]
+              - cell [ref=f4e1010]
+            - row [ref=f4e1011]:
+              - cell "Sven Co-op Dedicated Server" [ref=f4e1012]
+              - cell [ref=f4e1013]:
+                - link "276060" [ref=f4e1014] [cursor=pointer]:
+                  - /url: steam://install/276060
+              - cell "Yes" [ref=f4e1015]
+              - cell "Yes" [ref=f4e1016]
+              - cell "Yes" [ref=f4e1017]
+              - cell [ref=f4e1018]
+            - row [ref=f4e1019]:
+              - cell "Synergy Dedicated Server" [ref=f4e1020]
+              - cell [ref=f4e1021]:
+                - link "17525" [ref=f4e1022] [cursor=pointer]:
+                  - /url: steam://install/17525
+              - cell "Yes" [ref=f4e1023]
+              - cell "Yes" [ref=f4e1024]
+              - cell "Yes" [ref=f4e1025]
+              - cell [ref=f4e1026]
+            - row [ref=f4e1027]:
+              - 'cell "Takedown: Red Sabre Dedicated Server" [ref=f4e1028]'
+              - cell [ref=f4e1029]:
+                - link "261020" [ref=f4e1030] [cursor=pointer]:
+                  - /url: steam://install/261020
+              - cell "Yes" [ref=f4e1031]
+              - cell "Yes" [ref=f4e1032]
+              - cell "Yes" [ref=f4e1033]
+              - cell [ref=f4e1034]
+            - row [ref=f4e1035]:
+              - cell [ref=f4e1036]:
+                - link "Team Fortress 2 Dedicated Server" [ref=f4e1037] [cursor=pointer]:
+                  - /url: http://wiki.teamfortress.com/wiki/Windows_dedicated_server
+              - cell [ref=f4e1038]:
+                - link "232250" [ref=f4e1039] [cursor=pointer]:
+                  - /url: steam://install/232250
+              - cell "Yes" [ref=f4e1040]
+              - cell "No" [ref=f4e1041]
+              - cell "Yes" [ref=f4e1042]
+              - cell [ref=f4e1043]
+            - row [ref=f4e1044]:
+              - cell "Team Fortress Classic Dedicated Server" [ref=f4e1045]
+              - cell [ref=f4e1046]:
+                - link "90" [ref=f4e1047] [cursor=pointer]:
+                  - /url: steam://install/90
+              - cell "Yes" [ref=f4e1048]
+              - cell "No" [ref=f4e1049]
+              - cell "Yes" [ref=f4e1050]
+              - cell "+app_set_config \"90 mod tfc\"" [ref=f4e1051]
+            - row [ref=f4e1052]:
+              - 'cell "The Haunted: Hells Reach Dedicated Server" [ref=f4e1053]'
+              - cell [ref=f4e1054]:
+                - link "43210" [ref=f4e1055] [cursor=pointer]:
+                  - /url: steam://install/43210
+              - cell "Yes" [ref=f4e1056]
+              - cell "Yes" [ref=f4e1057]
+              - cell "No" [ref=f4e1058]
+              - cell [ref=f4e1059]
+            - row [ref=f4e1060]:
+              - cell [ref=f4e1061]:
+                - link "Tower Unite Dedicated Server" [ref=f4e1062] [cursor=pointer]:
+                  - /url: http://steamcommunity.com/sharedfiles/filedetails/?id=662378924
+              - cell [ref=f4e1063]:
+                - link "439660" [ref=f4e1064] [cursor=pointer]:
+                  - /url: steam://install/439660
+              - cell "Yes" [ref=f4e1065]
+              - cell "No" [ref=f4e1066]
+              - cell "Yes" [ref=f4e1067]
+              - cell [ref=f4e1068]
+            - row [ref=f4e1069]:
+              - cell "The Ship Dedicated Server" [ref=f4e1070]
+              - cell [ref=f4e1071]:
+                - link "2403" [ref=f4e1072] [cursor=pointer]:
+                  - /url: steam://install/2403
+              - cell "Yes" [ref=f4e1073]
+              - cell "Yes" [ref=f4e1074]
+              - cell "No" [ref=f4e1075]
+              - cell [ref=f4e1076]
+            - row [ref=f4e1077]:
+              - cell "Valheim Dedicated Server" [ref=f4e1078]
+              - cell [ref=f4e1079]:
+                - link "896660" [ref=f4e1080] [cursor=pointer]:
+                  - /url: steam://install/896660
+              - cell "Yes" [ref=f4e1081]
+              - cell "Yes" [ref=f4e1082]
+              - cell "Yes" [ref=f4e1083]
+              - cell [ref=f4e1084]
+            - row [ref=f4e1085]:
+              - cell "Windrose Dedicated Server" [ref=f4e1086]
+              - cell [ref=f4e1087]:
+                - link "4129620" [ref=f4e1088] [cursor=pointer]:
+                  - /url: steam://install/4129620
+              - cell "Yes" [ref=f4e1089]
+              - cell "Yes" [ref=f4e1090]
+              - cell "Yes" [ref=f4e1091]
+              - cell [ref=f4e1092]
+            - row [ref=f4e1093]:
+              - cell "Zombie Panic Source Dedicated Server" [ref=f4e1094]
+              - cell [ref=f4e1095]:
+                - link "17505" [ref=f4e1096] [cursor=pointer]:
+                  - /url: steam://install/17505
+              - cell "Yes" [ref=f4e1097]
+              - cell "Yes" [ref=f4e1098]
+              - cell "Yes" [ref=f4e1099]
+              - cell [ref=f4e1100]
+            - row [ref=f4e1101]:
+              - cell "Zombie Grinder Dedicated Server" [ref=f4e1102]
+              - cell [ref=f4e1103]:
+                - link "374980" [ref=f4e1104] [cursor=pointer]:
+                  - /url: steam://install/374980
+              - cell "Yes" [ref=f4e1105]
+              - cell "No" [ref=f4e1106]
+              - cell "No" [ref=f4e1107]
+              - cell [ref=f4e1108]
+          - rowgroup
+        - heading "Linux Dedicated Servers" [level=2] [ref=f4e1109]
+        - table [ref=f4e1110]:
+          - rowgroup [ref=f4e1111]:
+            - row [ref=f4e1112]:
+              - columnheader "Server Name" [ref=f4e1113] [cursor=pointer]
+              - columnheader "AppID" [ref=f4e1114] [cursor=pointer]
+              - columnheader "SteamCMD Client" [ref=f4e1115] [cursor=pointer]
+              - columnheader "Steam Client" [ref=f4e1116] [cursor=pointer]
+              - columnheader "Anonymous Login" [ref=f4e1117] [cursor=pointer]
+              - columnheader "Notes" [ref=f4e1118] [cursor=pointer]
+          - rowgroup [ref=f4e1119]:
+            - row [ref=f4e1120]:
+              - cell [ref=f4e1121]:
+                - link "7 Days to Die Dedicated Server" [ref=f4e1122] [cursor=pointer]:
+                  - /url: /wiki/7_Days_to_Die_Dedicated_Server
+              - cell "294420" [ref=f4e1123]
+              - cell "Yes" [ref=f4e1124]
+              - cell "Yes" [ref=f4e1125]
+              - cell "No" [ref=f4e1126]
+              - cell "Game purchase required" [ref=f4e1127]
+            - row [ref=f4e1128]:
+              - cell [ref=f4e1129]:
+                - link "American Truck Simulator Dedicated Server" [ref=f4e1130] [cursor=pointer]:
+                  - /url: https://modding.scssoft.com/wiki/Documentation/Tools/Dedicated_Server
+              - cell "2239530" [ref=f4e1131]
+              - cell "Yes" [ref=f4e1132]
+              - cell "Yes" [ref=f4e1133]
+              - cell "Yes" [ref=f4e1134]
+              - cell [ref=f4e1135]
+            - row [ref=f4e1136]:
+              - 'cell "ARK: Survival Evolved Dedicated Server" [ref=f4e1137]'
+              - cell "376030" [ref=f4e1138]
+              - cell "Yes" [ref=f4e1139]
+              - cell "No" [ref=f4e1140]
+              - cell "No" [ref=f4e1141]
+              - cell [ref=f4e1142]
+            - row [ref=f4e1143]:
+              - cell [ref=f4e1144]:
+                - link "Arma 3 Dedicated Server" [ref=f4e1145] [cursor=pointer]:
+                  - /url: http://community.bistudio.com/wiki/Arma_3_Dedicated_Server
+              - cell "233780" [ref=f4e1146]
+              - cell "Yes" [ref=f4e1147]
+              - cell "Yes" [ref=f4e1148]
+              - cell "No" [ref=f4e1149]
+              - cell [ref=f4e1150]
+            - row [ref=f4e1151]:
+              - cell [ref=f4e1152]:
+                - link "Barotrauma Dedicated Server" [ref=f4e1153] [cursor=pointer]:
+                  - /url: https://barotraumagame.com/wiki/Hosting_a_Dedicated_Server
+              - cell "1026340" [ref=f4e1154]
+              - cell "Yes" [ref=f4e1155]
+              - cell "Yes" [ref=f4e1156]
+              - cell "Yes" [ref=f4e1157]
+              - cell [ref=f4e1158]
+            - row [ref=f4e1159]:
+              - 'cell "Black Mesa: Deathmatch Dedicated Server" [ref=f4e1160]'
+              - cell "346680" [ref=f4e1161]
+              - cell "Yes" [ref=f4e1162]
+              - cell "Yes" [ref=f4e1163]
+              - cell "Yes" [ref=f4e1164]
+              - cell [ref=f4e1165]
+            - row [ref=f4e1166]:
+              - cell "BrainBread 2 Dedicated Server" [ref=f4e1167]
+              - cell "475370" [ref=f4e1168]
+              - cell "Yes" [ref=f4e1169]
+              - cell "No" [ref=f4e1170]
+              - cell "No" [ref=f4e1171]
+              - cell [ref=f4e1172]
+            - row [ref=f4e1173]:
+              - cell [ref=f4e1174]:
+                - link "Blade Symphony Dedicated Server" [ref=f4e1175] [cursor=pointer]:
+                  - /url: http://www.blade-symphony.com/server-guide/
+              - cell "228780" [ref=f4e1176]
+              - cell "Yes" [ref=f4e1177]
+              - cell "No" [ref=f4e1178]
+              - cell "No" [ref=f4e1179]
+              - cell "Game Purchase Required" [ref=f4e1180]
+            - row [ref=f4e1181]:
+              - cell "BlazeRush Dedicated Server" [ref=f4e1182]
+              - cell "332850" [ref=f4e1183]
+              - cell "Yes" [ref=f4e1184]
+              - cell "Yes" [ref=f4e1185]
+              - cell "Yes" [ref=f4e1186]
+              - cell [ref=f4e1187]
+            - row [ref=f4e1188]:
+              - cell "Counter-Strike Dedicated Server" [ref=f4e1189]
+              - cell "90" [ref=f4e1190]
+              - cell "Yes" [ref=f4e1191]
+              - cell "No" [ref=f4e1192]
+              - cell "Yes" [ref=f4e1193]
+              - cell [ref=f4e1194]
+            - row [ref=f4e1195]:
+              - cell [ref=f4e1196]:
+                - link "Counter-Strike Global Offensive Dedicated Server" [ref=f4e1197] [cursor=pointer]:
+                  - /url: /wiki/Counter-Strike:_Global_Offensive_Dedicated_Servers
+              - cell "740" [ref=f4e1198]
+              - cell "Yes" [ref=f4e1199]
+              - cell "No" [ref=f4e1200]
+              - cell "Yes" [ref=f4e1201]
+              - cell "Login for public server" [ref=f4e1202]
+            - row [ref=f4e1203]:
+              - 'cell "Counter-Strike: Condition Zero Dedicated Server" [ref=f4e1204]'
+              - cell "90" [ref=f4e1205]
+              - cell "Yes" [ref=f4e1206]
+              - cell "No" [ref=f4e1207]
+              - cell "Yes" [ref=f4e1208]
+              - cell "+app_set_config \"90 mod czero\"" [ref=f4e1209]
+            - row [ref=f4e1210]:
+              - 'cell "Counter-Strike: Source Dedicated Server" [ref=f4e1211]'
+              - cell "232330" [ref=f4e1212]
+              - cell "Yes" [ref=f4e1213]
+              - cell "No" [ref=f4e1214]
+              - cell "Yes" [ref=f4e1215]
+              - cell [ref=f4e1216]
+            - row [ref=f4e1217]:
+              - cell "Chivalry Medieval Warfare Dedicated Server" [ref=f4e1218]
+              - cell "220070" [ref=f4e1219]
+              - cell "Yes" [ref=f4e1220]
+              - cell "Yes" [ref=f4e1221]
+              - cell "Yes" [ref=f4e1222]
+              - cell [ref=f4e1223]
+            - row [ref=f4e1224]:
+              - 'cell "Dark Horizons: Mechanized Corps Dedicated Server" [ref=f4e1225]'
+              - cell "312070" [ref=f4e1226]
+              - cell "Yes" [ref=f4e1227]
+              - cell "No" [ref=f4e1228]
+              - cell "Yes" [ref=f4e1229]
+              - cell [ref=f4e1230]
+            - row [ref=f4e1231]:
+              - cell "Day of Defeat Dedicated Server" [ref=f4e1232]
+              - cell "90" [ref=f4e1233]
+              - cell "Yes" [ref=f4e1234]
+              - cell "No" [ref=f4e1235]
+              - cell "Yes" [ref=f4e1236]
+              - cell "+app_set_config \"90 mod dod\"" [ref=f4e1237]
+            - row [ref=f4e1238]:
+              - 'cell "Day of Defeat: Source Dedicated Server" [ref=f4e1239]'
+              - cell "232290" [ref=f4e1240]
+              - cell "Yes" [ref=f4e1241]
+              - cell "No" [ref=f4e1242]
+              - cell "Yes" [ref=f4e1243]
+              - cell [ref=f4e1244]
+            - row [ref=f4e1245]:
+              - cell "Day of Infamy Dedicated Server" [ref=f4e1246]
+              - cell "462310" [ref=f4e1247]
+              - cell "Yes" [ref=f4e1248]
+              - cell "No" [ref=f4e1249]
+              - cell "Yes" [ref=f4e1250]
+              - cell [ref=f4e1251]
+            - row [ref=f4e1252]:
+              - cell "Deathmatch Classic Dedicated Server" [ref=f4e1253]
+              - cell "90" [ref=f4e1254]
+              - cell "Yes" [ref=f4e1255]
+              - cell "No" [ref=f4e1256]
+              - cell "Yes" [ref=f4e1257]
+              - cell "+app_set_config \"90 mod dmc\"" [ref=f4e1258]
+            - row [ref=f4e1259]:
+              - cell "Dota 2 Dedicated Server" [ref=f4e1260]
+              - cell "570" [ref=f4e1261]
+              - cell "Yes" [ref=f4e1262]
+              - cell "Yes" [ref=f4e1263]
+              - cell "No" [ref=f4e1264]
+              - cell [ref=f4e1265]
+            - row [ref=f4e1266]:
+              - cell "Don't Starve Together Dedicated Server" [ref=f4e1267]
+              - cell "343050" [ref=f4e1268]
+              - cell "Yes" [ref=f4e1269]
+              - cell "Yes" [ref=f4e1270]
+              - cell "Yes" [ref=f4e1271]
+              - cell [ref=f4e1272]
+            - row [ref=f4e1273]:
+              - cell [ref=f4e1274]:
+                - link "Euro Truck Simulator 2 Dedicated Server" [ref=f4e1275] [cursor=pointer]:
+                  - /url: https://modding.scssoft.com/wiki/Documentation/Tools/Dedicated_Server
+              - cell "1948160" [ref=f4e1276]
+              - cell "Yes" [ref=f4e1277]
+              - cell "Yes" [ref=f4e1278]
+              - cell "Yes" [ref=f4e1279]
+              - cell [ref=f4e1280]
+            - row [ref=f4e1281]:
+              - cell "Fistful of Frags Server" [ref=f4e1282]
+              - cell "295230" [ref=f4e1283]
+              - cell "Yes" [ref=f4e1284]
+              - cell "No" [ref=f4e1285]
+              - cell "Yes" [ref=f4e1286]
+              - cell [ref=f4e1287]
+            - row [ref=f4e1288]:
+              - cell [ref=f4e1289]:
+                - link "Garry's Mod Dedicated Server" [ref=f4e1290] [cursor=pointer]:
+                  - /url: http://wiki.garrysmod.com/page/Hosting_A_Dedicated_Server
+              - cell "4020" [ref=f4e1291]
+              - cell "Yes" [ref=f4e1292]
+              - cell "No" [ref=f4e1293]
+              - cell "Yes" [ref=f4e1294]
+              - cell [ref=f4e1295]
+            - row [ref=f4e1296]:
+              - 'cell "Half-Life 2: Deathmatch Dedicated Server" [ref=f4e1297]'
+              - cell "232370" [ref=f4e1298]
+              - cell "Yes" [ref=f4e1299]
+              - cell "No" [ref=f4e1300]
+              - cell "Yes" [ref=f4e1301]
+              - cell [ref=f4e1302]
+            - row [ref=f4e1303]:
+              - cell "Hurtworld dedicated server" [ref=f4e1304]
+              - cell "405100" [ref=f4e1305]
+              - cell "Yes" [ref=f4e1306]
+              - cell "No" [ref=f4e1307]
+              - cell "Yes" [ref=f4e1308]
+              - cell [ref=f4e1309]:
+                - link "Bat file" [ref=f4e1310] [cursor=pointer]:
+                  - /url: https://github.com/jamiebatch452/Useful-Files/blob/master/hurtworldserver.bat
+                - text: for server.
+            - row [ref=f4e1311]:
+              - 'cell "Half-Life Deathmatch: Source Dedicated server" [ref=f4e1312]'
+              - cell "255470" [ref=f4e1313]
+              - cell "Yes" [ref=f4e1314]
+              - cell "Yes" [ref=f4e1315]
+              - cell "Yes" [ref=f4e1316]
+              - cell [ref=f4e1317]
+            - row [ref=f4e1318]:
+              - cell [ref=f4e1319]:
+                - link "Half-Life Dedicated Server" [ref=f4e1320] [cursor=pointer]:
+                  - /url: /wiki/Half-Life_Dedicated_Server
+              - cell "90" [ref=f4e1321]
+              - cell "Yes" [ref=f4e1322]
+              - cell "Yes" [ref=f4e1323]
+              - cell "Yes" [ref=f4e1324]
+              - cell [ref=f4e1325]
+            - row [ref=f4e1326]:
+              - 'cell "Half-Life: Opposing Force Server" [ref=f4e1327]'
+              - cell "90" [ref=f4e1328]
+              - cell "Yes" [ref=f4e1329]
+              - cell "No" [ref=f4e1330]
+              - cell "Yes" [ref=f4e1331]
+              - cell "+app_set_config \"90 mod gearbox\"" [ref=f4e1332]
+            - row [ref=f4e1333]:
+              - cell [ref=f4e1334]:
+                - link "Insurgency 2014 Dedicated Server" [ref=f4e1335] [cursor=pointer]:
+                  - /url: /wiki/Insurgency_2014_Dedicated_Server
+              - cell "237410" [ref=f4e1336]
+              - cell "Yes" [ref=f4e1337]
+              - cell "Yes" [ref=f4e1338]
+              - cell "Yes" [ref=f4e1339]
+              - cell [ref=f4e1340]
+            - row [ref=f4e1341]:
+              - 'cell "Insurgency: Modern Infantry Combat Dedicated Server" [ref=f4e1342]'
+              - cell "17705" [ref=f4e1343]
+              - cell "Yes" [ref=f4e1344]
+              - cell "Yes" [ref=f4e1345]
+              - cell "Yes" [ref=f4e1346]
+              - cell [ref=f4e1347]
+            - row [ref=f4e1348]:
+              - 'cell "Just Cause 2: Multiplayer - Dedicated Server" [ref=f4e1349]'
+              - cell "261140" [ref=f4e1350]
+              - cell "Yes" [ref=f4e1351]
+              - cell "Yes" [ref=f4e1352]
+              - cell "Yes" [ref=f4e1353]
+              - cell [ref=f4e1354]
+            - row [ref=f4e1355]:
+              - cell [ref=f4e1356]:
+                - link "Killing Floor Dedicated Server - Linux" [ref=f4e1357] [cursor=pointer]:
+                  - /url: http://wiki.tripwireinteractive.com/index.php?title=Dedicated_Server_(KillingFloor)
+              - cell "215360" [ref=f4e1358]
+              - cell "Yes" [ref=f4e1359]
+              - cell "No" [ref=f4e1360]
+              - cell "No" [ref=f4e1361]
+              - cell "Please create a new account or use a pre-existing one, account doesn't need to own the game; or else you will get the dreaded \"ERROR! Failed to install app '215360' (No subscription)\"" [ref=f4e1362]
+            - row [ref=f4e1363]:
+              - cell "Killing Floor 2 Dedicated Server" [ref=f4e1364]
+              - cell "232130" [ref=f4e1365]
+              - cell "Yes" [ref=f4e1366]
+              - cell "Yes" [ref=f4e1367]
+              - cell "Yes" [ref=f4e1368]
+              - cell [ref=f4e1369]
+            - row [ref=f4e1370]:
+              - cell "Left 4 Dead 2 Dedicated Server" [ref=f4e1371]
+              - cell "222860" [ref=f4e1372]
+              - cell "Yes" [ref=f4e1373]
+              - cell "Yes" [ref=f4e1374]
+              - cell "Yes" [ref=f4e1375]
+              - cell [ref=f4e1376]
+            - row [ref=f4e1377]:
+              - cell "Left 4 Dead Dedicated Server" [ref=f4e1378]
+              - cell "222840" [ref=f4e1379]
+              - cell "Yes" [ref=f4e1380]
+              - cell "Yes" [ref=f4e1381]
+              - cell "Yes" [ref=f4e1382]
+              - cell [ref=f4e1383]
+            - row [ref=f4e1384]:
+              - cell [ref=f4e1385]:
+                - link "Natural Selection 2 Dedicated Server" [ref=f4e1386] [cursor=pointer]:
+                  - /url: http://wiki.unknownworlds.com/ns2/Dedicated_Server
+              - cell "4940" [ref=f4e1387]
+              - cell "Yes" [ref=f4e1388]
+              - cell "Yes" [ref=f4e1389]
+              - cell "No" [ref=f4e1390]
+              - cell [ref=f4e1391]
+            - row [ref=f4e1392]:
+              - cell [ref=f4e1393]:
+                - 'link "NS2: Combat Dedicated Server" [ref=f4e1394] [cursor=pointer]':
+                  - /url: http://wiki.unknownworlds.com/ns2/Dedicated_Server
+              - cell "313900" [ref=f4e1395]
+              - cell "Yes" [ref=f4e1396]
+              - cell "No" [ref=f4e1397]
+              - cell "Yes" [ref=f4e1398]
+              - cell [ref=f4e1399]
+            - row [ref=f4e1400]:
+              - cell [ref=f4e1401]:
+                - link "No More Room In Hell Dedicated Server" [ref=f4e1402] [cursor=pointer]:
+                  - /url: http://wiki.nomoreroominhell.com/wiki/Dedicated_Server_Setup
+              - cell "317670" [ref=f4e1403]
+              - cell "Yes" [ref=f4e1404]
+              - cell "No" [ref=f4e1405]
+              - cell "No" [ref=f4e1406]
+              - cell [ref=f4e1407]
+            - row [ref=f4e1408]:
+              - cell [ref=f4e1409]:
+                - link "Out of Reach Dedicated Server" [ref=f4e1410] [cursor=pointer]:
+                  - /url: http://outofreach.gamepedia.com/Dedicated_Servers_Installation
+              - cell "406800" [ref=f4e1411]
+              - cell "Yes" [ref=f4e1412]
+              - cell "No" [ref=f4e1413]
+              - cell "Yes" [ref=f4e1414]
+              - cell [ref=f4e1415]
+            - row [ref=f4e1416]:
+              - cell "Pirates, Vikings, and Knights II Dedicated Server" [ref=f4e1417]
+              - cell "17575" [ref=f4e1418]
+              - cell "Yes" [ref=f4e1419]
+              - cell "Yes" [ref=f4e1420]
+              - cell "Yes" [ref=f4e1421]
+              - cell [ref=f4e1422]
+            - row [ref=f4e1423]:
+              - cell [ref=f4e1424]:
+                - link "Project Zomboid Dedicated Server" [ref=f4e1425] [cursor=pointer]:
+                  - /url: http://pzwiki.net/wiki/Multiplayer_FAQ
+              - cell "108600" [ref=f4e1426]
+              - cell "Yes" [ref=f4e1427]
+              - cell "No" [ref=f4e1428]
+              - cell "No" [ref=f4e1429]
+              - cell "Game Purchase Required" [ref=f4e1430]
+            - row [ref=f4e1431]:
+              - cell [ref=f4e1432]:
+                - link "Quake Live Dedicated Server" [ref=f4e1433] [cursor=pointer]:
+                  - /url: https://linuxgsm.com/servers/qlserver/
+              - cell "349090" [ref=f4e1434]
+              - cell "Yes" [ref=f4e1435]
+              - cell "No" [ref=f4e1436]
+              - cell "Yes" [ref=f4e1437]
+              - cell [ref=f4e1438]
+            - row [ref=f4e1439]:
+              - cell [ref=f4e1440]:
+                - link "Quake 2 Dedicated Server" [ref=f4e1441] [cursor=pointer]:
+                  - /url: https://linuxgsm.com/servers/q2server/
+              - cell "2320" [ref=f4e1442]
+              - cell "Yes" [ref=f4e1443]
+              - cell "No" [ref=f4e1444]
+              - cell "Yes" [ref=f4e1445]
+              - cell [ref=f4e1446]
+            - row [ref=f4e1447]:
+              - cell "Red Orchestra Linux Dedicated Server" [ref=f4e1448]
+              - cell "223250" [ref=f4e1449]
+              - cell "Yes" [ref=f4e1450]
+              - cell "Yes" [ref=f4e1451]
+              - cell "No" [ref=f4e1452]
+              - cell [ref=f4e1453]
+            - row [ref=f4e1454]:
+              - cell "Ricochet Dedicated Server" [ref=f4e1455]
+              - cell "90" [ref=f4e1456]
+              - cell "Yes" [ref=f4e1457]
+              - cell "No" [ref=f4e1458]
+              - cell "Yes" [ref=f4e1459]
+              - cell "+app_set_config \"90 mod ricochet\"" [ref=f4e1460]
+            - row [ref=f4e1461]:
+              - cell [ref=f4e1462]:
+                - link "Rust Dedicated Server" [ref=f4e1463] [cursor=pointer]:
+                  - /url: /wiki/Rust_Dedicated_Server
+              - cell "258550" [ref=f4e1464]
+              - cell "Yes" [ref=f4e1465]
+              - cell "No" [ref=f4e1466]
+              - cell "Yes" [ref=f4e1467]
+              - cell [ref=f4e1468]
+            - row [ref=f4e1469]:
+              - cell [ref=f4e1470]:
+                - link "Satisfactory Dedicated Server" [ref=f4e1471] [cursor=pointer]:
+                  - /url: https://satisfactory.wiki.gg/wiki/Dedicated_servers
+              - cell "1690800" [ref=f4e1472]
+              - cell "Yes" [ref=f4e1473]
+              - cell "Yes" [ref=f4e1474]
+              - cell "Yes" [ref=f4e1475]
+              - cell [ref=f4e1476]
+            - row [ref=f4e1477]:
+              - cell "Serious Sam 3 Dedicated Server" [ref=f4e1478]
+              - cell "41080" [ref=f4e1479]
+              - cell "Yes" [ref=f4e1480]
+              - cell "Yes" [ref=f4e1481]
+              - cell "No" [ref=f4e1482]
+              - cell [ref=f4e1483]
+            - row [ref=f4e1484]:
+              - cell "Source SDK Base 2006 MP Dedicated Server" [ref=f4e1485]
+              - cell "205" [ref=f4e1486]
+              - cell "Yes" [ref=f4e1487]
+              - cell "Yes" [ref=f4e1488]
+              - cell "Yes" [ref=f4e1489]
+              - cell [ref=f4e1490]:
+                - generic [ref=f4e1492]:
+                  - img "Icon-Bug.png" [ref=f4e1494]
+                  - strong [ref=f4e1495]: "Bug:"
+                  - generic [ref=f4e1496]:
+                    - text: Linux files missing
+                    - 'generic "{{{tested}}} param of Template:Bug was not set, see Template:Bug for more info" [ref=f4e1498]':
+                      - text: "[todo tested in"
+                      - link "?" [ref=f4e1499] [cursor=pointer]:
+                        - /url: /wiki/Template:BugNotice#Parameters
+                      - text: "]"
+            - row [ref=f4e1500]:
+              - cell "Source 2007 Dedicated Server" [ref=f4e1501]
+              - cell "310" [ref=f4e1502]
+              - cell "Yes" [ref=f4e1503]
+              - cell "Yes" [ref=f4e1504]
+              - cell "Yes" [ref=f4e1505]
+              - cell [ref=f4e1506]
+            - row [ref=f4e1507]:
+              - cell "Source Dedicated Server" [ref=f4e1508]
+              - cell "205" [ref=f4e1509]
+              - cell "Yes" [ref=f4e1510]
+              - cell "Yes" [ref=f4e1511]
+              - cell "Yes" [ref=f4e1512]
+              - cell [ref=f4e1513]
+            - row [ref=f4e1514]:
+              - cell "Source SDK Base 2013 Dedicated Server" [ref=f4e1515]
+              - cell "244310" [ref=f4e1516]
+              - cell "Yes" [ref=f4e1517]
+              - cell "Yes" [ref=f4e1518]
+              - cell "Yes" [ref=f4e1519]
+              - cell [ref=f4e1520]
+            - row [ref=f4e1521]:
+              - cell [ref=f4e1522]:
+                - link "Squad Dedicated Server" [ref=f4e1523] [cursor=pointer]:
+                  - /url: http://squad.gamepedia.com/Server_Configuration
+              - cell "403240" [ref=f4e1524]
+              - cell "Yes" [ref=f4e1525]
+              - cell "Yes" [ref=f4e1526]
+              - cell "Yes" [ref=f4e1527]
+              - cell [ref=f4e1528]
+            - row [ref=f4e1529]:
+              - cell [ref=f4e1530]:
+                - link "Starbound Dedicated server" [ref=f4e1531] [cursor=pointer]:
+                  - /url: http://starbounder.org/Guide:Setting_Up_Multiplayer
+              - cell "211820" [ref=f4e1532]
+              - cell "Yes" [ref=f4e1533]
+              - cell "Yes" [ref=f4e1534]
+              - cell "No" [ref=f4e1535]
+              - cell "Game Purchase Required" [ref=f4e1536]
+            - row [ref=f4e1537]:
+              - cell "Sven Co-op Dedicated Server" [ref=f4e1538]
+              - cell "276060" [ref=f4e1539]
+              - cell "Yes" [ref=f4e1540]
+              - cell "Yes" [ref=f4e1541]
+              - cell "Yes" [ref=f4e1542]
+              - 'cell "Supported on Debian and derivatives (including Ubuntu) only. First enable i386 with `dpkg --add-architecture i386` if running on amd64, then `apt install libc6:i386 zlib1g:i386 libssl1.1:i386 libstdc++6:i386`." [ref=f4e1543]'
+            - row [ref=f4e1544]:
+              - cell [ref=f4e1545]:
+                - link "Team Fortress 2 Dedicated Server" [ref=f4e1546] [cursor=pointer]:
+                  - /url: http://wiki.teamfortress.com/wiki/Linux_dedicated_server
+              - cell "232250" [ref=f4e1547]
+              - cell "Yes" [ref=f4e1548]
+              - cell "No" [ref=f4e1549]
+              - cell "Yes" [ref=f4e1550]
+              - cell [ref=f4e1551]
+            - row [ref=f4e1552]:
+              - cell "Team Fortress Classic Dedicated Server" [ref=f4e1553]
+              - cell "90" [ref=f4e1554]
+              - cell "Yes" [ref=f4e1555]
+              - cell "No" [ref=f4e1556]
+              - cell "Yes" [ref=f4e1557]
+              - cell "+app_set_config \"90 mod tfc\"" [ref=f4e1558]
+            - row [ref=f4e1559]:
+              - cell "The Ship Dedicated Server" [ref=f4e1560]
+              - cell "2403" [ref=f4e1561]
+              - cell "Yes" [ref=f4e1562]
+              - cell "Yes" [ref=f4e1563]
+              - cell "No" [ref=f4e1564]
+              - cell [ref=f4e1565]
+            - row [ref=f4e1566]:
+              - cell [ref=f4e1567]:
+                - link "Tower Unite Dedicated Server" [ref=f4e1568] [cursor=pointer]:
+                  - /url: http://steamcommunity.com/sharedfiles/filedetails/?id=662378924
+              - cell "439660" [ref=f4e1569]
+              - cell "Yes" [ref=f4e1570]
+              - cell "No" [ref=f4e1571]
+              - cell "Yes" [ref=f4e1572]
+              - cell [ref=f4e1573]
+            - row [ref=f4e1574]:
+              - cell "Terraria Dedicated Server" [ref=f4e1575]
+              - cell "105600" [ref=f4e1576]
+              - cell "Yes" [ref=f4e1577]
+              - cell "Yes" [ref=f4e1578]
+              - cell "No" [ref=f4e1579]
+              - cell "Game Purchase Required" [ref=f4e1580]
+            - row [ref=f4e1581]:
+              - cell "Unturned Dedicated Server" [ref=f4e1582]
+              - cell "1110390" [ref=f4e1583]
+              - cell "Yes" [ref=f4e1584]
+              - cell "Yes" [ref=f4e1585]
+              - cell "No" [ref=f4e1586]
+              - cell [ref=f4e1587]
+            - row [ref=f4e1588]:
+              - cell "Zombie Panic Source Dedicated Server" [ref=f4e1589]
+              - cell "17505" [ref=f4e1590]
+              - cell "Yes" [ref=f4e1591]
+              - cell "Yes" [ref=f4e1592]
+              - cell "Yes" [ref=f4e1593]
+              - cell [ref=f4e1594]
+          - rowgroup
+      - generic [ref=f4e1596]:
+        - link "Categories" [ref=f4e1597] [cursor=pointer]:
+          - /url: /wiki/Special:Categories
+        - text: ":"
+        - list [ref=f4e1598]:
+          - listitem [ref=f4e1599]:
+            - link "Pages with other bugs" [ref=f4e1600] [cursor=pointer]:
+              - /url: /wiki/Category:Pages_with_other_bugs
+          - listitem [ref=f4e1601]:
+            - link "Steam" [ref=f4e1602] [cursor=pointer]:
+              - /url: /wiki/Category:Steam
+          - listitem [ref=f4e1603]:
+            - link "Steam Applications" [ref=f4e1604] [cursor=pointer]:
+              - /url: /wiki/Category:Steam_Applications
+          - listitem [ref=f4e1605]:
+            - link "Dedicated Server" [ref=f4e1606] [cursor=pointer]:
+              - /url: /wiki/Category:Dedicated_Server
+          - listitem [ref=f4e1607]:
+            - link "Lists" [ref=f4e1608] [cursor=pointer]:
+              - /url: /wiki/Category:Lists
+  - generic:
+    - heading "Navigation menu" [level=2] [ref=f4e1609]
+    - generic [ref=f4e1610]:
+      - navigation "Personal tools" [ref=f4e1611]:
+        - list [ref=f4e1613]:
+          - listitem [ref=f4e1614]:
+            - link "Create account" [ref=f4e1615] [cursor=pointer]:
+              - /url: /w/index.php?title=Special:CreateAccount&returnto=Dedicated+Servers+List
+          - listitem [ref=f4e1616]:
+            - link "Log in" [ref=f4e1617] [cursor=pointer]:
+              - /url: /w/index.php?title=Special:UserLogin&returnto=Dedicated+Servers+List
+      - navigation "Namespaces" [ref=f4e1619]:
+        - list [ref=f4e1620]:
+          - listitem [ref=f4e1621]:
+            - link "Page" [ref=f4e1622] [cursor=pointer]:
+              - /url: /wiki/Dedicated_Servers_List
+          - listitem [ref=f4e1623]:
+            - link "Discussion" [ref=f4e1624] [cursor=pointer]:
+              - /url: /wiki/Talk:Dedicated_Servers_List
+      - generic [ref=f4e1625]:
+        - navigation "Views" [ref=f4e1626]:
+          - list [ref=f4e1627]:
+            - listitem [ref=f4e1628]:
+              - link "Read" [ref=f4e1629] [cursor=pointer]:
+                - /url: /wiki/Dedicated_Servers_List
+            - listitem [ref=f4e1630]:
+              - link "View source" [ref=f4e1631] [cursor=pointer]:
+                - /url: /w/index.php?title=Dedicated_Servers_List&action=edit
+            - listitem [ref=f4e1632]:
+              - link "View history" [ref=f4e1633] [cursor=pointer]:
+                - /url: /w/index.php?title=Dedicated_Servers_List&action=history
+        - navigation "More" [ref=f4e1634] [cursor=pointer]:
+          - button "More" [ref=f4e1635]
+        - search [ref=f4e1638]:
+          - generic [ref=f4e1639]:
+            - heading "Search" [level=3] [ref=f4e1640]
+            - generic [ref=f4e1642]:
+              - searchbox "Search Valve Developer Community" [ref=f4e1643]
+              - button "Search" [ref=f4e1644] [cursor=pointer]
+              - button "Go" [ref=f4e1645] [cursor=pointer]
+    - generic [ref=f4e1646]:
+      - banner [ref=f4e1647]:
+        - link "Visit the main page" [ref=f4e1648] [cursor=pointer]:
+          - /url: /wiki/Main_Page
+      - navigation "Navigation" [ref=f4e1649]:
+        - list [ref=f4e1651]:
+          - listitem [ref=f4e1652]:
+            - link "Main Page" [ref=f4e1653] [cursor=pointer]:
+              - /url: /wiki/Main_Page
+          - listitem [ref=f4e1654]:
+            - link "Source SDK index" [ref=f4e1655] [cursor=pointer]:
+              - /url: /wiki/SDK_Docs
+          - listitem [ref=f4e1656]:
+            - link "Recent changes" [ref=f4e1657] [cursor=pointer]:
+              - /url: /wiki/Special:RecentChanges
+          - listitem [ref=f4e1658]:
+            - link "Random page" [ref=f4e1659] [cursor=pointer]:
+              - /url: /wiki/Special:RandomRootpage
+      - navigation [ref=f4e1660]:
+        - heading "Workshop" [level=3] [ref=f4e1661]
+        - list [ref=f4e1663]:
+          - listitem [ref=f4e1664]:
+            - link "Half-Life SDK" [ref=f4e1665] [cursor=pointer]:
+              - /url: /wiki/Half-Life_SDK
+          - listitem [ref=f4e1666]:
+            - 'link "Half-Life: Alyx Tools" [ref=f4e1667] [cursor=pointer]':
+              - /url: /wiki/Half-Life:_Alyx_Workshop_Tools
+          - listitem [ref=f4e1668]:
+            - link "Dota 2 Tools" [ref=f4e1669] [cursor=pointer]:
+              - /url: /wiki/Dota_2_Workshop_Tools
+          - listitem [ref=f4e1670]:
+            - link "SteamVR Tools" [ref=f4e1671] [cursor=pointer]:
+              - /url: /wiki/SteamVR/Environments
+          - listitem [ref=f4e1672]:
+            - link "Counter-Strike 2 Tools" [ref=f4e1673] [cursor=pointer]:
+              - /url: /wiki/Counter-Strike_2_Workshop_Tools
+      - navigation [ref=f4e1674]:
+        - heading "Support" [level=3] [ref=f4e1675]
+        - list [ref=f4e1677]:
+          - listitem [ref=f4e1678]:
+            - link "Community portal" [ref=f4e1679] [cursor=pointer]:
+              - /url: /wiki/Valve_Developer_Community:Community_portal
+          - listitem [ref=f4e1680]:
+            - link "Getting help" [ref=f4e1681] [cursor=pointer]:
+              - /url: /wiki/Help:Contents
+          - listitem [ref=f4e1682]:
+            - link "Source SDK FAQ" [ref=f4e1683] [cursor=pointer]:
+              - /url: /wiki/Category:Source_SDK_FAQ
+          - listitem [ref=f4e1684]:
+            - link "Level Design FAQ" [ref=f4e1685] [cursor=pointer]:
+              - /url: /wiki/Category:Level_Design_FAQ
+      - navigation [ref=f4e1686]:
+        - heading "Steam Community" [level=3] [ref=f4e1687]
+        - list [ref=f4e1689]:
+          - listitem [ref=f4e1690]:
+            - link "Source SDK Hub" [ref=f4e1691] [cursor=pointer]:
+              - /url: http://steamcommunity.com/app/211
+          - listitem [ref=f4e1692]:
+            - link "Source SDK Discussion" [ref=f4e1693] [cursor=pointer]:
+              - /url: https://steamcommunity.com/app/211/discussions
+          - listitem [ref=f4e1694]:
+            - link "Steam" [ref=f4e1695] [cursor=pointer]:
+              - /url: http://www.steampowered.com
+      - navigation [ref=f4e1696]:
+        - heading "Tools" [level=3] [ref=f4e1697]
+        - list [ref=f4e1699]:
+          - listitem [ref=f4e1700]:
+            - link "What links here" [ref=f4e1701] [cursor=pointer]:
+              - /url: /wiki/Special:WhatLinksHere/Dedicated_Servers_List
+          - listitem [ref=f4e1702]:
+            - link "Related changes" [ref=f4e1703] [cursor=pointer]:
+              - /url: /wiki/Special:RecentChangesLinked/Dedicated_Servers_List
+          - listitem [ref=f4e1704]:
+            - link "Special pages" [ref=f4e1705] [cursor=pointer]:
+              - /url: /wiki/Special:SpecialPages
+          - listitem [ref=f4e1706]:
+            - link "Printable version" [ref=f4e1707] [cursor=pointer]:
+              - /url: javascript:print();
+          - listitem [ref=f4e1708]:
+            - link "Permanent link" [ref=f4e1709] [cursor=pointer]:
+              - /url: /w/index.php?title=Dedicated_Servers_List&oldid=519476
+          - listitem [ref=f4e1710]:
+            - link "Page information" [ref=f4e1711] [cursor=pointer]:
+              - /url: /w/index.php?title=Dedicated_Servers_List&action=info
+  - contentinfo [ref=f4e1712]:
+    - list [ref=f4e1713]:
+      - listitem [ref=f4e1714]: This page was last edited on 9 September 2026, at 09:14.
+    - list:
+      - listitem [ref=f4e1715]:
+        - link "About Valve Developer Community" [ref=f4e1716] [cursor=pointer]:
+          - /url: /wiki/Valve_Developer_Community:About
+      - listitem [ref=f4e1717]:
+        - link "Terms of Use" [ref=f4e1718] [cursor=pointer]:
+          - /url: /wiki/Valve_Developer_Community:Terms_of_use
+      - listitem [ref=f4e1719]:
+        - link "Third Party Legal Notices" [ref=f4e1720] [cursor=pointer]:
+          - /url: Valve Developer Community:Third Party Legal Notices
+    - list [ref=f4e1721]:
+      - listitem [ref=f4e1722]:
+        - link [ref=f4e1723] [cursor=pointer]:
+          - /url: https://www.mediawiki.org/
+          - img "Powered by MediaWiki" [ref=f4e1724]
