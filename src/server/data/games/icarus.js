@@ -46,8 +46,9 @@ const template = {
 	displayName: "Icarus",
 	type: "icarus",
 	// No RCON exists, so there is nothing to ask the server to stop with: the panel closes its window and force-kills after its grace
-	// time. The query port is a Steam query port; whether it answers is not verified, so the server is watched by its process.
-	method: "process",
+	// time. The query port answers Steam queries (checked on a real install), so the server is watched through it.
+	method: "gamedig",
+	queryProtocol: "icarus",
 	updateAppId: "2089300",
 	storeAppId: "1149460",
 	sharedInstall: false,
@@ -102,7 +103,8 @@ const template = {
 	buildServerEntry: (p) => ({
 		name: p.name,
 		type: "icarus",
-		method: "process",
+		method: "gamedig",
+		queryProtocol: "icarus",
 		host: "127.0.0.1",
 		port: p.port,
 		queryPort: p.queryPort,

@@ -34,6 +34,8 @@ Some games are set up by the arguments on the command that starts them, not by a
 - [SCUM](#scum)
 - [StarRupture](#starrupture)
 - [Unturned](#unturned)
+- [Soulmask](#soulmask)
+- [Garry's Mod](#garrys-mod)
 
 ## ARK: Survival Ascended / Evolved
 
@@ -2903,7 +2905,7 @@ StarRupture keeps its server settings in `DSSettings.txt` in the server's instal
 The first start builds the world ("Create a new world on start" is Yes). After that, set it to **No** and "Load the saved world on start" to **Yes**, or the world is made again at every start.
 The game fixes the player limit at 4. It has no difficulty or rules settings in any file.
 Passwords are not set by the panel. The game reads them from `Password.json` (admin) and `PlayerPassword.json` (join) in the server folder, and will only accept a value made by a website (starrupture-utilities.com), not the password typed in plain text. Without `PlayerPassword.json` anyone who knows the address can join.
-Forward UDP only for the game port. The same number also answers on TCP for the in-game Manage Server screen, which has a reported security hole, so leave TCP closed.
+Forward UDP only for the game port. The same number can also answer on TCP for the in-game Manage Server screen, which has a reported security hole (the panel turns that web interface off in the start script), so leave TCP closed.
 
 ### StarRupture: World
 
@@ -2912,7 +2914,7 @@ Forward UDP only for the game port. The same number also answers on TCP for the 
 | Setting | Name in the file | What it does |
 | --- | --- | --- |
 | World name | `SessionName` | The name of your world. It is also the name of the folder the world is saved in (StarRupture\Saved\SaveGames), so a new name starts a new, empty world and the old one stays on disk. Keep it short: 20 characters is the longest one server setup documents. |
-| Create a new world on start | `StartNewGame` | Yes builds a brand-new world every time the server starts. Use it once for the first start, then change it to No, and set "Load the saved world on start" to Yes, or the world is made again at every start. Choices: `true` (Yes: create a new world), `false` (No: keep the existing world). |
+| Create a new world on start | `StartNewGame` | Yes builds a brand-new world every time the server starts. Use it once for the first start, then change it to No, and set "Load the saved world on start" to Yes, or the world is made again at every start. Do not switch it off before a save exists: with nothing to load, the server keeps running with no world at all. Choices: `true` (Yes: create a new world), `false` (No: keep the existing world). |
 | Load the saved world on start | `LoadSavedGame` | Yes loads the save named below when the server starts, so your world comes back after a restart or a crash. With No the server loads nothing: it waits with no world, or builds a new one if "Create a new world on start" is Yes. Choices: `true` (Yes: load the saved world), `false` (No: do not load a save). |
 | Save file to load | `SaveGameName` | The file inside the world's save folder to load, including .sav. It is case-sensitive. The server's own autosave is AutoSave0.sav; older autosaves are numbered after it. |
 
@@ -3005,3 +3007,300 @@ The server uses two UDP ports: the one shown, and the next one up. Forward both 
 | Countdown after an update | `Shutdown_Update_Detected_Timer` | How many seconds the server waits after finding an update before it shuts down (600 is ten minutes). The server has to be started again afterwards, so set the panel to restart it when it stops on its own. |
 | Update warning in chat | `Shutdown_Update_Detected_Message` | The message players see in chat when the countdown starts. {0} is replaced by the time left. |
 | Message when kicked for an update | `Shutdown_Kick_Message` | The message shown to players who are still connected when the server shuts down for an update. |
+
+## Soulmask
+
+Soulmask is set up by the arguments on the command that starts it (the **Launch options**): the name, passwords, player limit, ports, PvE or PvP, the ban lists and how often the world is saved. The game keeps its saves in `WS\Saved` inside the server's folder, and its log in `WS\Saved\Logs\WS.log`.
+
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#soulmask).
+
+**Stopping can lose recent progress.** The game saves safely only when told to through its local text console: connect to `127.0.0.1` on the Console Port (18888 by default) with a Telnet client, type `saveworld 1`, then `quit 30`. The panel cannot send those commands. It closes the server's window and then ends the program, and the game's own guide warns that closing it directly may roll the world back to the last time it was written to disk. That is every `-backup` seconds (900, 15 minutes, as the panel starts it): lower it in the Launch options to lose less, or save by hand before stopping. Windows needs its optional Telnet client turned on for this.
+The world rules (experience, drop and growth rates, raids, difficulty) are in `WS\Saved\GameplaySettings\GameXishu.json`, which the game makes on its first start. The panel does not offer a form for it, because nothing it could find explains what each setting does. The file holds every setting three times, in groups `0`, `1` and `2`; a dedicated server reads group `1`. Stop the server before editing it by hand. It is included in the panel's backups.
+The server is started as a PvE server (`-pve`). For PvP, turn off **PvE mode** and turn on **PvP mode** in the Launch options. Both change some of the game's settings.
+The server takes a few minutes to start (two to five) before it is listed. The first lines of `WS.log` should show `Game Server API initialized`; if Steam fails to start there, the three Steam DLLs the panel copied into `WS\Binaries\Win64` may be missing or out of date.
+The admin password is made for you when you leave it empty, so the server is never open to anyone typing the admin command; look in the Launch options for it. In the game, press the `~` key and type `gm key` followed by the password.
+Mods are Steam Workshop mods, listed by id when the server is created or in the Launch options (`-mod`). The server downloads them when it starts, which can make the first start slow, and every player needs the same mods subscribed and switched on. Mods made before the game's 1.0 release (10 April 2026) may no longer work and can stop the server from starting: take the newest-changed one off the list first. Back up the world before adding or removing mods.
+Each Soulmask server needs its own game, query and console ports. The console port is not in the panel's Ports section, so the panel does not check it for clashes: change it in the Launch options if you add a second server by hand.
+The game uses a lot of memory: at least 16 GB for one server is the wiki's figure, and the server's memory use is reported to grow over time, so a daily restart helps.
+
+## Garry's Mod
+
+Garry's Mod is set up with console variables ("convars"): lines of a name and a value in `.cfg` files in the `garrysmod\cfg` folder of the server. The panel writes the server's name and password in `autoexec.cfg`, and everything else you change goes in `server.cfg`, which the game ships empty. The map, gamemode, player limit and port are on the launch line.
+
+- `autoexec.cfg`: The server's name and password. The panel writes this file when it creates the server.
+- `server.cfg`: Every other setting: access, voice, physics, downloads, Sandbox limits and the Trouble in Terrorist Town rules. Only the lines you set are in the file.
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#garrys-mod).
+
+The game reads these files when it starts, so stop and start the server after changing a setting.
+The name and password are in `autoexec.cfg` and not in `server.cfg` on purpose: the panel updates the game with SteamCMD's `validate`, which puts files the game ships (including the empty `server.cfg`) back as they were, so anything the panel had written in `server.cfg` would be gone after an update. If you put the same setting in both files, the later one wins; the research could not confirm which runs later.
+Facepunch says every server should have a Game Server Login Token (steamcommunity.com/dev/managegameservers, app ID 4000). Without one the server ranks very low in the server list, and an invalid or expired one stops the server from starting. Add it with the Game Server Login Token argument in Launch options. It is a secret: do not share it.
+Mods are Steam Workshop addons. Put them in a Workshop collection (Public or Unlisted), then give its id in the Workshop collection argument; the server downloads and mounts the collection every time it starts. Players only download an addon's content from your server if the addon is marked for download by a Lua file (`resource.AddWorkshop`, in `garrysmod\lua\autorun\server`), or is the current map or gamemode. The panel does not write that file.
+Source games have a remote console (RCON) on the game port over TCP, with the password set by `rcon_password`. The panel does not use it for this server, so Stop closes the server's window and, after 15 seconds, ends the program. Whether that gives the game time to save its data (Sandbox's persistent props are saved when the server shuts down) was not tested.
+Settings of community gamemodes (DarkRP, Murder, Prop Hunt and others), the Sandbox `toolmode_allow_<tool>` switches, the NPC damage files (`skill.cfg`) and the map cycle are not in the form. The shipped `mapcycle.txt` says Garry's Mod does not use it.
+The values of the Sandbox rules and limits come from the Facepunch wiki's list, which says it is rarely updated. A setting the file has that the panel does not explain is still shown.
+
+### Garry's Mod (autoexec.cfg): Server
+
+2 settings in `autoexec.cfg`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server name | `hostname` | The name shown in the in-game server browser. The panel writes it when it creates the server. |
+| Join password | `sv_password` | What players type to join. Leave it empty for a server anyone can join. |
+
+### Garry's Mod (server.cfg): Server
+
+8 settings in `server.cfg`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Country flag | `sv_location` | A two-letter country code (gb, us, de ... or eu for the European Union) that picks the flag next to your server in the server browser. It has to be the country the server really is in. |
+| Contact email | `sv_contact` | The administrator's email address, shown in the server's information. |
+| Loading screen web page | `sv_loadingurl` | A web page players see while they join. It has to start with http:// or https://. |
+| Steam group | `sv_steamgroup` | The number of a Steam group to tie the server to. The group's number is on the group's admin profile page. |
+| Gamemode name shown | `sv_gamename_override` | If it is not empty, this text replaces the gamemode name the server tells Steam. |
+| Shown player limit | `sv_visiblemaxplayers` | Changes the player limit that people browsing the server list see. -1 shows the real limit. |
+| Hide from the server list | `hide_server` | On hides the server from the in-game server browser; players can still join by typing its address. Handy while you are still setting it up. Choices: `0` (Off), `1` (On). |
+| Local network only | `sv_lan` | On makes a LAN server: no Steam sign-in, not listed on the internet, and only local-type addresses can join. Keep it off for a server friends join over the internet. Choices: `0` (Off), `1` (On). |
+
+### Garry's Mod (server.cfg): Access and security
+
+10 settings in `server.cfg`, shown under **Access and security** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Allow players to run their own Lua | `sv_allowcslua` | Lets players run their own Lua scripts in their own game (lua_openscript_cl and lua_run_cl), which is how cheat scripts work. Turn it off to block them. This overrides any gamemode's setting. Choices: `0` (Off), `1` (On). |
+| Kick on Lua errors | `sv_kickerrornum` | Kicks a player once they have caused this many Lua errors on their own computer. 0 never kicks. |
+| Allow cheat commands | `sv_cheats` | Lets players use cheat commands. Keep it off on a normal server. Choices: `0` (Off), `1` (On). |
+| Connection attempts per second | `sv_max_connects_sec` | The most connection attempts per second the server answers from one address. A low number makes flooding the server harder. |
+| Server-list queries per second | `sv_max_queries_sec` | The most server-browser queries per second the server answers from one address. |
+| Server-list queries per second, total | `sv_max_queries_sec_global` | The most server-browser queries per second the server answers from all addresses together. |
+| Console commands per second | `sv_quota_stringcmdspersecond` | How many console commands per second one player may send. 0 allows none. |
+| Kick for command spam | `sv_quota_stringcmd_kick` | If above 0, a player who sends more console commands than the limit above is kicked. |
+| Voice packets per tick | `sv_maxvoicepacketsperframe` | How many voice packets a player may send in one server tick before being kicked. 0 turns the check off. Higher numbers make the server easier to flood. |
+| Log bans | `sv_logbans` | Writes bans to the server log. Choices: `0` (Off), `1` (On). |
+
+### Garry's Mod (server.cfg): Voice
+
+5 settings in `server.cfg`, shown under **Voice** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Everyone hears everyone | `sv_alltalk` | On lets every player hear every other player's voice, whatever team they are on. Choices: `0` (Off), `1` (On). |
+| Voice chat | `sv_voiceenable` | Turns voice chat on or off for the whole server. Choices: `0` (Off), `1` (On). |
+| Use Steam voice | `sv_use_steam_voice` | Uses Steam Voice instead of the old voice codec. With it on, voice input from a file no longer works. Choices: `0` (Off), `1` (On). |
+| Allow voice from a file | `sv_allow_voice_from_file` | Whether players may feed a recorded file into voice chat (voice_inputfromfile). Choices: `0` (Off), `1` (On). |
+| Voice icons overhead | `mp_show_voice_icons` | Shows a speaker icon above players who are talking. Choices: `0` (Off), `1` (On). |
+
+### Garry's Mod (server.cfg): Gameplay
+
+14 settings in `server.cfg`, shown under **Gameplay** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Players can pause | `sv_pausable` | Whether the server can be paused from the game. Choices: `0` (Off), `1` (On). |
+| Noclip speed | `sv_noclipspeed` | How fast players fly with noclip (a multiplier). |
+| Footstep sounds | `sv_footsteps` | Plays footstep sounds for players. Choices: `0` (Off), `1` (On). |
+| Pick things up with the Use key | `sv_playerpickupallowed` | Lets players pick up objects with the Use key. Choices: `0` (Off), `1` (On). |
+| Name change cooldown (seconds) | `sv_namechange_cooldown_seconds` | How many seconds a player has to wait before they can change their name again. |
+| Limit the physics gun | `physgun_limited` | On means the physics gun can only pick up certain things (props and ragdolls), not map objects. Sandbox sets this to off unless you change it. Choices: `0` (Off), `1` (On). |
+| Physics gun range | `physgun_maxrange` | How far away the physics gun can reach. |
+| Max ammo | `gmod_maxammo` | If above 0, every ammo type uses this as its carrying limit. 0 leaves each ammo type with its own limit. |
+| Half-Life 2 suit power | `gmod_suit` | Anything other than 0 turns on the Half-Life 2 suit power bar (sprint and oxygen). |
+| Half-Life 2 sneak attack | `gmod_sneak_attack` | 0 turns off the instant-kill headshot Half-Life 2 gives against NPCs that have not seen the player. Choices: `0` (Off), `1` (On). |
+| Realistic fall damage | `mp_falldamage` | On turns on realistic fall damage. Choices: `0` (Off), `1` (On). Another value can be typed. |
+| Flashlight | `mp_flashlight` | Whether players can use their flashlight. The game's own network.cfg turns it on when the server starts. Choices: `0` (Off), `1` (On). |
+| Weapons stay | `mp_weaponstay` | On stops a player picking up a weapon they already carry. Choices: `0` (Off), `1` (On). |
+| Solid NPC ragdolls | `ai_serverragdolls` | On makes NPC ragdolls solid by default. Choices: `0` (Off), `1` (On). |
+
+### Garry's Mod (server.cfg): Physics
+
+11 settings in `server.cfg`, shown under **Physics** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Gravity | `sv_gravity` | How strongly things are pulled down. 600 is the normal value. |
+| Ground friction | `sv_friction` | How much players slide on the ground. Higher numbers stop them sooner. |
+| Ground acceleration | `sv_accelerate` | How fast players speed up on the ground. |
+| Air acceleration | `sv_airaccelerate` | How much players can steer while in the air. |
+| Top player speed | `sv_maxspeed` | The fastest a player is allowed to move. |
+| Minimum stopping speed | `sv_stopspeed` | The minimum speed used when a player slows down on the ground. |
+| Top object speed | `sv_maxvelocity` | The fastest any moving object may go, along each direction. |
+| Fix crazy physics | `sv_crazyphysics_defuse` | Resets objects whose physics go wild. The game says turning this off should be a last resort, because it lets people crash a Sandbox server with physics tricks. Choices: `0` (Off), `1` (On). |
+| Remove crazy-physics objects | `sv_crazyphysics_remove` | Removes objects whose physics go wild (the same warning as above). Choices: `0` (Off), `1` (On). |
+| Constraint solver passes | `gmod_physiterations` | Extra physics passes make welds, ropes and other constraints more stable, at the cost of server CPU. |
+| Physics speed | `phys_timescale` | Scales how fast physics runs. 1 is normal. |
+
+### Garry's Mod (server.cfg): Network and performance
+
+9 settings in `server.cfg`, shown under **Network and performance** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Idle disconnect time (seconds) | `sv_timeout` | How many seconds without any message from a player before they are dropped. |
+| Connecting timeout (seconds) | `sv_timeout_signon` | The same, for a player who is still connecting. |
+| Max data per player | `sv_maxrate` | The most data per second the server sends one player. 0 means no limit. |
+| Min data per player | `sv_minrate` | The least data per second the server allows for one player. 0 means no minimum. |
+| Max updates per second | `sv_maxupdaterate` | The most updates per second the server sends each player. |
+| Min updates per second | `sv_minupdaterate` | The fewest updates per second the server allows for each player. |
+| Max lag compensation (seconds) | `sv_maxunlag` | The longest delay, in seconds, the server will make up for when checking a hit. |
+| Restart when empty and large (MB) | `sv_memlimit` | If set, the server exits whenever it is empty and using more memory than this many MB, so it can be started fresh. 0 turns it off. |
+| Keep working when empty | `sv_hibernate_think` | On makes the server keep running its game logic even when nobody is on. Choices: `0` (Off), `1` (On). |
+
+### Garry's Mod (server.cfg): Downloads and Workshop
+
+4 settings in `server.cfg`, shown under **Downloads and Workshop** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Allow player uploads | `sv_allowupload` | Lets players upload custom files such as sprays. Choices: `0` (Off), `1` (On). |
+| Players download from the game server | `sv_allowdownload` | Lets players download files straight from the game server. The Facepunch wiki calls this the slowest way (64 kilobytes a second), says it is obsolete, and warns that it opens the server to players spamming file requests. Choices: `0` (Off), `1` (On). |
+| Fast download web address | `sv_downloadurl` | The address of a web server that holds your custom files, so players download from it instead of from the game server. Players try the file with .bz2 added first, then the plain file. The files still have to be marked for download in a Lua file. |
+| Update Workshop items at start | `host_workshop_autoupdate` | 0 stops Workshop addons from updating when the server starts. That protects against a bad update, but an old map can keep players from joining. Choices: `0` (Off), `1` (On). |
+
+### Garry's Mod (server.cfg): Remote console
+
+6 settings in `server.cfg`, shown under **Remote console** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Remote console password | `rcon_password` | The password for the server's remote console (RCON). While it is empty, every remote login is refused. The panel does not use the remote console for this server. Changing it while the server runs disconnects everyone logged in remotely. |
+| Remote login failures before a ban | `sv_rcon_maxfailures` | How many wrong remote console passwords one address may try before it is banned. |
+| Failures in the window | `sv_rcon_minfailures` | How many wrong remote console passwords within the time window below lead to a ban. |
+| Failure window (seconds) | `sv_rcon_minfailuretime` | The number of seconds over which wrong remote console passwords are counted. |
+| Remote login ban length (minutes) | `sv_rcon_banpenalty` | How many minutes someone who fails the remote console login is banned for. |
+| Address that is never banned | `sv_rcon_whitelist_address` | A wrong remote console password from this address never causes a ban (for example 127.0.0.1). |
+
+### Garry's Mod (server.cfg): Logging
+
+5 settings in `server.cfg`, shown under **Logging** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Write a log file | `sv_logfile` | Writes server information to the server's log file. Choices: `0` (Off), `1` (On). |
+| Show the log in the console | `sv_logecho` | Also prints the log information in the server console. Choices: `0` (Off), `1` (On). |
+| One log file | `sv_log_onefile` | Logs to a single file only instead of a new one each time. Choices: `0` (Off), `1` (On). |
+| Compress old logs | `sv_logfilecompress` | Compresses the log file (gzip, ending in .log.gz) when it is closed. Choices: `0` (Off), `1` (On). |
+| Log players' Lua errors | `sv_log_client_errors` | Above 0 writes the Lua errors from players' computers to clientside_errors.txt. 0 only prints them in the console; below 0 does not even print them. |
+
+### Garry's Mod (server.cfg): Sandbox limits
+
+18 settings in `server.cfg`, shown under **Sandbox limits** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Props per player | `sbox_maxprops` | The most props one player can have spawned at once. |
+| Ragdolls per player | `sbox_maxragdolls` | The most ragdolls one player can have spawned at once. |
+| NPCs per player | `sbox_maxnpcs` | The most NPCs one player can have spawned at once. |
+| Vehicles per player | `sbox_maxvehicles` | The most vehicles one player can have spawned at once. |
+| Effects per player | `sbox_maxeffects` | The most effect props one player can have spawned at once. |
+| Scripted entities per player | `sbox_maxsents` | The most scripted entities (the Entities tab of the spawn menu) one player can have spawned at once. |
+| Balloons per player | `sbox_maxballoons` | The most balloons one player can have at once. |
+| Buttons per player | `sbox_maxbuttons` | The most buttons one player can have at once. |
+| Cameras per player | `sbox_maxcameras` | The most cameras one player can have at once. |
+| Dynamite per player | `sbox_maxdynamite` | The most dynamite one player can have at once. |
+| Emitters per player | `sbox_maxemitters` | The most emitters one player can have at once. |
+| Hoverballs per player | `sbox_maxhoverballs` | The most hoverballs one player can have at once. |
+| Lamps per player | `sbox_maxlamps` | The most lamps one player can have at once. |
+| Lights per player | `sbox_maxlights` | The most lights one player can have at once. |
+| Thrusters per player | `sbox_maxthrusters` | The most thrusters one player can have at once. |
+| Wheels per player | `sbox_maxwheels` | The most wheels one player can have at once. |
+| Constraints per player | `sbox_maxconstraints` | The most welds and other constraints (not ropes) one player can make. |
+| Rope constraints per player | `sbox_maxropeconstraints` | The most rope-based constraints one player can make. |
+
+### Garry's Mod (server.cfg): Sandbox rules
+
+8 settings in `server.cfg`, shown under **Sandbox rules** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Everyone is invincible | `sbox_godmode` | On makes every player invincible. Choices: `0` (Off), `1` (On). |
+| Players can hurt players | `sbox_playershurtplayers` | Off stops players damaging each other. Choices: `0` (Off), `1` (On). |
+| Allow noclip | `sbox_noclip` | On lets players use noclip (flying through walls). Choices: `0` (Off), `1` (On). |
+| Spawn with Half-Life 2 weapons | `sbox_weapons` | On gives each player the default Half-Life 2 weapons every time they spawn. Choices: `0` (Off), `1` (On). |
+| Bone manipulation: other objects | `sbox_bonemanip_misc` | On lets players move the bones of other objects such as props. Choices: `0` (Off), `1` (On). |
+| Bone manipulation: NPCs | `sbox_bonemanip_npc` | On lets players move the bones of NPCs. Choices: `0` (Off), `1` (On). |
+| Bone manipulation: players | `sbox_bonemanip_player` | On lets players move the bones of other players. Choices: `0` (Off), `1` (On). |
+| Persistent props save name | `sbox_persist` | If not empty, players can right-click a prop while holding C and choose Make Persistent, so it survives restarts. The props are kept in garrysmod/data/persist under this name. Changing the name saves the persistent props, clears the map and loads the ones saved under the new name. |
+
+### Garry's Mod (server.cfg): TTT rounds
+
+12 settings in `server.cfg`, shown under **TTT rounds** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Round length (minutes) | `ttt_roundtime_minutes` | How long the main part of a round lasts. Starts at 10. |
+| Preparation time (seconds) | `ttt_preptime_seconds` | How long players prepare before each round. Starts at 30. |
+| First preparation time (seconds) | `ttt_firstpreptime` | How long players prepare before the first round after a map change. Starts at 60. |
+| After-round time (seconds) | `ttt_posttime_seconds` | How long the end-of-round screen lasts before the next round. Starts at 30. |
+| Rounds per map | `ttt_round_limit` | How many rounds are played before the map changes. Starts at 6. |
+| Map time limit (minutes) | `ttt_time_limit_minutes` | The total time on one map before the map changes. Starts at 75. |
+| Players needed to start | `ttt_minimum_players` | How many players are needed before a round starts. Starts at 2. |
+| Haste mode | `ttt_haste` | On adds time to the round every time someone dies, so a slow round ends sooner. Starts on. Choices: `0` (Off), `1` (On). |
+| Haste starting time (minutes) | `ttt_haste_starting_minutes` | The time a round starts with in haste mode. Starts at 5. |
+| Haste time per death (minutes) | `ttt_haste_minutes_per_death` | The minutes added to the round for each death in haste mode. Starts at 0.5. |
+| Fighting after the round | `ttt_postround_dm` | On lets everyone fight freely after the round has ended. Starts off. Choices: `0` (Off), `1` (On). |
+| Respawn wave interval (seconds) | `ttt_spawn_wave_interval` | The seconds between spawn waves. 0 spawns players straight away. Starts at 0. |
+
+### Garry's Mod (server.cfg): TTT roles
+
+6 settings in `server.cfg`, shown under **TTT roles** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Share of traitors | `ttt_traitor_pct` | The fraction of players who become traitors: 0.25 is a quarter. Starts at 0.25. |
+| Most traitors | `ttt_traitor_max` | The most traitors there can be in a round. Starts at 32. |
+| Share of detectives | `ttt_detective_pct` | The fraction of players who become detectives. Starts at 0.13. |
+| Most detectives | `ttt_detective_max` | The most detectives there can be in a round. Starts at 32. |
+| Players needed for detectives | `ttt_detective_min_players` | With fewer players than this there are no detectives. Starts at 8. |
+| Karma needed to be a detective | `ttt_detective_karma_min` | Players with less karma than this are not picked as a detective. Starts at 600. |
+
+### Garry's Mod (server.cfg): TTT credits
+
+9 settings in `server.cfg`, shown under **TTT credits** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Traitor starting credits | `ttt_credits_starting` | The equipment credits each traitor starts with. Starts at 2. |
+| Credit award threshold | `ttt_credits_award_pct` | The share of innocent players that must be dead before the traitors earn a credit award: 0.35 is just over a third. Starts at 0.35. |
+| Credits per award | `ttt_credits_award_size` | How many credits each award gives. Starts at 1. |
+| Repeat the award | `ttt_credits_award_repeat` | Whether the award is given again each time the threshold is passed again. Starts on. Choices: `0` (Off), `1` (On). |
+| Credits for killing a detective | `ttt_credits_detectivekill` | The credits traitors get for killing a detective. Starts at 1. |
+| Last traitor bonus | `ttt_credits_alonebonus` | The extra credits a traitor gets when they are alone. Starts at 1. |
+| Detective starting credits | `ttt_det_credits_starting` | The equipment credits each detective starts with. Starts at 1. |
+| Detective credits for a traitor kill | `ttt_det_credits_traitorkill` | The credits detectives get when a traitor is killed. Starts at 0. |
+| Detective credits for a traitor death | `ttt_det_credits_traitordead` | The credits detectives get when a traitor dies. Starts at 1. |
+
+### Garry's Mod (server.cfg): TTT karma
+
+12 settings in `server.cfg`, shown under **TTT karma** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Karma system | `ttt_karma` | On turns karma on. Karma goes down when you kill your own side, and a player with low karma does less damage and can be kicked. Starts on. Choices: `0` (Off), `1` (On). |
+| Starting karma | `ttt_karma_starting` | The karma every player starts with. Starts at 1000. |
+| Highest karma | `ttt_karma_max` | The most karma a player can have. Starts at 1000. |
+| Karma lost per wrongful kill | `ttt_karma_kill_penalty` | The karma taken away for killing a player on your own side. Starts at 15. |
+| Karma gained each round | `ttt_karma_round_increment` | The karma every player gets back at the end of each round. Starts at 5. |
+| Clean round bonus | `ttt_karma_clean_bonus` | The extra karma for a round without wrongful kills. Starts at 30. |
+| Karma for killing a traitor | `ttt_karma_traitorkill_bonus` | The karma gained for killing a traitor. Starts at 40. |
+| Remember karma | `ttt_karma_persist` | On keeps each player's karma when the map changes. Starts off. Choices: `0` (Off), `1` (On). |
+| Kick players with low karma | `ttt_karma_low_autokick` | On kicks (or bans, see below) players whose karma falls below the low karma line. Starts on. Choices: `0` (Off), `1` (On). |
+| Low karma line | `ttt_karma_low_amount` | The karma value below which a player is kicked or banned. Starts at 450. |
+| Ban instead of kick | `ttt_karma_low_ban` | On bans players with low karma instead of just kicking them. Starts on. Choices: `0` (Off), `1` (On). |
+| Low karma ban length (minutes) | `ttt_karma_low_ban_minutes` | How long the ban for low karma lasts. Starts at 60. |
+
+### Garry's Mod (server.cfg): TTT players
+
+8 settings in `server.cfg`, shown under **TTT players** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Idle time before spectating (seconds) | `ttt_idle_limit` | How many seconds a player can do nothing before they are moved to spectator. 0 or less turns it off. Starts at 180. |
+| Kick for changing name mid-round | `ttt_namechange_kick` | On kicks players who change their name during a round. Starts on. Choices: `0` (Off), `1` (On). |
+| Name change ban length (minutes) | `ttt_namechange_bantime` | How long the ban for changing name lasts. Starts at 10. |
+| Dead players can't text-chat with the living | `ttt_limit_spectator_chat` | On stops dead players' chat reaching living players. Starts on. Choices: `0` (Off), `1` (On). |
+| Dead players can't talk to the living | `ttt_limit_spectator_voice` | On stops dead players' voice reaching living players. Starts on. Choices: `0` (Off), `1` (On). |
+| Voice heard by distance | `ttt_locational_voice` | On makes players hear each other's voice only when close. Starts off. Choices: `0` (Off), `1` (On). |
+| Bots start as spectators | `ttt_bots_are_spectators` | On makes bots join as spectators. Starts off. Choices: `0` (Off), `1` (On). |
+| Highlight admins | `ttt_highlight_admins` | On shows admins in the scoreboard. Starts on. Choices: `0` (Off), `1` (On). |

@@ -11,6 +11,8 @@ import dst from "./dst.js";
 import icarus from "./icarus.js";
 import scum from "./scum.js";
 import starrupture from "./starrupture.js";
+import soulmask from "./soulmask.js";
+import garrysmod from "./garrysmod.js";
 import unturned from "./unturned.js";
 
-export const GAME_MODULES = [abiotic, dst, icarus, scum, starrupture, unturned];
+export const GAME_MODULES = [abiotic, dst, icarus, scum, starrupture, unturned, soulmask, garrysmod];
