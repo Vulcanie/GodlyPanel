@@ -8,3 +8,6 @@ data/*
 
 # The panel's secrets (signing key, RCON/Discord/cloud secrets) when run from the repo.
 .godlypanel-secrets/
+
+# Browser-automation session logs
+.playwright-mcp/
