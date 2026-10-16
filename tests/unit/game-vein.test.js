@@ -10,6 +10,9 @@ import { implicitPortsOf } from "../../src/server/data/portRules.js";
 import { deriveLaunch } from "../../src/server/services/batchLaunch.js";
 import { cmdSafe } from "../../src/server/services/windowlessLauncher.js";
 
+// Reads real .bat files and real Windows paths, so it only runs on Windows (CI's Windows job runs it).
+const onWindows = process.platform === "win32";
+
 // VEIN, from the research dossier: server app 2131400, game 1857950, UDP game and query ports, name/password/player limit in
 // Game.ini (Ramjet's Config page), gameplay console variables in Engine.ini, no RCON, no mods.
 
@@ -128,7 +131,7 @@ describe("VEIN start script", () => {
 		assert.match(t.buildStartScript(params({ name: '"&%' })).split("\r\n").find((l) => l.startsWith("start ")), /^start \/MIN "VEIN" /);
 	});
 
-	it("is read by the panel as a direct launch of the shipping program from its own folder", () => {
+	it("is read by the panel as a direct launch of the shipping program from its own folder", { skip: !onWindows }, () => {
 		const dir = fs.mkdtempSync(path.join(os.tmpdir(), "vein-test-"));
 		try {
 			const win64 = path.join(dir, "Vein", "Binaries", "Win64");

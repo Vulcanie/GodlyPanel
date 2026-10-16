@@ -7,6 +7,9 @@ import game, { cfgText, cleanLoginToken, parseAddonIds, downloadAddons } from ".
 import { GAME_TEMPLATES } from "../../src/server/data/gameTemplates.js";
 import { implicitPortsOf } from "../../src/server/data/portRules.js";
 
+// Reads real .bat files and real Windows paths, so it only runs on Windows (CI's Windows job runs it).
+const onWindows = process.platform === "win32";
+
 // Left 4 Dead 2, from the research dossier (nothing was run on a real install of this game): server app 222860, srcds.exe, one game
 // port, a server.cfg the panel writes, an optional login token and Workshop addon ids.
 
@@ -255,7 +258,7 @@ describe("Left 4 Dead 2 Workshop addons", () => {
 		});
 	});
 
-	it("copies a package, or a legacy .bin that is one, to addons/<id>.vpk", async () => {
+	it("copies a package, or a legacy .bin that is one, to addons/<id>.vpk", { skip: !onWindows }, async () => {
 		await withInstall(async (installDir) => {
 			const run = fakeSteamCmd({ 3815658696: { "isiw.vpk": VPK }, 2976027012: { "abc123_legacy.bin": VPK } });
 			const out = await downloadAddons(params({ installDir, mods: "3815658696,2976027012" }), { run });
