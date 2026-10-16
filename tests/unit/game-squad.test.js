@@ -7,6 +7,9 @@ import game, { serverNameText, parseModIds, downloadMods } from "../../src/serve
 import { GAME_TEMPLATES } from "../../src/server/data/gameTemplates.js";
 import { implicitPortsOf } from "../../src/server/data/portRules.js";
 
+// Moves real folders with Windows paths, so it only runs on Windows (CI's Windows job runs it).
+const onWindows = process.platform === "win32";
+
 // Squad, from the research dossier (nothing was run on a real install): server app 403240, SquadGameServer.exe, arguments written
 // KEY=value without a dash, name and player limit in Server.cfg, Workshop mods fetched by SteamCMD into SquadGame\Plugins\Mods.
 
@@ -267,7 +270,7 @@ describe("Squad Workshop mods", () => {
 		});
 	});
 
-	it("moves each mod to SquadGame/Plugins/Mods/<id>, directly containing its files, and cleans up SteamCMD's folder", async () => {
+	it("moves each mod to SquadGame/Plugins/Mods/<id>, directly containing its files, and cleans up SteamCMD's folder", { skip: !onWindows }, async () => {
 		await withInstall(async (installDir) => {
 			const run = fakeSteamCmd({ 3516838562: { "modinfo.smi": "x", "ModLoader.uplugin": "{}", "Content/a.uasset": "y" }, 3726472400: { "Content/b.uasset": "z" } });
 			const out = await downloadMods(params({ installDir, mods: "3516838562,3726472400" }), { run });
@@ -283,7 +286,7 @@ describe("Squad Workshop mods", () => {
 		});
 	});
 
-	it("replaces an older copy of the same mod instead of mixing into it", async () => {
+	it("replaces an older copy of the same mod instead of mixing into it", { skip: !onWindows }, async () => {
 		await withInstall(async (installDir) => {
 			const old = path.join(installDir, "SquadGame", "Plugins", "Mods", "3516838562");
 			await fsp.mkdir(old, { recursive: true });
@@ -294,7 +297,7 @@ describe("Squad Workshop mods", () => {
 		});
 	});
 
-	it("reports a mod Steam did not give, keeps the others, and warns about one nested too deep", async () => {
+	it("reports a mod Steam did not give, keeps the others, and warns about one nested too deep", { skip: !onWindows }, async () => {
 		await withInstall(async (installDir) => {
 			const run = fakeSteamCmd({ 3726472400: { "inner/Content/b.uasset": "z" }, 3516838562: { "Content/a.uasset": "y" } });
 			const out = await downloadMods(params({ installDir, mods: "1111111111,3726472400,3516838562" }), { run });
