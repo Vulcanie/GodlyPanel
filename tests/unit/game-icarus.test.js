@@ -7,6 +7,9 @@ import icarus, { batSafeName } from "../../src/server/data/games/icarus.js";
 import { deriveLaunch } from "../../src/server/services/batchLaunch.js";
 import { cmdSafe } from "../../src/server/services/windowlessLauncher.js";
 
+// Reads real .bat files and real Windows paths, so it only runs on Windows (CI's Windows job runs it).
+const onWindows = process.platform === "win32";
+
 // Icarus, as the research dossier describes it: UDP game port and query port, the name given as -SteamServerName=, the
 // settings file written before the first start, no RCON, and no -CreateProspect in the start script.
 
@@ -114,7 +117,7 @@ describe("Icarus start script", () => {
 		assert.equal(batSafeName("  My   Server  "), "My Server");
 	});
 
-	it("can be read back by the panel's direct-launch reader", () => {
+	it("can be read back by the panel's direct-launch reader", { skip: !onWindows }, () => {
 		const dir = fs.mkdtempSync(path.join(os.tmpdir(), "icarus-launch-"));
 		try {
 			const exe = path.join(dir, "Icarus", "Binaries", "Win64", "IcarusServer-Win64-Shipping.exe");

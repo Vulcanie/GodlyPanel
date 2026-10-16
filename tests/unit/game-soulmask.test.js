@@ -8,6 +8,9 @@ import { implicitPortsOf } from "../../src/server/data/portRules.js";
 import { deriveLaunch } from "../../src/server/services/batchLaunch.js";
 import { cmdSafe } from "../../src/server/services/windowlessLauncher.js";
 
+// Reads real .bat files and real Windows paths, so it only runs on Windows (CI's Windows job runs it).
+const onWindows = process.platform === "win32";
+
 // Soulmask, from the research dossier: everything is on the launch line, the Shipping program is started directly with
 // SteamAppId set, and the panel saves it through its local telnet console before a stop.
 
@@ -165,7 +168,7 @@ describe("Soulmask start script", () => {
 		assert.ok(launchLine(params({ serverPassword: "pw\\" })).includes('-PSW="pw"'));
 	});
 
-	it("can be read back by the panel's direct-launch reader, with SteamAppId", () => {
+	it("can be read back by the panel's direct-launch reader, with SteamAppId", { skip: !onWindows }, () => {
 		const dir = fs.mkdtempSync(path.join(os.tmpdir(), "soulmask-launch-"));
 		try {
 			const exe = path.join(dir, "WS", "Binaries", "Win64", "WSServer-Win64-Shipping.exe");

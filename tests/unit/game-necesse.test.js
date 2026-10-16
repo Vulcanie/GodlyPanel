@@ -9,6 +9,9 @@ import { cmdSafe } from "../../src/server/services/windowlessLauncher.js";
 import { classify } from "../../src/server/services/serverProcesses.js";
 import { detectFromScript } from "../../src/server/util/scriptPorts.js";
 
+// Reads real .bat files and real Windows paths, so it only runs on Windows (CI's Windows job runs it).
+const onWindows = process.platform === "win32";
+
 // Necesse, from the research dossier (nothing was run on a real install): server tool app 1169370, the bundled jre\bin\java.exe running
 // Server.jar, one UDP game port, everything on the launch line, no server.cfg written by the panel, no graceful stop.
 
@@ -139,7 +142,7 @@ describe("Necesse start script", () => {
 		await assert.rejects(t.resolveParams({ name: "x", sessionName: "w", serverPassword: 'a"b' }), /password/i);
 	});
 
-	it("can be read back by the panel's direct-launch reader", () => {
+	it("can be read back by the panel's direct-launch reader", { skip: !onWindows }, () => {
 		const dir = fs.mkdtempSync(path.join(os.tmpdir(), "necesse-launch-"));
 		try {
 			const exe = path.join(dir, "jre", "bin", "java.exe");
@@ -211,7 +214,7 @@ describe("Necesse server entry", () => {
 		assert.equal(entry.windowMode, "minimized");
 	});
 
-	it("owns the bundled java.exe and nobody else's, by its path", () => {
+	it("owns the bundled java.exe and nobody else's, by its path", { skip: !onWindows }, () => {
 		const found = classify(entry, [
 			{ pid: 10, path: "C:\\Servers\\necesse\\jre\\bin\\java.exe" },
 			{ pid: 11, path: "C:\\Program Files\\Java\\jdk-21\\bin\\java.exe" },

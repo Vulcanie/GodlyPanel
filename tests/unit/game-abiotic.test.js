@@ -7,6 +7,9 @@ import game, { SANDBOX_DEFAULTS } from "../../src/server/data/games/abiotic.js";
 import { implicitPortsOf } from "../../src/server/data/portRules.js";
 import { deriveLaunch } from "../../src/server/services/batchLaunch.js";
 
+// Reads real .bat files and real Windows paths, so it only runs on Windows (CI's Windows job runs it).
+const onWindows = process.platform === "win32";
+
 // Abiotic Factor, from the research dossier (developer wiki plus a real SteamCMD install of server app 2857200, build 24343458).
 
 const { template, backup, logs, launchOptions } = game;
@@ -137,7 +140,7 @@ describe("Abiotic Factor start script", () => {
 		assert.doesNotMatch(script.replace(/\r\n/g, ""), /[\r\n]/);
 	});
 
-	it("is read by the panel as a direct launch (so 'no window' mode is available) of the Shipping program", () => {
+	it("is read by the panel as a direct launch (so 'no window' mode is available) of the Shipping program", { skip: !onWindows }, () => {
 		const dir = fs.mkdtempSync(path.join(os.tmpdir(), "abiotic-test-"));
 		try {
 			const win64 = path.join(dir, "AbioticFactor", "Binaries", "Win64");
