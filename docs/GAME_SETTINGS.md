@@ -39,6 +39,9 @@ Some games are set up by the arguments on the command that starts them, not by a
 - [Barotrauma](#barotrauma)
 - [Necesse](#necesse)
 - [Left 4 Dead 2](#left-4-dead-2)
+- [Squad](#squad)
+- [Arma Reforger](#arma-reforger)
+- [VEIN](#vein)
 
 ## ARK: Survival Ascended / Evolved
 
@@ -3560,3 +3563,301 @@ The Valve list that the settings come from is a 2021 dump of game version 2.2.2.
 | Window for wrong passwords (seconds) | `sv_rcon_minfailuretime` | The number of seconds over which wrong remote console passwords are counted. |
 | Remote login ban length (minutes) | `sv_rcon_banpenalty` | How many minutes someone who fails the remote console login is banned for. |
 | Allow the banid command | `sv_banid_enabled` | Whether the server supports the banid command for banning players. Choices: `0` (Off), `1` (On). |
+
+## Squad
+
+Squad is set up by the files in `SquadGame\ServerConfig` (the name, player limit, map rotation, admins) and by a few arguments on the command that starts it, which are the **Launch options** on the Settings tab. The panel writes the server's name and player limit into `Server.cfg` when it creates the server. The other files are edited by hand with a text editor.
+
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#squad).
+
+**The settings files are not in the Settings tab.** They use `//` for comments, which the panel's file readers would show as settings, and `Server.cfg` keeps the name between double quotes. Edit them with a text editor while the server is stopped; the game reads them when it starts, and its updates do not overwrite them (new settings have to be added by hand). `Server.cfg` is `Key=value` per line: ServerName (keep the double quotes, or the server may not be visible), ShouldAdvertise, IsLANMatch, MaxPlayers, NumReservedSlots, PublicQueueLimit, MapRotationMode, team change and team-kill rules, and more. The wiki page Server Configuration lists them.
+**Admins** are in `Admins.cfg`: a group line `Group=Admin:kick,ban,changemap` and then `Admin=<SteamID64>:Admin` for each person (the wiki asks for the 17-digit SteamID64). Permission names include changemap, kick, ban, balance, chat, cheat, private, config, reserve, immune and manageserver. A group with only `reserve` gives a reserved slot.
+**There is no join password setting.** The game's own `Server.cfg` has no key for one (a `ServerPassword` line is mentioned only by third-party pages and was not confirmed). The wiki's way is the console command `AdminSetServerPassword <password>`, used by an admin with the `private` permission, and it sets the password on the running server.
+**Maps:** the server starts with `RANDOM=NONE`, and what is played next is set by `MapRotationMode` in `Server.cfg`: `LevelList` and `LayerList` follow `LevelRotation.cfg` and `LayerRotation.cfg` (one name per line, comments on their own line); `LayerList_Vote` lets players vote and uses `LayerVoting.cfg` and `VoteConfig.cfg`. The wiki says a freshly installed server votes on layers. A layer name must be written exactly (`Belaya_AAS_v1`); a typo stops it loading.
+**Stop:** the game's documented clean stop is Ctrl+C in its window. The panel closes the window and, after 15 seconds, ends the program. No source documents a saved world, so nothing is known to be lost, but players are disconnected and whether closing the window ends the server promptly was not tested. All Squad servers run as `SquadGameServer.exe`; the panel only closes the one that runs from this server's folder.
+**No player count.** The game's remote console can report one, but the panel does not talk to it, so the Players page shows only whether the server is running. The remote console is off: the panel writes `Rcon.cfg` with an empty `Password`, which the wiki says keeps it off. To use an outside tool such as SquadJS, set a long `Password` in `Rcon.cfg` (and a different `Port` than 21114 for a second server on this PC).
+**Ports:** game 7787 (and 7788), Steam query 27165 (and 27166), beacon 15000 (one per server) and, if turned on, the remote console 21114. The wiki opens each of them for both UDP and TCP. The panel keeps 7788 free but does not keep 27166 free or check the beacon port against other servers. The Ports section cannot rewrite this game's start script, so to change a port, edit `Start_Squad.bat` by hand (keep `Port=` first on the line) and stop and start the server.
+**Before the first start:** close the Steam program on this PC (the wiki says the server will not start with it open), allow `SquadGameServer.exe` through the firewall, and install the Visual C++ 2013 and 2015 runtimes and the DirectX June 2010 runtime that the wiki lists. Playing on the same network as the server needs NAT loopback on the router, and playing on the server PC itself means starting the server before Steam. Third-party hosting guides, not the wiki, estimate 16 GB of memory at 50 players and 32 GB at 80.
+**Mods:** Squad mods are Steam Workshop items. The ids given when the server is created are downloaded once, with SteamCMD, into `SquadGame\Plugins\Mods\<id>`; the server does not fetch them itself and there is no mod list in `Server.cfg` or on the launch line. Each mod's layers must be added to the rotation file by hand (the exact names are on its Workshop page), and some mods also need a line in `ModsConfig.cfg`, whose format the panel does not know. Every player needs the same mods. The panel does not update them later, a game update can stop a mod from working until its author updates it, and some are many gigabytes. To add a mod later, copy its Workshop download into that folder while the server is stopped.
+**Licensing:** a server made here is unlicensed. The wiki says unlicensed servers appear only in the Custom Servers browser; licensed ones need at least 60 slots and 10 admins and a key from the game's makers placed in `License.cfg`. The panel does not handle a license.
+The research could not confirm which program stays running after `SquadGameServer.exe` starts, the default ports the game uses when an argument is missing, or the files a fresh install ships. The first start on a real install should be checked against this guide.
+
+## Arma Reforger
+
+Arma Reforger keeps everything in one JSON file, `Configs\server-config.json` in the server's folder: the name, passwords, scenario, player limit, rules, saving and the mod list. The server finds it from the `-config` argument on the launch line, which also sets the frame rate limit and the profile folder.
+
+- `server-config.json`: The server's name, passwords, scenario, player limit, rules, autosave, network ports and mod list.
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#arma-reforger).
+
+Players join through the in-game server browser, or by IP address and the game port (UDP 2001 by default). Forward the game port and the Steam query port on the router.
+Mods are not a launch argument. They are the `game.mods` list in the JSON file, one entry per mod with its Workshop id, for example `[{"modID": "5D6EBC81EB1842EF", "name": "Enfusion Persistence Framework"}]`. The id is the 16-letter code in the mod's Workshop web address, not a Steam number. The Bohemia wiki spells the key `modID`; another site writes `modId`, and the key is case-sensitive, so use the wiki's. A mod's own dependencies must be listed as their own entries. The server downloads the mods itself the next time it starts, and players get them when they join. `#restart` in the game does not reload the list.
+Admins are the `game.admins` list: player identity ids or Steam ids, up to 20. A listed admin can type `#login` without a password. Everyone else uses `#login` and the admin password.
+The scenario is one `.conf` path. To see the paths, add the -listScenarios launch option, start the server once and read its log.
+The server has no known clean way to be stopped from the panel: Stop closes its window and, after 15 seconds, ends it. It autosaves every 10 minutes by default (Saving group), so a forced stop can lose that much play.
+The game also has a remote console (UDP port 19999, set up in the `rcon` part of the file, needs a password of 3 or more letters). The panel does not use it and the file the panel writes has none.
+The BattlEye file `BattlEye\BEServer_x64.cfg` in the server's folder must only ever have lines added to it, never edited, or BattlEye stops working. The panel does not touch it.
+Change `publicPort` and `a2s.port` here if you move the ports: the Ports section changes the panel's own record but not this file.
+
+### Reforger: Server
+
+6 settings in `server-config.json`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server name | `game.name` | The name shown in the in-game server browser. Up to 100 characters. |
+| Join password | `game.password` | The password players must type to join. Leave it empty for a server anyone can join. |
+| Admin password | `game.passwordAdmin` | Lets a player take admin control of the server: in the lobby press C, or in the game press Return, then type #login followed by this password. It cannot contain spaces. |
+| Scenario | `game.scenarioId` | The scenario (mission) the server runs, written as the path of its .conf file. Only one can be set: Arma Reforger does not rotate missions. To see the paths, add the -listScenarios launch option and read the server's log. |
+| Max players | `game.maxPlayers` | The most players that can be on the server at once, from 1 to 128. The default is 64. |
+| Listed in the server browser | `game.visible` | Whether the server shows up in the in-game server browser. Turn it off for a private server that friends join by IP address. The default is on. |
+
+### Reforger: Players
+
+3 settings in `server-config.json`, shown under **Players** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Allow Xbox and PlayStation players | `game.crossPlatform` | Yes lets players on PC, Xbox and PlayStation join; no accepts PC players only (the default). Console players cannot install mods, so a server with mods may turn them away. |
+| Join queue size | `operating.joinQueue.maxSize` | How many players can wait in line to join when the server is full, from 0 to 50. 0 turns the queue off, which is the default. |
+| Reserved slot after a kick (seconds) | `operating.slotReservationTimeout` | How long the server and the game's backend keep a slot free for a player who was kicked by the network system, so they can come back. From 5 to 300 seconds, default 60. |
+
+### Reforger: Rules
+
+6 settings in `server-config.json`, shown under **Rules** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| BattlEye anti-cheat | `game.gameProperties.battlEye` | Turns the BattlEye anti-cheat on or off for the server. It is on by default. |
+| Fast validation | `game.gameProperties.fastValidation` | How the server checks that a joining player's copy of the map matches the server's. On exchanges the least data. The wiki says to keep it on for any server that people join over the internet; turn it off only when testing on one PC, to find exactly what differs after a mismatch. |
+| First person view only | `game.gameProperties.disableThirdPerson` | Forces every player to use the first-person view, with no third-person camera. |
+| Hide the voice chat display | `game.gameProperties.VONDisableUI` | Players do not see the voice chat (VON, voice over network) display on their screen. |
+| Hide the direct speech display | `game.gameProperties.VONDisableDirectSpeechUI` | Players do not see the voice chat display for direct speech, the talking to people next to you. |
+| Talk on other factions' radios | `game.gameProperties.VONCanTransmitCrossFaction` | On lets players speak on the radios of other factions. Off, the default, lets them only listen to those. |
+
+### Reforger: View distance
+
+3 settings in `server-config.json`, shown under **View distance** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Farthest view distance | `game.gameProperties.serverMaxViewDistance` | The farthest distance players can see, set by the server. From 500 to 10000, default 1600. |
+| Smallest grass distance (meters) | `game.gameProperties.serverMinGrassDistance` | The minimum distance, in meters, at which players see grass. 0, the default, forces nothing on players. Otherwise use a value from 50 to 150. |
+| Network view distance | `game.gameProperties.networkViewDistance` | The farthest range at which the server sends things (vehicles, people and so on) to a player. From 500 to 5000, default 1500. A larger range asks more of the server and the network. |
+
+### Reforger: Saving
+
+6 settings in `server-config.json`, shown under **Saving** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Autosave every (minutes) | `game.gameProperties.persistence.autoSaveInterval` | How often the server saves the current mission on its own, when the mission supports it. From 0 to 60 minutes, default 10. 0 turns autosave off. If the server is ever stopped by force, up to this much play can be lost. |
+| Saves to keep | `game.gameProperties.persistence.saveRetention` | How many save points are kept for the current mission, from 1 to 128. The default is 10. |
+| Continue from the latest save | `game.gameProperties.persistence.loadSessionSave` | Loads the latest available save point automatically on the first start. The default is on. |
+| Keep saves after the mission ends | `game.gameProperties.persistence.keepSessionSave` | Keeps the save points of a playthrough after its mission is finished. The default is off. |
+| Server number (hive id) | `game.gameProperties.persistence.hiveId` | A number from 0 to 16383 that tells servers apart when several share the same save database, so their saves do not mix. The default is 0, which is right for a single server. |
+| Save players every (seconds) | `operating.playerSaveTime` | How often players are saved, for both online and local storage. The default is 120 seconds. A player save can also be requested at any time. |
+
+### Reforger: AI
+
+2 settings in `server-config.json`, shown under **AI** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Turn off all AI | `operating.disableAI` | The server does not run any AI at all, so no computer-controlled characters exist. It is off by default. |
+| Most AI characters | `operating.aiLimit` | The most AI characters that can exist at once. A negative number, the default of -1, means no limit. The -aiLimit launch option, if it is used, overrides this. |
+
+### Reforger: Network
+
+6 settings in `server-config.json`, shown under **Network** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Game port (UDP) | `publicPort` | The UDP port registered for the server and the one players connect to. The default is 2001. If the server sits behind a router, this is the port forwarded to it. The Ports section does not change this file, so change the port in both places. |
+| Bind address | `bindAddress` | The IP address of this PC the server listens on. The wiki says to leave it out of the file for almost everyone; left out or empty it listens on every address (0.0.0.0). |
+| Bind port (UDP) | `bindPort` | The UDP port the server listens on. The wiki says to leave it out so it follows the game port above; only needed for special port forwarding. |
+| Public address | `publicAddress` | The IP address registered with the game's backend, which players use to reach the server. Left out or empty, the backend finds it itself, which is what the wiki recommends. The word local makes the server use the address of this PC's network card. |
+| Steam query address | `a2s.address` | The IP address the Steam server-query service listens on. It can limit queries to one network card. 0.0.0.0 means every address. |
+| Steam query port (UDP) | `a2s.port` | The UDP port the Steam server query (A2S) listens on. The game's own default is 17777; the panel gives a new server 17877 so it does not clash with another game. The Ports section does not change this file. |
+
+### Reforger: Remote console
+
+5 settings in `server-config.json`, shown under **Remote console** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Remote console address | `rcon.address` | The IP address the game's remote console listens on. Required when the remote console is used. The panel does not use this console. |
+| Remote console port (UDP) | `rcon.port` | The UDP port the game's remote console listens on. The default is 19999. |
+| Remote console password | `rcon.password` | The password for the remote console. The console does not start without it. It must have at least 3 characters and no spaces. |
+| Remote console clients | `rcon.maxClients` | The most remote console clients connected at once, from 1 to 16. The default is 16. A client that quits stays counted for another 30 seconds. |
+| Remote console rights | `rcon.permission` | What everyone who connects to the remote console may do. Choices: `admin` (Admin: can run any command), `monitor` (Monitor: only commands that do not change the server). |
+
+### Reforger: Advanced
+
+3 settings in `server-config.json`, shown under **Advanced** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Report the real player list | `operating.lobbyPlayerSynchronise` | Sends the list of players on the server to the game's backend with each heartbeat, so the player count in the server browser matches the real number. It is on by default. |
+| No crash reports | `operating.disableCrashReporter` | Turns off the report the server sends automatically when it crashes. It has the same effect as the -disableCrashReporter launch option. Off by default. |
+| Stay up when the backend is lost | `operating.disableServerShutdown` | On, the server does not shut itself down when its connection to the game's backend is lost. Other causes, such as a broken settings file, still shut it down. Off by default. |
+
+## VEIN
+
+VEIN keeps its settings in two files in the server's install folder, under `Vein\Saved\Config\WindowsServer`. `Game.ini` holds the name, join password, player limit, admins and whitelist. `Engine.ini` holds the rules of the world (PvP, zombies, loot, time) as console variables under `[ConsoleVariables]`. The game's ports are arguments on the start script's launch line (**Launch options**).
+
+- `Game.ini`: The server's name and description, join password, player limit, admins (by Steam ID), the whitelist, the Steam VAC switch and the Discord chat links.
+- `Engine.ini`: The rules of the world as `vein.*` console variables: PvP, zombies and hordes, time speed, loot, how long water and power last, and autosave.
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#vein).
+
+There is no admin password. A player becomes an admin only when their 17-digit Steam ID (SteamID64) is in `AdminSteamIDs` or `SuperAdminSteamIDs`. The panel writes no admin line, so add your own on the Settings tab, or in the file with 'Edit as text'. Every entry after the first needs a leading plus sign (`+AdminSteamIDs=`), or it replaces the one before it.
+Stop the server before editing the files and restart it afterwards: VEIN does not apply file changes while it runs. The game removes lines that only repeat a default value, so a line you set to the default may vanish; nothing is broken.
+The panel writes `Engine.ini` with only its `[ConsoleVariables]` header. To change a rule, add its line under that header with 'Edit as text', for example `vein.PvP=0`. The Settings tab explains the rules it knows, but the community lists of them are incomplete and out of date in places. Use 1 and 0 for on and off.
+Stopping the server asks its console window to close. No source documents a safe shutdown, a stop command or a remote console (the old RCON port was removed in 0.019 Hotfix 2). It is not known whether the world is saved on the way out, so use the in-game admin menu's save button (Server section) before you stop it.
+Forward the two UDP ports (game and query). If a Windows server does not show up in the server browser and its log says the Steam dedicated server API failed to start, Ramjet suggests running it with administrator rights. Players can also connect directly with the address and game port.
+VEIN has no Steam Workshop and no official server mod support, and the panel adds nothing for mods. The server needs at least 8 GB of RAM to start, and more as players join.
+
+### VEIN (Game.ini): Server
+
+4 settings in `Game.ini`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Max players | `MaxPlayers` in `[/Script/Engine.GameSession]` | The most players that can be on at once. Ramjet's example is 16 (the figure it treats as the default), the wiki's example is 64, and one host reports about 32 as a practical limit. More players need more memory: the server needs at least 8 GB of RAM just to start. |
+| Server name | `ServerName` in `[/Script/Vein.VeinGameSession]` | The name shown in VEIN's server browser. One host limits it to 64 characters. |
+| Server description | `ServerDescription` in `[/Script/Vein.VeinGameSession]` | Shown when a player selects your server in the browser. Use it for rules, the play style or a Discord link, like a message of the day. |
+| Listed in the server browser | `bPublic` in `[/Script/Vein.VeinGameSession]` | False hides the server from the in-game browser. One host reports that this may not take effect on the current build, so also set a password if the server must stay private. Choices: `True` (Listed), `False` (Not listed). |
+
+### VEIN (Game.ini): Access
+
+2 settings in `Game.ini`, shown under **Access** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Join password | `Password` in `[/Script/Vein.VeinGameSession]` | What players type to join. Leave it empty for a server anyone can join. It is not an admin password. A host reports that passwords are case-sensitive and that letters, numbers, dashes and underscores are the safe characters. |
+| Steam VAC anti-cheat | `bVACEnabled` in `[OnlineSubsystemSteam]` | Turns Valve's anti-cheat on (1) or off (0) for the server. Ramjet's example has it off. Choices: `0` (Off), `1` (On). |
+
+### VEIN (Game.ini): Admins
+
+4 settings in `Game.ini`, shown under **Admins** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Super admin (Steam ID) | `SuperAdminSteamIDs` in `[/Script/Vein.VeinGameSession]` | A super admin is an admin who can also promote and demote other admins from inside the game; it is enough to list yourself here. A Steam ID is the 17-digit SteamID64 (it starts with 7656); steamid.io looks it up from a profile link. Put the first one here and any more under 'Extra super admin'. |
+| Extra super admin (Steam ID) | `+SuperAdminSteamIDs` in `[/Script/Vein.VeinGameSession]` | A second or later super admin. Every entry after the first has to start with a plus sign in the file, or it replaces the one before it. Add more of these lines in the file with 'Edit as text'. |
+| Admin (Steam ID) | `AdminSteamIDs` in `[/Script/Vein.VeinGameSession]` | Makes one Steam player an admin, who can use the in-game console and admin menu. There is no admin password; admin comes only from the Steam ID. A new game file may carry the placeholder 1234, which you replace. A Steam ID is the 17-digit SteamID64 (it starts with 7656); steamid.io looks it up from a profile link. |
+| Extra admin (Steam ID) | `+AdminSteamIDs` in `[/Script/Vein.VeinGameSession]` | A second or later admin. Every entry after the first has to start with a plus sign in the file, or it replaces the one before it and only the last counts. Add more of these lines in the file with 'Edit as text'. |
+
+### VEIN (Game.ini): Whitelist
+
+2 settings in `Game.ini`, shown under **Whitelist** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Allowed player (Steam ID) | `WhitelistedPlayers` in `[/Script/Vein.VeinGameStateBase]` | A whitelist (VEIN 0.023 and later). If there is any entry, only these players can join. Leave the section out to let anyone join. A Steam ID is the 17-digit SteamID64 (it starts with 7656); steamid.io looks it up from a profile link. |
+| Extra allowed player (Steam ID) | `+WhitelistedPlayers` in `[/Script/Vein.VeinGameStateBase]` | A second or later whitelisted player. Every entry after the first has to start with a plus sign in the file. Add more of these lines in the file with 'Edit as text'. |
+
+### VEIN (Game.ini): Network
+
+1 setting in `Game.ini`, shown under **Network** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Bind address | `BindAddr` in `[/Script/Vein.VeinGameSession]` | The IP address the server listens on. Normally it does not need to be set or changed; it matters only for a PC with several network addresses. |
+
+### VEIN (Game.ini): Discord
+
+2 settings in `Game.ini`, shown under **Discord** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Discord chat webhook | `DiscordChatWebhookURL` in `[/Script/Vein.ServerSettings]` | Sends the in-game global chat to a Discord channel. Make the webhook in Discord (channel settings, Integrations, Webhooks) and keep the web address in double quotes. |
+| Discord admin reports webhook | `DiscordChatAdminWebhookURL` in `[/Script/Vein.ServerSettings]` | Sends admin reports to a separate Discord channel. Written the same way as the chat webhook, in the same section. |
+
+### VEIN (Game.ini): Display
+
+1 setting in `Game.ini`, shown under **Display** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Show admin badges on the scoreboard | `GS_ShowScoreboardBadges` in `[/Script/Vein.ServerSettings]` | Shows (1) or hides (0) the admin badges on the in-game scoreboard. Choices: `1` (Show), `0` (Hide). |
+
+### VEIN (Engine.ini): Players and bases
+
+7 settings in `Engine.ini`, shown under **Players and bases** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Players can hurt each other | `vein.PvP` in `[ConsoleVariables]` | Whether players can damage other players. The list gives 1 (on) as the default. Choices: `1` (On), `0` (Off). |
+| Players can damage bases | `vein.BuildObjectPvP` in `[ConsoleVariables]` | Whether players can damage other players' bases. The list gives 1 (on) as the default. Choices: `1` (On), `0` (Off). |
+| Base damage | `vein.BaseDamage` in `[ConsoleVariables]` | Turns damage to bases on or off. The list gives 1 (on) as the default. Choices: `1` (On), `0` (Off). |
+| Bases decay over time | `vein.BuildObjectDecay` in `[ConsoleVariables]` | When on (1), bases slowly decay. The list gives 1 as the default and does not give the other allowed values. |
+| Permadeath | `vein.Permadeath` in `[ConsoleVariables]` | When on (1), players can not respawn after they die. The list gives 0 (off) as the default. |
+| Players always turn into zombies on death | `vein.AlwaysBecomeZombie` in `[ConsoleVariables]` | When on (1), a player who dies always becomes a zombie. The list gives 0 (off) as the default. |
+| XP gain | `vein.Stats.XPMultiplier` in `[ConsoleVariables]` | How fast players earn experience. The list gives a range of 0.1 to 10 and a default of 1. |
+
+### VEIN (Engine.ini): Zombies
+
+8 settings in `Engine.ini`, shown under **Zombies** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Zombie health | `vein.Zombies.Health` in `[ConsoleVariables]` | How much health zombies have. The list gives a range of 0.1 to 100 and a default of 40. |
+| Zombie speed | `vein.Zombies.SpeedMultiplier` in `[ConsoleVariables]` | How fast zombies move, as a multiplier. The list gives a range of 0.1 to 3 and a default of 1. |
+| Zombie damage | `vein.Zombies.DamageMultiplier` in `[ConsoleVariables]` | How hard zombies hit, as a multiplier. The list gives a range of 0.1 to 5 and a default of 1. |
+| Zombie hearing | `vein.Zombies.HearingMultiplier` in `[ConsoleVariables]` | How far zombies hear noise, as a multiplier. The list gives a range of 0.1 to 2 and a default of 1. |
+| Zombie sight | `vein.Zombies.SightMultiplier` in `[ConsoleVariables]` | How far zombies see, as a multiplier. The list gives a range of 0.1 to 2 and a default of 1. |
+| Zombies can climb | `vein.Zombies.CanClimb` in `[ConsoleVariables]` | Whether zombies can climb over obstacles. The list gives 1 (on) as the default and does not give the other allowed values. |
+| Zombies only take headshot damage | `vein.Zombies.HeadshotOnly` in `[ConsoleVariables]` | When on (1), zombies only take damage from headshots. The list gives 0 (off) as the default. |
+| Infection chance per hit | `vein.ZombieInfectionChance` in `[ConsoleVariables]` | The chance that a zombie hit infects the player. The list gives a range of 0 to 1 and a default of 0.01, which is 1 in 100. |
+
+### VEIN (Engine.ini): Spawning and hordes
+
+12 settings in `Engine.ini`, shown under **Spawning and hordes** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Zombies and animals spawn | `vein.AISpawner.Enabled` in `[ConsoleVariables]` | Turns AI spawning on or off. The list gives 1 (on) as the default. Choices: `1` (On), `0` (Off). |
+| Spawn limit (all) | `vein.AISpawner.SpawnCapMultiplier` in `[ConsoleVariables]` | A multiplier for the most AI that can exist at once. The list gives a default of 1 and no range. |
+| Spawn limit (zombies) | `vein.AISpawner.SpawnCapMultiplierZombie` in `[ConsoleVariables]` | A multiplier for the most zombies that can exist at once. The list gives a default of 1 and no range. |
+| Share of zombies that walk | `vein.AISpawner.ZombieWalkerPercentage` in `[ConsoleVariables]` | The fraction of zombies that are walkers, from 0 to 1. The list gives a default of 0.7. |
+| Share of zombies that crawl | `vein.AISpawner.ZombieCrawlerPercentage` in `[ConsoleVariables]` | The fraction of zombies that are crawlers, from 0 to 1. The list gives a default of 0.1. |
+| Share of zombies that start asleep | `vein.AISpawner.ZombieLayerPercentage` in `[ConsoleVariables]` | The fraction of zombies that start lying down, asleep, from 0 to 1. The list gives a default of 0.1. |
+| Horde mode | `vein.AISpawner.HordeMode` in `[ConsoleVariables]` | Turns horde attacks on or off. The list gives 0 (off) as the default. Choices: `1` (On), `0` (Off). |
+| Horde spawning | `vein.AISpawner.Horde.Enabled` in `[ConsoleVariables]` | Turns horde spawning on or off. The list gives 1 (on) as the default and does not give the other allowed values. |
+| Hordes per minute | `vein.AISpawner.Hordes.ChancePerMinute` in `[ConsoleVariables]` | The average number of hordes that start per minute. The list gives a default of 0.05. |
+| Horde length (seconds) | `vein.AISpawner.Hordes.Duration` in `[ConsoleVariables]` | How long each horde event lasts, in seconds. The list gives a default of 120. |
+| Horde chance from noise | `vein.AISpawner.Hordes.NoiseEffect` in `[ConsoleVariables]` | Higher means noise brings more hordes. The list gives a default of 0.1. |
+| Horde chance from scent | `vein.AISpawner.Hordes.ScentEffect` in `[ConsoleVariables]` | Higher means scent brings more hordes. The list gives a default of 0.5. |
+
+### VEIN (Engine.ini): Time
+
+6 settings in `Engine.ini`, shown under **Time** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Time speed | `vein.Time.TimeMultiplier` in `[ConsoleVariables]` | How fast the game world's clock runs. The list gives a range of 1 to 16 and a default of 16. Lower is slower, which also slows hunger and thirst indirectly. |
+| Night time speed | `vein.Time.NightTimeMultiplier` in `[ConsoleVariables]` | A multiplier for how fast time runs at night. The list gives a default of 3. |
+| Night speed starts at (hour) | `vein.Time.NightTimeMultiplierStart` in `[ConsoleVariables]` | The hour of the day when the faster night time starts. The list gives a default of 20. |
+| Night speed ends at (hour) | `vein.Time.NightTimeMultiplierEnd` in `[ConsoleVariables]` | The hour of the day when the faster night time ends. The list gives a default of 6. |
+| Clock runs on an empty server | `vein.Time.ContinueWithNoPlayers` in `[ConsoleVariables]` | When on (1), game time keeps passing when nobody is online. The list gives 0 (off) as the default. |
+| Start day offset | `vein.Time.StartOffsetDays` in `[ConsoleVariables]` | The day offset used for a new world. The list gives a default of 0. |
+
+### VEIN (Engine.ini): Loot and the world
+
+5 settings in `Engine.ini`, shown under **Loot and the world** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Loot scarcity | `vein.Scarcity.Difficulty` in `[ConsoleVariables]` | How much loot there is to find. The lists give a range of 0 to 4 with a default of 2, which they call standard. Choices: `0` (0 - None), `1` (1 - More loot), `2` (2 - Standard), `3` (3 - Less loot), `4` (4 - Impossible). |
+| Loot containers refill | `vein.ContainersRespawn.Enabled` in `[ConsoleVariables]` | Whether loot containers refill after they are emptied. The list gives 1 (on) as the default. Choices: `1` (On), `0` (Off). |
+| Container refill time (seconds) | `vein.ContainersRespawn.Interval` in `[ConsoleVariables]` | How long before emptied loot containers refill. The list gives a range of 600 to 43200 and a default of 10800, which is 3 hours. |
+| Days until the water stops | `vein.Calendar.WaterShutoffTimeDays` in `[ConsoleVariables]` | How many game days until the water supply goes off. The list gives a range of 1 to 999 and a default of 30. |
+| Days until the power stops | `vein.Calendar.ElectricalShutoffTimeDays` in `[ConsoleVariables]` | How many game days until the electricity goes off. The list gives a range of 1 to 999 and a default of 46. |
+
+### VEIN (Engine.ini): Saving
+
+1 setting in `Engine.ini`, shown under **Saving** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Autosave every (seconds) | `vein.Autosave.Interval` in `[ConsoleVariables]` | How often the server saves the world, in seconds. The list gives a default of 300, which is 5 minutes. |

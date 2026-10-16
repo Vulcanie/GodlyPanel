@@ -33,3 +33,14 @@ window to close and then forces it after 15 seconds (30 for Satisfactory), so DS
 | Space Engineers | none | 11 | none | No. Built, **not registered**: the panel can't write a world or config yet |
 | Necesse | none (its config shape fits no parser) | 16 | jar files in a mods folder | No. No graceful stop: its `quit` command cannot be sent |
 | Left 4 Dead 2 | 110 (`server.cfg`) | 15 | Workshop addon ids | No |
+
+## Status (batch 3, 2026-10-16)
+
+Research for batch 3 used a cheaper two-stage process: a small model found the authoritative pages (`SOURCES.md` → `sources.md` per game) and then copied facts out of exactly those pages into fixed tables (`EXTRACT.md`), with `NOT FOUND` for gaps instead of guesses. The build step reads the same pages.
+
+| Game | Settings | Launch args | Mods | Run against a real install |
+|---|---|---|---|---|
+| Squad | none (its `Server.cfg` has comment lines the parser would show as settings) | 14 | Workshop IDs, fetched once at creation | No |
+| Arma Reforger | 40 (`server-config.json`) | 26 | none yet (mods go in `game.mods`) | No |
+| VEIN | 16 (`Game.ini`) + 39 (`Engine.ini` `vein.*`) | 6 | none (no official support) | No |
+| Terraria / tModLoader | research only | | | Not built: vanilla Terraria has no Steam server and tModLoader's Steam install needs a login, so it needs a download-a-zip install step the panel doesn't have |

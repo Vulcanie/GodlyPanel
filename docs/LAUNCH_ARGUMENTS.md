@@ -36,6 +36,9 @@ Settings that live in a game's own settings file are in the [game settings guide
 - [Barotrauma](#barotrauma)
 - [Necesse](#necesse)
 - [Left 4 Dead 2](#left-4-dead-2)
+- [Squad](#squad)
+- [Arma Reforger](#arma-reforger)
+- [VEIN](#vein)
 
 ## Valheim
 
@@ -291,7 +294,7 @@ Example: `+server.queryport 28017`
 
 The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
 
-### `+rcon.ip`
+### Rust: `+rcon.ip`
 
 **Remote console address** (Network). The address the remote console listens on. 127.0.0.1 keeps it to this PC, which is what GodlyPanel needs.
 
@@ -299,7 +302,7 @@ Example: `+rcon.ip 127.0.0.1`
 
 The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
 
-### `+rcon.port`
+### Rust: `+rcon.port`
 
 **Remote console port** (Network). The port of the remote console (TCP). Only for the panel on this PC; never open it in your router.
 
@@ -307,7 +310,7 @@ Example: `+rcon.port 28018`
 
 The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
 
-### `+rcon.password`
+### Rust: `+rcon.password`
 
 **Remote console password** (Network). The remote console's password. Change it from the server's Automation tab so the panel stays in step.
 
@@ -1972,3 +1975,305 @@ Not offered in the Launch options form; the panel sets it and it is best left al
 ### Left 4 Dead 2: `-insecure`
 
 **Turn off Valve Anti-Cheat** (Advanced). Starts the server without Valve Anti-Cheat (VAC). Servers run with it unless this is on the line.
+
+## Squad
+
+Squad is started with arguments written `Name=value` with no dash in front (`Port=7787`), plus `-log` and `-fullcrashdump`. The game's wiki writes them in this exact spelling, so keep it. The server's name and the other settings are in `SquadGame\ServerConfig\Server.cfg`, not here. Changes apply the next time the server starts. These arguments are on the `SquadGameServer.exe` line of the server's start script.
+
+The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
+
+### `Port`
+
+**Game port** (Network). The port players connect to (UDP). The wiki's firewall list says the game uses the next port up too (7788), so keep both free. The panel writes it first on the line, on purpose: the other port arguments also end in "port=". To change it, edit the start script by hand and keep it first; the Ports section cannot rewrite this form of argument.
+
+Example: `Port=7787`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `QueryPort`
+
+**Steam query port** (Network). The port the Steam server list and query tools ask for the server's details on. The wiki's firewall list opens it and the next one up (27166) for both UDP and TCP. To change it, edit the start script by hand; the Ports section cannot rewrite this form of argument.
+
+Example: `QueryPort=27165`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `beaconport`
+
+**Beacon port** (Network). Written in lower case, as the wiki spells it. Every server on the same PC must have its own beacon port; the wiki suggests spacing them 5 apart. It lists the port as open for UDP and TCP. The wiki does not explain what it is used for. To change it, edit the start script by hand.
+
+Example: `beaconport=15000`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `MULTIHOME`
+
+**Bind IP address** (Network). Makes the server use one specific IP address of this PC. Only needed if the PC has several addresses; leave it off to use them all.
+
+Example: `MULTIHOME=192.168.1.20`
+
+### `FIXEDMAXPLAYERS`
+
+**Hard player limit** (Server). The most players that can be on the server, whatever else says. The panel also writes the same number as MaxPlayers in Server.cfg when it creates the server; the wiki does not say how the two interact, so keep them equal.
+
+Example: `FIXEDMAXPLAYERS=80`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `RANDOM`
+
+**Shuffle the map rotation** (Server). Whether the rotation of maps (layers) is shuffled. The panel starts the server with NONE, which every example in the wiki uses. Server.cfg also has its own settings for the rotation (MapRotationMode, RandomizeAtStart).
+
+Values: `NONE` (Never shuffle), `ALWAYS` (Always shuffle), `FIRST` (FIRST (the wiki does not explain this choice)).
+
+Example: `RANDOM=NONE`
+
+### `FIXEDMAXTICKRATE`
+
+**Maximum tick rate** (Performance). The most server updates per second. A higher number is smoother but uses more of the CPU. The wiki's example is 40; leave it off to let the game choose.
+
+Example: `FIXEDMAXTICKRATE=40`
+
+### Squad: `-log`
+
+**Show server window** (Saves and logs). Opens a console window that shows the server log, and keeps the server in a window the panel can close. All the wiki's examples have it. The panel also needs it on the line to read the other arguments here.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-fullcrashdump`
+
+**Full crash dump** (Saves and logs). If the server crashes, saves a full dump file for finding the cause. These files can get quite large.
+
+### Squad: `RCONIP`
+
+**Remote console address** (Remote console). The IP address the remote console (RCON) listens on; 0.0.0.0 is the default public address. The same as IP in Rcon.cfg, according to the file's own comment.
+
+Example: `RCONIP=0.0.0.0`
+
+### Squad: `RCONPORT`
+
+**Remote console port** (Remote console). The port of the remote console. The same as Port in Rcon.cfg; the wiki's default there is 21114. A second server on this PC needs its own. The panel does not use the remote console.
+
+Example: `RCONPORT=21114`
+
+### Squad: `RCONPASSWORD`
+
+**Remote console password** (Remote console). Turns on the remote console with this password; with no password it stays off. A password on the launch line can be read by anyone who can see the PC's running programs, so setting Password in Rcon.cfg is the safer way. Choose a long one: whoever has it can run admin commands.
+
+Example: `RCONPASSWORD=…`
+
+### `RCONMAXCONNECTIONS`
+
+**Remote console connections** (Remote console). How many remote console sessions can be open at once. The same as MaxConnections in Rcon.cfg, where the wiki's default is 5.
+
+Example: `RCONMAXCONNECTIONS=5`
+
+### `RCONSECONDSBEFORETIMEOUTCHECK`
+
+**Remote console idle check (seconds)** (Remote console). Seconds without contact from a connected console before the server checks it is still there. The wiki says it takes 30 to 3600; the same as SecondsBeforeTimeoutCheck in Rcon.cfg (default 120).
+
+Example: `RCONSECONDSBEFORETIMEOUTCHECK=120`
+
+## Arma Reforger
+
+Arma Reforger's server is set up in its JSON file (the Settings tab); the launch line points it at that file and tunes how it runs. Arguments are written with a dash and a space before the value, like `-maxFPS 60`. Changes apply the next time the server starts. These arguments are on the `ArmaReforgerServer.exe` line of the server's start script.
+
+The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
+
+### `-config`
+
+**Settings file** (Required). The JSON file the server reads all its settings from (the Settings tab edits it). With -server instead, the server would ignore this file, so that argument is not offered.
+
+Example: `-config ".\Configs\server-config.json"`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-maxFPS`
+
+**Frame rate limit** (Required). Limits how many times a second the server updates. The wiki says to always set it, to a value from 60 to 120: without it the server can try to use all the resources of the PC. Do not clear this.
+
+Values: `60` (60 (the usual)), `90`, `120` (120 (the most the wiki suggests)). Other values are accepted too.
+
+Example: `-maxFPS 60`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `-profile`
+
+**Profile folder** (Saves and logs). The folder where the server keeps its logs and, by default, the add-ons (mods) it downloads. Without it the game uses one folder in Documents shared by every Reforger server on this PC. The panel sets a folder inside this server's own folder, which its backups and Logs tab look in.
+
+Example: `-profile "C:\Servers\reforger\profile"`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `-logsDir`
+
+**Logs folder** (Saves and logs). The folder, by name inside the profile folder or by full path, where the server keeps its logs, crash dumps and temporary files. The Logs tab looks in the profile folder, so change this only if you know why.
+
+Example: `-logsDir logs`
+
+### `-keepNumOfLogs`
+
+**Logs to keep** (Saves and logs). The most log files the server keeps. The default is 10.
+
+Example: `-keepNumOfLogs 10`
+
+### `-logAppend`
+
+**Keep the log between starts** (Saves and logs). The log is not emptied when the server starts, so the history of earlier runs stays in it.
+
+### `-logLevel`
+
+**Log detail** (Saves and logs). How much the log says. Each level also includes the more serious ones below it: normal logs everything, fatal only the worst problems.
+
+Values: `normal` (Normal: everything), `warning` (Warnings and worse), `error` (Errors and worse), `fatal` (Only fatal problems).
+
+Example: `-logLevel warning`
+
+### `-logTime`
+
+**Time in log lines** (Saves and logs). What each log line starts with: nothing, the time of day, or the date and the time.
+
+Values: `none` (No time), `time` (Time of day (the default)), `datetime` (Date and time).
+
+Example: `-logTime datetime`
+
+### `-logStats`
+
+**Log performance every (milliseconds)** (Saves and logs). Writes performance numbers, such as the server's frame rate, to the log at this interval in milliseconds. Leave it empty to log none.
+
+Example: `-logStats 5000`
+
+### `-logVoting`
+
+**Log votes** (Saves and logs). Adds lines to the log about the voting system: who started a vote, who voted and against whom.
+
+### `-listScenarios`
+
+**List scenarios in the log** (Server). Prints the .conf paths of the available scenarios in the log when the server starts, so you can copy one into the Scenario setting. Workshop scenarios are listed only if no scenario is being loaded.
+
+### `-backendFreshSession`
+
+**Start a new session** (Server). Skips loading the server's earlier session, so it starts like a brand new one. Saves and loads that happen later work as usual.
+
+### `-playerLimits`
+
+**Players per faction** (Server). Sets the most players each faction may have. Written as FactionKey:Number, with several entries separated by commas. This needs a recent game version (1.7.0).
+
+### `-nds`
+
+**Network dynamic simulation** (Network tuning). The server sends each player only the things that matter to them. This number is how many cells wide that area is; the default is 2. A larger number gives a longer network view range but slower server performance. 0 turns the feature off.
+
+Example: `-nds 2`
+
+### `-nwkResolution`
+
+**Network cell size (meters)** (Network tuning). The size of the cells used to decide what to send to a player, from 100 to 1000 meters. Smaller cells mean less pop-in but a shorter network view range. For a long view range use big cells with a small -nds.
+
+Example: `-nwkResolution 500`
+
+### `-staggeringBudget`
+
+**Cells processed per tick** (Network tuning). How many stationary (not moving) cells may be processed in one server update, from 1 to 10201. Left out, it follows the -nds diameter.
+
+Example: `-staggeringBudget 100`
+
+### `-streamingBudget`
+
+**Streaming budget** (Network tuning). The streaming budget shared equally by all connections. It cannot go below 100, so the system does not stall.
+
+Example: `-streamingBudget 1000`
+
+### `-streamsDelta`
+
+**Streams per player limit** (Network tuning). Limits how many streams are opened for a player. If the server has this many more streams open than the player has, it opens no more in that update. From 1 to 1000, default 100.
+
+Example: `-streamsDelta 100`
+
+### `-rpl-timeout-ms`
+
+**Connection timeout (milliseconds)** (Network tuning). The timeout of the connection between the server and a player's game, in milliseconds.
+
+Example: `-rpl-timeout-ms 10000`
+
+### `-addonTempDir`
+
+**Temporary folder for add-ons** (Mods). Where add-ons (mods) are unpacked while they download. The wiki suggests setting it when downloading large mods fails with a curl error 23, so the server has a folder it may write to.
+
+Example: `-addonTempDir "C:\Temp\reforger"`
+
+### `-addonDownloadDir`
+
+**Download folder for add-ons** (Mods). Where the server downloads add-ons (mods) from the Workshop to. They are stored in an addons folder inside it.
+
+Example: `-addonDownloadDir "D:\ReforgerMods"`
+
+### `-addonsVerify`
+
+**Check the mods at start** (Mods). Checks every installed add-on. If one is damaged, the server shuts down and writes the damaged files to the log.
+
+### `-addonsRepair`
+
+**Repair the mods at start** (Mods). Checks every installed add-on and repairs a damaged one by itself. If the repair fails, the server shuts down.
+
+### `-freezeCheck`
+
+**Freeze detection (seconds)** (Troubleshooting). How many seconds the server may freeze before it is forced to crash, from 0 to 600. The default is 300. The wiki says this setting can also switch the detection off completely.
+
+Example: `-freezeCheck 300`
+
+### `-freezeCheckMode`
+
+**When the server freezes** (Troubleshooting). What happens when freezing is detected. Kill is more reliable than crash but gives no information about the freeze.
+
+Values: `crash` (Crash the server on purpose), `minidump` (Save a crash dump and keep running (Windows only)), `kill` (Kill the server without any report).
+
+Example: `-freezeCheckMode crash`
+
+### `-noThrow`
+
+**No error pop-ups** (Troubleshooting). Turns off all error message windows: script errors, failed checks and crashes.
+
+## VEIN
+
+VEIN's ports are given on the command that starts it; its name, password, player limit and admins are in Game.ini and its world rules in Engine.ini (the Settings tab). The official wiki lists only a few launch arguments and says the rest are still pending testing. Changes apply the next time the server starts. These arguments are on the `VeinServer-Win64-Test.exe` line of the server's start script.
+
+The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
+
+### VEIN: `-log`
+
+**Show the log window** (Required). Gives the server a console window that shows its log. Keep it: the panel asks that window to close when it stops the server, and one host notes the server prints no console output without it.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### VEIN: `-Port`
+
+**Game port** (Network). The UDP port players connect to (the game's own default is 7777). Change it from the server's Ports section so the panel can check for clashes and open the firewall. Written with an equals sign, -Port=8960.
+
+Example: `-Port=8960`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### VEIN: `-QueryPort`
+
+**Query port** (Network). The UDP port the Steam server browser asks for the server's details on. The wiki says to keep it at the game port plus 2 and not between 27020 and 27050, which Steam uses on a PC that runs Steam. Change it from the server's Ports section.
+
+Example: `-QueryPort=8962`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### VEIN: `-multihome`
+
+**Bind address** (Network). Makes the server use one specific IP address of this PC. Only useful on a PC with several network cards or addresses; leave it off to use them all.
+
+Example: `-multihome=192.168.1.20`
+
+### `-onethread`
+
+**Single-threaded** (Performance). Runs the server on a single thread. A hosting guide says it is useful when one machine hosts several servers.
+
+### VEIN: `-MaxPlayers`
+
+**Max players** (Server). The most players that can be on at once. The wiki's example uses 64. The panel sets the limit in Game.ini (Max players on the Settings tab) instead; it is not documented which of the two wins, so set it in one place only.
+
+Example: `-MaxPlayers=16`

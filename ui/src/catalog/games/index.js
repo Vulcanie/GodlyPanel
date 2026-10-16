@@ -17,6 +17,9 @@ import garrysmod from "./garrysmod.js";
 import barotrauma from "./barotrauma.js";
 import necesse from "./necesse.js";
 import l4d2 from "./l4d2.js";
+import squad from "./squad.js";
+import armareforger from "./armareforger.js";
+import vein from "./vein.js";
 import unturned from "./unturned.js";
 
-export const GAME_UI_MODULES = [abiotic, dst, icarus, scum, starrupture, unturned, soulmask, garrysmod, barotrauma, necesse, l4d2];
+export const GAME_UI_MODULES = [abiotic, dst, icarus, scum, starrupture, unturned, soulmask, garrysmod, barotrauma, necesse, l4d2, squad, armareforger, vein];
