@@ -13,6 +13,21 @@ import { GAME_MODULES } from "./games/index.js";
 // engine auto-generates on first boot (unique server/world IDs), this is
 // called out in a comment on that template so the creation flow knows to
 // leave them alone rather than fabricate them.
+//
+// Optional capabilities of a template, besides the usual fields:
+//   zipInstall: { repo: "<owner>/<name>", asset: "<file name>", maxBytes?, expect?: [file, ...] }
+//     Installs the game from a GitHub release instead of through SteamCMD (a template then has no updateAppId). The create job asks
+//     GitHub's API for the repo's latest release, takes the asset with exactly that name, and installs it only if GitHub publishes a
+//     SHA-256 for it (the asset's `digest`) and the download matches it. The file is fetched over https from github.com or GitHub's
+//     own download hosts only (a redirect elsewhere is refused), within `maxBytes` (default 1 GiB) and a time limit, and is unpacked
+//     into the server's folder only after every name in the archive has been checked to stay inside it. `expect` lists files that
+//     must exist afterwards. Nothing is downloaded until the person creating the server has agreed: createServer answers 409 with
+//     code "zip-download-not-accepted" (and details: repo, asset, tag, size) until the request carries acceptZipDownload: true, and
+//     the create form shows a dialog first, like the one for SteamCMD. See services/zipInstall.js.
+//   needsSteamCmd(params) -> boolean
+//     For a template that is not installed through SteamCMD but still uses it afterwards (Workshop mod downloads in postWrite).
+//     Adds the same consent step as an install (acceptSteamCmdDownload) when SteamCMD is not on the PC yet, and has the job make
+//     sure a copy is there before postWrite runs. Must not throw on a form that has not been checked yet.
 
 import {
 	getUploadManifest,

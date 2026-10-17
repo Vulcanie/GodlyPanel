@@ -20,5 +20,7 @@ import squad from "./squad.js";
 import armareforger from "./armareforger.js";
 import vein from "./vein.js";
 import unturned from "./unturned.js";
+import spaceengineers from "./spaceengineers.js";
+import terraria from "./terraria.js";
 
-export const GAME_MODULES = [abiotic, dst, icarus, scum, starrupture, unturned, soulmask, garrysmod, barotrauma, necesse, l4d2, squad, armareforger, vein];
+export const GAME_MODULES = [abiotic, dst, icarus, scum, starrupture, unturned, soulmask, garrysmod, barotrauma, necesse, l4d2, squad, armareforger, vein, spaceengineers, terraria];

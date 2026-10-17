@@ -30,7 +30,7 @@ window to close and then forces it after 15 seconds (30 for Satisfactory), so DS
 | Soulmask | none (its rates file has no explanation anywhere) | 28 | Workshop IDs (`-mod`) | **Yes**: the Shipping exe stays running, not elevated, the local console answers `saveworld 1`. Closing the window alone does not save, so the panel now sends `saveworld 1` before a stop (`telnetSaveCommand`) |
 | Garry's Mod | 145 (`server.cfg`) + 2 (`autoexec.cfg`) | 19 | one Workshop collection | **Mostly**: `srcds.exe` stays running, `server.cfg` runs, Stop is clean. Fixed: the console log is `console.log`, not `console.txt` |
 | Barotrauma | none (its settings are XML attributes no parser reads) | 15 | manual (`LocalMods`) | No |
-| Space Engineers | none | 11 | none | No. Built, **not registered**: the panel can't write a world or config yet |
+| Space Engineers | none | 11 | none | **Yes** (2026-10-17): the panel writes a small config pointing at the game's own premade "Star System" world; the game reports ready for players in about 20 s and answers Steam queries. No real client join tried. Stop force-kills (no save on stop; autosave every 5 minutes) |
 | Necesse | none (its config shape fits no parser) | 16 | jar files in a mods folder | No. No graceful stop: its `quit` command cannot be sent |
 | Left 4 Dead 2 | 110 (`server.cfg`) | 15 | Workshop addon ids | No |
 
@@ -43,4 +43,4 @@ Research for batch 3 used a cheaper two-stage process: a small model found the a
 | Squad | none (its `Server.cfg` has comment lines the parser would show as settings) | 14 | Workshop IDs, fetched once at creation | No |
 | Arma Reforger | 40 (`server-config.json`) | 26 | none yet (mods go in `game.mods`) | No |
 | VEIN | 16 (`Game.ini`) + 39 (`Engine.ini` `vein.*`) | 6 | none (no official support) | No |
-| Terraria / tModLoader | research only | | | Not built: vanilla Terraria has no Steam server and tModLoader's Steam install needs a login, so it needs a download-a-zip install step the panel doesn't have |
+| Terraria / tModLoader | 26 (`serverconfig.txt`) | 17 | Workshop ids (SteamCMD) | **Yes** (2026-10-17): installed from the tModLoader GitHub release zip (new install step: consent, GitHub-published SHA-256 required, GitHub hosts only, safe unpack), first start downloads .NET, generates a world and listens on its TCP port. Stop force-kills (`exit` cannot be sent) |

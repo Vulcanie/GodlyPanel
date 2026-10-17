@@ -14,10 +14,11 @@ export function setUnauthenticatedHandler(fn) {
 }
 
 export class ApiError extends Error {
-	constructor(message, { status, code } = {}) {
+	constructor(message, { status, code, details } = {}) {
 		super(message);
 		this.status = status;
 		this.code = code;
+		this.details = details;
 	}
 }
 
@@ -51,6 +52,7 @@ export async function apiFetch(path, options = {}) {
 		throw new ApiError(payload?.error || `Request failed (${res.status})`, {
 			status: res.status,
 			code: payload?.code,
+			details: payload?.details,
 		});
 	}
 

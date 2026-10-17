@@ -5,9 +5,10 @@ import { parseLaunchArgs, launchArgsEntries, serializeLaunchArgs } from "../conf
 
 // Space Engineers' catalog, held to the rules of catalogs.test.js (every argument explained, no repeated choice) and checked against
 // the start script the server side writes. It has no settings file: the game's XML config is not a shape the panel can read.
+// The panel writes that config itself when the server is created (checked on the server side).
 
 const def = seUi.launch;
-const params = { name: "Test", port: 27116, maxPlayers: 8, instanceSlug: "test", installDir: "C:\\S\\space", startScriptFilename: "Start_SpaceEngineers.bat" };
+const params = { name: "Test", sessionName: "Test", port: 27116, maxPlayers: 8, instanceSlug: "test", installDir: "C:\\S\\space", startScriptFilename: "Start_SpaceEngineers.bat" };
 const script = seServer.template.buildStartScript(params);
 
 describe("Space Engineers module", () => {
@@ -26,10 +27,18 @@ describe("Space Engineers module", () => {
 		expect(entry.configPath).toBeUndefined();
 	});
 
-	it("says the panel writes no config or world, and that Torch is not supported", () => {
+	it("says what the panel writes, where the settings live, that Stop does not save, and that Torch is not supported", () => {
 		const notes = seUi.guide.notes.join(" ");
-		expect(notes).toMatch(/does not write the config file or a world/);
+		expect(notes).toMatch(/SpaceEngineers-Dedicated.cfg/);
+		expect(notes).toMatch(/first time the server starts/);
+		expect(notes).toMatch(/Sandbox_config.sbc/);
+		expect(notes).toMatch(/Stop does not save/);
 		expect(notes).toMatch(/Torch/);
+		expect(notes).not.toMatch(/does not write the config file or a world/);
+	});
+
+	it("mentions no Steam port: the game does not use it", () => {
+		expect(seUi.guide.notes.join(" ")).not.toMatch(/8766|Steam port/);
 	});
 });
 
@@ -82,10 +91,10 @@ describe("Space Engineers launch arguments", () => {
 		expect(serializeLaunchArgs(parsed, {})).toBe(script);
 	});
 
-	it("reads the port and the player limit off the line", () => {
+	it("reads the port off the line, and shows the player limit as empty (it is in the config file)", () => {
 		const by = Object.fromEntries(launchArgsEntries(parseLaunchArgs(script, def)).map((e) => [e.key, e]));
 		expect(by.port.value).toBe("27116");
-		expect(by.maxPlayers.value).toBe("8");
+		expect(by.maxPlayers.value).toBe("");
 		expect(by.ip.value).toBe("");
 		expect(by.ignorelastsession.value).toBe("false");
 	});
@@ -107,10 +116,10 @@ describe("Space Engineers launch arguments", () => {
 		expect(offered).toEqual(["ignorelastsession", "ip", "maxPlayers", "port"]);
 	});
 
-	it("finds the line when no player limit was asked for", () => {
-		const bare = seServer.template.buildStartScript({ ...params, maxPlayers: undefined });
-		const by = Object.fromEntries(launchArgsEntries(parseLaunchArgs(bare, def)).map((e) => [e.key, e]));
+	it("reads a player limit a person added to the line", () => {
+		const withLimit = script.replace("-port 27116", "-port 27116 -maxPlayers 6");
+		const by = Object.fromEntries(launchArgsEntries(parseLaunchArgs(withLimit, def)).map((e) => [e.key, e]));
 		expect(by.port.value).toBe("27116");
-		expect(by.maxPlayers.value).toBe("");
+		expect(by.maxPlayers.value).toBe("6");
 	});
 });

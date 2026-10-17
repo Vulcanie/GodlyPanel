@@ -3,16 +3,20 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import spaceEngineers from "../../src/server/data/games/spaceengineers.js";
+import spaceEngineers, { serverName, worldFolderName } from "../../src/server/data/games/spaceengineers.js";
 import { deriveLaunch } from "../../src/server/services/batchLaunch.js";
 
-// Space Engineers, as the research dossier describes it: SpaceEngineersDedicated.exe started with -console, the data folder pinned
-// with -path, the game port on the line, and no config file or world written by the panel.
+// Space Engineers, as a real install behaved (research/spaceengineers/06-verification.md): SpaceEngineersDedicated.exe started with
+// -console, the data folder pinned with -path and the game port on the line, plus a SpaceEngineers-Dedicated.cfg the panel writes that
+// names the server, the premade world the game copies into Saves on its first start, and the session settings that make it joinable.
+
+const onWindows = process.platform === "win32";
 
 const { template: t, backup, logs, launchOptions } = spaceEngineers;
 
 const params = (extra = {}) => ({
 	name: "Test Space",
+	sessionName: "Friends Station",
 	port: 27116,
 	maxPlayers: 8,
 	instanceSlug: "test-space",
@@ -36,8 +40,9 @@ describe("Space Engineers template", () => {
 		assert.equal(t.installLayoutRoot, "");
 	});
 
-	it("asks for no extra fields: no name, password, RCON or mods", () => {
-		assert.deepEqual(t.fields, []);
+	it("asks for the server's name only: no password, RCON or mods", () => {
+		assert.deepEqual(t.fields, ["sessionName"]);
+		assert.match(t.fieldMeta.sessionName.label, /Server Name/);
 	});
 
 	it("has one game port, free of the other templates' defaults and of the port after it", async () => {
@@ -47,24 +52,88 @@ describe("Space Engineers template", () => {
 		const taken = new Set(others.flatMap((x) => x.ports.map((p) => p.default)));
 		assert.ok(!taken.has(t.ports[0].default), `${t.ports[0].default} is another template's`);
 		assert.ok(!taken.has(t.ports[0].default + 1));
-		// Not the game's own default (27016) or the Steam port's (8766): other templates here use those.
+		// Not the game's own default (27016): another template here uses it.
 		assert.notEqual(t.ports[0].default, 27016);
-		assert.notEqual(t.ports[0].default, 8766);
 		assert.equal(t.ports[0].default, 27116);
 	});
 
-	it("writes no config file and no world", () => {
-		assert.equal(t.buildConfigFile, undefined);
+	it("writes the config file into the data folder (which also makes the folder the game needs) and nothing else", () => {
+		const cfg = t.buildConfigFile(params());
+		assert.equal(cfg.relPath, "Data\\SpaceEngineers-Dedicated.cfg");
+		assert.equal(t.buildExtraFiles, undefined);
 		assert.equal(t.copyInstalledFiles, undefined);
 		assert.equal(t.patchInstalledConfig, undefined);
 	});
+});
 
-	it("makes the data folder the game needs, with only a note file in it", () => {
-		const extra = t.buildExtraFiles(params());
-		assert.deepEqual(extra.map((f) => f.relPath), ["Data\\ABOUT-THIS-FOLDER.md"]);
-		// Not a .log or .txt file, so the Logs tab does not list it.
-		assert.ok(!/\.(log|txt)$/i.test(extra[0].relPath));
-		assert.match(extra[0].content, /SpaceEngineers-Dedicated\.cfg/);
+describe("Space Engineers config file", () => {
+	const cfg = (extra) => t.buildConfigFile(params(extra)).content;
+	const tag = (text, name) => new RegExp(`<${name}>([^<]*)</${name}>`).exec(text)?.[1];
+
+	it("is the game's XML: MyConfigDedicated with the name, world and premade world", () => {
+		const text = cfg();
+		assert.match(text, /^<\?xml version="1\.0"\?>/);
+		assert.match(text, /<MyConfigDedicated [^>]*>/);
+		assert.match(text, /<\/MyConfigDedicated>\s*$/);
+		assert.equal(tag(text, "ServerName"), "Friends Station");
+		assert.equal(tag(text, "WorldName"), "Friends Station");
+	});
+
+	it("points the game at a premade world the install ships, so the first start makes a world", () => {
+		// Relative to DedicatedServer64, where the start script runs the game from (a real start loaded it that way).
+		assert.equal(tag(cfg(), "PremadeCheckpointPath"), "..\\Content\\CustomWorlds\\Star System");
+		assert.equal(tag(cfg(), "LoadWorld"), undefined);
+		assert.equal(tag(cfg(), "IgnoreLastSession"), undefined);
+	});
+
+	it("makes the server public with a player limit, and switches the remote API off", () => {
+		assert.equal(tag(cfg(), "OnlineMode"), "PUBLIC");
+		assert.equal(tag(cfg(), "MaxPlayers"), "8");
+		assert.equal(tag(cfg({ maxPlayers: undefined }), "MaxPlayers"), "8");
+		assert.equal(tag(cfg({ maxPlayers: "" }), "MaxPlayers"), "8");
+		assert.equal(tag(cfg({ maxPlayers: 16 }), "MaxPlayers"), "16");
+		assert.equal(tag(cfg({ maxPlayers: 500 }), "MaxPlayers"), "64");
+		assert.equal(tag(cfg({ maxPlayers: 1 }), "MaxPlayers"), "2");
+		assert.equal(tag(cfg(), "RemoteApiEnabled"), "false");
+	});
+
+	it("leaves the ports to the launch line", () => {
+		const text = cfg();
+		assert.equal(tag(text, "ServerPort"), undefined);
+		assert.equal(tag(text, "SteamPort"), undefined);
+		assert.equal(tag(text, "IP"), undefined);
+	});
+
+	it("takes the server name from the form, and the world name from it without characters a folder cannot have", () => {
+		assert.equal(tag(cfg({ sessionName: "  The  Hub  " }), "ServerName"), "The Hub");
+		assert.equal(tag(cfg({ sessionName: undefined }), "ServerName"), "Test Space");
+		assert.equal(tag(cfg({ sessionName: "   " }), "ServerName"), "Test Space");
+		assert.equal(tag(cfg({ sessionName: 'A/B:C*D?"E<F>G|H\\I' }), "WorldName"), "ABCDEFGHI");
+		assert.equal(tag(cfg({ sessionName: "Base 2.0" }), "WorldName"), "Base 2.0");
+	});
+
+	it("escapes the characters XML acts on, so a name cannot break or extend the file", () => {
+		const text = cfg({ sessionName: 'Tom & <Jerry> "x" </ServerName><LoadWorld>C:\\evil</LoadWorld>' });
+		assert.equal(tag(text, "LoadWorld"), undefined);
+		assert.equal((text.match(/<ServerName>/g) ?? []).length, 1);
+		assert.match(tag(text, "ServerName"), /^Tom &amp; &lt;Jerry&gt; &quot;x&quot; /);
+		assert.doesNotMatch(tag(text, "ServerName"), /[<>"]/);
+		assert.doesNotMatch(tag(text, "WorldName"), /[<>"\\/]/);
+	});
+
+	it("strips line breaks and other control characters from names", () => {
+		const text = cfg({ sessionName: "Line\r\nTwo\u0000\u0007" });
+		assert.equal(tag(text, "ServerName"), "Line Two");
+		assert.equal(serverName("a\tb"), "a b");
+	});
+
+	it("falls back when nothing usable is left, and avoids names Windows reserves", () => {
+		assert.equal(worldFolderName("???"), "Space Engineers World");
+		assert.equal(worldFolderName(""), "Space Engineers World");
+		assert.equal(worldFolderName("con"), "con World");
+		assert.equal(worldFolderName("Base..."), "Base");
+		assert.equal(worldFolderName("x".repeat(200)).length, 60);
+		assert.equal(serverName("x".repeat(500)).length, 100);
 	});
 });
 
@@ -81,7 +150,7 @@ describe("Space Engineers start script", () => {
 	});
 
 	it("starts the server with -console, the data folder and the game port", () => {
-		assert.equal(startLine(params()), 'start /MIN "Test Space" SpaceEngineersDedicated.exe -console -path "%~dp0Data" -port 27116 -maxPlayers 8');
+		assert.equal(startLine(params()), 'start /MIN "Test Space" SpaceEngineersDedicated.exe -console -path "%~dp0Data" -port 27116');
 	});
 
 	it("never starts without -console or -noconsole, which would open the setup window", () => {
@@ -93,21 +162,12 @@ describe("Space Engineers start script", () => {
 		assert.doesNotMatch(script, /ignorelastsession/i);
 	});
 
-	it("passes the player limit only when one was asked for, within the game window's 2 to 64", () => {
-		const limit = (maxPlayers) => /-maxPlayers (\d+)/.exec(startLine(params({ maxPlayers })))?.[1];
-		assert.equal(limit(undefined), undefined);
-		assert.equal(limit(""), undefined);
-		assert.equal(limit("abc"), undefined);
-		assert.equal(limit(0), undefined);
-		assert.equal(limit(1), "2");
-		assert.equal(limit(16), "16");
-		assert.equal(limit(500), "64");
-		assert.equal(limit(8.9), "8");
-		// Written with the capital P the game matches on.
-		assert.doesNotMatch(startLine(params()), /-maxplayers/);
+	it("leaves the player limit to the config file; -maxPlayers is only there if a person adds it", () => {
+		assert.doesNotMatch(script, /maxplayers/i);
+		assert.doesNotMatch(t.buildStartScript(params({ maxPlayers: 40 })), /maxplayers/i);
 	});
 
-	it("keeps characters cmd acts on out of the window title", () => {
+	it("keeps characters cmd acts on out of the window title, and never puts the server's name in the script", () => {
 		const nasty = t.buildStartScript(params({ name: 'Evil" & calc | %PATH% ^ <x>' }));
 		const start = nasty.split("\r\n").find((l) => l.startsWith("start "));
 		const title = /^start \/MIN "([^"]*)" /.exec(start);
@@ -117,9 +177,10 @@ describe("Space Engineers start script", () => {
 		assert.match(startLine(params({ name: '"&%' })), /^start \/MIN "Space Engineers" /);
 		// Quotes: the title and the data folder, in pairs.
 		assert.equal((start.match(/"/g) ?? []).length, 4);
+		assert.doesNotMatch(t.buildStartScript(params({ sessionName: 'Evil" & calc' })), /calc/);
 	});
 
-	it("can be read back by the panel's direct-launch reader", () => {
+	it("can be read back by the panel's direct-launch reader", { skip: !onWindows }, () => {
 		const dir = fs.mkdtempSync(path.join(os.tmpdir(), "se-launch-"));
 		try {
 			const exe = path.join(dir, "DedicatedServer64", "SpaceEngineersDedicated.exe");
@@ -161,7 +222,8 @@ describe("Space Engineers server entry", () => {
 		assert.ok(start.includes(entry.processName));
 	});
 
-	it("has no settings file the panel edits, no remote console and no password", () => {
+	it("shows the server's name as its session, and has no settings file the panel edits, no remote console and no password", () => {
+		assert.equal(entry.sessionName, "Friends Station");
 		assert.equal(entry.configPath, undefined);
 		assert.equal(entry.configPaths, undefined);
 		assert.equal(entry.rconPort, undefined);

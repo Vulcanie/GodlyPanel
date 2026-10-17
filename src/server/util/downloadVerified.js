@@ -19,13 +19,14 @@ import { pipeline } from "node:stream/promises";
  * @param {string} [options.checksumSource]    where the checksum came from, for the error message
  * @param {(received: number) => void} [options.onProgress]
  * @param {number} [options.timeoutMs]  longest the whole download may take (a stalled connection would otherwise wait for ever)
+ * @param {typeof fetch} [options.fetchImpl]  stands in for the global fetch (tests)
  * @returns {Promise<{ sha256: string, bytes: number }>}
  */
-export async function downloadVerified({ url, dest, sha256 = null, size = null, isTrusted = null, checksumSource = "release notes", onProgress = null, timeoutMs = 30 * 60_000 }) {
+export async function downloadVerified({ url, dest, sha256 = null, size = null, isTrusted = null, checksumSource = "release notes", onProgress = null, timeoutMs = 30 * 60_000, fetchImpl = fetch }) {
 	const partial = `${dest}.partial`;
 	await fsp.mkdir(path.dirname(dest), { recursive: true });
 	try {
-		const res = await fetch(url, { headers: { "User-Agent": "GodlyPanel" }, redirect: "follow", signal: AbortSignal.timeout(timeoutMs) });
+		const res = await fetchImpl(url, { headers: { "User-Agent": "GodlyPanel" }, redirect: "follow", signal: AbortSignal.timeout(timeoutMs) });
 		if (!res.ok || !res.body) throw new Error(`The download answered ${res.status}.`);
 		if (isTrusted && !isTrusted(res.url || url)) throw new Error("The download was redirected somewhere the panel doesn't trust.");
 		const hash = crypto.createHash("sha256");

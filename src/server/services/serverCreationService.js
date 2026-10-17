@@ -10,6 +10,7 @@ import { paths } from "../paths.js";
 import { getConfig } from "../config/configStore.js";
 import { getSecrets } from "../config/secretsStore.js";
 import { ensureSteamCmd, isSteamCmdInstalled } from "./steamCmdProvisioner.js";
+import { installZipRelease, resolveRelease, describeSize } from "./zipInstall.js";
 import { assertStorageHeadroom } from "./storageService.js";
 import { inspectFolder } from "./folderCheck.js";
 import { resolveResource } from "../../shared/resources.js";
@@ -69,6 +70,8 @@ export function listTemplates() {
 		fieldMeta: t.fieldMeta ?? null,
 		requiresEula: Boolean(t.requiresEula),
 		sessionIsAddress: Boolean(t.sessionIsAddress),
+		// Where a game that is not installed through SteamCMD comes from, for the dialog that asks before anything is downloaded.
+		zipInstall: t.zipInstall ? { repo: t.zipInstall.repo, asset: t.zipInstall.asset } : null,
 	}));
 }
 
@@ -418,7 +421,7 @@ async function writeFileEnsuringDir(fullPath, content) {
 	await fs.writeFile(fullPath, content, "utf8");
 }
 
-async function runJob(jobId, template, params) {
+async function runJob(jobId, template, params, deps = {}) {
 	const logDir = paths.creationLogsDir;
 	await fs.mkdir(logDir, { recursive: true });
 	const logPath = path.join(logDir, `${jobId}.log`);
@@ -443,7 +446,15 @@ async function runJob(jobId, template, params) {
 
 		// Templates with no updateAppId (e.g. the Minecraft modpack template)
 		// have no Steam install at all — everything is written directly.
-		if (!skipInstall && template.updateAppId) {
+		if (!skipInstall && template.zipInstall) {
+			// A game installed from a GitHub release zip (zipInstall, see gameTemplates.js) instead of through SteamCMD.
+			log(`Installing ${template.displayName} from GitHub to ${installDir} ...`);
+			await installZipRelease(template.zipInstall, installDir, {
+				log,
+				onStage: (status) => setStatus(jobId, { status }),
+				...(deps.zip ?? {}),
+			});
+		} else if (!skipInstall && template.updateAppId) {
 			setStatus(jobId, { status: "installing" });
 			log(`Installing appid ${template.updateAppId} to ${installDir} ...`);
 			await installWithRetries(installDir, template.updateAppId, logStream, logPath, log);
@@ -581,6 +592,9 @@ async function runJob(jobId, template, params) {
 		// overrides copy, etc.) — runs before the server is registered so a
 		// still-downloading server never shows up as "live" on the dashboard.
 		let postWriteWarnings = [];
+		// A game that is not installed through SteamCMD can still need it afterwards (tModLoader's Workshop mods).
+		// The person agreed to the download when they pressed Create (see createServer).
+		if (template.needsSteamCmd?.(params)) await ensureSteamCmd((msg) => log(msg));
 		if (template.postWrite) {
 			const result = await template.postWrite(p, {
 				log,
@@ -646,7 +660,7 @@ async function runJob(jobId, template, params) {
 		});
 		log(`Done. "${entry.name}" is live — no API restart needed.`);
 		if (postWriteWarnings.length > 0) {
-			log(`WARNING: ${postWriteWarnings.length} mod(s) could not be resolved automatically — see above.`);
+			log(`WARNING: ${postWriteWarnings.length === 1 ? "1 thing needs" : `${postWriteWarnings.length} things need`} your attention (a mod that could not be fetched, or a note about this game); the warning${postWriteWarnings.length === 1 ? "" : "s"} are shown with the finished server.`);
 		}
 		logStream.end();
 
@@ -664,7 +678,10 @@ async function runJob(jobId, template, params) {
 	}
 }
 
-export async function createServer(templateId, rawParams) {
+/**
+ * @param {object} [deps]  stand-ins for tests: { zip: { fetchImpl, archive, scratchDir } } for a zipInstall template's download
+ */
+export async function createServer(templateId, rawParams, deps = {}) {
 	const template = getTemplate(templateId);
 	if (!template) throw new Error(`Unknown template: ${templateId}`);
 
@@ -690,12 +707,32 @@ export async function createServer(templateId, rawParams) {
 	// Downloading a program from the internet is not something to do silently
 	// as a side effect of pressing Create. The UI asks, then resends with
 	// acceptSteamCmdDownload.
-	const willInstall = template.updateAppId && !(template.sharedInstall && suggested.sharedInstallDir);
+	const willInstall = (template.updateAppId && !(template.sharedInstall && suggested.sharedInstallDir)) || template.needsSteamCmd?.(rawParams);
 	if (willInstall && !isSteamCmdInstalled() && rawParams.acceptSteamCmdDownload !== true) {
 		const err = new Error(
 			"SteamCMD isn't installed yet. It's Valve's official tool for downloading game servers, and needs to be downloaded once.",
 		);
 		err.code = "steamcmd-not-installed";
+		throw err;
+	}
+
+	// The same goes for a game that comes from a GitHub release zip: nothing is fetched until the person has seen what, from where and
+	// how big, and agreed (acceptZipDownload). The lookup only reads the release's details; a release the panel would refuse to
+	// install is refused here, before the question.
+	if (template.zipInstall && rawParams.acceptZipDownload !== true) {
+		let details = { repo: template.zipInstall.repo, asset: template.zipInstall.asset };
+		try {
+			const found = await resolveRelease(template.zipInstall, { fetchImpl: deps.zip?.fetchImpl });
+			details = { ...details, tag: found.tag, size: found.size, sizeText: describeSize(found.size) };
+		} catch (e) {
+			if (e.refusal) throw e;
+			// GitHub can't be reached just now: ask anyway, without a size. The download itself would fail with the real reason.
+		}
+		const err = new Error(
+			`${template.displayName} is downloaded from GitHub (${details.repo}, the file ${details.asset}${details.sizeText ? `, ${details.sizeText}` : ""}) and checked against the checksum GitHub publishes for it. Nothing is downloaded until you agree.`,
+		);
+		err.code = "zip-download-not-accepted";
+		err.details = details;
 		throw err;
 	}
 
@@ -754,7 +791,7 @@ export async function createServer(templateId, rawParams) {
 	await saveJobState(jobId, jobs.get(jobId));
 
 	// Fire and forget — the caller polls getJob(jobId) for progress.
-	runJob(jobId, template, params).catch((e) => {
+	runJob(jobId, template, params, deps).catch((e) => {
 		setStatus(jobId, { status: "error", error: e.message });
 	});
 

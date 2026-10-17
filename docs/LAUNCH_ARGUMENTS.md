@@ -39,6 +39,8 @@ Settings that live in a game's own settings file are in the [game settings guide
 - [Squad](#squad)
 - [Arma Reforger](#arma-reforger)
 - [VEIN](#vein)
+- [Space Engineers](#space-engineers)
+- [Terraria (tModLoader)](#terraria-tmodloader)
 
 ## Valheim
 
@@ -1754,7 +1756,7 @@ Values: `default` (Default), `strict` (Strict), `custom` (Custom).
 
 Example: `-karmapreset default`
 
-### `-language`
+### Barotrauma: `-language`
 
 **Server language** (Server). The language shown for the server in the server list. It is only used when it matches a name in the game's Data\languageoptions.xml; anything else is ignored.
 
@@ -2080,7 +2082,7 @@ Arma Reforger's server is set up in its JSON file (the Settings tab); the launch
 
 The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
 
-### `-config`
+### Arma Reforger: `-config`
 
 **Settings file** (Required). The JSON file the server reads all its settings from (the Settings tab edits it). With -server instead, the server would ignore this file, so that argument is not offered.
 
@@ -2277,3 +2279,199 @@ Example: `-multihome=192.168.1.20`
 **Max players** (Server). The most players that can be on at once. The wiki's example uses 64. The panel sets the limit in Game.ini (Max players on the Settings tab) instead; it is not documented which of the two wins, so set it in one place only.
 
 Example: `-MaxPlayers=16`
+
+## Space Engineers
+
+Space Engineers' dedicated server takes its game port and data folder from the command that starts it, and can take a player limit there too. Its other options (name, admins, password, world rules, mods) are in the server's own config file and worlds, which the panel does not edit after creating them. Changes apply the next time the server starts. These arguments are on the `SpaceEngineersDedicated.exe` line of the server's start script.
+
+The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
+
+### Space Engineers: `-console`
+
+**Console mode** (Required). Starts the server straight away in a console window. Without this (or -noconsole) the game opens its setup window and waits for someone to press Start, so a panel-run server would never come up. The console window is also what the panel closes to stop the server.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-path`
+
+**Data folder** (Required). The folder the server keeps its config file (SpaceEngineers-Dedicated.cfg), worlds, mods and logs in. It has to exist: the game quits at once, without a message, when it does not. The panel makes it when it creates the server, and its backups and Logs tab look in the Data folder of the server, so leave it as it is.
+
+Example: `-path "D:\Servers\space\Data"`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Space Engineers: `-port`
+
+**Game port** (Network). The UDP port players connect to, and the one the game answers Steam's server-list queries on. It replaces the port in the config file (the panel's config does not set one). Change it from the server's Ports section so the panel can check for clashes and open the firewall. Two servers on one PC need different ports.
+
+Example: `-port 27116`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Space Engineers: `-maxPlayers`
+
+**Max players** (Server). The most players that can be on the server at once. It replaces the limit stored in the world (the panel's config set that to 8, or to the number you chose when creating the server, when the world was first made; on a real server the server list showed the number from this line). A whole number, written with a capital P.
+
+Example: `-maxPlayers 8`
+
+### Space Engineers: `-ip`
+
+**Listen address** (Network). Makes the server use one specific IP address of this PC, instead of the one in the config file (0.0.0.0, which is all of them). Only useful on a PC with several network cards or addresses. A value that is not an IP address is ignored.
+
+Example: `-ip 192.168.1.20`
+
+### `-ignorelastsession`
+
+**Ignore the last session** (Saves and logs). By default the server starts the world it ran last. With this, it ignores that and builds the world from the config file again. The panel's config file has no LoadWorld and names a ready-made world to copy, so turning this on may make the server start a new world instead of continuing yours. Not tried on a real server; leave it off unless you know you want that.
+
+### `-session:`
+
+**Load this world** (Saves and logs). Starts the world in the given folder instead of the last one. Only the wiki documents it (Keen's source has no such argument), so how it treats quotes and spaces is not known. Set LoadWorld in the config file instead.
+
+Example: `-session:D:\Servers\space\Data\Saves\MyWorld`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-noconsole`
+
+**No console window** (Advanced). Used instead of -console, to run without the console window. Not offered: the panel then has no window to ask to close, so a Stop may end the server without saving the world. The line needs one of -console and -noconsole, never both.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-plugin`
+
+**Plugin file** (Advanced). Loads a plugin (.dll) into the server. Keen does not support plugins and any plugin has full access to this PC, so only use one you trust. The wiki adds that game clients then need a password; what that means is not explained. The line may hold several.
+
+Example: `-plugin C:\plugins\Example.dll`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-eos`
+
+**Epic Online Services network** (Network). Makes the server use Epic's online network layer instead of Steam's. The wiki lists it with no further explanation, so what it does for a normal Steam server is not known.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-np`
+
+**Epic network parameter** (Network). Sets one network setting of the Epic layer, written as name:value, and repeated for each. The wiki names globalMaxUpload and peerMaxUpload (600 by default), and statWindow and peakStatWindow (60 seconds). It only matters with -eos.
+
+Example: `-np globalMaxUpload:1000`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+## Terraria (tModLoader)
+
+The game port and the player limit are given on the command that starts the server, and only there. The world, its name and the password are in serverconfig.txt. The line starts tModLoader's own start script, which cannot take a value with a space in it, so keep every value here to one word. Changes apply the next time the server starts. These arguments are on the `busybox64.exe` line of the server's start script.
+
+The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
+
+### Terraria (tModLoader): `-nosteam`
+
+**No Steam** (Required). Tells tModLoader's start script not to use Steam and not to ask about it. Without it the script stops and waits for an answer typed into the console, which the panel cannot give.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Terraria (tModLoader): `-config`
+
+**Settings file** (Required). The text file with the world, password and the other settings. The Settings tab edits serverconfig.txt in the server's folder.
+
+Example: `-config serverconfig.txt`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-tmlsavedirectory`
+
+**Data folder** (Required). Where worlds, mods and each mod's settings are kept: a Worlds, a Mods and a ModConfigs folder below it. The panel keeps it in the server's own folder, so its backups find them. Changing it hides the existing worlds.
+
+Example: `-tmlsavedirectory tmldata`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Terraria (tModLoader): `-port`
+
+**Game port** (Network). The TCP port players connect to; the game's own default is 7777, which other servers here use. Change it from the server's Ports section so the panel can check for clashes and open the firewall. Two servers on one PC need different ports.
+
+Example: `-port 7878`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Terraria (tModLoader): `-players`
+
+**Max players** (Server). The most players that can be on the server at once, from 1 to 255. More players need more memory and a faster PC. (The game also accepts -maxplayers for the same thing.)
+
+Example: `-players 8`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Terraria (tModLoader): `-ip`
+
+**Bind address** (Network). Makes the server listen only on one IP address of this PC. Only useful on a PC with several network cards or addresses; leave it off to use them all.
+
+Example: `-ip 192.168.1.20`
+
+### `-noupnp`
+
+**No auto port-forward** (Network). Turns off the automatic port-forwarding attempt (UPnP) when the server starts. Useful if you forward the port by hand.
+
+### `-secure`
+
+**Extra cheat protection** (Server). Adds additional cheat protection to the server (the game's description of it). The same setting can be turned on in serverconfig.txt.
+
+### `-banlist`
+
+**Ban list file** (Saves and logs). The file that keeps banned players; banlist.txt in the server's folder if left off. No spaces: the start script that tModLoader ships splits a value with a space in it into two.
+
+Example: `-banlist banlist.txt`
+
+### `-worldrollbackstokeep`
+
+**Rolling world backups to keep** (Saves and logs). How many automatic rolling backup copies of the world the game keeps; tModLoader's own menu starts its servers with 2. Not listed on the Terraria wiki, so whether a value given here is honoured was not tested. The copies are in the Worlds folder's Backups.
+
+Example: `-worldrollbackstokeep 2`
+
+### Terraria (tModLoader): `-language`
+
+**Server language** (Server). The language of the server's own console messages. The same setting is a line in serverconfig.txt.
+
+Values: `en-US` (English), `de-DE` (German), `it-IT` (Italian), `fr-FR` (French), `es-ES` (Spanish), `ru-RU` (Russian), `zh-Hans` (Chinese), `pt-BR` (Portuguese), `pl-PL` (Polish).
+
+Example: `-language en-US`
+
+### `-disableannouncementbox`
+
+**No announcement boxes** (Advanced). Stops the Announcement Box block from sending text messages to players when wire triggers it.
+
+### `-announcementboxrange`
+
+**Announcement box range** (Advanced). How far, in pixels, an Announcement Box's message reaches. -1 means the whole server.
+
+Example: `-announcementboxrange -1`
+
+### `-modpack`
+
+**Mod pack** (Mods). Loads only the mods in this named mod pack instead of the list in enabled.json. No spaces: the start script that tModLoader ships splits a value with a space in it into two.
+
+Example: `-modpack friendsplaythrough`
+
+### `-modpath`
+
+**Mods folder** (Mods). The folder tModLoader loads .tmod files from. The panel leaves it at the Mods folder inside the data folder, where its backups look.
+
+Example: `-modpath D:\Mods`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-steamworkshopfolder`
+
+**Workshop mods folder** (Mods). Where Steam Workshop mods downloaded with SteamCMD are read from. The panel adds it when Workshop mods were asked for at creation. Use forward slashes and no spaces.
+
+Example: `-steamworkshopfolder steamapps/workshop`
+
+### `-savedirectory`
+
+**Data folder (adds tModLoader)** (Advanced). Like the data folder above, but tModLoader is added to the end of the path. The panel uses -tmlsavedirectory instead; leave this off.
+
+Example: `-savedirectory D:\srv`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
