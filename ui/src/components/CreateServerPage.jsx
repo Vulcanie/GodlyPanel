@@ -72,7 +72,8 @@ const POLL_MS = 4000;
 // What each stage of a creation job is called to a person, and a line on what is going on.
 const JOB_STAGES = {
 	queued: { label: "Waiting to start" },
-	installing: { label: "Downloading the game", hint: "Installing via SteamCMD. This can take a while for a large game…" },
+	downloading: { label: "Downloading the server", hint: "Downloading it from GitHub and checking it against the checksum GitHub publishes…" },
+	installing: { label: "Downloading the game", hint: "Installing the server. This can take a while for a large game…" },
 	configuring: { label: "Writing scripts and config", hint: "Writing scripts and config…" },
 	"first-boot": { label: "Starting it once to create its settings", hint: "Booting once to generate default config…" },
 	"resolving-mods": { label: "Finding the mod files", hint: "Resolving mod files via CurseForge…" },
@@ -107,7 +108,7 @@ function Art({ type, height, children, sx }) {
 /** One game in the picker. The whole card is the button, and the game's name is its heading. */
 function GameCard({ template, onPick }) {
 	// A hint about what choosing it involves, only where it is not the usual one-step setup.
-	const note = template.fields?.includes("uploadId") ? "Needs a modpack zip" : template.sharedInstall ? "Shared install" : null;
+	const note = template.fields?.includes("uploadId") ? "Needs a modpack zip" : template.sharedInstall ? "Shared install" : template.zipInstall ? "Downloaded from GitHub" : null;
 	return (
 		<ButtonBase
 			onClick={() => onPick(template)}
@@ -226,6 +227,10 @@ function CreateServerPage({ onBack, userRole }) {
 	const [submitting, setSubmitting] = React.useState(false);
 	const [submitError, setSubmitError] = React.useState(null);
 	const [askSteamCmd, setAskSteamCmd] = React.useState(false);
+	// What a game that is downloaded from GitHub (not through SteamCMD) will fetch, while the person is being asked: { repo, asset, tag?, sizeText? }.
+	const [askZip, setAskZip] = React.useState(null);
+	// The downloads already agreed to for this server, so that a second question doesn't lose the first answer.
+	const agreed = React.useRef({});
 	const [job, setJob] = React.useState(null);
 	// Stages the creation job has been through, in order, so the screen can show what is done and what is going on.
 	const [stages, setStages] = React.useState([]);
@@ -247,6 +252,7 @@ function CreateServerPage({ onBack, userRole }) {
 
 	const pickTemplate = async (template) => {
 		const ticket = ++pickTicket.current;
+		agreed.current = {};
 		setSelected(template);
 		setSuggested(null);
 		setSubmitError(null);
@@ -285,6 +291,7 @@ function CreateServerPage({ onBack, userRole }) {
 
 	const chooseAnother = () => {
 		pickTicket.current++;
+		agreed.current = {};
 		setSelected(null);
 		setSuggested(null);
 		setSubmitError(null);
@@ -301,8 +308,10 @@ function CreateServerPage({ onBack, userRole }) {
 			return next;
 		});
 
-	const submit = async (acceptSteamCmdDownload = false) => {
+	const submit = async (accept = {}) => {
+		agreed.current = { ...agreed.current, ...accept };
 		setAskSteamCmd(false);
+		setAskZip(null);
 		setSubmitting(true);
 		setSubmitError(null);
 		try {
@@ -312,7 +321,8 @@ function CreateServerPage({ onBack, userRole }) {
 			const body = {
 				templateId: selected.id,
 				...fields,
-				...(acceptSteamCmdDownload ? { acceptSteamCmdDownload: true } : {}),
+				...(agreed.current.steamCmd ? { acceptSteamCmdDownload: true } : {}),
+				...(agreed.current.zip ? { acceptZipDownload: true } : {}),
 			};
 			for (const p of selected.ports) {
 				body[p.key] = Number(form[p.key]);
@@ -327,6 +337,10 @@ function CreateServerPage({ onBack, userRole }) {
 			setSubmitting(false);
 			if (e.code === "steamcmd-not-installed") {
 				setAskSteamCmd(true);
+				return;
+			}
+			if (e.code === "zip-download-not-accepted") {
+				setAskZip({ ...(selected.zipInstall ?? {}), ...(e.details ?? {}) });
 				return;
 			}
 			setSubmitError(e.message);
@@ -629,7 +643,7 @@ function CreateServerPage({ onBack, userRole }) {
 						<Button variant="outlined" onClick={chooseAnother} disabled={submitting}>
 							Choose a different game
 						</Button>
-						<Button variant="contained" size="large" onClick={() => submit(false)} disabled={!canCreate} sx={flatWhenDisabled}>
+						<Button variant="contained" size="large" onClick={() => submit()} disabled={!canCreate} sx={flatWhenDisabled}>
 							{submitting ? "Creating..." : "Create Server"}
 						</Button>
 					</Box>
@@ -645,7 +659,39 @@ function CreateServerPage({ onBack, userRole }) {
 				</DialogContent>
 				<DialogActions>
 					<Button onClick={() => setAskSteamCmd(false)}>Cancel</Button>
-					<Button variant="contained" onClick={() => submit(true)}>
+					<Button variant="contained" onClick={() => submit({ steamCmd: true })}>
+						Download and continue
+					</Button>
+				</DialogActions>
+			</Dialog>
+
+			<Dialog open={Boolean(askZip)} onClose={() => setAskZip(null)}>
+				<DialogTitle>Download {selected?.displayName ?? "the server"} from GitHub?</DialogTitle>
+				<DialogContent>
+					<DialogContentText component="div">
+						<Typography variant="body2" sx={{ mb: 1.5 }}>
+							This game is not installed through SteamCMD. The panel will download it from the project's releases on GitHub:
+						</Typography>
+						<Box component="ul" sx={{ m: 0, mb: 1.5, pl: 2.5 }}>
+							<li>
+								<b>What:</b> {askZip?.asset}
+								{askZip?.tag ? ` (release ${askZip.tag})` : ""}
+							</li>
+							<li>
+								<b>From:</b> github.com/{askZip?.repo}
+							</li>
+							<li>
+								<b>Size:</b> {askZip?.sizeText ?? "not known yet (GitHub could not be reached just now)"}
+							</li>
+						</Box>
+						<Typography variant="body2">
+							It is fetched over https from GitHub only, checked against the SHA-256 checksum GitHub publishes for it (a download without a matching checksum is thrown away), and unpacked only into this server's own folder. Nothing is downloaded until you press the button.
+						</Typography>
+					</DialogContentText>
+				</DialogContent>
+				<DialogActions>
+					<Button onClick={() => setAskZip(null)}>Cancel</Button>
+					<Button variant="contained" onClick={() => submit({ zip: true })}>
 						Download and continue
 					</Button>
 				</DialogActions>

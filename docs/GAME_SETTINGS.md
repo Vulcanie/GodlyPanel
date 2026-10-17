@@ -42,6 +42,8 @@ Some games are set up by the arguments on the command that starts them, not by a
 - [Squad](#squad)
 - [Arma Reforger](#arma-reforger)
 - [VEIN](#vein)
+- [Space Engineers](#space-engineers)
+- [Terraria (tModLoader)](#terraria-tmodloader)
 
 ## ARK: Survival Ascended / Evolved
 
@@ -3861,3 +3863,109 @@ VEIN has no Steam Workshop and no official server mod support, and the panel add
 | Setting | Name in the file | What it does |
 | --- | --- | --- |
 | Autosave every (seconds) | `vein.Autosave.Interval` in `[ConsoleVariables]` | How often the server saves the world, in seconds. The list gives a default of 300, which is 5 minutes. |
+
+## Space Engineers
+
+Space Engineers' dedicated server keeps its options in `SpaceEngineers-Dedicated.cfg` and in each world's `Sandbox_config.sbc`, inside the `Data` folder in the server's install folder. The panel writes the first config file and starts the server with `-console -path` and the game port; those, the player limit and a few more are the **Launch options** on the Settings tab.
+
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#space-engineers).
+
+**What the panel set up.** When the server was created it wrote `Data\SpaceEngineers-Dedicated.cfg` with the server name you typed, "public", a limit of 8 players (or the number you chose), and a ready-made world from the game's own files (Star System: a star with planets and moons, which takes about 1.6 GB of memory once running). The game makes your world from it **the first time the server starts**, in `Data\Saves\<server name>`, which takes a few seconds longer than usual. The server is ready when its log (Logs tab) says `Game ready...`. If the config file is ever missing, the game starts but does nothing: it logs that it has no world and sits idle.
+**Where the settings are.** The server's name is read from the config file at every start. The world's rules (game mode, player limit, multipliers, oxygen, trash removal, mods) are copied from the config into the world when it is made, and from then on they live in the world's own `Data\Saves\<world>\Sandbox_config.sbc`: change them there. Changing the rules in the config file later does nothing for a world that already exists. The admin, ban and reserved-slot lists are in the config file. Both are XML the Settings tab cannot edit, so open them in a text editor with the server stopped: the game rewrites them while it runs. The join password is stored as a hash with a salt, made by the game's setup window; it cannot be typed in.
+**A different or fresh world.** The server continues the world it ran last. To start over, stop the server, take a backup, and delete the `Data\Saves` folder: the next start builds a new world from the config again (the config's server name is used as the world's name). To use a world of your own, copy its folder into `Data\Saves` and set `LoadWorld` in the config to the folder's full path, with the drive letter (the wiki's way; the panel has not tried it). A world made on your own PC is in `%AppData%\SpaceEngineers\Saves\<your Steam ID>`.
+**Stop does not save.** The game ignores the panel's request to close, so after 15 seconds the panel ends it, and the game does not save when it is ended. It saves by itself every 5 minutes (the log says `Autosave`), so a Stop can lose up to the last 5 minutes of building. To lose nothing, press Stop right after an autosave. A world ended this way loaded normally on the next start.
+The game port is on the launch line and is the only port to open (UDP). The game answers Steam's server-list queries on that same port, and its `SteamPort` setting is not used. The panel also switches the game's remote web API off in the config file.
+Mods are Steam Workshop items listed in the world's `Sandbox_config.sbc` (and, in older guides, in the config file). The server downloads them when it starts and players get them when they join. Take a backup before removing a mod that added blocks: grids built with them can be damaged.
+This is the plain game server from Keen. The Torch wrapper (a separate community program with plugins, which runs the game inside its own `Torch.Server.exe`) is not supported by the panel.
+
+## Terraria (tModLoader)
+
+This is Terraria running on tModLoader, the mod loader, which is the only Terraria server the panel can install without a Steam account. It is a .NET program (`tModLoader.dll`, with its .NET runtime in the `dotnet` folder) in the server's install folder. The world, its name and the password are in `serverconfig.txt`; the game port and the player limit are the **Launch options**. Players need tModLoader (free on Steam), not plain Terraria.
+
+- `serverconfig.txt`: The world to load, how a new one is made (size, name, seed, difficulty), the password and message of the day, and a few network and mod settings. One `key=value` per line; a line starting with `#` is ignored.
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#terraria-tmodloader).
+
+**The panel cannot stop the server cleanly.** The world is saved when `exit` is typed into the server's own console window; the Terraria wiki says the server saves on shutdown only with that command. The panel has no way to type into a console, so Stop asks the window to close and ends the process after 15 seconds, and the world keeps only what the server saved before (it also saves from time to time, how often is not documented). Before you press Stop, update or restart, open the server's window, which the panel keeps minimized on the taskbar rather than hidden, type `exit` and wait for it to close. `exit-nosave` throws the changes away.
+**Only tModLoader players can join, and they need the same mods.** Plain Terraria cannot join, even with no mods on the server, and a tModLoader player cannot join a plain Terraria server. The player's tModLoader version has to match too (the first three numbers of its version). The game offers to download any missing mods when a player joins.
+**The first start takes a few minutes.** The panel installs tModLoader from its GitHub release, which does not include the .NET runtime; the first time the server starts, tModLoader's own script downloads it into the `dotnet` folder, so the PC needs internet. The server shows as stopped until it has finished. Windows may ask to allow `dotnet.exe` through the firewall: allow it. If a first start fails half way, start it again; if it keeps failing, stop the server, delete the `dotnet` folder and start again.
+**Port.** The game port is TCP (7878 here, because 7777 is the default of Valheim and Satisfactory, which the panel also hosts); players type it after your address. Open it in Windows Firewall and forward it on your router. There is no query port, so the panel can tell that the server is running but not how many players are on.
+**Settings.** Stop the server before editing `serverconfig.txt`; it is read when the server starts. A line that starts with `#` is ignored, which is how the game's example file switches settings off. The game port and the player limit are on the launch line, not in this file. The world, size, name, seed and difficulty only matter when a new world is made. There is no setting for Corruption or Crimson; to choose, make the world in the game and copy its `.wld` and `.twld` files into `tmldata\Worlds`, then put the `.wld` path on the `world=` line.
+**Values with a space on the launch line break.** The start script that tModLoader ships joins its arguments into one string and splits it on spaces again, so a launch option such as a folder with a space in it falls apart. Keep launch values to one word; the world's name, path and the password are in `serverconfig.txt`, where spaces are fine.
+**Mods** are Steam Workshop items of tModLoader. Mods you list when creating the server are downloaded once with SteamCMD into `steamapps\workshop`, and their internal names are written to `tmldata\Mods\enabled.json`, which is what decides which mods load. Steam does not download the mods a mod needs, so look at the 'Required items' on its Workshop page and list those too. A `.tmod` file copied into `tmldata\Mods` by hand also needs its internal name added to `enabled.json`. Each mod's own settings are files in `tmldata\ModConfigs`. The panel does not download or update mods later: a monthly tModLoader release can break mods, so back up before changing either. Removing a mod from an existing world may lose what it added; no source says that is safe.
+**Updates.** The panel installs the newest tModLoader once, when the server is created, and does not update it afterwards. To update, make a new server with the same world files, or replace the files from a newer `tModLoader.zip` by hand while the server is stopped (keep `serverconfig.txt`, `tmldata`, `steamapps` and `dotnet`).
+If a mod stops the server from starting or kicks players, read the log: the Logs tab shows `server.log` in the `tModLoader-Logs` folder. Remove the newest mod from `enabled.json` to recover.
+
+### Terraria: World
+
+1 setting in `serverconfig.txt`, shown under **World** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| World file | `world` in `[root]` | The full path of the world to load (the .wld file, never the .twld next to it), written without quotes. The panel fills this in with a file named after the world in the server's tmldata\Worlds folder. If the file does not exist, a new world is made there (see 'Create world if missing'). |
+
+### Terraria: New world
+
+4 settings in `serverconfig.txt`, shown under **New world** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Create world if missing | `autocreate` in `[root]` | If the file named on the world line does not exist, the server makes a new world of this size there. It does nothing for a world that already exists. Choices: `1` (Small), `2` (Medium), `3` (Large). |
+| New world name | `worldname` in `[root]` | The name a newly made world is given. It has no effect on a world that already exists. The game's world-creation menu limits names to 27 characters. |
+| World seed | `seed` in `[root]` | Text the new world is generated from: the same seed gives (almost) the same world. Only used when the world is made. The game also has special seed words, such as 5162020 for a world with both Corruption and Crimson; whether the server's seed line recognises them the way the in-game box does was not tested. |
+| World difficulty | `difficulty` in `[root]` | The game mode of a newly made world; it cannot be changed afterwards. Journey is a creative-style mode, and only Journey characters can join a Journey world. The shipped example lists only Classic and Expert; Master and Journey are on the Terraria wiki's server page and are expected to work with tModLoader but were not tested. Without this line the game decides, which was not tested either. Choices: `0` (Classic), `1` (Expert), `2` (Master), `3` (Journey). |
+
+### Terraria: Server
+
+5 settings in `serverconfig.txt`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server password | `password` in `[root]` | What players type to join. Leave the line out for a server anyone can join. The panel writes it when it makes the server. |
+| Message of the day | `motd` in `[root]` | A message shown to players when they join. |
+| Extra cheat protection | `secure` in `[root]` | Turns on additional server-side checks against cheating (the game's description: 'adds additional cheat protection to the server'). The example file only shows 1, so anything else is expected to mean off. Choices: `1` (On), `0` (Off). |
+| Server language | `language` in `[root]` | The language of the server's own console messages. It does not change what players see. Choices: `en-US` (English), `de-DE` (German), `it-IT` (Italian), `fr-FR` (French), `es-ES` (Spanish), `ru-RU` (Russian), `zh-Hans` (Chinese), `pt-BR` (Portuguese), `pl-PL` (Polish). |
+| Ban list file | `banlist` in `[root]` | The file that keeps banned players. Without this line the server uses banlist.txt in its folder. The ban and kick commands are typed into the server's console. |
+
+### Terraria: Network
+
+2 settings in `serverconfig.txt`, shown under **Network** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Auto port-forward (UPnP) | `upnp` in `[root]` | Asks your router to open the game port by itself when the server starts. The Terraria wiki says it does not always work, so forward the port by hand if friends cannot join. The example file only shows 1, so anything else is expected to mean off. Choices: `1` (On), `0` (Off). |
+| Enemy smoothing | `npcstream` in `[root]` | Reduces enemies skipping or teleporting for players, at the cost of more network traffic. A lower number is smoother but sends more data; 0 turns it off. The example file uses 60, and tModLoader's own wiki suggests a number around 2 to 6 for a smoother result. |
+
+### Terraria: Performance
+
+1 setting in `serverconfig.txt`, shown under **Performance** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Process priority | `priority` in `[root]` | How much of the PC's processor time Windows gives the server compared with other programs. The panel does not set it; the game's own example file uses High. A launch argument for the same thing, if you give one, wins. Choices: `0` (Realtime), `1` (High), `2` (Above normal), `3` (Normal), `4` (Below normal), `5` (Idle). |
+
+### Terraria: Mods
+
+2 settings in `serverconfig.txt`, shown under **Mods** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Mods folder | `modpath` in `[root]` | The folder tModLoader looks in for .tmod files and for the list of enabled mods (enabled.json). Without this line it is the Mods folder inside the server's tmldata folder, where the panel's backups look; change it only if you keep mods somewhere else on purpose. |
+| Mod pack to load | `modpack` in `[root]` | Loads only the mods in this named mod pack, instead of the list in enabled.json. Mod packs are made in the tModLoader game and are looked up by name in a ModPacks folder next to the mods folder; the server stops with an error if the pack is missing. |
+
+### Terraria: Journey permissions
+
+11 settings in `serverconfig.txt`, shown under **Journey permissions** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Freeze time | `journeypermission_time_setfrozen` in `[root]` | Who may freeze the day and night clock. Who may use this Journey power in a Journey-mode world. It does nothing in other worlds. Whether tModLoader honours the Journey permission lines was not tested. Choices: `0` (Locked for everyone), `1` (Only the host), `2` (Anyone). |
+| Set time to dawn | `journeypermission_time_setdawn` in `[root]` | Who may jump the time to dawn. Who may use this Journey power in a Journey-mode world. It does nothing in other worlds. Whether tModLoader honours the Journey permission lines was not tested. Choices: `0` (Locked for everyone), `1` (Only the host), `2` (Anyone). |
+| Set time to noon | `journeypermission_time_setnoon` in `[root]` | Who may jump the time to noon. Who may use this Journey power in a Journey-mode world. It does nothing in other worlds. Whether tModLoader honours the Journey permission lines was not tested. Choices: `0` (Locked for everyone), `1` (Only the host), `2` (Anyone). |
+| Set time to dusk | `journeypermission_time_setdusk` in `[root]` | Who may jump the time to dusk. Who may use this Journey power in a Journey-mode world. It does nothing in other worlds. Whether tModLoader honours the Journey permission lines was not tested. Choices: `0` (Locked for everyone), `1` (Only the host), `2` (Anyone). |
+| Set time to midnight | `journeypermission_time_setmidnight` in `[root]` | Who may jump the time to midnight. Who may use this Journey power in a Journey-mode world. It does nothing in other worlds. Whether tModLoader honours the Journey permission lines was not tested. Choices: `0` (Locked for everyone), `1` (Only the host), `2` (Anyone). |
+| Time speed | `journeypermission_time_setspeed` in `[root]` | Who may change how fast time passes. Who may use this Journey power in a Journey-mode world. It does nothing in other worlds. Whether tModLoader honours the Journey permission lines was not tested. Choices: `0` (Locked for everyone), `1` (Only the host), `2` (Anyone). |
+| God mode | `journeypermission_godmode` in `[root]` | Who may turn on god mode. Who may use this Journey power in a Journey-mode world. It does nothing in other worlds. Whether tModLoader honours the Journey permission lines was not tested. Choices: `0` (Locked for everyone), `1` (Only the host), `2` (Anyone). |
+| Wind strength | `journeypermission_wind_setstrength` in `[root]` | Who may set the wind strength. Who may use this Journey power in a Journey-mode world. It does nothing in other worlds. Whether tModLoader honours the Journey permission lines was not tested. Choices: `0` (Locked for everyone), `1` (Only the host), `2` (Anyone). |
+| Freeze wind | `journeypermission_wind_setfrozen` in `[root]` | Who may freeze the wind. Who may use this Journey power in a Journey-mode world. It does nothing in other worlds. Whether tModLoader honours the Journey permission lines was not tested. Choices: `0` (Locked for everyone), `1` (Only the host), `2` (Anyone). |
+| Rain strength | `journeypermission_rain_setstrength` in `[root]` | Who may set the rain strength. Who may use this Journey power in a Journey-mode world. It does nothing in other worlds. Whether tModLoader honours the Journey permission lines was not tested. Choices: `0` (Locked for everyone), `1` (Only the host), `2` (Anyone). |
+| Freeze rain | `journeypermission_rain_setfrozen` in `[root]` | Who may freeze the rain. Who may use this Journey power in a Journey-mode world. It does nothing in other worlds. Whether tModLoader honours the Journey permission lines was not tested. Choices: `0` (Locked for everyone), `1` (Only the host), `2` (Anyone). |

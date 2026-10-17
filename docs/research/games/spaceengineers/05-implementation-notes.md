@@ -1,48 +1,41 @@
 # Space Engineers: implementation notes
 
-Built 2026-10-15 from 01..04 of this folder. Not run on a real install. Plain dedicated server only; the Torch wrapper is out of scope for v1.
+Built 2026-10-15 from 01..04 of this folder; **revised 2026-10-17 after a real install** (evidence: `06-verification.md`, build 01_210_014). Plain dedicated server only; the Torch wrapper is out of scope for v1.
 
-## Files created
-- `src/server/data/games/spaceengineers.js` (template, backup, logs, launchOptions: true)
-- `ui/src/catalog/games/spaceengineers.js` (type `spaceengineers`; `files: {}`, `launch`, `guide`)
-- `tests/unit/game-spaceengineers.test.js` (18 tests, pass), `ui/src/__tests__/game-spaceengineers.test.js` (14 tests, pass)
-- Not registered in either `index.js` (the lead does that): add `spaceengineers` to `GAME_MODULES` and `GAME_UI_MODULES`.
+Status: registered in both `index.js` files for the verification run (`GAME_MODULES`, `GAME_UI_MODULES`; keep them). A server created from the template now starts a world the game reports ready for players (`Game ready...`, answers Steam A2S with its name, world and player limit). A real client join is the one thing not tried.
 
-## What it does
-- SteamCMD app 298740 (anonymous), store 244850, `method: "process"`, `installLayoutRoot: ""`, `fields: []`.
-- Start script: `cd /d "%~dp0DedicatedServer64"` then `start /MIN "<name>" SpaceEngineersDedicated.exe -console -path "%~dp0Data" -port <port>` plus `-maxPlayers <2-64>` only when the create form gave a number.
-- `processName`: `SpaceEngineersDedicated.exe` (dossier 01: the process in the taskkill lines of Keen's page and the wiki, a single process).
-- One panel port: game port UDP, default 27116 (game's own 27016 is Sons of the Forest's query port here). 27117 is free.
-- `buildExtraFiles` writes `Data\ABOUT-THIS-FOLDER.md` only to make the `Data` folder (the game quits silently if `-path` does not exist). `.md` so the Logs tab (which lists `.log`/`.txt` in a dir) does not show it.
-- Backup: `Data/Saves`, `Data/SpaceEngineers-Dedicated.cfg`. Logs: dir `Data`, dir `DedicatedServer64/logs` (missing dirs are skipped).
-- Settings tab: Launch options only. 11 launch arguments in the catalog (4 editable in the form: `-port`, `-maxPlayers`, `-ip`, `-ignorelastsession`; `-console`, `-path`, `-noconsole`, `-session:`, `-plugin`, `-eos`, `-np` explained, `edit: false`). 0 settings (no settings file).
+## Files
+- `src/server/data/games/spaceengineers.js` (template, backup, logs, launchOptions: true; named exports `serverName`, `worldFolderName`)
+- `ui/src/catalog/games/spaceengineers.js` (type `spaceengineers`; `files: {}`, `launch` with 11 arguments, `guide`)
+- `tests/unit/game-spaceengineers.test.js` (25 tests; the one that reads a real `.bat` with Windows paths is `{ skip: !onWindows }`), `ui/src/__tests__/game-spaceengineers.test.js` (15 tests)
 
-## Deviations from the dossier / decisions
-1. **No config file and no world are written.** Brief: write a first `SpaceEngineers-Dedicated.cfg` only if the dossier has a verified minimal one. It has not: 02-config says the first-start sequence is UNVERIFIED end to end. Checking Keen's 2022 source (`raw/MySandboxGame.cs`) shows more: with no `LoadWorld` the server starts a new world only if `PremadeCheckpointPath` points at an existing premade world folder, otherwise it logs "Cannot start new world - Premade world not found" and idles; and an unset `SessionSettings` takes class defaults with `OnlineMode = PRIVATE`. Whether the 2026 build still behaves so (one hosting guide says it makes a random world by itself) is unknown. A minimal cfg with only name/ports would therefore be unverified at best and could leave a server nobody can join.
-   Consequence: a server created by the panel starts the exe but has no config, no world, no server name. The user must supply `Data\SpaceEngineers-Dedicated.cfg` and a world in `Data\Saves\<name>` (cfg `LoadWorld` = full path). The guide says this first in its notes.
-2. **No XML parser.** The cfg and `Sandbox_config.sbc` are plain-child-element XML (`<MaxPlayers>8</MaxPlayers>`); `xmlProperties.js` only handles `<property name= value=>`, no other parser fits. None written, per brief. So `files: {}` and `entry.configPath(s)` are absent (a game with no editable file; history then covers the launch options). The ~200 settings in 02-config.md are not in the catalog.
-3. `sessionName`/`serverPassword` fields not offered: ServerName is a cfg element (not settable by argument), the password is a salted hash by an undocumented method (dossier 02).
-4. No `queryPort`: the Steam port (`SteamPort`, 8766) has no launch argument and is only in the cfg. It clashes with Sons of the Forest's default game port (8766) if both run on one PC; noted in the guide. It is not a managed panel port, so the firewall helper does not open it.
-5. `-ignorelastsession` is NOT on the generated line (dossier suggests it for first creation). With no `LoadWorld` in a cfg, it could mean a new world on every start. It is offered in the form with that warning.
-6. `-maxPlayers` is clamped to 2..64 (the Dedicated Server window's range, 02-config); omitted when not asked for so the world's own limit applies.
-7. `-session:` is explained, not editable (wiki only, absent from 2022 source, quoting unknown). `-noconsole` explained, not editable (no window to close, so Stop may not save). `-selectInstance`, `-checkAlive`, `-start` (no description anywhere), `-report` (crash helper) left out.
-8. Launch regex `\bSpaceEngineersDedicated`: run from `DedicatedServer64` (the cwd choice is mine: the Pterodactyl egg runs it from a parent folder, double-click runs it from its own folder; either is evidenced).
-9. No mods field (dossier 04: mods are a `<Mods>` list in the world's `Sandbox_config.sbc`, authoritative file unestablished; no recommendation to add one).
+## What it does now
+- SteamCMD app 298740 (anonymous), store 244850, `method: "process"`, `installLayoutRoot: ""`, `fields: ["sessionName"]` (the create form's server name).
+- Start script: `cd /d "%~dp0DedicatedServer64"`, then `start /MIN "<name>" SpaceEngineersDedicated.exe -console -path "%~dp0Data" -port <port>`. No `-maxPlayers` any more (the cfg carries it). No `RunAsInvoker` line: the manifest is `asInvoker`.
+- `buildConfigFile` writes `Data\SpaceEngineers-Dedicated.cfg` (which also makes the `Data` folder the game needs): `SessionSettings{OnlineMode PUBLIC, MaxPlayers 8 or the form's 2..64}`, `ServerName` (from `sessionName`, XML-escaped, control characters stripped, 100 characters), `WorldName` (the same, without `\ / : * ? " < > |`, trailing dots/spaces, Windows reserved names; 60 characters), `PremadeCheckpointPath` `..\Content\CustomWorlds\Star System`, `RemoteApiEnabled false`.
+- No world file is copied: the game itself copies the premade world from its own `Content\CustomWorlds` into `Data\Saves\<WorldName>` on the first start, then resumes it (`Saves\LastSession.sbl`) on every later start. `buildExtraFiles`/`copyInstalledFiles` are not used. (`copyInstalledFiles` copies single files only, so it could not have copied a world folder anyway.)
+- `processName`: `SpaceEngineersDedicated.exe` (confirmed). Entry carries `sessionName`.
+- One panel port: game port UDP, default 27116. The game answers Steam A2S on it. SteamPort and the cfg's ServerPort are not used.
+- Backup: `Data/Saves`, `Data/SpaceEngineers-Dedicated.cfg`. Logs: dir `Data` (the game log), dir `DedicatedServer64/logs` (Steam `.txt` logs).
+- Settings tab: Launch options only (`-port`, `-maxPlayers`, `-ip`, `-ignorelastsession` editable; `-console`, `-path`, `-noconsole`, `-session:`, `-plugin`, `-eos`, `-np` explained, `edit: false`). 0 settings (no parser fits the cfg / `Sandbox_config.sbc`).
+
+## Decisions and deviations
+1. **Premade world = Star System** (planets; about 1.6 GB RAM). Empty World (about 0.6 GB) also works; it is one constant (`PREMADE_WORLD`) if a lighter default is wanted.
+2. **Relative premade path** (`..\Content\...`, resolved from `DedicatedServer64`, where the script runs the game). An absolute path also worked. Relative survives moving the server folder, but it only matters on the very first start.
+3. **OnlineMode PUBLIC**: unset, this build runs OFFLINE. Whether FRIENDS/PRIVATE would suit a hobbyist better is a product choice.
+4. **MaxPlayers default 8** is mine (the game's class default is 4). It is only applied when the world is made; afterwards the world's own `Sandbox_config.sbc` wins, so the player limit cannot be changed by editing the cfg later, only there or with `-maxPlayers` on the line (tested: the line wins).
+5. No `GameMode` written: the game's default is Creative. Add `<GameMode>Survival</GameMode>` to the `SessionSettings` block if survival is wanted by default.
+6. No join password field (hash with salt, undocumented), no RCON (none), no mods field (list in cfg and `Sandbox_config.sbc`), no XML parser for the cfg or the world config (shape not handled by the panel's readers), so the 200 settings of 02-config.md are not in a catalog.
+7. `-ignorelastsession` stays off the generated line and is offered with a warning (not tried: with the panel's cfg it probably makes a new world each start).
+8. No Steam port note any more (not bound); the old Sons of the Forest clash note was dropped.
 
 ## Limitations of the panel for this game
-- No RCON/console command: Stop = close the console window, then force-kill after 15 s. Keen documents that a normal close saves ("taskkill /IM" without /f) and its source handles CTRL_CLOSE; a force-kill loses unsaved progress. Autosave default is 5 minutes (`AutoSaveInMinutes`).
-- The game's own Maintenance features (auto restart/update) are not touched.
-- Settings that live in the cfg or the world (name, admins, bans, password hash, rules, mods) are hand-edited, with the server stopped (the game rewrites them on shutdown).
+- **STOP DOES NOT SAVE.** The panel's close request (taskkill without /F) does nothing to the game (its console window belongs to `conhost.exe`). After 15 s the panel force-kills, and the log never shows a shutdown or save. Only the game's autosave (5 minutes by default, `AutoSaveInMinutes`) and the save at world creation exist, so a Stop or a "stop"-mode backup can lose up to 5 minutes. A world ended this way loaded normally 3 times in a row. A graceful stop would need a new stop mechanism (a Ctrl+C / console-close sent to the right console, or the game's remote API with its key), which this task did not build.
+- With the cfg missing the game starts, logs that it has no world and idles, and the panel still reports the server online.
+- Settings that live in the cfg or the world (name, admins, bans, password hash, rules, mods) are hand-edited with the server stopped (the game rewrites the cfg at start and shutdown).
 
-## Needs real-install verification
-1. SteamCMD anonymous install of 298740 lands `DedicatedServer64\SpaceEngineersDedicated.exe` directly in the install folder (no `steamapps\common`).
-2. `-console -path "<full path>" -port N` starts a server with no setup window; `-path` really accepts the quoted `%~dp0Data` path.
-3. What a first start does with a `Data` folder holding only the ABOUT note: does it create a default cfg/world, idle, or exit? (dossier items 9/11 of 01.) This decides whether a cfg/world template can be added later.
-4. A cfg + world copied into `Data` (with `LoadWorld` as a full path) loads and is joinable; the minimal cfg elements (`ServerName`, `WorldName`, `IP`, `ServerPort`, `SteamPort`, plus `PremadeCheckpointPath` or `LoadWorld`) suffice; `OnlineMode` in the world is PUBLIC or the server is not listed.
-5. `-port` on the line overrides cfg `ServerPort`; `-maxPlayers` overrides the world's limit.
-6. Stop: closing the console window saves the world and exits within 15 s (stop, start, check the latest changes are present). Same for `-noconsole` (why it is not offered).
-7. Which process stays running: only `SpaceEngineersDedicated.exe`, no launcher child; whether a 32-bit `DedicatedServer\` folder ships.
-8. Data location: logs really are in `Data` (file names unknown), world backups in `Data\Saves\<world>\Backup`; `DedicatedServer64\logs\workshop_log.txt` exists.
-9. UDP 27116 (game) and 8766 (Steam port) are the only ports needed; the protocol of the Steam port; whether the A2S query answers (not used by the panel: the server is watched by its process).
-10. Windows Firewall prompt/rule for `SpaceEngineersDedicated.exe`; the firewall helper guesses the program path as `<install>\SpaceEngineersDedicated.exe` unless a running copy is found.
-11. Workshop mod downloads on a SteamCMD install: copying `steamclient64.dll`, `tier0_s64.dll`, `vstdlib_s64.dll` into `DedicatedServer64` may be needed (dossier 01/04); not done by the panel.
+## Still unverified
+1. A real client joining (Steam server list, version match, `PUBLIC` vs `OFFLINE`).
+2. `LoadWorld` with a world from a client PC; `-ignorelastsession`; Workshop mods on a SteamCMD install.
+3. Windows Firewall prompt/rule for `SpaceEngineersDedicated.exe` (the firewall helper guesses `<install>\SpaceEngineersDedicated.exe` unless a running copy is found; the real path is `DedicatedServer64\`).
+4. Whether a graceful stop is possible at all from outside the console window.
