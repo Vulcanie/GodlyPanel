@@ -1,6 +1,6 @@
-// For someone whose system asks for less motion (Windows: "Show animations in Windows" off), the page must not run its endless
-// animations at the fastest speed (the online dot and the spinners once flickered like that in a browser; the desktop app does not
-// apply the setting, so it looked fine there). Not part of `npm test` (it needs a Chromium); run it with `node tests/ui/reduced-motion.mjs`.
+// For someone whose system asks for less motion (Windows: "Show animations in Windows" off), the page must leave its endless
+// animations (the online dot, the loading wheels) at their own speed; they once raced in a browser. The desktop app does not apply
+// the setting, so it looked fine there. Not part of `npm test` (it needs a Chromium); run it with `node tests/ui/reduced-motion.mjs`.
 // Set GP_CHROME to a chrome.exe.
 import { chromium } from "playwright-core";
 import { spawn } from "node:child_process";
@@ -32,22 +32,21 @@ try {
 	await page.waitForLoadState("networkidle");
 	await page.waitForTimeout(1200);
 
-	// Two stand-ins that run the page's own pulse animation endlessly: one outside a progress indicator, one inside.
+	// A stand-in that runs the page's own pulse animation endlessly, and one that has a hover transition.
 	await page.evaluate(() => {
-		document.body.insertAdjacentHTML("beforeend", '<div id="plain" style="animation: gp-pulse 2s infinite; width:10px; height:10px"></div><div class="MuiCircularProgress-root"><i id="spin" style="display:block; animation: gp-pulse 1.4s infinite; width:10px; height:10px"></i></div>');
+		document.body.insertAdjacentHTML("beforeend", '<div id="plain" style="animation: gp-pulse 2s infinite; transition: color 1s; width:10px; height:10px"></div>');
 	});
-	const read = (id) => page.evaluate((i) => { const s = getComputedStyle(document.getElementById(i)); return { duration: s.animationDuration, count: s.animationIterationCount }; }, id);
+	const read = () => page.evaluate(() => { const s = getComputedStyle(document.getElementById("plain")); return { duration: s.animationDuration, count: s.animationIterationCount, transition: s.transitionDuration }; });
 
 	await page.emulateMedia({ reducedMotion: "no-preference" });
-	let plain = await read("plain");
-	check("with no preference, an endless animation keeps its own speed", plain.count === "infinite" && plain.duration === "2s", JSON.stringify(plain));
+	let r = await read();
+	check("with no preference, an endless animation keeps its own speed", r.count === "infinite" && r.duration === "2s", JSON.stringify(r));
+	check("and transitions take their time", r.transition === "1s", JSON.stringify(r));
 
 	await page.emulateMedia({ reducedMotion: "reduce" });
-	plain = await read("plain");
-	check("asking for less motion stops an endless animation from looping", plain.count === "1", JSON.stringify(plain));
-	check("and makes it instant rather than fast", plain.duration === "0.00001s" || plain.duration === "1e-05s", JSON.stringify(plain));
-	const spin = await read("spin");
-	check("but a spinner keeps moving at its own speed", spin.count === "infinite" && spin.duration === "1.4s", JSON.stringify(spin));
+	r = await read();
+	check("asking for less motion leaves an endless animation at its own speed, still looping", r.count === "infinite" && r.duration === "2s", JSON.stringify(r));
+	check("but makes transitions instant", r.transition === "0.00001s" || r.transition === "1e-05s", JSON.stringify(r));
 } finally {
 	await browser.close();
 	api.kill();
