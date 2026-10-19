@@ -81,16 +81,9 @@ export function buildTheme(mode) {
 					code: { fontFamily: MONO },
 					"@keyframes gp-pulse": { "0%": { opacity: 0.9, transform: "scale(0.9)" }, "70%": { opacity: 0, transform: "scale(2.4)" }, "100%": { opacity: 0, transform: "scale(2.4)" } },
 					"@keyframes gp-rise": { from: { opacity: 0, transform: "translateY(8px)" }, to: { opacity: 1, transform: "none" } },
-					// For someone who has asked their system for less motion: decorative movement is cut to a single instant frame, and an
-					// endless animation (the online dot) plays once rather than looping at that speed. A loading spinner or progress bar keeps
-					// moving, because it is how the page says something is happening.
-					"@media (prefers-reduced-motion: reduce)": {
-						"*:not(.MuiCircularProgress-root):not(.MuiCircularProgress-root *):not(.MuiLinearProgress-root):not(.MuiLinearProgress-root *), *:not(.MuiCircularProgress-root):not(.MuiCircularProgress-root *):not(.MuiLinearProgress-root):not(.MuiLinearProgress-root *)::before, *:not(.MuiCircularProgress-root):not(.MuiCircularProgress-root *):not(.MuiLinearProgress-root):not(.MuiLinearProgress-root *)::after": {
-							animationDuration: "0.01ms !important",
-							animationIterationCount: "1 !important",
-							transitionDuration: "0.01ms !important",
-						},
-					},
+					// For someone who has asked their system for less motion: hover and colour transitions become instant. Animations are left
+					// alone, so the online dot and the loading wheels keep their own speed (squeezing an endless one made it race).
+					"@media (prefers-reduced-motion: reduce)": { "*, *::before, *::after": { transitionDuration: "0.01ms !important" } },
 				},
 			},
 			MuiPaper: { styleOverrides: { root: { backgroundImage: "none" }, rounded: { borderRadius: 12 } } },
