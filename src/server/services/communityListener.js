@@ -4,7 +4,7 @@ import http from "node:http";
 import net from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { verifyCredentials, getById, needsSetup, setPassword } from "../data/userStore.js";
+import { verifyCredentials, getById, needsSetup, setPassword, getPreferences, setPreferences } from "../data/userStore.js";
 import { auditActions, auditSignInFailed, auditSignedOut, auditPasswordChanged } from "./auditTrail.js";
 import sessionRoutes from "../routes/sessions.js";
 import { revokeUserSessions, revokeSession } from "./sessionStore.js";
@@ -208,6 +208,17 @@ export function createCommunityApp({ hostRule, uiDir, staffSignIn = () => false 
 		auditPasswordChanged(req);
 		res.once("finish", () => revokeSession(oldSid));
 		res.json({ success: true });
+	});
+
+	// What this person has chosen to hide ("don't show again"), kept on their account like at the panel's own address. The panel's
+	// routes aren't shared with a guest, and an administrator's staffApi below doesn't carry the sign-in routes, so it is answered here.
+	app.get("/api/auth/preferences", requireRole("admin", "moderator", "guest"), (req, res) => res.json({ prefs: getPreferences(req.user.id) }));
+	app.put("/api/auth/preferences", requireRole("admin", "moderator", "guest"), async (req, res) => {
+		try {
+			res.json({ prefs: await setPreferences(req.user.id, req.body) });
+		} catch (e) {
+			res.status(400).json({ error: e.message });
+		}
 	});
 
 	// Live updates for everyone allowed in here. A staff session is only present while staff sign-in is on.

@@ -225,6 +225,19 @@ describe("the community view", () => {
 			assert.equal((await raw(port, { method: "DELETE", url: `/api/users/${made.json.id}`, cookie: adminCookie })).status, 200);
 		});
 
+		it("keeps what they chose to hide (\"don't show again\") on their account, as it does at the panel's own address", async () => {
+			const before = await raw(port, { url: "/api/auth/preferences", cookie: adminCookie });
+			assert.equal(before.status, 200, before.text);
+			assert.equal(before.json.prefs.checklistDismissed, undefined);
+			const saved = await raw(port, { method: "PUT", url: "/api/auth/preferences", cookie: adminCookie, body: { checklistDismissed: true }, headers: { "Sec-Fetch-Site": "same-origin" } });
+			assert.equal(saved.status, 200, saved.text);
+			assert.equal((await raw(port, { url: "/api/auth/preferences", cookie: adminCookie })).json.prefs.checklistDismissed, true);
+			// The same account, read at the panel's own address, sees the same choice.
+			const own = await api.cookieFor({ username: "admin", password: "TestAdmin!2345" });
+			assert.equal((await api.get("/api/auth/preferences", { cookie: own })).json.prefs.checklistDismissed, true);
+			await raw(port, { method: "PUT", url: "/api/auth/preferences", cookie: adminCookie, body: { checklistDismissed: false } });
+		});
+
 		it("lets a moderator sign in, as a moderator: they still can't reach what only an administrator can", async () => {
 			const r = await login(MOD_LOGIN, "203.0.113.21");
 			assert.equal(r.status, 200, r.text);
