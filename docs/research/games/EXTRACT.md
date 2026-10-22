@@ -16,3 +16,6 @@ LAUNCH: one table: `argument exactly as written | takes a value? | default | all
 MODS: Label: value (url) lines for: does the dedicated server support mods; how mods are added (workshop ids, files in a folder, a config line, a launch argument); folder paths; config or file names involved; do clients need the same mods; loader/framework needed; 5 most popular mods or frameworks named on the pages (with ids if shown).
 
 Final message: max 60 words: how many rows you wrote and how many items are NOT FOUND.
+
+## Vault rules
+Your files go in `docs/research/games/<slug>/` as `01-basics.md`, `02-config.md`, `03-launch-args.md`, `04-mods.md` (the names the overview links to), with page copies in `raw/`. After Stage B, run [[OVERVIEW]] to write `00-overview.md`.

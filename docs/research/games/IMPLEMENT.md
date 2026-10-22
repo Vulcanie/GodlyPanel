@@ -1,8 +1,8 @@
 # IMPLEMENTATION BRIEF (build one game from its research dossier)
 
 You are an implementation agent for GodlyPanel (repo C:\GodlyPanel, Windows). Research for your game is in
-`C:\Users\vulca\AppData\Local\Temp\claude\c--GodlyPanel\5e664e5d-9cf5-48e8-83cd-427e6c66bc6d\scratchpad\research\<slug>\` (files 01-basics.md,
-02-config.md, 03-launch-args.md, 04-mods.md) and `...\research\CONVENTIONS.md`. Read ALL of them first.
+`C:\GodlyPanel\docs\research\games\<slug>\`. Start with `00-overview.md` (frontmatter + quick facts + conflicts + gaps), then read `01-basics.md`,
+`02-config.md`, `03-launch-args.md`, `04-mods.md` and `docs\research\games\CONVENTIONS.md` in full. Any conflict listed in the overview is unresolved: check the live source or use the most-evidenced value and note it.
 
 ## What you create (NEW FILES ONLY, you must not edit any existing file)
 1. `src/server/data/games/<id>.js`, default export `{ template, backup, logs, launchOptions }`, described in `src/server/data/games/index.js`.
@@ -26,7 +26,7 @@ You are an implementation agent for GodlyPanel (repo C:\GodlyPanel, Windows). Re
    entry fields, config file content, that ports in the script match the entry) and `ui/src/__tests__/game-<type>.test.js` (vitest; import your
    UI module: every setting has label + description > 10 chars + group, no repeated dropdown choices, every launch arg has label/description/
    group, flags unique). Use the rules in `ui/src/__tests__/catalogs.test.js`.
-4. `research\<slug>\05-implementation-notes.md` in the scratchpad: what you built, every deviation from the dossier, everything you left out and
+4. `docs\research\games\<slug>\05-implementation-notes.md` (in the repo, beside the dossier): what you built, every deviation from the dossier, everything you left out and
    why, what MUST be verified on a real install (list concrete checks), and any limitation of the panel for this game (e.g. no graceful stop).
 
 ## Rules
@@ -51,3 +51,6 @@ You are an implementation agent for GodlyPanel (repo C:\GodlyPanel, Windows). Re
   src/__tests__/game-<type>.test.js` to check your own tests; they must pass. Write tests first when practical (RED, then GREEN).
 - Final message (max 150 words): files created, test results, number of settings and launch arguments in the catalog, list of
   "needs real-install verification" items.
+
+## Vault upkeep (lead, after the build)
+In `<slug>/00-overview.md` change `status: researched-unverified` to `built-unverified` and add a line under "Panel fit" linking `[[05-implementation-notes]]`. In `INDEX.md` move the game from "Researched, not implemented" to "Already built into the panel". Add the game to the status table in `README.md` once it has been checked.

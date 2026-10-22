@@ -23,5 +23,10 @@ import vein from "./vein.js";
 import unturned from "./unturned.js";
 import spaceengineers from "./spaceengineers.js";
 import terraria from "./terraria.js";
+import svencoop from "./svencoop.js";
+import css from "./css.js";
+import hl2dm from "./hl2dm.js";
+import astroneer from "./astroneer.js";
+import avorion from "./avorion.js";
 
-export const GAME_UI_MODULES = [abiotic, dst, icarus, scum, starrupture, unturned, soulmask, garrysmod, barotrauma, necesse, l4d2, squad, armareforger, vein, spaceengineers, terraria];
+export const GAME_UI_MODULES = [abiotic, dst, icarus, scum, starrupture, unturned, soulmask, garrysmod, barotrauma, necesse, l4d2, squad, armareforger, vein, spaceengineers, terraria, svencoop, css, hl2dm, astroneer, avorion];

@@ -41,6 +41,10 @@ Settings that live in a game's own settings file are in the [game settings guide
 - [VEIN](#vein)
 - [Space Engineers](#space-engineers)
 - [Terraria (tModLoader)](#terraria-tmodloader)
+- [Sven Co-op](#sven-co-op)
+- [Counter-Strike: Source](#counter-strike-source)
+- [Half-Life 2: Deathmatch](#half-life-2-deathmatch)
+- [Avorion](#avorion)
 
 ## Valheim
 
@@ -1920,7 +1924,7 @@ The panel puts this on the line when it creates the server. It is in the Launch 
 
 Example: `-ip 0.0.0.0`
 
-### `-nohltv`
+### Left 4 Dead 2: `-nohltv`
 
 **No SourceTV** (Network). Turns SourceTV (the spectator broadcast) off and closes its port, which is usually 27020.
 
@@ -1944,7 +1948,7 @@ Example: `+map c1m1_hotel`
 
 The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
 
-### `+exec`
+### Left 4 Dead 2: `+exec`
 
 **Settings file** (Server). The settings file the server runs when it starts, from the left4dead2\cfg folder. The panel writes it, and the Settings tab edits it.
 
@@ -1970,7 +1974,7 @@ Example: `+sv_setsteamaccount …`
 
 Not offered in the Launch options form; the panel sets it and it is best left alone.
 
-### `-conclearlog`
+### Left 4 Dead 2: `-conclearlog`
 
 **Start console.log afresh** (Saves and logs). Empties console.log every time the server starts. It only works together with the option above.
 
@@ -2475,3 +2479,411 @@ Example: `-steamworkshopfolder steamapps/workshop`
 Example: `-savedirectory D:\srv`
 
 Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+## Sven Co-op
+
+Sven Co-op is started with `+word value` commands (the map, the player limit, the config file) and `-word` options (the port, the console). "Arguments start with a hyphen and parameters start with a plus sign", as the manual puts it. They are read when the server starts, so changes apply the next time it starts. None of them has to be last on the line. These arguments are on the `SvenDS.exe` line of the server's start script.
+
+The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
+
+### Sven Co-op: `-console`
+
+**Console window** (Required). Runs the server in console mode: a text window you can type commands into. Required, or the server starts in graphical mode. The panel always writes it.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Sven Co-op: `-port`
+
+**Game port** (Network). The port the server listens on and tells players to connect to (UDP). The manual also lists TCP on the same number for the remote console. Change it from the server's Ports section so the panel can check for clashes.
+
+Example: `-port 27355`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `+ip`
+
+**Listen address** (Network). The network address the server listens on. Only needed if the computer has more than one IP address (virtual network cards such as VirtualBox, VMware and Hyper-V count) and you must choose which one to listen on.
+
+Example: `+ip 0.0.0.0`
+
+### `-sport`
+
+**Anti-cheat port** (Network). The port for Valve Anti-Cheat (VAC) traffic. It starts at 26900 and, per the manual, moves up to the next free port if that one is taken, so it rarely needs setting.
+
+Example: `-sport 26900`
+
+### Sven Co-op: `+maxplayers`
+
+**Max players** (Server). The most players on the server at one time, from 2 to 32. It is 12 if you do not give a number. The manual says most maps become overcrowded with more than 12 players.
+
+Example: `+maxplayers 12`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Sven Co-op: `+map`
+
+**Start map** (World). The map the server starts on: the map file's name without .bsp. Required: without it the server stays in a state nobody can connect to. A name that starts with a hyphen has to be put in quotes.
+
+Example: `+map stadium4`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `+servercfgfile`
+
+**Config file** (Required). The server's settings file, which the Settings tab edits. The wiki says it has to be named on the launch line to be used when the server starts. The panel always writes it.
+
+Example: `+servercfgfile server.cfg`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `+log`
+
+**Server log** (Saves and logs). Starts a log file for the server console. The manual recommends it. Only on is documented.
+
+Values: `undefined`. Other values are accepted too.
+
+Example: `+log on`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `+logsdir`
+
+**Log folder** (Saves and logs). The folder the server's logs are kept in. It starts as logs. Only useful with several servers sharing one install; the Logs tab looks in the svencoop\logs folder.
+
+Example: `+logsdir logs`
+
+### Sven Co-op: `-game`
+
+**Game folder** (Advanced). Only needed if you run a mod on Sven Co-op's engine; otherwise leave it out. How a mod is installed for the server is not described anywhere the research could find.
+
+Example: `-game svencoop`
+
+## Counter-Strike: Source
+
+Counter-Strike: Source is started with `+word value` console commands (the map, the player limit) and `-word` launch options (the port, the console). They are read when the server starts, so changes apply the next time it starts. None of them has to be last on the line. These arguments are on the `srcds.exe` line of the server's start script.
+
+The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
+
+### Counter-Strike: Source: `-console`
+
+**Console window** (Required). Runs the server in console mode: a text window you can type commands into. The panel always writes it.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Counter-Strike: Source: `-game`
+
+**Game folder** (Required). Tells srcds which game to run. For Counter-Strike: Source this is cstrike. The panel always writes it.
+
+Example: `-game cstrike`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Counter-Strike: Source: `-port`
+
+**Game port** (Network). The port the server listens on and tells players to connect to. Valve's page says Source also uses it for the remote console. Change it from the server's Ports section so the panel can check for clashes.
+
+Example: `-port 27515`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Counter-Strike: Source: `-strictportbind`
+
+**Stop if the port is taken** (Network). If the port is already in use, the server quits with an error instead of quietly using another port. Without it a second server would take another port and players would not find it.
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Counter-Strike: Source: `-ip`
+
+**Listen address** (Network). The network address the server listens on, so players can reach it. It has to be an address of this PC. Only needed with several network cards; it has nothing to do with the address players use from outside.
+
+Example: `-ip 0.0.0.0`
+
+### Counter-Strike: Source: `-nohltv`
+
+**No SourceTV** (Network). Turns SourceTV (the spectator broadcast) off and closes its port, which is usually 27020.
+
+### Counter-Strike: Source: `+maxplayers`
+
+**Max players** (Server). The number of player slots on the server. It is only read when the server starts.
+
+Example: `+maxplayers 10`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Counter-Strike: Source: `+map`
+
+**Start map** (World). The map the server starts on, such as de_dust2. Give the map's name, with or without .bsp.
+
+Example: `+map de_dust2`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Counter-Strike: Source: `+exec`
+
+**Settings file** (Server). The settings file the server runs when it starts, from the cstrike\cfg folder. The panel writes it, and the Settings tab edits it.
+
+Example: `+exec server.cfg`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Counter-Strike: Source: `+sv_setsteamaccount`
+
+**Steam login token** (Server). A Steam Game Server Login Token for this server. Valve's page says you need one if the server stops with the Steam connection error 18 or 106. Create one at steamcommunity.com/dev/managegameservers; the account must own the game. Treat it like a password.
+
+Example: `+sv_setsteamaccount …`
+
+### `-nobots`
+
+**No bots** (Game). Turns bots off for the whole server, which also saves CPU time on a weak PC.
+
+### Counter-Strike: Source: `-condebug`
+
+**Write the console to a file** (Saves and logs). Writes everything the console prints to console.log in the cstrike folder. The Logs tab reads that file.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Counter-Strike: Source: `-conclearlog`
+
+**Start console.log afresh** (Saves and logs). Empties console.log every time the server starts. It only works together with the option above.
+
+### Counter-Strike: Source: `-insecure`
+
+**Turn off Valve Anti-Cheat** (Advanced). Starts the server without Valve Anti-Cheat (VAC). Servers run with it unless this is on the line.
+
+## Half-Life 2: Deathmatch
+
+Half-Life 2: Deathmatch is started with `+word value` console commands (the map, the player limit) and `-word` launch options (the port, the console). They are read when the server starts, so changes apply the next time it starts. None of them has to be last on the line. These arguments are on the `srcds.exe` line of the server's start script.
+
+The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
+
+### Half-Life 2: Deathmatch: `-console`
+
+**Console window** (Required). Runs the server in console mode: a text window you can type commands into. The panel always writes it.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Half-Life 2: Deathmatch: `-game`
+
+**Game folder** (Required). Tells srcds which game to run. For Half-Life 2: Deathmatch this is hl2mp. The panel always writes it.
+
+Example: `-game hl2mp`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Half-Life 2: Deathmatch: `-port`
+
+**Game port** (Network). The port the server listens on and tells players to connect to. Valve's page says Source also uses it for the remote console. Change it from the server's Ports section so the panel can check for clashes.
+
+Example: `-port 27435`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Half-Life 2: Deathmatch: `-strictportbind`
+
+**Stop if the port is taken** (Network). If the port is already in use, the server quits with an error instead of quietly using another port. Without it a second server would take another port and players would not find it.
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Half-Life 2: Deathmatch: `-ip`
+
+**Listen address** (Network). The network address the server listens on, so players can reach it. It has to be an address of this PC. Only needed with several network cards; it has nothing to do with the address players use from outside.
+
+Example: `-ip 0.0.0.0`
+
+### Half-Life 2: Deathmatch: `-nohltv`
+
+**No SourceTV** (Network). Turns SourceTV (the spectator broadcast) off and closes its port, which is usually 27020.
+
+### Half-Life 2: Deathmatch: `+maxplayers`
+
+**Max players** (Server). The number of player slots on the server. It is only read when the server starts. Valve's examples use 24, while Linode's guide says the game officially supports 16.
+
+Example: `+maxplayers 16`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Half-Life 2: Deathmatch: `+map`
+
+**Start map** (World). The map the server starts on, such as dm_lockdown. Give the map's name without .bsp.
+
+Example: `+map dm_lockdown`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Half-Life 2: Deathmatch: `+sv_setsteamaccount`
+
+**Steam login token** (Server). A Steam Game Server Login Token for this server. Valve's page says you need one if the server stops with the Steam connection error 18 or 106. Create one at steamcommunity.com/dev/managegameservers; the account must own the game. Treat it like a password.
+
+Example: `+sv_setsteamaccount …`
+
+### Half-Life 2: Deathmatch: `-condebug`
+
+**Write the console to a file** (Saves and logs). Writes everything the console prints to console.log in the hl2mp folder. The Logs tab reads that file.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Half-Life 2: Deathmatch: `-insecure`
+
+**Turn off Valve Anti-Cheat** (Advanced). Starts the server without Valve Anti-Cheat (VAC). Servers run with it unless this is on the line.
+
+## Avorion
+
+Avorion's galaxy, ports, name, player limit and admin are given on the command that starts it. The rest of its settings are in the galaxy's server.ini (the Settings tab). Whether a launch argument beats the same setting in server.ini is not documented. Changes apply the next time the server starts. These arguments are on the `bin\AvorionServer.exe` line of the server's start script.
+
+The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
+
+### `--galaxy-name`
+
+**Galaxy name** (Required). The galaxy to load or create. It is the folder name under galaxy, so a new name makes a new galaxy and keeps the old one. Changing it also moves where the panel looks for server.ini.
+
+Example: `--galaxy-name "Avorion"`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `--datapath`
+
+**Galaxies folder** (Required). The folder the galaxies are kept in, counted from the server's folder. The panel's backups and Settings tab expect it to be galaxy, so leave it.
+
+Example: `--datapath galaxy`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `--server-name`
+
+**Server name** (Server). The name shown when the server is queried and in the server list.
+
+Example: `--server-name "My Avorion Server"`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `--admin`
+
+**Admin Steam ID** (Server). The 17-digit Steam64 id of the player who is the server's administrator. Without it nobody is admin. The wiki says the argument takes the id of the administrators; how to give several was not found.
+
+Example: `--admin 76561198000000000`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `--max-players`
+
+**Max players** (Server). The most players that can be online at once. The default is 10.
+
+Example: `--max-players 10`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `--port`
+
+**Game port** (Network). The port players connect to, UDP and TCP. The default is 27000, and a direct-IP join works only on that port. The panel's Ports section does not rewrite this argument: change it here and in the Ports section together.
+
+Example: `--port 27000`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `--query-port`
+
+**Query port** (Network). The UDP port used to answer server queries. Only the Pterodactyl egg uses this argument and no page describes it; the panel sets it to the game port plus 4.
+
+Example: `--query-port 27004`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `--steam-query-port`
+
+**Steam query port** (Network). The UDP port for Steam's server browser. Only the Pterodactyl egg uses this argument and no page describes it; the panel sets it to the game port plus 2.
+
+Example: `--steam-query-port 27002`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `--steam-master-port`
+
+**Steam master port** (Network). The UDP port for Steam networking. Only the Pterodactyl egg uses this argument and no page describes it; the panel sets it to the game port plus 3.
+
+Example: `--steam-master-port 27003`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `--difficulty`
+
+**Difficulty** (Rules). The difficulty of a new galaxy, from -3 to 3. The default is 0. The names come from one hosting site; the wiki gives only the numbers.
+
+Values: `-3` (-3 Beginner), `-2` (-2 Easy), `-1` (-1 Normal), `0` (0 Veteran), `1` (1 Expert), `2` (2 Hardcore), `3` (3 Insane).
+
+Example: `--difficulty 0`
+
+### `--seed`
+
+**Seed** (Rules). The seed a new galaxy is made from (letters and numbers). Only used when the galaxy is first made; changing it for an existing galaxy breaks its saves.
+
+Example: `--seed MySeed1`
+
+### `--infinite-resources`
+
+**Infinite resources** (Rules). Gives all players unlimited resources. The wiki's table gives no default; the server.ini setting is off by default.
+
+Values: `true` (Yes), `false` (No).
+
+Example: `--infinite-resources true`
+
+### `--collision-damage`
+
+**Collision damage** (Rules). How much damage objects take when they collide, from 0 (none) to 1 (full). The default is 1.
+
+Example: `--collision-damage 1`
+
+### `--same-start-sector`
+
+**Same start sector** (Rules). Whether all players start in the same sector. When false, each new player gets a random empty sector on the outer rim.
+
+Values: `true` (Yes), `false` (No).
+
+Example: `--same-start-sector true`
+
+### `--save-interval`
+
+**Save every (seconds)** (Saves). The time between automatic saves, in seconds. The default is 300 (5 minutes). The server.ini setting of the same purpose has a default of 600.
+
+Example: `--save-interval 300`
+
+### `--threads`
+
+**Sector update threads** (Performance). How many threads update the sectors. Keep it at or below the number of processor cores.
+
+Example: `--threads 4`
+
+### `--public`
+
+**Public** (Network). Whether the server lets other players join.
+
+Values: `true` (Yes), `false` (No).
+
+Example: `--public true`
+
+### `--listed`
+
+**List publicly** (Network). Whether the server shows up in the public server lists. It also needs Steam networking.
+
+Values: `true` (Yes), `false` (No).
+
+Example: `--listed true`
+
+### `--use-steam-networking`
+
+**Use Steam networking** (Network). Whether players join and are checked through Steam. A direct-IP join on a port other than 27000 needs this.
+
+Values: `true` (Yes), `false` (No).
+
+Example: `--use-steam-networking true`
+
+### `--exit-on-last-admin-logout`
+
+**Shut down when the last admin logs out** (Advanced). Shuts the server down when the last administrator leaves. The panel does not restart it, and the world is not saved by the panel on the way.
+
+### `--stderr-to-log`
+
+**Error output to the log file** (Saves). Sends the console's error output to the log file instead of the console window.
+
+### `--stdout-to-log`
+
+**Console output to the log file** (Saves). Sends the console's normal output to the log file instead of the console window. The window then shows nothing, but /save and /stop can still be typed into it.

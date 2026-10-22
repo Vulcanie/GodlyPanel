@@ -44,6 +44,11 @@ Some games are set up by the arguments on the command that starts them, not by a
 - [VEIN](#vein)
 - [Space Engineers](#space-engineers)
 - [Terraria (tModLoader)](#terraria-tmodloader)
+- [Sven Co-op](#sven-co-op)
+- [Counter-Strike: Source](#counter-strike-source)
+- [Half-Life 2: Deathmatch](#half-life-2-deathmatch)
+- [Astroneer](#astroneer)
+- [Avorion](#avorion)
 
 ## ARK: Survival Ascended / Evolved
 
@@ -3969,3 +3974,488 @@ If a mod stops the server from starting or kicks players, read the log: the Logs
 | Freeze wind | `journeypermission_wind_setfrozen` in `[root]` | Who may freeze the wind. Who may use this Journey power in a Journey-mode world. It does nothing in other worlds. Whether tModLoader honours the Journey permission lines was not tested. Choices: `0` (Locked for everyone), `1` (Only the host), `2` (Anyone). |
 | Rain strength | `journeypermission_rain_setstrength` in `[root]` | Who may set the rain strength. Who may use this Journey power in a Journey-mode world. It does nothing in other worlds. Whether tModLoader honours the Journey permission lines was not tested. Choices: `0` (Locked for everyone), `1` (Only the host), `2` (Anyone). |
 | Freeze rain | `journeypermission_rain_setfrozen` in `[root]` | Who may freeze the rain. Who may use this Journey power in a Journey-mode world. It does nothing in other worlds. Whether tModLoader honours the Journey permission lines was not tested. Choices: `0` (Locked for everyone), `1` (Only the host), `2` (Anyone). |
+
+## Sven Co-op
+
+Sven Co-op is set up with console variables: lines of a name and a value in `server.cfg`, in the `svencoop` folder of the server. The panel writes the server's name and password in it when it creates the server, and you change the rest on the Settings tab. The map, the player limit and the port are on the launch line.
+
+- `server.cfg`: Every server setting: name and password, rules, map time, voting, voice, network and downloads. Only the lines you set are in the file; a setting that is not there keeps the game's own value.
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#sven-co-op).
+
+The game reads this file when a map starts (its manual says changes you save while the server runs take effect on the next map), so stop and start the server, or wait for the next map, after changing a setting.
+The wiki asks for `hostname` to be the first line of the file, so the server does not show up under its default name. The panel writes it there; keep it there if you edit the file by hand.
+Stopping: the only way the manual describes to stop the server is closing its window. The research found no console command to quit, so the panel's Stop closes the server's window and, after 15 seconds, ends the program. Do not run an update while a server is running; the update fails.
+The remote console (RCON) is on the game port over TCP, with the password set by `rcon_password`. The panel does not use it for this server.
+Custom maps are not a panel feature. Extract a map's archive into the `svencoop_addons` folder (its `maps`, `models`, `sound`, `sprites` and WAD files), never into the `svencoop` folder; the manual says a `scripts` folder in an archive should hold only a `maps` folder, and that anything else is suspicious. Players download custom content from the server when `sv_allowdownload` is on; for speed, point `sv_downloadurl` at a web server that holds it.
+AngelScript plugins are listed in `default_plugins.txt`, and the admin list is `admins.txt` (one Steam ID per line). Their formats, the map cycle, the map vote list, the skill file and the plugin packs Metamod and AMX Mod X are not in the form; the research did not find their syntax.
+Settings the wiki marks as obsolete in Sven Co-op (allow_spectators, sv_alltalk, sv_spectalk, sv_spectator_password, mp_fraglimit) are not in the form. Leave `deathmatch` at 1 and do not use `coop`; the wiki says the game depends on it.
+A setting the file has that the panel does not explain is still shown.
+
+### Sven Co-op: Server
+
+6 settings in `server.cfg`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server name | `hostname` | The name shown in the server browser. The panel writes it when it creates the server, as the first line of the file, which the wiki asks for so the server does not appear under its default name (Sven Co-op v5.0 server). About 40 characters is the most the wiki suggests. |
+| Join password | `sv_password` | What players type to join. Leave it empty for a public server. |
+| Contact email | `sv_contact` | The email address of whoever runs the server, so players have someone to contact when there is a problem. Empty by default. |
+| Server region | `sv_region` | The region your server is in. It is used in Steam's server browser, so players can look for servers near them. The game starts at 255, International. Choices: `-1` (Do not list), `0` (USA, east coast), `1` (USA, west coast), `2` (South America), `3` (Europe), `4` (Asia), `5` (Australia (Oceania)), `6` (Middle East), `7` (Africa), `255` (International). |
+| Local network only | `sv_lan` | On makes a server for a local area network only: players sign in with their IP address and can only join from the same subnet as the server. Keep it off for a server friends join over the internet. Starts off. Choices: `0` (Off), `1` (On). Another value can be typed. |
+| Allow spectator proxies (HLTV) | `sv_proxies` | On lets spectator proxies (HLTV) connect to your server. Starts off. Choices: `0` (Off), `1` (On). Another value can be typed. |
+
+### Sven Co-op: Remote console and cheats
+
+2 settings in `server.cfg`, shown under **Remote console and cheats** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Remote console password | `rcon_password` | The password for the server's remote console (RCON, over TCP on the game port). While it is empty, remote access is not available. The panel does not use the remote console for this server. |
+| Cheat commands | `sv_cheats` | Who may use cheat commands: nobody, everyone, or administrators only. The wiki says that on an internet server the player slots must be 3 or fewer for ordinary players to use cheats. Starts at nobody. Choices: `0` (Nobody), `1` (Everyone), `2` (Administrators only). |
+
+### Sven Co-op: Rules
+
+23 settings in `server.cfg`, shown under **Rules** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Difficulty | `skill` | The default skill level of your server. Maps can override it in their own configuration. The game starts at Realistic. Choices: `0` (The map chooses), `1` (Easy), `2` (Hard), `3` (Realistic). |
+| Classic Mode | `mp_classic_mode` | Allow or refuse Classic Mode on maps that support it. -1 lets the players vote. Starts at -1. Choices: `-1` (Players vote), `0` (Disabled), `1` (Enabled). |
+| Killing allied NPCs | `mp_npckill` | What happens when someone kills an allied NPC. 0 disallows it, 1 allows it, and 2 allows it only for killers that are not players, not allied and not passive humans. Starts at 1. This replaces the old killnpc setting. Choices: `0` (Not allowed), `1` (Allowed), `2` (Only non-player, non-allied, non-human-passive killers). |
+| Realistic fall damage | `mp_falldamage` | On uses realistic fall damage. Off means a player hurt by falling always loses 10 health points. Starts on. Choices: `0` (Off), `1` (On). Another value can be typed. |
+| Flashlight | `mp_flashlight` | Whether players can use their flashlight. Starts on. Choices: `0` (Off), `1` (On). Another value can be typed. |
+| Footstep sounds | `mp_footsteps` | Players make footstep sounds while running fast enough. Starts on. Choices: `0` (Off), `1` (On). Another value can be typed. |
+| Telefragging | `mp_telefrag` | On means a player who is teleported inside someone kills them. Starts on. Choices: `0` (Off), `1` (On). Another value can be typed. |
+| Players can drop weapons | `mp_dropweapons` | Lets players drop weapons and ammo. Miniguns and shock rifles can always be dropped. Starts on. Choices: `0` (Off), `1` (On). Another value can be typed. |
+| Weapons stay | `mp_weaponstay` | On lets weapons be picked up several times, except miniguns. Starts on. Choices: `0` (Off), `1` (On). Another value can be typed. |
+| No akimbo uzis | `mp_no_akimbo_uzis` | On denies players akimbo uzis. Starts off. Choices: `0` (Off), `1` (On). Another value can be typed. |
+| Players can change model | `mp_modelselection` | Off stops players changing their model. Starts on. Choices: `0` (Off), `1` (On). Another value can be typed. |
+| More than one spawn point | `mp_multiplespawn` | Lets players use more than one spawn point. Starts on. Choices: `0` (Off), `1` (On). Another value can be typed. |
+| Force respawn | `mp_forcerespawn` | Forces players to respawn after they die. The wiki recommends leaving it off, so players respawn when they are ready. Starts off. Choices: `0` (Off), `1` (On). Another value can be typed. |
+| Respawn delay (seconds) | `mp_respawndelay` | How many seconds a player must wait before respawning. Starts at 6. |
+| Show monster information | `mp_allowmonsterinfo` | Lets players see information about the monsters they look at. Starts on. Choices: `0` (Off), `1` (On). Another value can be typed. |
+| Banana bombs | `mp_banana` | Lets players throw banana bombs. Starts on. Choices: `0` (Off), `1` (On). Another value can be typed. |
+| Grapple pulls the player | `mp_grapple_mode` | On pulls a grappled player towards monsters bigger than headcrabs, rather than pulling the monster to the player. Starts on. Choices: `0` (Off), `1` (On). Another value can be typed. |
+| No blast gibs | `mp_noblastgibs` | On stops monsters being gibbed (ripped apart) when killed with explosives. Starts off. Choices: `0` (Off), `1` (On). Another value can be typed. |
+| No auto-climb | `mp_disable_autoclimb` | On denies players the auto-climb feature. Starts off. Choices: `0` (Off), `1` (On). Another value can be typed. |
+| No skill auto-balancing | `mp_disable_pcbalancing` | On disables skill auto-balancing. Starts off. Choices: `0` (Off), `1` (On). Another value can be typed. |
+| No Barnacle grapple on players | `mp_disable_player_rappel` | On denies players the use of the Barnacle grapple on each other. Starts off. Choices: `0` (Off), `1` (On). Another value can be typed. |
+| No gauss jump | `mp_disablegaussjump` | On disables the vertical knock back caused by the gauss cannon's charge-up shot. Starts off. Choices: `0` (Off), `1` (On). Another value can be typed. |
+| Anyone can pause | `pausable` | Whether anyone on the server can pause the game. The wiki never recommends it on a public server. Starts off. Choices: `0` (Off), `1` (On). Another value can be typed. |
+
+### Sven Co-op: Map time
+
+3 settings in `server.cfg`, shown under **Map time** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Map time limit (minutes) | `mp_timelimit` | The map changes after this many minutes if it has not been completed already. 0 means no limit. Starts at 60. |
+| Time limit when empty (minutes) | `mp_timelimit_empty` | The map changes after this many minutes when the server is empty, whatever the map's own time limit says. 0 turns this off. Starts at 10. |
+| Ignore the map's time limit | `mp_notimelimit` | On disables a map's time limit (mp_timelimit). Starts off. Choices: `0` (Off), `1` (On). Another value can be typed. |
+
+### Sven Co-op: Voting
+
+10 settings in `server.cfg`, shown under **Voting** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Players can vote | `mp_voteallow` | Allows players to use the built-in voting system. The wiki suggests turning it off if you run plug-in packs such as AdminMod or AMX Mod X. Starts on. Choices: `0` (Off), `1` (On). Another value can be typed. |
+| Votes needed to kick (%) | `mp_votekickrequired` | The percentage of players that must say yes for a kick vote to succeed. -1 disables it. Starts at 66. |
+| Votes needed to ban (%) | `mp_votebanrequired` | The percentage of players that must say yes for a ban vote to succeed. -1 disables it, which is where it starts. |
+| Votes needed to kill (%) | `mp_votekillrequired` | The percentage of players that must say yes for a kill (slay) vote to succeed. -1 disables it. Starts at 51. |
+| Votes needed to change map (%) | `mp_votemaprequired` | The percentage of players that must say yes for a map vote to succeed. -1 disables it. Starts at 66. |
+| Votes needed for Classic Mode (%) | `mp_voteclassicmoderequired` | The percentage of players that must say yes for a Classic Mode vote to succeed. -1 disables it. Starts at 51. |
+| Wait before another poll (seconds) | `mp_playervotedelay` | How many seconds a player must wait before starting another poll. Starts at 300. |
+| Wait between polls (seconds) | `mp_votetimebetween` | How many seconds must pass before a player other than the previous poll starter can start a new poll. Starts at 60. |
+| Time to vote (seconds) | `mp_votetimecheck` | How many seconds players have to cast their vote. Starts at 20. |
+| Respawn delay after a vote kill (seconds) | `mp_votekill_respawndelay` | How many seconds a player must wait before respawning after being killed by a vote. Starts at 15. |
+
+### Sven Co-op: Voice
+
+2 settings in `server.cfg`, shown under **Voice** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Voice chat | `sv_voiceenable` | Lets players use voice communication. Starts on. Choices: `0` (Off), `1` (On). Another value can be typed. |
+| Voice codec | `sv_voicecodec` | The voice codec to use. Only voice_miles and voice_speex are available. Starts at voice_speex. (Only the game's manual lists this one.) Choices: `voice_speex` (Speex), `voice_miles` (Miles). |
+
+### Sven Co-op: Network and performance
+
+7 settings in `server.cfg`, shown under **Network and performance** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server frame rate | `sys_ticrate` | The most frames per second the server processes. The wiki warns that rates over 200 have a negative effect on physics and NPC movement. The sources disagree on the starting value (100 on the wiki and the manual's configuration page, 128 on the manual's basic page), so check yours. |
+| Idle disconnect time (seconds) | `sv_timeout` | How many seconds a player can stop responding before the server counts them as having lost their connection. Starts at 60. |
+| Max data per player (bytes/second) | `sv_maxrate` | The most data per second clients can talk to the server at in internet mode. Starts at 20000. |
+| Min data per player (bytes/second) | `sv_minrate` | The least data per second clients can talk to the server at in internet mode. Starts at 0. |
+| Max updates per second | `sv_maxupdaterate` | The most events per second the server can send to a client. The wiki says 50 is enough for 16 players. Starts at 50. |
+| Min updates per second | `sv_minupdaterate` | The fewest events per second the server sends to a client. The wiki asks you not to change it, so players on slow connections can still join. Starts at 10. |
+| Local network data rate (bytes/second) | `sv_lan_rate` | The rate clients are forced to talk to the server at in local network mode. Starts at 100000. |
+
+### Sven Co-op: Downloads and sprays
+
+7 settings in `server.cfg`, shown under **Downloads and sprays** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Players download from the server | `sv_allowdownload` | Lets players download custom content from your server. Starts on. Choices: `0` (Off), `1` (On). Another value can be typed. |
+| Fast download web address | `sv_downloadurl` | The HTTP address where your server's custom content can be found, so players can download it very fast. The wiki says HTTPS is not supported. Empty by default. |
+| Compress downloads | `sv_filetransfercompression` | Lets custom content be compressed on the fly for faster delivery. Starts on. Choices: `0` (Off), `1` (On). Another value can be typed. |
+| Players upload sprays | `sv_allowupload` | Lets players send custom sprays to your server. Starts on. Choices: `0` (Off), `1` (On). Another value can be typed. |
+| Spray delay (seconds) | `decalfrequency` | How many seconds a player must wait before making their spray again. 0 removes the delay, which is not recommended. Starts at 30. |
+| Spray file size limit (MB) | `hpk_maxsize` | The size limit, in megabytes, of the file that stores uploaded sprays. Starts at 2. |
+| Most decals | `mp_decals` | The most decals the server will render. Starts at 2048. |
+
+## Counter-Strike: Source
+
+Counter-Strike: Source is set up with console variables ("convars"): lines of a name and a value in `server.cfg`, in the `cstrike\cfg` folder of the server. The panel writes that file with the server's name, the password and `sv_lan 0`. The map, the player limit and the port are on the launch line.
+
+- `server.cfg`: The server's name and password, the remote console password, whether it is local-network only and whether cheats are allowed. Only the lines you set are in the file. The research found no other setting for this game, so the game's rules are not in the form.
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#counter-strike-source).
+
+The game reads the file when it starts, so stop and start the server after changing a setting.
+Friends join with the console command `connect <your address>:<port>`.
+The form is short because the research found only a handful of named settings. Game rules such as friendly fire or round time still work by typing the setting name and its value as a new line in `server.cfg` (a setting the panel does not explain is still shown), but the panel cannot explain them yet.
+The Steam login token is optional. Valve says it is only needed when the server stops with error 18 or 106. Add it with the Steam login token argument in Launch options. It is a secret: do not share it.
+The panel has no way to type into this server's console, so Stop closes its window and, after 15 seconds, ends the program. The research found no documented close command.
+No mod support is set up: the research found no install method. A game update through the panel could reset a `server.cfg` that the game itself ships, so check the name and password after updating.
+The port in the Ports section is the game port. The game also uses UDP 27020 (SourceTV). Two Source servers on one PC both want it, so the second one may take another number. `-nohltv` turns it off.
+
+### Counter-Strike: Source: Server
+
+3 settings in `server.cfg`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server name | `hostname` | The name people see in the server browser. The panel writes it when it creates the server. |
+| Join password | `sv_password` | What players type to join. Leave it empty for a server anyone can join. |
+| Remote console password | `rcon_password` | The password for the server's remote console (RCON), which Valve says shares the game port. Choose a long one: anyone with it controls the server. The panel does not use the remote console for this server. |
+
+### Counter-Strike: Source: Joining
+
+1 setting in `server.cfg`, shown under **Joining** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Local network only | `sv_lan` | On makes a LAN server, useful to stop players joining from the internet: only players on your local network can join. Keep it off for a server friends join over the internet. Choices: `0` (Off), `1` (On). |
+
+### Counter-Strike: Source: Game rules
+
+1 setting in `server.cfg`, shown under **Game rules** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Allow cheat commands | `sv_cheats` | Lets players use cheat commands, which have no effect while this is off. Keep it off on a server other people play on. Choices: `0` (Off), `1` (On). |
+
+## Half-Life 2: Deathmatch
+
+Half-Life 2: Deathmatch is set up with console variables ("convars"): lines of a name and a value in `server.cfg`, in the `hl2mp\cfg` folder of the server. The panel writes that file with the server's name, the password and `sv_lan 0`. The map, the player limit and the port are on the launch line.
+
+- `server.cfg`: The server's name and password, the match rules (team play, frag and time limits, respawn times), voice, downloads and network limits. Only the lines you set are in the file; a setting you leave out keeps the game's own value. When the file exists, what it says overrides the launch line.
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#half-life-2-deathmatch).
+
+The game reads the file when it starts, so stop and start the server after changing a setting.
+Friends join with the console command `connect <your address>:<port>`.
+The game does not come with a `server.cfg`; the panel writes one. The map rotation is a separate file, `hl2mp\cfg\mapcycle.txt`, with one map name per line. The panel cannot edit it yet. Copy `mapcycle_default.txt` to `mapcycle.txt` and change the copy, never the default file.
+Custom maps go in `hl2mp\custom` (or `hl2mp\custom\maps`). Players who do not have your map download it from the server while Downloads are allowed.
+The Steam login token is optional. Valve says it is only needed when the server stops with error 18 or 106. Add it with the Steam login token argument in Launch options. It is a secret: do not share it.
+The panel has no way to type into this server's console, so Stop closes its window and, after 15 seconds, ends the program. The only stop method the research found is pressing CTRL+C in the console window.
+No mod support is set up: the research found no install method for plugins such as SourceMod and no Steam Workshop for this game.
+The port in the Ports section is the game port. The game also uses UDP 27020 (SourceTV). Two Source servers on one PC both want it, so the second one may take another number. `-nohltv` turns it off.
+Valve's examples start the server with 24 players, while Linode's guide says the game officially supports 16. The panel starts with 16; raise it with the Max players argument if you want to try more.
+
+### Half-Life 2: Deathmatch: Server
+
+2 settings in `server.cfg`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server name | `hostname` | The name people see in the server browser. The panel writes it when it creates the server. |
+| Join password | `sv_password` | What players type to join. Leave it empty for a server anyone can join. |
+
+### Half-Life 2: Deathmatch: Joining
+
+2 settings in `server.cfg`, shown under **Joining** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Local network only | `sv_lan` | On makes a LAN server: only players on your local network can join. Keep it off for a server friends join over the internet. Choices: `0` (Off), `1` (On). |
+| Drop silent players after (seconds) | `sv_timeout` | How many seconds a player can send nothing before the server disconnects them. 0 turns the check off. Linode's sample uses 65. |
+
+### Half-Life 2: Deathmatch: Match rules
+
+12 settings in `server.cfg`, shown under **Match rules** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Team deathmatch | `mp_teamplay` | Off is free-for-all deathmatch. On is Combine versus Rebels team deathmatch. Choices: `0` (Off), `1` (On). |
+| Frag limit | `mp_fraglimit` | How many frags (kills) a player needs to end the match, after which the map changes. 0 means no limit. |
+| Time limit (minutes) | `mp_timelimit` | How many minutes a map lasts before the server changes it. 0 means no limit. |
+| Friendly fire | `mp_friendlyfire` | On lets teammates hurt each other. It only matters in team deathmatch. Choices: `0` (Off), `1` (On). |
+| Respawn automatically | `mp_forcerespawn` | On brings a player back to life on their own after they die. Off makes them press a key to respawn. Choices: `0` (Off), `1` (On). |
+| Allow spectators | `mp_allowspectators` | On lets players watch the match without playing. Choices: `0` (Off), `1` (On). |
+| Fall damage | `mp_falldamage` | The amount of damage a fall does. Linode's sample sets 10 and lists 0 as the default. |
+| Footstep sounds | `mp_footsteps` | On plays the sound of players' footsteps. Choices: `0` (Off), `1` (On). |
+| Flashlight | `mp_flashlight` | On lets players use their flashlight. Choices: `0` (Off), `1` (On). |
+| Pick up props with the use key | `hl2mp_allow_pickup` | On lets players pick up physics objects they can carry by pressing the use key on them. Valve lists it as off by default. Choices: `0` (Off), `1` (On). |
+| Allow cheat commands | `sv_cheats` | Lets players use cheat commands, which have no effect while this is off. Keep it off on a server other people play on. Choices: `0` (Off), `1` (On). |
+| Map rotation file | `mapcyclefile` | The name of the file that lists the maps the server rotates through, instead of mapcycle.txt. If the file is missing the server uses the game's default rotation list. |
+
+### Half-Life 2: Deathmatch: Weapons and items
+
+2 settings in `server.cfg`, shown under **Weapons and items** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Weapon respawn time (seconds) | `sv_hl2mp_weapon_respawn_time` | How many seconds before a weapon that was picked up appears again. Linode lists 20 as the default. |
+| Item respawn time (seconds) | `sv_hl2mp_item_respawn_time` | How many seconds before health, energy, ammo and props that were picked up appear again. Linode lists 30 as the default. |
+
+### Half-Life 2: Deathmatch: Voice
+
+2 settings in `server.cfg`, shown under **Voice** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Voice chat | `sv_voiceenable` | On lets players talk to each other with their microphones. Choices: `0` (Off), `1` (On). |
+| Everyone hears everyone | `sv_alltalk` | On lets all players hear each other. Off lets players hear only their own team. Choices: `0` (Off), `1` (On). |
+
+### Half-Life 2: Deathmatch: Downloads
+
+2 settings in `server.cfg`, shown under **Downloads** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Allow sprays | `sv_allowupload` | On lets players upload their custom spray images to the server. Choices: `0` (Off), `1` (On). |
+| Allow downloads | `sv_allowdownload` | On lets players download sprays, custom maps and other extra content from your server. Linode lists it as on by default; a player without your custom map gets it this way. Choices: `0` (Off), `1` (On). |
+
+### Half-Life 2: Deathmatch: Network
+
+4 settings in `server.cfg`, shown under **Network** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Highest bandwidth per player | `sv_maxrate` | The most bandwidth the server lets one player use. 0 means no limit. |
+| Lowest bandwidth per player | `sv_minrate` | The least bandwidth the server lets one player use. Linode lists 3500 as the default. 0 means no limit. |
+| Highest updates per second | `sv_maxupdaterate` | The most updates per second the server will send a player. Linode lists 66 as the default and uses 300 in its sample. |
+| Lowest updates per second | `sv_minupdaterate` | The fewest updates per second the server allows a player. Linode lists 10 as the default. |
+
+## Astroneer
+
+Astroneer keeps the server's options in two files in `Astro\Saved\Config\WindowsServer` inside the server's install folder. The program takes no launch options.
+
+- `AstroServerSettings.ini`: The server name, join password, the owner (who becomes the server's admin), the public IP address, saving and the server's speed.
+- `Engine.ini`: The game port.
+
+The server will not start if the public IP address, the owner's Steam name or the owner's SteamID64 is empty. The panel asks for them when it creates the server.
+Every player must set `net.AllowEncryption=False` under `[SystemSettings]` in their own `%LocalAppData%\Astro\Saved\Config\WindowsNoEditor\Engine.ini` before joining, as the server guides say. On Windows the server itself needs no change.
+Edit these files only while the server is stopped: the game's own notice is that changes made while it runs are lost.
+The panel stops the server by closing it, and Astroneer has no documented way to save first. The world since the last auto-save can be lost, so keep the auto-save interval short.
+Mods are `.pak` files put in `Astro\Saved\Paks`. That has not been tested on a server, so the panel adds nothing for them.
+
+### Astroneer (AstroServerSettings.ini): Server
+
+3 settings in `AstroServerSettings.ini`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server name | `ServerName` in `[/Script/Astro.AstroServerSettings]` | The name shown in the server browser. The hosting panels allow 60 characters at most. |
+| Advertised name | `ServerAdvertisedName` in `[/Script/Astro.AstroServerSettings]` | If set, this is shown in the server browser instead of the server name. Leave empty to show the server name. |
+| Public IP address | `PublicIP` in `[/Script/Astro.AstroServerSettings]` | The address players use to join, without a port. The server registers itself with it, so it must be the address players actually type. The server does not start if this is empty. |
+
+### Astroneer (AstroServerSettings.ini): Access
+
+5 settings in `AstroServerSettings.ini`, shown under **Access** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Join password | `ServerPassword` in `[/Script/Astro.AstroServerSettings]` | What players type to join. Letters, numbers, dashes and underscores only. Leave empty for a server anyone can join. |
+| Owner's Steam name | `OwnerName` in `[/Script/Astro.AstroServerSettings]` | The server owner's Steam name, spelled exactly the way other players see it. The server does not start if this is empty. |
+| Owner's SteamID64 | `OwnerGuid` in `[/Script/Astro.AstroServerSettings]` | The owner's 17-digit SteamID64. Write 0 and the game fills it in when the owner first joins. The server does not start if this is empty. |
+| Allowed players only | `DenyUnlistedPlayers` in `[/Script/Astro.AstroServerSettings]` | On: only players already listed in the server's player list can join. Off: anyone with the password (if any) can join. |
+| Remote console password | `ConsolePassword` in `[/Script/Astro.AstroServerSettings]` | The password the game's remote console asks for. A hosting guide recommends setting a long random one. The panel does not use the remote console. |
+
+### Astroneer (AstroServerSettings.ini): Saves
+
+3 settings in `AstroServerSettings.ini`, shown under **Saves** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Save file name | `ActiveSaveFileDescriptiveName` in `[/Script/Astro.AstroServerSettings]` | The name of the save the server loads and writes to, without the .savegame ending. The saves are in Astro\Saved\SaveGames. |
+| Auto-save every (seconds) | `AutoSaveGameInterval` in `[/Script/Astro.AstroServerSettings]` | How often the game saves the world by itself. 900 is 15 minutes. The panel can only close the server, not ask it to save, so the world since the last save can be lost when the server is stopped. |
+| Save backup every (seconds) | `BackupSaveGamesInterval` in `[/Script/Astro.AstroServerSettings]` | How often the game makes a backup copy of the save. 7200 is 2 hours. |
+
+### Astroneer (AstroServerSettings.ini): Performance
+
+3 settings in `AstroServerSettings.ini`, shown under **Performance** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Kick idle players after (seconds) | `PlayerActivityTimeout` in `[/Script/Astro.AstroServerSettings]` | Players who do nothing for this many seconds are removed. 0 turns this off. |
+| Server frame rate (players on) | `MaxServerFramerate` in `[/Script/Astro.AstroServerSettings]` | How many times a second the server updates the world while players are connected. 30 is the default. A higher number such as 60 can feel smoother but uses more of the processor. |
+| Server frame rate (nobody on) | `MaxServerIdleFramerate` in `[/Script/Astro.AstroServerSettings]` | How many times a second the server updates the world when nobody is connected. It is kept low on purpose to save processor time, so leave it low. |
+
+### Astroneer (Engine.ini): Network
+
+1 setting in `Engine.ini`, shown under **Network** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Game port | `Port` in `[URL]` | The port players connect to. Change it from the server's Ports section so the panel can check for clashes and open the firewall. Two servers on one PC need different ports. |
+
+## Avorion
+
+Avorion's server is `bin\AvorionServer.exe` in the server's install folder. A galaxy is a folder under `galaxy`, holding its save, its settings file `server.ini` and the mod list `modconfig.lua`. The name, ports, player limit and admin are given on the command that starts the server (the **Launch options** on the Settings tab); the rest of the rules are in `server.ini`.
+
+- `server.ini`: The galaxy's rules, limits, performance, saving, privacy and server information. The server makes it on its first run, so it appears after the first start.
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#avorion).
+
+**The panel cannot stop the server cleanly.** The server is stopped by typing `/save` and then `/stop` into its own console window; killing it is not recommended. The panel has no way to type into a console, so Stop asks the process to close and ends it after 15 seconds, and the galaxy keeps only what the server saved before. Before you press Stop (or update, or restart), open the server's window, which the panel keeps minimized on the taskbar rather than hidden, type `/save`, then `/stop`, and wait for the window to close.
+**Stop the server before editing `server.ini`, and back it up first.** The server overwrites the file at every start, and a single mistake in it makes the server rebuild the whole file with default settings and a new seed. The file does not exist until the server has run once.
+**The join password is in `server.ini`**, as Password under Administration (the Server info group). Set it after the first start, then restart the server. It is empty by default, so anyone can join until you do.
+**Nobody is an admin until you give a Steam ID.** The `--admin` launch option takes a player's 17-digit Steam64 id. The create form has a field for it.
+**Ports.** The game port (27000 by default) is used for both UDP and TCP, and the panel also uses the next four ports (Steam query, Steam master and query). Forward the game port for UDP and TCP on your router; the panel's firewall check opens UDP only, so allow the TCP port in Windows Firewall yourself. Joining by IP works only on port 27000; another port needs Steam networking. If you change the port in the panel's Ports section, also change `--port` in Launch options, because the panel does not rewrite it.
+**Mods** are Steam Workshop ids in `modconfig.lua` in the galaxy folder; the server downloads them the next time it starts, and players are offered the same ones when they join. Put `--` at the start of a line to turn it off, but disabling a mod can corrupt saves, so back up the galaxy first. Mods that are not on the Workshop have to be copied into the galaxy's `mods` folder and listed by hand.
+The panel's Launch options reader needs a word that starts with a single dash on the line, and every Avorion argument starts with two, so the start script's window title ends in `-Avorion`. Leave that part of the title alone.
+Use only plain English letters in paths and names: the server supports ASCII characters only, in paths and in its log. The server's own log is `serverlog.txt` in `%appdata%\Avorion`, which the Logs tab cannot read.
+
+### Avorion: Rules
+
+13 settings in `server.ini`, shown under **Rules** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Game mode | `Scenario` in `[Game]` | The galaxy's mode: Normal is the regular game, Creative is the build-anything mode. The default is Normal. It is set when the galaxy is made; no source says whether changing it later has an effect. Choices: `0` (Creative), `1` (Normal). |
+| Hardcore (perma-destruction) | `HardcoreEnabled` in `[Game]` | Turns hardcore mode on for the whole server: a player's ship, once destroyed, cannot be rebuilt at a repair dock and its turrets and upgrades are lost. The wiki says the default depends on the difficulty the galaxy was made with; another site says it is off. |
+| Infinite resources | `InfiniteResources` in `[Game]` | Gives every player unlimited resources (the game's "creative mode"). The default is off. |
+| Collision damage | `CollisionDamage` in `[Game]` | A multiplier for the damage objects take when they collide. 0 is no damage and 1 is full damage; a number like 0.5 is half. The default is 1. |
+| Story missions | `Storyline` in `[Game]` | Whether the story missions are enabled. The default is on. |
+| NPC damage | `DamageMultiplier` in `[Game]` | A multiplier for the damage non-player ships deal. 1 is normal; the default is 1. |
+| Random events | `EventsFactor` in `[Game]` | A multiplier for how often random events happen. 1 is normal; the default is 1. |
+| Relation gain speed | `RelationGainFactor` in `[Game]` | A multiplier for how fast relations with factions improve. 1 is normal; the default is 1. |
+| Relation loss speed | `RelationLossFactor` in `[Game]` | A multiplier for how fast relations with factions get worse. 1 is normal; the default is 1. |
+| Starting relations | `InitialRelations` in `[Game]` | How factions feel about new players at the start, from -3 (friendly) to 3 (hostile). The default is 0. |
+| Precise NPC aim | `PreciseAIAim` in `[Game]` | When on, non-player ships aim more accurately. The default is off. |
+| Allow boarding | `BoardingAllowed` in `[Game]` | Whether ships can be boarded. The default is on. |
+| All building materials | `FullBuildingUnlocked` in `[Game]` | Makes every building material available from the start. The default is off. |
+
+### Avorion: Players
+
+5 settings in `server.ini`, shown under **Players** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Player-versus-player damage | `PlayerToPlayerDamage` in `[Game]` | Whether players can damage each other's ships, for the whole server. The default is on. |
+| Ships safe while offline | `LogoutInvincibility` in `[Game]` | A player's ships cannot be destroyed while that player is offline. The default is on. |
+| Offline safety delay (seconds) | `LogoutInvincibilityDelay` in `[Game]` | How long a player must be offline before their ships become invincible, in seconds. The default is 30. |
+| Same start sector | `sameStartSector` in `[Game]` | When on, every new player starts in the same sector. When off, each new player gets a random empty sector on the outer rim as their home sector. The default is on. |
+| Double-check player input | `SafePlayerInput` in `[Game]` | Experimental. Checks the updates players send to the server and accepts only control input, to stop cheating. The wiki says turning it off gives much smoother performance and turning it on can be very slow over a slow network. The default is off. |
+
+### Avorion: Spawn and resources
+
+3 settings in `server.ini`, shown under **Spawn and resources** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Starting resources | `StartingResources` in `[Game]` | How generous the start is, from -4 (quick start, more resources) to 0 (normal). The default is 0. |
+| Resource asteroid density | `ResourceAsteroidFactor` in `[Game]` | A multiplier for how many resource asteroids there are. 1 is normal; the default is 1. |
+| Wreckage resources | `ResourceWreckageFactor` in `[Game]` | A multiplier for the resources found in wreckage. 1 is normal; the default is 1. |
+
+### Avorion: Wreckage
+
+2 settings in `server.ini`, shown under **Wreckage** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Big wreckage lasts (seconds) | `BigWreckageDespawnTime` in `[Game]` | How long new large wreckage (more than 15 blocks) made during play, such as in combat, stays before it disappears, in seconds. The default is 1800. |
+| Small wreckage lasts (seconds) | `SmallWreckageDespawnTime` in `[Game]` | How long new small wreckage (15 blocks or less) made during play stays before it disappears, in seconds. The default is 900. |
+
+### Avorion: Limits
+
+12 settings in `server.ini`, shown under **Limits** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Fighters per sector and player | `MaximumFightersPerSectorAndPlayer` in `[Game]` | The most fighters one player can have in one sector at once. -1 means no limit, which is the default. |
+| Blocks per ship | `MaximumBlocksPerCraft` in `[Game]` | The most blocks any ship can be made of. -1 means no limit, which is the default. |
+| Volume per ship | `MaximumVolumePerShip` in `[Game]` | The most volume a ship can reach. -1 means no limit, which is the default. |
+| Volume per station | `MaximumVolumePerStation` in `[Game]` | The most volume a station can reach. -1 means no limit, which is the default. |
+| Ships per player | `MaximumPlayerShips` in `[Game]` | The most ships one player can own at a time. -1 means no limit, which is the default. |
+| Stations per player | `MaximumPlayerStations` in `[Game]` | The most stations one player can own at a time. -1 means no limit, which is the default. |
+| Stations per sector | `MaximumStationsPerSector` in `[Game]` | The most stations that can be in one sector. -1 means no limit, which is the default. |
+| Ships per alliance | `MaximumAllianceShips` in `[Game]` | The most ships one alliance can own. -1 means no limit, which is the default. |
+| Stations per alliance | `MaximumAllianceStations` in `[Game]` | The most stations one alliance can own. -1 means no limit, which is the default. |
+| Blocks per turret | `MaximumBlocksPerTurret` in `[Game]` | The most blocks one turret can be made of. The default is 250. |
+| Player inventory slots | `PlayerInventorySlots` in `[Game]` | How many inventory slots each player has. The default is 1000. |
+| Alliance inventory slots | `AllianceInventorySlots` in `[Game]` | How many inventory slots each alliance has. The default is 1000. |
+
+### Avorion: Performance
+
+8 settings in `server.ini`, shown under **Performance** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Sector update threads | `workerThreads` in `[System]` | How many threads update the sectors at once (the same as the Threads setting in the game). Keep it at or below the number of processor cores. Sources disagree on the default (1 and 25). |
+| Sector generator threads | `generatorThreads` in `[System]` | How many threads make new sectors while players are calculating routes. The default is 2. |
+| Script background threads | `scriptBackgroundThreads` in `[System]` | How many threads run heavy script work during play, such as building new ship models. The default is 2. |
+| Sectors kept alive per player | `aliveSectorsPerPlayer` in `[System]` | How many sectors stay active for each player and alliance that has ships in them. The wiki says 5 on a multiplayer server. |
+| Keep idle sectors (seconds) | `sectorUpdateTimeLimit` in `[System]` | How long sectors that cannot be simulated from a distance stay in memory, in seconds. The default is 300. |
+| Empty sector update step (seconds) | `emptySectorUpdateInterval` in `[System]` | The time between update steps for sectors with no players, in seconds. The default is 0.5. |
+| Fast sector simulation | `weakUpdate` in `[System]` | Simulates sectors without players with a faster, less accurate update. The default is on. |
+| Hang detection | `hangDetection` in `[System]` | Watches for a hung or crashed server. The default is on. |
+
+### Avorion: Saves
+
+3 settings in `server.ini`, shown under **Saves** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Save every (seconds) | `saveInterval` in `[System]` | How often the server saves the galaxy, in seconds. The default in this file is 600 (10 minutes). The --save-interval launch option is a separate setting with a default of 300. |
+| Hourly backups | `backups` in `[System]` | Whether the server makes its own backup every hour. The default is on. |
+| Backup folder | `backupsPath` in `[System]` | Where the server's own backups go. Empty uses the server's default place. |
+
+### Avorion: Network and privacy
+
+7 settings in `server.ini`, shown under **Network and privacy** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Public | `isPublic` in `[Networking]` | A privacy setting, the same as the --public launch option. The wiki says that when on, only one administrator is allowed and the server does not show up in the LAN menu. The default is on. |
+| List publicly | `isListed` in `[Networking]` | Shows the server in the public server list when Steam networking is also on. The default is off. |
+| Check players with Steam | `isAuthenticated` in `[Networking]` | Whether players are checked with Steam when they join (the "Authenticate Users" setting in the game). The default is on. |
+| Use Steam networking | `useSteam` in `[Networking]` | Lets players join through Steam, for example with "join game". Joining by IP and a port other than 27000 needs this. The default is on. |
+| VAC anti-cheat | `vacSecure` in `[Networking]` | Whether Valve's anti-cheat protects the server. The default is on. |
+| Update broadcast (seconds) | `broadcastInterval` in `[Networking]` | The time between the server's mass update broadcasts, in seconds. The default is 5. |
+| Send stats to admins | `sendStatsToAdmins` in `[Networking]` | Sends server statistics to the administrator. The default is on. |
+
+### Avorion: Remote console
+
+3 settings in `server.ini`, shown under **Remote console** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Remote console password | `rconPassword` in `[Networking]` | The password the remote console (RCON) needs. Empty turns the remote console off, which is the default. The panel does not use it. |
+| Remote console port (TCP) | `rconPort` in `[Networking]` | The TCP port of the remote console, when it is on. The default is 27015. |
+| Remote console address | `rconIp` in `[Networking]` | The IP address the remote console listens on. Empty listens on all addresses, which is the default. |
+
+### Avorion: Server info
+
+5 settings in `server.ini`, shown under **Server info** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server description | `description` in `[Administration]` | A description shown in the server list. The wiki's default is "An Avorion Server". |
+| Join password | `password` in `[Administration]` | What players must type to join; a wrong one kicks them. Empty means anyone can join, which is the default. Set it after the first start, once the server has made this file. |
+| Access list | `accessListMode` in `[Administration]` | Whether the server uses a blacklist (everyone can join except those on it) or a whitelist (only those on it can join). The default is Blacklist. Choices: `Blacklist` (Blacklist (everyone but those listed)), `Whitelist` (Whitelist (only those listed)). |
+| Allow pausing | `pausable` in `[Administration]` | Lets the server be paused. The default is off. |
+| Message of the day | `motd` in `[Game]` | A message shown to players when they join. Empty shows none, which is the default. |
+
+### Avorion: Advanced
+
+3 settings in `server.ini`, shown under **Advanced** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Developer mode | `DevMode` in `[Game]` | Turns on the game's developer mode. Leave it off on a normal server. The default is off. |
+| Profiling | `profiling` in `[System]` | Records performance and memory details so the /status command prints a lot more; the server may run slightly slower. The default is off. |
+| Send crash reports | `sendCrashReports` in `[System]` | Whether the server sends crash reports. The default is on. |
