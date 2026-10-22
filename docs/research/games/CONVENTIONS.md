@@ -14,8 +14,8 @@ descriptions must be plain language.
 3. Prefer the game's OWN shipped files as ground truth (default config files inside the server install, `-help` output, bundled
    documentation). If you can read them via a source, quote them.
 4. Date today is 2026-10-14. Games change; note the game/server build the facts are for.
-5. Do not touch C:\GodlyPanel unless your task says you are an implementation agent. Research agents write only under the
-   scratchpad research folder.
+5. Do not touch C:\GodlyPanel unless your task says you are an implementation agent. Research agents write only under the game's folder in the vault, `docs/research/games/<slug>/`
+   (earlier batches used a scratchpad research folder).
 6. Never print or store real passwords/tokens. Never run anything on the user's PC that starts, stops, or changes their existing
    servers (anything under C:\GodlyPanelApp\ is the user's live install: do not read-write it).
 

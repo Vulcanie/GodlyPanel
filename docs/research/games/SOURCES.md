@@ -27,3 +27,6 @@ Server app id: <id or not found> (<url>)
 ...
 ```
 Final message: two lines: number of URLs per topic, and anything you could not find.
+
+## Vault rules (apply to every stage)
+Each game lives in `docs/research/games/<slug>/` (the repo, not a scratch folder), and the vault front page is `INDEX.md`. After Stage A the lead adds the game to `INDEX.md`'s tables; the stages then add `01` to `04` ([[EXTRACT]]) and `00-overview.md` ([[OVERVIEW]]). Write file names in the numbered style so wikilinks like `[[01-basics]]` resolve.

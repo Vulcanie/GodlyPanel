@@ -11,3 +11,9 @@ data/*
 
 # Browser-automation session logs
 .playwright-mcp/
+
+# Game research for the many planned games: kept local, to move to its own repo later.
+# (Files already tracked under here, the batch 1-3 dossiers and guides, stay tracked.)
+docs/research/games/*/raw/
+docs/research/games/
+docs/plans/GAMES_BATCH_*_PLAN.md

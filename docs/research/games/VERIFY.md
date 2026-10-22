@@ -1,7 +1,7 @@
 # VERIFICATION BRIEF (check one new game on a real install through the panel)
 
-You verify that a game GodlyPanel now supports really works. Read `...\research\CONVENTIONS.md` and the game's dossier + `05-implementation-notes.md`
-(`...\research\<slug>\`). The notes end with "needs real-install verification": that list is your checklist.
+You verify that a game GodlyPanel now supports really works. Read `docs\research\games\CONVENTIONS.md`, the game's `00-overview.md` and its dossier + `05-implementation-notes.md`
+(`docs\research\games\<slug>\`). The notes end with "needs real-install verification": that list is your checklist.
 
 ## How
 A scratch panel is already running at http://127.0.0.1:47999 (admin / Scratch-Admin-Pass-1, bound to localhost). Helpers in `C:\GodlyScratch`:
@@ -28,6 +28,9 @@ Use PowerShell/Get-CimInstance to see which processes run from that folder, and 
 - Do NOT edit any file in `C:\GodlyPanel`. Report problems; the lead fixes them. You may read repo files.
 - No UPnP/router/firewall changes. Do not leave anything running when you finish: stop your server through the panel and confirm no process remains
   under `C:\GodlyScratch\data\servers\scratch-<id>`.
-- Write `...\research\<slug>\06-verification.md`: a table check | result (PASS/FAIL/PARTIAL) | evidence, then "Discrepancies to fix" listing exact
+- Write `docs\research\games\<slug>\06-verification.md`: a table check | result (PASS/FAIL/PARTIAL) | evidence, then "Discrepancies to fix" listing exact
   file/line/value changes you recommend. Final message: max 150 words: pass/fail counts and the discrepancies.
 - Be efficient with tokens: write your findings file early, then refine.
+
+## Vault upkeep (lead, after the check)
+In `<slug>/00-overview.md` set `status: verified` (or `verified-partial` with what failed) and link `[[06-verification]]`; update the "Run against a real install" column in `README.md`.
