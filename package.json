@@ -100,6 +100,6 @@
 		"fast-check": "^4.10.2",
 		"playwright-core": "^1.56.0",
 		"supertest": "^7.3.1",
-		"undici": "^8.11.2"
+		"undici": "^8.12.3"
 	}
 }
