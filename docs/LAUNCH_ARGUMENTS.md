@@ -45,6 +45,48 @@ Settings that live in a game's own settings file are in the [game settings guide
 - [Counter-Strike: Source](#counter-strike-source)
 - [Half-Life 2: Deathmatch](#half-life-2-deathmatch)
 - [Avorion](#avorion)
+- [Minecraft (vanilla)](#minecraft-vanilla)
+- [Terraria (vanilla)](#terraria-vanilla)
+- [The Forest](#the-forest)
+- [Wurm Unlimited](#wurm-unlimited)
+- [Mordhau](#mordhau)
+- [Team Fortress 2](#team-fortress-2)
+- [Counter-Strike 2](#counter-strike-2)
+- [Insurgency: Sandstorm](#insurgency-sandstorm)
+- [Left 4 Dead](#left-4-dead)
+- [Zombie Panic! Source](#zombie-panic-source)
+- [BrainBread 2](#brainbread-2)
+- [Day of Defeat: Source](#day-of-defeat-source)
+- [Fistful of Frags](#fistful-of-frags)
+- [No More Room in Hell](#no-more-room-in-hell)
+- [Insurgency (2014)](#insurgency-2014)
+- [Pirates, Vikings, and Knights II](#pirates-vikings-and-knights-ii)
+- [Dystopia](#dystopia)
+- [Empires](#empires)
+- [Double Action: Boogaloo](#double-action-boogaloo)
+- [Half-Life Dedicated Server](#half-life-dedicated-server)
+- [IOSoccer](#iosoccer)
+- [BATTALION: Legacy](#battalion-legacy)
+- [Black Mesa](#black-mesa)
+- [Military Conflict: Vietnam](#military-conflict-vietnam)
+- [SCP: Secret Laboratory](#scp-secret-laboratory)
+- [Rising World](#rising-world)
+- [Natural Selection 2](#natural-selection-2)
+- [Chivalry: Medieval Warfare](#chivalry-medieval-warfare)
+- [Hurtworld](#hurtworld)
+- [Euro Truck Simulator 2](#euro-truck-simulator-2)
+- [American Truck Simulator](#american-truck-simulator)
+- [Stationeers](#stationeers)
+- [Wreckfest](#wreckfest)
+- [Operation: Harsh Doorstop](#operation-harsh-doorstop)
+- [Rising Storm 2: Vietnam](#rising-storm-2-vietnam)
+- [Miscreated](#miscreated)
+- [Craftopia](#craftopia)
+- [Age of Chivalry](#age-of-chivalry)
+- [HumanitZ](#humanitz)
+- [The Front](#the-front)
+- [Empyrion - Galactic Survival](#empyrion---galactic-survival)
+- [ATLAS](#atlas)
 
 ## Valheim
 
@@ -490,7 +532,7 @@ Example: `-multihome=192.168.1.20`
 
 Example: `-ServerQueryPort=15777`
 
-### `-BeaconPort`
+### Satisfactory: `-BeaconPort`
 
 **Beacon port** (Network). The port the game uses to find the server on a network. Leave it off for the game's default.
 
@@ -538,7 +580,7 @@ Example: `-logfile "output_log.txt"`
 
 The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
 
-### `-dedicated`
+### 7 Days to Die: `-dedicated`
 
 **Dedicated server** (Required). Starts the game as a server rather than a client. Keep it on the line.
 
@@ -732,7 +774,7 @@ Example: `TheIsland_WP?listen?SessionName=My ARK?Port=7777`
 
 Example: `-WinLiveMaxPlayers=70`
 
-### `-mods`
+### ARK: Survival Ascended / Evolved: `-mods`
 
 **Mods** (Dash arguments). The mod IDs to load, separated by commas. Add them from the Mods tab; mods have no explanations here.
 
@@ -1324,7 +1366,7 @@ Soulmask is set up by the arguments on the command that starts it: the name, the
 
 The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
 
-### `-server`
+### Soulmask: `-server`
 
 **Server mode** (Required). Starts the game as a dedicated server. The guides call it required.
 
@@ -1872,7 +1914,7 @@ Example: `-datadir .\data`
 
 Not offered in the Launch options form; the panel sets it and it is best left alone.
 
-### `-settings`
+### Necesse: `-settings`
 
 **Settings file** (Saves and logs). A different file to read the server's settings from, instead of cfg\server.cfg. Anything given on the launch line still wins over it.
 
@@ -1928,7 +1970,7 @@ Example: `-ip 0.0.0.0`
 
 **No SourceTV** (Network). Turns SourceTV (the spectator broadcast) off and closes its port, which is usually 27020.
 
-### `-nomaster`
+### Left 4 Dead 2: `-nomaster`
 
 **Hide from the server list** (Network). Keeps the server out of the master server list, so it does not show in the server browser. Players can still connect by address.
 
@@ -1996,7 +2038,7 @@ Example: `Port=7787`
 
 Not offered in the Launch options form; the panel sets it and it is best left alone.
 
-### `QueryPort`
+### Squad: `QueryPort`
 
 **Steam query port** (Network). The port the Steam server list and query tools ask for the server's details on. The wiki's firewall list opens it and the next one up (27166) for both UDP and TCP. To change it, edit the start script by hand; the Ports section cannot rewrite this form of argument.
 
@@ -2414,11 +2456,11 @@ The panel puts this on the line when it creates the server. It is in the Launch 
 
 Example: `-ip 192.168.1.20`
 
-### `-noupnp`
+### Terraria (tModLoader): `-noupnp`
 
 **No auto port-forward** (Network). Turns off the automatic port-forwarding attempt (UPnP) when the server starts. Useful if you forward the port by hand.
 
-### `-secure`
+### Terraria (tModLoader): `-secure`
 
 **Extra cheat protection** (Server). Adds additional cheat protection to the server (the game's description of it). The same setting can be turned on in serverconfig.txt.
 
@@ -2442,11 +2484,11 @@ Values: `en-US` (English), `de-DE` (German), `it-IT` (Italian), `fr-FR` (French)
 
 Example: `-language en-US`
 
-### `-disableannouncementbox`
+### Terraria (tModLoader): `-disableannouncementbox`
 
 **No announcement boxes** (Advanced). Stops the Announcement Box block from sending text messages to players when wire triggers it.
 
-### `-announcementboxrange`
+### Terraria (tModLoader): `-announcementboxrange`
 
 **Announcement box range** (Advanced). How far, in pixels, an Announcement Box's message reaches. -1 means the whole server.
 
@@ -2500,7 +2542,7 @@ Example: `-port 27355`
 
 The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
 
-### `+ip`
+### Sven Co-op: `+ip`
 
 **Listen address** (Network). The network address the server listens on. Only needed if the computer has more than one IP address (virtual network cards such as VirtualBox, VMware and Hyper-V count) and you must choose which one to listen on.
 
@@ -2536,7 +2578,7 @@ Example: `+servercfgfile server.cfg`
 
 Not offered in the Launch options form; the panel sets it and it is best left alone.
 
-### `+log`
+### Sven Co-op: `+log`
 
 **Server log** (Saves and logs). Starts a log file for the server console. The manual recommends it. Only on is documented.
 
@@ -2632,7 +2674,7 @@ Not offered in the Launch options form; the panel sets it and it is best left al
 
 Example: `+sv_setsteamaccount …`
 
-### `-nobots`
+### Counter-Strike: Source: `-nobots`
 
 **No bots** (Game). Turns bots off for the whole server, which also saves CPU time on a weak PC.
 
@@ -2887,3 +2929,1979 @@ Example: `--use-steam-networking true`
 ### `--stdout-to-log`
 
 **Console output to the log file** (Saves). Sends the console's normal output to the log file instead of the console window. The window then shows nothing, but /save and /stop can still be typed into it.
+
+## Minecraft (vanilla)
+
+The server's own options are in `server.properties` (the Settings tab). The options here are the server program's arguments, which come after `server.jar` on the launch line. Changes apply the next time the server starts. The memory the server may use is set by the Max Memory field when the server is made. These arguments are on the `java` line of the server's start script.
+
+The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
+
+### `--nogui`
+
+**No window** (Required). Starts the server without its own small window. The panel always writes it.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `--world`
+
+**World name** (World). Uses this world folder instead of the one named in server.properties. The panel's backup follows the name in server.properties, so a backup will not include a world chosen here.
+
+Example: `--world world`
+
+### `--universe`
+
+**Universe folder** (World). The folder the world name is relative to. Leave it off to use the server's own folder.
+
+Example: `--universe C:\Minecraft\worlds`
+
+### `--bonusChest`
+
+**Bonus chest** (World). Adds the bonus chest to a world the first time it is made. Has no effect on a world that already exists.
+
+### `--demo`
+
+**Demo mode** (Advanced). Runs the server as the demo: players get a demo pop-up, and after five in-game days they cannot break or place blocks.
+
+### `--safeMode`
+
+**Vanilla data packs only** (Advanced). Makes the server load only the vanilla data pack, so other data packs are not loaded.
+
+### `--serverId`
+
+**Server ID** (Advanced). A name shown in crash reports, to tell this server's reports apart from others'.
+
+Example: `--serverId main`
+
+### `--eraseCache`
+
+**Erase cached data** (Maintenance). Deletes the cached light and biome data so the server makes it again. The next start is slower.
+
+### `--forceUpgrade`
+
+**Upgrade the world** (Maintenance). Converts the world to the newest save format. After that, older versions of the game can no longer open the world. Make a backup first.
+
+### `--recreateRegionFiles`
+
+**Rebuild region files** (Maintenance). Like Upgrade the world, but also rewrites every chunk into fresh region files. Takes longer, and the same warning about older versions applies.
+
+## Terraria (vanilla)
+
+The game port and the player limit are given on the command that starts the server, and only there. The world, its name and the password are in serverconfig.txt. Changes apply the next time the server starts. These arguments are on the `TerrariaServer.exe` line of the server's start script.
+
+The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
+
+### Terraria (vanilla): `-config`
+
+**Settings file** (Required). The text file with the world, the password and the other settings. The Settings tab edits serverconfig.txt in the server's folder. The panel always writes it.
+
+Example: `-config serverconfig.txt`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Terraria (vanilla): `-port`
+
+**Game port** (Network). The TCP port players connect to. The game's own default is 7777, which two other servers here use, so this server starts at 7790. Change it from the server's Ports section so the panel can check for clashes.
+
+Example: `-port 7790`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Terraria (vanilla): `-maxplayers`
+
+**Max players** (Server). The most players that can be on the server at once, from 1 to 255. The wiki's default is 16 when this is left out, and more players need more memory.
+
+Example: `-maxplayers 16`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Terraria (vanilla): `-ip`
+
+**Bind address** (Network). Makes the server listen only on one IP address of this PC. Only useful on a PC with several network cards or addresses; leave it off to use them all.
+
+Example: `-ip 192.168.1.20`
+
+### Terraria (vanilla): `-noupnp`
+
+**No auto port-forward** (Network). Turns off the automatic port-forwarding attempt (UPnP) when the server starts. Useful if you forward the port by hand.
+
+### Terraria (vanilla): `-disableannouncementbox`
+
+**No announcement boxes** (Advanced). Stops the Announcement Box from sending its text messages when wire triggers it.
+
+### Terraria (vanilla): `-announcementboxrange`
+
+**Announcement box range** (Advanced). How far, in pixels, an Announcement Box's message reaches. -1 sends it to the whole server.
+
+Example: `-announcementboxrange -1`
+
+## The Forest
+
+The arguments that start The Forest's server. The panel writes them when the server is created, and the first two are the ones the game needs to find its files. Changes apply the next time the server starts. These arguments are on the `TheForestDedicatedServer.exe` line of the server's start script.
+
+The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
+
+### The Forest: `-batchmode`
+
+**Batch mode** (Required). Runs the server without a game window, as the egg does. The panel always writes it.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### The Forest: `-nographics`
+
+**No graphics** (Required). Starts the server without drawing graphics, which a server does not need. The panel always writes it.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-nosteamclient`
+
+**No Steam client** (Required). Runs the server without the Steam client, as the egg does. The panel always writes it.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-serverPasswordAdmin`
+
+**Admin password** (Required). The password that unlocks the in-game admin commands. Set when the server is created; it is not shown here so it stays out of view.
+
+Example: `-serverPasswordAdmin (your password)`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-inittype`
+
+**Start type** (Save). New starts a new world. Continue loads the one already saved in the save folder. The dossier gives the two values only; what a New start does to an existing save is not known.
+
+Values: `New` (New (start a new world)), `Continue` (Continue (load the saved world)).
+
+Example: `-inittype New`
+
+### `-savefolderpath`
+
+**Save folder** (Folders). The folder the saves are kept in, counted from the server's folder. The panel writes the same folder it backs up.
+
+Example: `-savefolderpath TheForestDedicatedServer_Data`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-configfilepath`
+
+**Config file** (Folders). The config file the server reads, counted from the server's folder. The panel writes config.cfg at this path. Whether the game reads this path is not verified.
+
+Example: `-configfilepath TheForestDedicatedServer_Data\forest\config\config.cfg`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+## Wurm Unlimited
+
+Wurm Unlimited's launcher is started with arguments written `name=value`, with no dash in front. The world, ports, name, player limit and passwords are written by the panel when the server is created. The optional arguments below can be added here. Changes apply the next time the server starts. These arguments are on the `WurmServerLauncher.exe` line of the server's start script.
+
+The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
+
+### `start`
+
+**World** (Required). The world the server loads: the name of a folder in the server's folder, made first with the game's own launcher. Creative and Adventure are the names the research gives.
+
+Example: `start=Creative`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `externalport`
+
+**Game port (TCP)** (Network). The TCP port players connect through. The default is 3724. The panel's Ports section does not rewrite this argument: change it here and in the Ports section together.
+
+Example: `externalport=3724`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Wurm Unlimited: `queryport`
+
+**Steam query port (UDP)** (Network). The UDP port the Steam server browser asks for the server's details on. The research gives the range 27016 to 27030 for it.
+
+Example: `queryport=27020`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Wurm Unlimited: `maxplayers`
+
+**Max players** (Server). The most players that can be online at once. The panel writes the number chosen when the server is created.
+
+Example: `maxplayers=25`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `servername`
+
+**Server name** (Server). The name shown in the server browser, in quotes. The research gives a limit of 64 characters.
+
+Example: `servername="My Wurm Server"`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `serverpassword`
+
+**Server password** (Server). The password players must enter to join. Set when the server is created; it is not shown here so it stays out of view.
+
+Example: `serverpassword=(your password)`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `adminpwd`
+
+**Admin password** (Server). The password that unlocks the in-game admin commands. Set when the server is created; it is not shown here so it stays out of view.
+
+Example: `adminpwd=(your password)`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Wurm Unlimited: `ip`
+
+**Listen address** (Network). The IP address the server binds to. Leave it out unless the server's default network address is not the one players should use.
+
+Example: `ip=0.0.0.0`
+
+### `homekingdom`
+
+**Home kingdom** (Server). The kingdom the server belongs to, when it is a home server. The numbers are the ones the game's own launcher lists.
+
+Values: `0` (0 No kingdom), `1` (1 Jenn-Kellon), `2` (2 Mol-Rehan), `3` (3 Horde of the Summoned), `4` (4 Freedom).
+
+Example: `homekingdom=4`
+
+### `homeserver`
+
+**Home server** (Server). Whether the server is a home server, which belongs to a single kingdom. The research gives no default.
+
+Values: `true` (Yes), `false` (No).
+
+Example: `homeserver=true`
+
+### `pvp`
+
+**Player versus player** (Rules). Turns player-versus-player fighting on or off on the server. The research gives no default.
+
+Values: `true` (Yes), `false` (No).
+
+Example: `pvp=true`
+
+### `epicsettings`
+
+**Epic settings** (Rules). When on, the server follows the rules of the official Epic servers, for example the skill curve. The research gives no default.
+
+Values: `true` (Yes), `false` (No).
+
+Example: `epicsettings=false`
+
+### `loginserver`
+
+**Login server** (Network). Whether this server acts as a login server. The default is on. Turn it off only if another server is meant to act as the login server.
+
+Values: `true` (Yes), `false` (No).
+
+Example: `loginserver=true`
+
+## Mordhau
+
+The arguments that start Mordhau's server. The map is the first word after the program and is not in this form; to change it, edit the start script by hand. The panel writes the ports when the server is created. Changes apply the next time the server starts. These arguments are on the `MordhauServer.exe` line of the server's start script.
+
+The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
+
+### `-MaxSlots`
+
+**Max players** (Server). The most players that can be on the server at once. The Pterodactyl egg's example is 48. A hosting guide says going much past 64 tends to hurt performance.
+
+Example: `-MaxSlots=48`
+
+### Mordhau: `-Port`
+
+**Game port** (Network). The UDP port players connect to. Written by the panel when the server is created. The form does not change it: edit the start script by hand and keep the flag.
+
+Example: `-Port=25900`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Mordhau: `-queryport`
+
+**Query port** (Network). The UDP port the server browser asks for the server's details. Written by the panel when the server is created; change it by editing the start script by hand.
+
+Example: `-queryport=25902`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Mordhau: `-beaconport`
+
+**Beacon port** (Network). The UDP port the server's beacon uses, one per server on a PC. Written by the panel when the server is created; change it by editing the start script by hand.
+
+Example: `-beaconport=25903`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+## Team Fortress 2
+
+Team Fortress 2 is started with `+word value` console commands (the map, the player limit) and `-word` launch options (the port, the console). They are read when the server starts, so changes apply the next time it starts. None of them has to be last on the line. These arguments are on the `srcds.exe` line of the server's start script.
+
+The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
+
+### Team Fortress 2: `-console`
+
+**Console window** (Required). Runs the server in console mode: a text window you can type commands into. The panel always writes it.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Team Fortress 2: `-game`
+
+**Game folder** (Required). Tells srcds which game to run. For Team Fortress 2 this is tf. The panel always writes it.
+
+Example: `-game tf`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Team Fortress 2: `-port`
+
+**Game port** (Network). The port the server listens on and tells players to connect to. The remote console uses the same number over TCP. Change it from the server's Ports section so the panel can check for clashes.
+
+Example: `-port 27615`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Team Fortress 2: `-strictportbind`
+
+**Stop if the port is taken** (Network). If the port is already in use, the server quits with an error instead of quietly using another port. Without it a second server would take another port and players would not find it.
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Team Fortress 2: `-ip`
+
+**Listen address** (Network). The network address the server binds to. Only needed with several network cards or to pick one address of this PC. It is not the address players use from outside.
+
+Example: `-ip 0.0.0.0`
+
+### Team Fortress 2: `-nohltv`
+
+**No SourceTV** (Network). Turns SourceTV (the spectator broadcast) off and closes its port, which is usually UDP 27020.
+
+### Team Fortress 2: `+maxplayers`
+
+**Max players** (Server). The number of player slots on the server, up to 32. It is only read when the server starts.
+
+Example: `+maxplayers 24`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Team Fortress 2: `+map`
+
+**Start map** (World). The map the server starts on, such as ctf_2fort. Give the map's name, with or without .bsp.
+
+Example: `+map ctf_2fort`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Team Fortress 2: `+exec`
+
+**Settings file** (Server). The settings file the server runs when it starts, from the tf\cfg folder. The panel writes it, and the Settings tab edits it.
+
+Example: `+exec server.cfg`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Team Fortress 2: `+sv_setsteamaccount`
+
+**Steam login token** (Server). A Steam Game Server Login Token for this server. The dossier says one is needed to show in the public server browser; without it the server still runs. Create one at steamcommunity.com/dev/managegameservers (Team Fortress 2 is app 440). Treat it like a password.
+
+Example: `+sv_setsteamaccount …`
+
+### Team Fortress 2: `-condebug`
+
+**Write the console to a file** (Saves and logs). Writes everything the console prints to console.log in the game's folder. The Logs tab reads that file.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Team Fortress 2: `-conclearlog`
+
+**Start console.log afresh** (Saves and logs). Empties console.log every time the server starts. It only works together with the option above.
+
+### Team Fortress 2: `-insecure`
+
+**Turn off Valve Anti-Cheat** (Advanced). Starts the server without Valve Anti-Cheat (VAC). VAC is on unless this is on the line.
+
+## Counter-Strike 2
+
+Counter-Strike 2 is started with `-word` launch options (the port, the player limit) and `+word value` console commands (the map, the settings file). They are read when the server starts, so changes apply the next time it starts. None of them has to be last on the line. These arguments are on the `cs2.exe` line of the server's start script.
+
+The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
+
+### Counter-Strike 2: `-dedicated`
+
+**Dedicated server** (Required). Runs the game as a dedicated server with no game window. Without it the game opens as a normal player program. The panel always writes it.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Counter-Strike 2: `-port`
+
+**Game port** (Network). The UDP port players connect to and the server list uses. Change it from the server's Ports section so the panel can check for clashes.
+
+Example: `-port 27065`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Counter-Strike 2: `-ip`
+
+**Listen address** (Network). The address the server binds to, when this PC has several network cards and the server must use one of them. Leave it out otherwise.
+
+Example: `-ip 0.0.0.0`
+
+### Counter-Strike 2: `-maxplayers`
+
+**Max players** (Server). The number of player slots on the server. It is read when the server starts.
+
+Example: `-maxplayers 10`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Counter-Strike 2: `+sv_setsteamaccount`
+
+**Steam login token** (Server). A Game Server Login Token (GSLT) for this server, from steamcommunity.com/dev/managegameservers with app ID 730. Without one the server is LAN-only and is not listed publicly. Each token belongs to one server, and it is a secret: do not share it.
+
+Example: `+sv_setsteamaccount …`
+
+### Counter-Strike 2: `+map`
+
+**Start map** (World). The map the server starts on, such as de_dust2.
+
+Example: `+map de_dust2`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `+game_alias`
+
+**Game mode** (World). The game mode the server starts in: competitive (the game's default), wingman, casual, deathmatch or custom. The Settings tab's mode file is the competitive one.
+
+Example: `+game_alias casual`
+
+### Counter-Strike 2: `+exec`
+
+**Settings file** (Server). The settings file the server runs at start-up, from the game's cfg folder. The panel writes it, and the Settings tab edits it.
+
+Example: `+exec server.cfg`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Counter-Strike 2: `-insecure`
+
+**Turn off Valve Anti-Cheat** (Advanced). Starts the server with Valve Anti-Cheat (VAC) turned off. Leave it off unless you have a reason to change it.
+
+## Insurgency: Sandstorm
+
+The extra arguments that start Insurgency: Sandstorm's server. The map, the scenario and the player limit sit on the map address before the arguments, and the form does not change them: to change them, edit the start script by hand. The panel writes the ports, the server name and the login token when the server is created. These arguments are on the `InsurgencyServer.exe` line of the server's start script.
+
+The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
+
+### Insurgency: Sandstorm: `-log`
+
+**Log window** (Logging). Opens the server's log window, which shows what the server prints. The guide describes it as enabling the log window; the panel starts the server with it on.
+
+### `-ruleset`
+
+**Rule set** (Browser). Set to OfficialRules to list the server under the browser's official-rules filter, which the mod.io guide gives as the way to opt in. Leave it out for a custom server.
+
+Example: `-ruleset=OfficialRules`
+
+### `-mutators`
+
+**Mutators (game variants)** (Game). Turns on game variants such as HeadshotOnly or HotPotato. List several with commas and no spaces. Each variant's own settings are in Game.ini, which this form does not show.
+
+Example: `-mutators=HeadshotOnly`
+
+### Insurgency: Sandstorm: `-Port`
+
+**Game port** (Network). The UDP port players connect to. Written by the panel when the server is created. Change it by editing the start script by hand.
+
+Example: `-Port=25940`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Insurgency: Sandstorm: `-QueryPort`
+
+**Query port** (Network). The port the server browser asks for the server's details (UDP and TCP). Written by the panel when the server is created; change it by editing the start script by hand.
+
+Example: `-QueryPort=25942`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-hostname`
+
+**Server name** (Server). The name shown in the server browser. Written by the panel from the Server Name field when the server is created.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-GSLTToken`
+
+**Steam login token** (Access). The Steam game-server login token, written from the form when the server is created. It is made for app 581320 at steamcommunity.com/dev/managegameservers.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+## Left 4 Dead
+
+Left 4 Dead is started with `+word value` console commands (the map, the player limit) and `-word` launch options (the port, the console). They are read when the server starts, so changes apply the next time it starts. None of them has to be last on the line. These arguments are on the `srcds.exe` line of the server's start script.
+
+The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
+
+### Left 4 Dead: `-console`
+
+**Console window** (Required). Runs the server in console mode: a text window you can type commands into. The panel always writes it.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Left 4 Dead: `-game`
+
+**Game folder** (Required). Tells srcds which game to run. For Left 4 Dead this is left4dead. The panel always writes it.
+
+Example: `-game left4dead`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Left 4 Dead: `-port`
+
+**Game port** (Network). The port the server listens on and tells players to connect to. Valve's page says Source also uses it for the remote console. Change it from the server's Ports section so the panel can check for clashes.
+
+Example: `-port 25950`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Left 4 Dead: `-ip`
+
+**Listen address** (Network). The network address the server listens on. Valve's page allows an address of this PC or 0.0.0.0 for all of them. Only needed with several network cards.
+
+Example: `-ip 0.0.0.0`
+
+### Left 4 Dead: `-nohltv`
+
+**No SourceTV** (Network). Turns SourceTV (the spectator broadcast) off and closes its port, which is usually 27020.
+
+### Left 4 Dead: `+maxplayers`
+
+**Max players** (Server). The number of player slots on the server. It is only read when the server starts.
+
+Example: `+maxplayers 8`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Left 4 Dead: `+map`
+
+**Start map** (World). The map the server starts on, such as l4d_hospital01_apartment. Give the map's name, with or without .bsp.
+
+Example: `+map l4d_hospital01_apartment`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Left 4 Dead: `+exec`
+
+**Settings file** (Server). The settings file the server runs when it starts, from the left4dead\cfg folder. The panel writes it, and the Settings tab edits it.
+
+Example: `+exec server.cfg`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Left 4 Dead: `+sv_setsteamaccount`
+
+**Steam login token** (Server). A Steam Game Server Login Token for this server. Valve's page says you need one if the server stops with the Steam connection error 18 or 106. Create one at steamcommunity.com/dev/managegameservers; the account must own the game. Treat it like a password.
+
+Example: `+sv_setsteamaccount …`
+
+### Left 4 Dead: `-nobots`
+
+**No bots** (Game). Turns bots off for the whole server, which also saves CPU time on a weak PC.
+
+### Left 4 Dead: `-insecure`
+
+**Turn off Valve Anti-Cheat** (Advanced). Starts the server without Valve Anti-Cheat (VAC). Valve's page says this is what the option does; leave it off unless you know you need it.
+
+## Zombie Panic! Source
+
+Zombie Panic! Source is started with `-word value` launch options (the game, the port, the player limit) and `+word value` console commands (the map). They are read when the server starts, so changes apply the next time it starts. None of them has to be last on the line. These arguments are on the `srcds.exe` line of the server's start script.
+
+The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
+
+### Zombie Panic! Source: `-console`
+
+**Console window** (Required). Runs the server in console mode: a text window you can type commands into. The panel always writes it.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Zombie Panic! Source: `-game`
+
+**Game folder** (Required). Tells srcds which game to run. For Zombie Panic! Source this is zps. The panel always writes it.
+
+Example: `-game zps`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Zombie Panic! Source: `-dedicated`
+
+**Dedicated server** (Required). Starts the program as a dedicated server. The panel always writes it, as the community's Windows start line does.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Zombie Panic! Source: `-secure`
+
+**Turn on Valve Anti-Cheat** (Advanced). Turns Valve Anti-Cheat (VAC) on. The ZPS guide says servers without VAC are hidden from the server browser's list but still show in Steam's. Remove it from the line to start without VAC.
+
+### Zombie Panic! Source: `-port`
+
+**Game port** (Network). The port the server listens on and tells players to connect to. Valve's page says Source also uses it for the remote console. Change it from the server's Ports section so the panel can check for clashes.
+
+Example: `-port 25952`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Zombie Panic! Source: `-strictportbind`
+
+**Stop if the port is taken** (Network). If the port is already in use, the server quits with an error instead of quietly using another port. Without it a second server would take another port and players would not find it.
+
+### Zombie Panic! Source: `-maxplayers`
+
+**Max players** (Server). The number of player slots on the server. The ZPS guide says 24 is the most ZPS supports. It is only read when the server starts.
+
+Example: `-maxplayers 20`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Zombie Panic! Source: `+map`
+
+**Start map** (World). The map the server starts on, such as zpo_biotec. Give the map's name, with or without .bsp.
+
+Example: `+map zpo_biotec`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Zombie Panic! Source: `+sv_setsteamaccount`
+
+**Steam login token** (Server). A Steam Game Server Login Token for this server. Valve's page says you need one if the server stops with the Steam connection error 18 or 106. Create one at steamcommunity.com/dev/managegameservers; the account must own the game. Treat it like a password.
+
+Example: `+sv_setsteamaccount …`
+
+### Zombie Panic! Source: `-nobots`
+
+**No bots** (Game). Turns bots off for the whole server, which also saves CPU time on a weak PC.
+
+### Zombie Panic! Source: `-nohltv`
+
+**No SourceTV** (Network). Turns SourceTV (the spectator broadcast) off and closes its port, which is usually 27020.
+
+## BrainBread 2
+
+BrainBread 2 is started with `-word value` launch options (the game, the port, the console) and `+word value` console commands (the map, the player limit, the address). They are read when the server starts, so changes apply the next time it starts. None of them has to be last on the line. These arguments are on the `srcds.exe` line of the server's start script.
+
+The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
+
+### BrainBread 2: `-console`
+
+**Console window** (Required). Runs the server in console mode, a text window. The vendor guide says the server can only restart automatically in this mode. The panel always writes it.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### BrainBread 2: `-game`
+
+**Game folder** (Required). Tells srcds which game to run. For BrainBread 2 this is BrainBread2. The panel always writes it.
+
+Example: `-game BrainBread2`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### BrainBread 2: `-secure`
+
+**Turn on Valve Anti-Cheat** (Advanced). Turns Valve Anti-Cheat (VAC) protection on for the server. The vendor guide says you can remove it if you do not want VAC.
+
+### BrainBread 2: `+map`
+
+**Start map** (World). The map the server starts on, such as bbc_termoil. The vendor guide says this command should not be removed. Give the map's name, with or without .bsp.
+
+Example: `+map bbc_termoil`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### BrainBread 2: `+maxplayers`
+
+**Max players** (Server). The number of player slots on the server. It is only read when the server starts.
+
+Example: `+maxplayers 12`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### BrainBread 2: `-port`
+
+**Game port** (Network). The port the server listens on. The vendor guide says it can be changed to anywhere from 27015 to 27020, and the panel's default is outside that range: test a server before relying on it (see the guide).
+
+Example: `-port 25954`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### BrainBread 2: `+ip`
+
+**Server address** (Network). The address the server listens on. The vendor guide says to use this PC's own address, not 127.0.0.1. 0.0.0.0 means all of this PC's addresses; the guide's advice is not confirmed for the panel's default.
+
+Example: `+ip 0.0.0.0`
+
+### BrainBread 2: `+exec`
+
+**Settings file** (Server). The settings file the server runs when it starts, from the brainbread2\cfg folder. The panel writes it, and the Settings tab edits it.
+
+Example: `+exec server.cfg`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### BrainBread 2: `+sv_setsteamaccount`
+
+**Steam login token** (Server). A Steam Game Server Login Token for this server. Create one at steamcommunity.com/dev/managegameservers; the account must own the game. Treat it like a password.
+
+Example: `+sv_setsteamaccount …`
+
+## Day of Defeat: Source
+
+Day of Defeat: Source is started with `-word` launch options (the game folder, the port, VAC) and `+word value` console commands (the player limit, the map). They are read when the server starts, so changes apply the next time it starts. None of them has to be last on the line. These arguments are on the `srcds.exe` line of the server's start script.
+
+The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
+
+### Day of Defeat: Source: `-console`
+
+**Console window** (Required). Runs the server in console mode: a text window you can type commands into. The panel always writes it.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Day of Defeat: Source: `-game`
+
+**Game folder** (Required). Tells srcds which game to run. For Day of Defeat: Source this is dod. The panel always writes it.
+
+Example: `-game dod`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Day of Defeat: Source: `-secure`
+
+**Valve Anti-Cheat (VAC)** (Security). Runs the server with Valve Anti-Cheat (VAC) protection. The guides say to remove it only if you do not want VAC.
+
+### Day of Defeat: Source: `-port`
+
+**Game port** (Network). The port the server uses and players connect to. The guides allow 27015 to 27020; change it from the server's Ports section so the panel can check for clashes.
+
+Example: `-port 25965`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Day of Defeat: Source: `+maxplayers`
+
+**Max players** (Server). The number of player slots on the server. It is only read when the server starts.
+
+Example: `+maxplayers 32`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Day of Defeat: Source: `+map`
+
+**Start map** (World). The map the server starts on, such as dod_anzio. Give the map's name, with or without .bsp.
+
+Example: `+map dod_anzio`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Day of Defeat: Source: `+exec`
+
+**Settings file** (Server). The settings file the server runs when it starts, from the dod\cfg folder. The panel writes it, and the Settings tab edits it.
+
+Example: `+exec server.cfg`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Day of Defeat: Source: `+sv_setsteamaccount`
+
+**Steam login token** (Server). A Steam Game Server Login Token for this server, which other players need to find it in the public list. Create one at steamcommunity.com/dev/managegameservers for game id 232290. Treat it like a password.
+
+Example: `+sv_setsteamaccount …`
+
+## Fistful of Frags
+
+Fistful of Frags is started with `-word` launch options (the game folder, the port) and `+word value` console commands (the player limit, the map). They are read when the server starts, so changes apply the next time it starts. None of them has to be last on the line. These arguments are on the `srcds.exe` line of the server's start script.
+
+The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
+
+### Fistful of Frags: `-console`
+
+**Console window** (Required). Runs the server in console mode: a text window you can type commands into. The panel always writes it.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Fistful of Frags: `-game`
+
+**Game folder** (Required). Tells srcds which game to run. For Fistful of Frags this is fof. The panel always writes it.
+
+Example: `-game fof`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Fistful of Frags: `-port`
+
+**Game port** (Network). The port the server uses and players connect to. The guides use 27015 as the default; change it from the server's Ports section so the panel can check for clashes.
+
+Example: `-port 25975`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Fistful of Frags: `-insecure`
+
+**Turn off Valve Anti-Cheat** (Security). Starts the server without Valve Anti-Cheat (VAC). Only use it if you know why you want that.
+
+### `-norestart`
+
+**Do not restart on a crash** (Advanced). Stops the server from trying to restart itself after it fails.
+
+### Fistful of Frags: `+maxplayers`
+
+**Max players** (Server). The number of player slots on the server. It is only read when the server starts.
+
+Example: `+maxplayers 16`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Fistful of Frags: `+map`
+
+**Start map** (World). The map the server starts on, such as fof_fistful or fof_revenge. Give the map's name, with or without .bsp.
+
+Example: `+map fof_fistful`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Fistful of Frags: `+exec`
+
+**Settings file** (Server). The settings file the server runs when it starts, from the fof\cfg folder. The panel writes it, and the Settings tab edits it.
+
+Example: `+exec server.cfg`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+## No More Room in Hell
+
+No More Room in Hell is started with `-word` launch options (the game folder, the port) and `+word value` console commands (the player limit, the map). They are read when the server starts, so changes apply the next time it starts. None of them has to be last on the line. These arguments are on the `srcds.exe` line of the server's start script.
+
+The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
+
+### No More Room in Hell: `-console`
+
+**Console window** (Required). Runs the server in console mode: a text window you can type commands into. The panel always writes it.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### No More Room in Hell: `-game`
+
+**Game folder** (Required). Tells srcds which game to run. For No More Room in Hell this is nmrih. The panel always writes it.
+
+Example: `-game nmrih`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### No More Room in Hell: `-port`
+
+**Game port** (Network). The port the server uses and players connect to. The generic default is 27015; change it from the server's Ports section so the panel can check for clashes.
+
+Example: `-port 25985`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### No More Room in Hell: `+maxplayers`
+
+**Max players** (Server). The number of player slots on the server. It is only read when the server starts.
+
+Example: `+maxplayers 8`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### No More Room in Hell: `+map`
+
+**Start map** (World). The map the server starts on, such as nmo_broadway. Give the map's name, with or without .bsp.
+
+Example: `+map nmo_broadway`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### No More Room in Hell: `+exec`
+
+**Settings file** (Server). The settings file the server runs when it starts, from the nmrih\cfg folder. The panel writes it, and the Settings tab edits it.
+
+Example: `+exec server.cfg`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### No More Room in Hell: `+sv_setsteamaccount`
+
+**Steam login token** (Server). A Steam Game Server Login Token for this server, which other players need to join. Create one at steamcommunity.com/dev/managegameservers for game id 317670. Treat it like a password.
+
+Example: `+sv_setsteamaccount …`
+
+## Insurgency (2014)
+
+Insurgency (2014) is started with `-word` launch options (the console window, the port) and `+word value` console commands (the player limit, the map). They are read when the server starts, so changes apply the next time it starts. None of them has to be last on the line. These arguments are on the `srcds.exe` line of the server's start script.
+
+The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
+
+### Insurgency (2014): `-console`
+
+**Console window** (Required). Runs the server in console mode: a text window you can type commands into. The panel always writes it.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Insurgency (2014): `-port`
+
+**Game port** (Network). The port the server uses and players connect to. The panel's Ports section sets it, so the panel can check for clashes.
+
+Example: `-port 25934`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Insurgency (2014): `+maxplayers`
+
+**Max players** (Server). The number of player slots on the server. It is only read when the server starts.
+
+Example: `+maxplayers 32`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Insurgency (2014): `+map`
+
+**Start map** (World). The map the server starts on, such as market_coop. Give the map's name, with or without .bsp.
+
+Example: `+map market_coop`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Insurgency (2014): `+exec`
+
+**Settings file** (Server). The settings file the server runs when it starts, from the insurgency\cfg folder. The panel writes it, and the Settings tab edits it.
+
+Example: `+exec server.cfg`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Insurgency (2014): `-insecure`
+
+**Run without Valve Anti-Cheat** (Security). Starts the server without Valve Anti-Cheat (VAC). Leave it off unless you know you need it; the Valve page only describes what the flag does.
+
+### Insurgency (2014): `-nobots`
+
+**No bots** (Server). Turns bots off on the server, so only real players fill the slots.
+
+### Insurgency (2014): `-nohltv`
+
+**No SourceTV** (Network). Turns off SourceTV, the spectator broadcast, and closes its port (usually 27020).
+
+## Pirates, Vikings, and Knights II
+
+Pirates, Vikings, and Knights II is started with `-word` launch options (the game folder, the port) and `+word value` console commands (the player limit, the map). They are read when the server starts, so changes apply the next time it starts. None of them has to be last on the line. These arguments are on the `srcds_win64.exe` line of the server's start script.
+
+The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
+
+### Pirates, Vikings, and Knights II: `-console`
+
+**Console window** (Required). Runs the server in console mode: a text window you can type commands into. The panel always writes it.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Pirates, Vikings, and Knights II: `-game`
+
+**Game folder** (Required). Tells srcds which game to run. For Pirates, Vikings, and Knights II this is pvkii. The panel always writes it.
+
+Example: `-game pvkii`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Pirates, Vikings, and Knights II: `-strictportbind`
+
+**Stop if the port is taken** (Network). Makes the server quit with an error if it cannot use its port, rather than starting on another one. Keeps a clash visible.
+
+### Pirates, Vikings, and Knights II: `-port`
+
+**Game port** (Network). The port the server uses and players connect to. The panel's Ports section sets it, so the panel can check for clashes.
+
+Example: `-port 25922`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Pirates, Vikings, and Knights II: `+maxplayers`
+
+**Max players** (Server). The number of player slots on the server. It is only read when the server starts.
+
+Example: `+maxplayers 24`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Pirates, Vikings, and Knights II: `+map`
+
+**Start map** (World). The map the server starts on, such as bt_island. Give the map's name, with or without .bsp.
+
+Example: `+map bt_island`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Pirates, Vikings, and Knights II: `+exec`
+
+**Settings file** (Server). The settings file the server runs when it starts, from the pvkii\cfg folder. The panel writes it, and the Settings tab edits it.
+
+Example: `+exec server.cfg`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+## Dystopia
+
+Dystopia is started with `-word` launch options (the console window, the game folder, the port, VAC) and `+word value` console commands (the map, the settings file). They are read when the server starts, so changes apply the next time it starts. None of them has to be last on the line. These arguments are on the `srcds.exe` line of the server's start script.
+
+The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
+
+### Dystopia: `-console`
+
+**Console window** (Required). Runs the server in console mode: a text window you can type commands into. The panel always writes it.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Dystopia: `-game`
+
+**Game folder** (Required). Tells srcds where the game's folder is, relative to the server's bin\win32 folder. The panel always writes it.
+
+Example: `-game ..\..\dystopia`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Dystopia: `-port`
+
+**Game port** (Network). The port the server uses and players connect to. The panel's Ports section sets it, so the panel can check for clashes.
+
+Example: `-port 25924`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Dystopia: `+map`
+
+**Start map** (World). The map the server starts on, such as dys_vaccine. Give the map's name, with or without .bsp.
+
+Example: `+map dys_vaccine`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Dystopia: `+exec`
+
+**Settings file** (Server). The settings file the server runs when it starts, from the dystopia\cfg folder. The panel writes it, and the Settings tab edits it.
+
+Example: `+exec server.cfg`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Dystopia: `-insecure`
+
+**Run without Valve Anti-Cheat** (Security). Starts the server without Valve Anti-Cheat (VAC). Leave it off unless you know you need it; the Valve page only describes what the flag does.
+
+### Dystopia: `-nobots`
+
+**No bots** (Server). Turns bots off on the server, so only real players fill the slots.
+
+### Dystopia: `-nohltv`
+
+**No SourceTV** (Network). Turns off SourceTV, the spectator broadcast, and closes its port (usually 27020).
+
+## Empires
+
+Empires is started with `-word` launch options (the game folder, the port, the console) and `+word value` console commands (the map, the player limit). They are read when the server starts, so changes apply the next time it starts. None of them has to be last on the line. These arguments are on the `srcds.exe` line of the server's start script.
+
+The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
+
+### Empires: `-console`
+
+**Console window** (Required). Runs the server in console mode: a text window you can type commands into. The panel always writes it.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Empires: `-game`
+
+**Game folder** (Required). Tells srcds which game to run. For Empires this is empires. The panel always writes it.
+
+Example: `-game empires`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-toconsole`
+
+**Send output to the console** (Saves and logs). Sends the server's output to its console window, where the panel's window shows it. Kept from the research's example launch line.
+
+### Empires: `-secure`
+
+**Use Valve Anti-Cheat** (Advanced). Starts the server with Valve Anti-Cheat (VAC) protection. It came from the research's example launch line; the research could not confirm it on the current build.
+
+### Empires: `-port`
+
+**Game port** (Network). The port the server listens on and tells players to connect to. Change it from the server's Ports section so the panel can check for clashes.
+
+Example: `-port 25926`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Empires: `+maxplayers`
+
+**Max players** (Server). How many people can be on the server at once, from 1 to 64. It is only read when the server starts.
+
+Example: `+maxplayers 62`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Empires: `+map`
+
+**Start map** (World). The map the server starts on, such as con_district402. Give the map's name, without .bsp.
+
+Example: `+map con_district402`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Empires: `+exec`
+
+**Settings file** (Server). The settings file the server runs when it starts, from the empires\cfg folder. The panel writes it, and the Settings tab edits it.
+
+Example: `+exec server.cfg`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+## Double Action: Boogaloo
+
+Double Action is started with `-word` launch options (the game folder, the port, the console) and `+word value` console commands (the map, the player limit). They are read when the server starts, so changes apply the next time it starts. None of them has to be last on the line. These arguments are on the `srcds.exe` line of the server's start script.
+
+The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
+
+### Double Action: Boogaloo: `-console`
+
+**Console window** (Required). Runs the server in console mode: a text window you can type commands into. The panel always writes it.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Double Action: Boogaloo: `-game`
+
+**Game folder** (Required). Tells srcds which game to run. For Double Action this is dab. The panel always writes it.
+
+Example: `-game dab`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Double Action: Boogaloo: `-port`
+
+**Game port** (Network). The port the server listens on and tells players to connect to. Change it from the server's Ports section so the panel can check for clashes.
+
+Example: `-port 25928`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Double Action: Boogaloo: `+maxplayers`
+
+**Max players** (Server). How many players can be on the server at once. It is only read when the server starts. The research's largest figure is 24.
+
+Example: `+maxplayers 10`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Double Action: Boogaloo: `+map`
+
+**Start map** (World). The map the server starts on, such as da_rooftops. Give the map's name, without .bsp.
+
+Example: `+map da_rooftops`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Double Action: Boogaloo: `+exec`
+
+**Settings file** (Server). The settings file the server runs when it starts. The panel writes it, and the Settings tab edits it.
+
+Example: `+exec server.cfg`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Double Action: Boogaloo: `+ip`
+
+**Listen address** (Network). The network address of this PC the server listens on. Only needed with several network cards. It has to be an address of this PC, not 127.0.0.1.
+
+Example: `+ip 0.0.0.0`
+
+### Double Action: Boogaloo: `-nohltv`
+
+**No SourceTV** (Network). Turns SourceTV (the spectator broadcast) off and closes its port, which is usually 27020.
+
+### Double Action: Boogaloo: `-insecure`
+
+**Turn off Valve Anti-Cheat** (Advanced). Starts the server without Valve Anti-Cheat (VAC). Servers run with VAC on unless this is on the line.
+
+### `-ignoresigint`
+
+**Ignore Ctrl+C** (Advanced). Stops Ctrl+C from quitting the server (Valve's list says it prevents Ctrl+C quitting). Not confirmed for this game.
+
+## Half-Life Dedicated Server
+
+Half-Life Dedicated Server is started with `-word` launch options (the game folder, the port, the settings file) and `+word value` console commands (the player limit, the map). They are read when the server starts, so changes apply the next time it starts. These arguments are on the `hlds.exe` line of the server's start script.
+
+The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
+
+### Half-Life Dedicated Server: `-console`
+
+**Console window** (Required). Runs the server in console mode, a text window you can type commands into. The guide says this works on Windows; the panel always writes it.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Half-Life Dedicated Server: `-game`
+
+**Game folder** (Required). Tells the server which game to run. cstrike is Counter-Strike 1.6. The panel always writes it.
+
+Example: `-game cstrike`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Half-Life Dedicated Server: `-port`
+
+**Game port** (Network). The port the server uses and players connect to. The default in the guides is 27015; change it from the server's Ports section so the panel can check for clashes.
+
+Example: `-port 25944`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Half-Life Dedicated Server: `-nomaster`
+
+**Hide from the server browser** (Network). Keeps the server out of the public server browser. Its guide also says it turns off server queries.
+
+### Half-Life Dedicated Server: `+maxplayers`
+
+**Max players** (Server). The number of player slots on the server. It is only read when the server starts.
+
+Example: `+maxplayers 32`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Half-Life Dedicated Server: `+map`
+
+**Start map** (World). The map the server starts on, such as de_dust2. Give the map's name without .bsp.
+
+Example: `+map de_dust2`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Half-Life Dedicated Server: `-exec`
+
+**Settings file** (Server). The settings file the server runs when it starts, from the cstrike folder. The panel writes it, and the Settings tab edits it.
+
+Example: `-exec server.cfg`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+## IOSoccer
+
+IOSoccer is started with `-word` launch options (the game folder, the port) and `+word value` console commands (the player limit, the map). They are read when the server starts, so changes apply the next time it starts. None of them has to be last on the line. These arguments are on the `srcds_win64.exe` line of the server's start script.
+
+The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
+
+### IOSoccer: `-console`
+
+**Console window** (Required). Runs the server in console mode: a text window you can type commands into. The panel always writes it.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### IOSoccer: `-game`
+
+**Game folder** (Required). Tells srcds which game to run. For IOSoccer this is iosoccer. The panel always writes it.
+
+Example: `-game iosoccer`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### IOSoccer: `-port`
+
+**Game port** (Network). The port the server uses and players connect to. Change it from the server's Ports section so the panel can check for clashes.
+
+Example: `-port 25948`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### IOSoccer: `+maxplayers`
+
+**Max players** (Server). The number of player slots on the server, from 2 to 33 (spectators included, per a hosting guide). It is only read when the server starts.
+
+Example: `+maxplayers 32`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### IOSoccer: `+map`
+
+**Start map** (World). The map the server starts on, such as 8v8_vienna. Give the map's name, without .bsp.
+
+Example: `+map 8v8_vienna`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### IOSoccer: `+exec`
+
+**Settings file** (Server). The settings file the server runs when it starts, from the iosoccer\cfg folder. The panel writes it, and the Settings tab edits it.
+
+Example: `+exec server.cfg`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+## BATTALION: Legacy
+
+The arguments that start BATTALION: Legacy's server. The panel writes them when the server is created, and the Launch options form can add more at the end of the line. Changes apply the next time the server starts. These arguments are on the `BattalionServer.exe` line of the server's start script.
+
+The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
+
+### BATTALION: Legacy: `-Port`
+
+**Game port** (Network). The UDP port players connect to. The server also opens the port above it. The panel writes it when the server is created. Change it from the server's Ports section so the panel can check for clashes.
+
+Example: `-Port=25956`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### BATTALION: Legacy: `-QueryPort`
+
+**Query port** (Network). The UDP port the server browser asks for the server's details. The panel writes it when the server is created. Change it from the server's Ports section so the panel can check for clashes.
+
+Example: `-QueryPort=25958`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### BATTALION: Legacy: `-SteamServerName`
+
+**Server name** (Server). The name shown in the server browser. Up to 60 characters, the limit the Pterodactyl egg for this game uses. Written with quotes around it.
+
+Example: `-SteamServerName="My Battle Server"`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### BATTALION: Legacy: `-AdminPassword`
+
+**Admin password** (Access). The password a player types in the game's console, with Server.Login followed by it, to get admin commands. Up to 20 characters, the limit the Pterodactyl egg uses. It is kept on the start command, so anyone who can read the start script can see it.
+
+Example: `-AdminPassword="secret"`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+## Black Mesa
+
+Black Mesa is started with `-word` launch options (the game folder, the port) and `+word value` console commands (the player limit, the map). They are read when the server starts, so changes apply the next time it starts. None of them has to be last on the line. These arguments are on the `srcds.exe` line of the server's start script.
+
+The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
+
+### Black Mesa: `-console`
+
+**Console window** (Required). Runs the server in console mode: a text window you can type commands into. The panel always writes it.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Black Mesa: `-game`
+
+**Game folder** (Required). Tells srcds which game to run. For Black Mesa this is bms, and the guides say not to change it. The panel always writes it.
+
+Example: `-game bms`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Black Mesa: `-strictportbind`
+
+**Stop if the port is taken** (Network). Makes the server quit with an error if it cannot use its port, rather than starting on another one. Keeps a clash visible.
+
+### Black Mesa: `-port`
+
+**Game port** (Network). The port the server uses and players connect to. The panel's Ports section sets it, so the panel can check for clashes.
+
+Example: `-port 25916`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Black Mesa: `+maxplayers`
+
+**Max players** (Server). The number of player slots on the server. It is only read when the server starts.
+
+Example: `+maxplayers 24`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Black Mesa: `+map`
+
+**Start map** (World). The map the server starts on, such as dm_crossfire. Give the map's file name without .bsp.
+
+Example: `+map dm_crossfire`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Black Mesa: `+exec`
+
+**Settings file** (Server). The settings file the server runs when it starts, from the bms\cfg folder. The panel writes it, and the Settings tab edits it.
+
+Example: `+exec server.cfg`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+## Military Conflict: Vietnam
+
+Military Conflict: Vietnam is started with `-word` launch options (the game folder, the port) and `+word value` console commands (the player limit, the map). They are read when the server starts, so changes apply the next time it starts. None of them has to be last on the line. These arguments are on the `srcds_x64.exe` line of the server's start script.
+
+The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
+
+### Military Conflict: Vietnam: `-console`
+
+**Console window** (Required). Runs the server in console mode: a text window you can type commands into. The panel always writes it.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Military Conflict: Vietnam: `-game`
+
+**Game folder** (Required). Tells srcds which game folder to run. For Military Conflict: Vietnam this is vietnam. The panel always writes it.
+
+Example: `-game vietnam`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Military Conflict: Vietnam: `-port`
+
+**Game port** (Network). The port the server uses and players connect to. The panel's Ports section sets it, so the panel can check for clashes.
+
+Example: `-port 25970`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Military Conflict: Vietnam: `+maxplayers`
+
+**Max players** (Server). The number of player slots on the server. It is only read when the server starts.
+
+Example: `+maxplayers 24`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Military Conflict: Vietnam: `+map`
+
+**Start map** (World). The map the server starts on, such as mcv_bridge. Give the map's name, without .bsp.
+
+Example: `+map mcv_bridge`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Military Conflict: Vietnam: `+exec`
+
+**Settings file** (Server). The settings file the server runs when it starts, from the vietnam\cfg folder. The panel writes it, and the Settings tab edits it.
+
+Example: `+exec server.cfg`
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+## SCP: Secret Laboratory
+
+LocalAdmin starts the game and keeps it running. Its options are written after the port on the start line. They are read when the server starts, so a change applies the next time the server starts. The two options marked as always written are set by the panel so the server starts without stopping to ask a question. These arguments are on the `LocalAdmin.exe` line of the server's start script.
+
+This game has no Launch options form. To change an argument, open the server's start script (**Edit Batch Files** on its page) and edit the line.
+
+### `--acceptEULA`
+
+**Accept the end user licence** (Required). Accepts the game's end user licence agreement, so LocalAdmin does not stop to ask. The panel always writes it.
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `--useDefault`
+
+**Use the default settings** (Required). If LocalAdmin has no configuration yet, it uses the default one instead of asking questions in its window. The panel always writes it.
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `--restartsLimit`
+
+**Automatic restart limit** (Restarts). How many times LocalAdmin restarts the game within the time window below. 0 turns automatic restarts off, and -1 removes the limit. The default is 4.
+
+Example: `--restartsLimit 4`
+
+### `--restartsTimeWindow`
+
+**Restart time window (seconds)** (Restarts). The length of the time, in seconds, that the restart limit counts over. 0 stops the count from ever resetting. The default is 480.
+
+Example: `--restartsTimeWindow 480`
+
+### `--logLengthLimit`
+
+**Log size limit** (Logs). The most characters LocalAdmin's own log file can hold. The suffixes k, M, G and T are allowed, and 0 removes the limit. The default is 25G.
+
+Example: `--logLengthLimit 25G`
+
+### `--logEntriesLimit`
+
+**Log entry limit** (Logs). The most entries LocalAdmin's own log file can hold. The same suffixes are allowed, and 0 removes the limit. The default is 10G.
+
+Example: `--logEntriesLimit 10G`
+
+### `--noLogs`
+
+**Turn off LocalAdmin's logs** (Logs). Stops LocalAdmin writing its own log files. The game's own output is not affected by this option.
+
+## Rising World
+
+The panel starts the server with the two flags a Unity server needs to run with no window. Everything else is set in server.properties, not on the launch line: the old Java server's `+serverport` and similar arguments are ignored by this build. These arguments are on the `RisingWorldServer.exe` line of the server's start script.
+
+This game has no Launch options form. To change an argument, open the server's start script (**Edit Batch Files** on its page) and edit the line.
+
+### Rising World: `-batchmode`
+
+**Run without a window** (Required). Starts the Unity program in batch mode, with no interactive window. The panel always writes it.
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Rising World: `-nographics`
+
+**No graphics** (Required). Tells Unity not to start a graphics device, which a server does not have. The panel always writes it.
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+## Natural Selection 2
+
+The panel writes the name, the map, the player limit, the port and the config folder. Map and player limit can be changed here. Workshop mods go in with -mods and are added at the end of the line. These arguments are on the `Server.exe` line of the server's start script.
+
+The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
+
+### Natural Selection 2: `-name`
+
+**Server name** (Required). The name shown in the server list. The panel writes it from the Server Name you typed when you created the server.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-map`
+
+**Start map** (World). The map the server starts on. The name is case sensitive, such as ns2_summit. The server then follows MapCycle.json.
+
+Example: `-map ns2_summit`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `-limit`
+
+**Player limit** (Players). The most players who can join at once. The dossier's example is 20; the game's own default is not in the sources.
+
+Example: `-limit 20`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Natural Selection 2: `-port`
+
+**Game port** (Network). The port the server listens on and players connect to. Change it from the server's Ports section so the panel can check for clashes.
+
+Example: `-port 27040`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `-config_path`
+
+**Config folder** (Files). The folder the server reads its config files from. The panel points it at the config folder inside the server's folder, so the settings can be edited here.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### `-logdir`
+
+**Log folder** (Files). The folder the server writes its log to. The panel points it at the serverlogs folder inside the server's folder so the Logs tab can show it.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Natural Selection 2: `-mods`
+
+**Workshop mods** (Mods). Steam Workshop IDs of mods to load, in hexadecimal, separated by spaces. The server downloads them when it starts. Remove the flag to run without mods.
+
+Example: `-mods 706d242 812f004`
+
+## Chivalry: Medieval Warfare
+
+The panel starts the server with the map, the ports and two flags the dossier says the server needs. The launch line is not editable yet: the game's full list of options is not confirmed. These arguments are on the `UDK.exe` line of the server's start script.
+
+This game has no Launch options form. To change an argument, open the server's start script (**Edit Batch Files** on its page) and edit the line.
+
+### `-dedicated=true`
+
+**Dedicated server** (Required). Tells the program to run as a dedicated server, with no player window. The panel always writes it.
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `-seekfreeloadingserver`
+
+**Seek-free loading** (Required). A flag the game's own setup asks for. Removing it can stop the server from starting, so the panel always writes it.
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+## Hurtworld
+
+The panel starts the server headless and passes the ports and the server name in one -exec string. Every flag here is written by the panel, so none can be changed from this form. These arguments are on the `Hurtworld.exe` line of the server's start script.
+
+This game has no Launch options form. To change an argument, open the server's start script (**Edit Batch Files** on its page) and edit the line.
+
+### Hurtworld: `-batchmode`
+
+**Run without a window** (Required). Starts the game in batch mode, with no interactive window. The panel always writes it.
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Hurtworld: `-nographics`
+
+**No graphics** (Required). Tells the game not to start a graphics device, which a server does not have. The panel always writes it.
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Hurtworld: `-exec`
+
+**Startup commands** (Server). A quoted list of commands separated by semicolons. The panel writes the game port (host), the query port and the server name from the Ports and Server Name fields.
+
+Example: `-exec "host 12871;queryport 12881;servername My Server"`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Hurtworld: `-logfile`
+
+**Log file** (Logs). The file the server writes its log to, in the server's folder. The panel reads it for the Logs tab.
+
+Example: `-logfile "gamelog.txt"`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+## Euro Truck Simulator 2
+
+The panel starts the server with one flag: the folder that holds its settings, package files and log. Nothing else on that line is set from here, so it cannot be changed in this form. These arguments are on the `eurotrucks2_server.exe` line of the server's start script.
+
+This game has no Launch options form. To change an argument, open the server's start script (**Edit Batch Files** on its page) and edit the line.
+
+### Euro Truck Simulator 2: `-homedir`
+
+**Server home folder** (Files). The folder the server keeps its server_config.sii, its package files and its log in. The panel sets it to the data folder inside the server's folder.
+
+Example: `-homedir "C:\Servers\ets2\data"`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+## American Truck Simulator
+
+The panel starts the server with one flag: the folder that holds its settings, package files and log. Nothing else on that line is set from here, so it cannot be changed in this form. These arguments are on the `amtrucks_server.exe` line of the server's start script.
+
+This game has no Launch options form. To change an argument, open the server's start script (**Edit Batch Files** on its page) and edit the line.
+
+### American Truck Simulator: `-homedir`
+
+**Server home folder** (Files). The folder the server keeps its server_config.sii, its package files and its log in. The panel sets it to the data folder inside the server's folder.
+
+Example: `-homedir "C:\Servers\ats\data"`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+## Stationeers
+
+The panel starts the dedicated server headless with a save called Panel (made the first time from the world type you pick, then loaded on every start), and passes the name, the ports, the visibility and the password on one -settings line. Every flag here is written by the panel, so none can be changed from this form. These arguments are on the `rocketstation_DedicatedServer.exe` line of the server's start script.
+
+This game has no Launch options form. To change an argument, open the server's start script (**Edit Batch Files** on its page) and edit the line.
+
+### `-LOAD`
+
+**Save and world type** (World). The save name (always Panel) and the world type from the World Type field: Mars2, Europa3, Lunar, MimasHerschel, Venus or Vulcan2. The first start creates the save; every later start loads it, so the world survives restarts.
+
+Example: `-LOAD Panel Mars2`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Stationeers: `-settings`
+
+**Settings** (Server). The server's settings as Name value pairs: the server name, whether it is listed, the two ports, and the password if one is set. The panel writes them from the create form.
+
+Example: `-settings ServerName "My Station" ServerVisible true GamePort 27816 UpdatePort 27818`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+## Wreckfest
+
+The panel starts the server with -s, which tells it to read the settings file named by server_config=. Every setting is in server_config.cfg, not on the launch line. These arguments are on the `Wreckfest_x64.exe` line of the server's start script.
+
+This game has no Launch options form. To change an argument, open the server's start script (**Edit Batch Files** on its page) and edit the line.
+
+### `-s`
+
+**Run as a server** (Required). Starts the program as a dedicated server, reading the settings file that the next argument names. The panel always writes it.
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+## Operation: Harsh Doorstop
+
+The panel starts the server with the map, the server name and the ports. Every flag here is written by the panel, so none can be changed from this form. The flags are the ones the community start line uses; their meaning is only partly documented. These arguments are on the `HarshDoorstopServer-Win64-Shipping.exe` line of the server's start script.
+
+This game has no Launch options form. To change an argument, open the server's start script (**Edit Batch Files** on its page) and edit the line.
+
+### Operation: Harsh Doorstop: `-SteamServerName`
+
+**Server name** (Server). The name shown in the server browser. The panel writes it from the Server Name you typed, in quotes.
+
+Example: `-SteamServerName "Friends Server"`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Operation: Harsh Doorstop: `-Port`
+
+**Game port** (Network). The port players connect to. The panel writes the Game Port you set. Its protocol (TCP or UDP) is not confirmed.
+
+Example: `-Port 27050`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Operation: Harsh Doorstop: `-MULTIHOME`
+
+**Listen address** (Network). The address the server listens on, given as 0.0.0.0 (all addresses), as the community start line gives it. The panel always writes it.
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Operation: Harsh Doorstop: `-QueryPort`
+
+**Steam query port** (Network). The port the Steam server browser asks for the server's details on. The panel writes the Steam Query Port you set.
+
+Example: `-QueryPort 27052`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+## Rising Storm 2: Vietnam
+
+The panel starts the server with the map, the max player count and the two ports. The form below only shows the switches the panel writes; it cannot add others yet. These arguments are on the `VNGame.exe` line of the server's start script.
+
+This game has no Launch options form. To change an argument, open the server's start script (**Edit Batch Files** on its page) and edit the line.
+
+### Rising Storm 2: Vietnam: `-Port`
+
+**Game port** (Network). The port players connect to. The panel writes the Game Port you set. The community guides say changing it also changes the query port by the same amount unless the query port is given too.
+
+Example: `-Port 27070`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Rising Storm 2: Vietnam: `-QueryPort`
+
+**Steam query port** (Network). The port the Steam server browser asks for the server's details on. The panel writes the Steam Query Port you set.
+
+Example: `-QueryPort 27072`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+## Miscreated
+
+The panel starts the server with the game port and the server name. Every argument here is written by the panel, so none can be changed from this form. Other settings are in hosting.cfg, which the panel does not edit. These arguments are on the `MiscreatedServer.exe` line of the server's start script.
+
+This game has no Launch options form. To change an argument, open the server's start script (**Edit Batch Files** on its page) and edit the line.
+
+### `-mis_gameserverid`
+
+**Game server ID** (Server). An ID for the server's database, set to a fixed number. The panel writes 1337. Changing it on a server that already has a world wipes that world.
+
+Example: `-mis_gameserverid 1337`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `-sv_port`
+
+**Game port** (Network). The port the server listens on. The panel writes it from the Ports field when the server is created.
+
+Example: `-sv_port 27960`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `+sv_servername`
+
+**Server name** (Server). The name shown in the server browser. The panel writes it from the Server Name you typed.
+
+Example: `+sv_servername "My Server"`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+## Craftopia
+
+The panel starts the server with two flags from the setup guides. Every setting is in ServerSetting.ini, not on the launch line, so nothing here can be changed. These arguments are on the `Craftopia.exe` line of the server's start script.
+
+This game has no Launch options form. To change an argument, open the server's start script (**Edit Batch Files** on its page) and edit the line.
+
+### Craftopia: `-batchmode`
+
+**Run without a window** (Required). Starts the Unity program in batch mode, with no interactive window. The panel always writes it. The setup guides use it; they do not say what it does.
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `-showlogs`
+
+**Show logs in the console** (Logs). Prints the server's log to its console window, as the setup guides do. The panel always writes it. It does not write a log file.
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+## Age of Chivalry
+
+The panel starts the server with these arguments. Every one is written by the panel, so none can be changed from this form. The server name and the game port come from the server's own settings, and the rest of the settings are in server.cfg. These arguments are on the `srcds.exe` line of the server's start script.
+
+This game has no Launch options form. To change an argument, open the server's start script (**Edit Batch Files** on its page) and edit the line.
+
+### Age of Chivalry: `-console`
+
+**Console window** (Required). Runs the server as text in its own console window, the form the dossier's guide uses. The panel needs it to read the output.
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Age of Chivalry: `-game`
+
+**Game folder** (Required). Tells srcds which mod to run. For Age of Chivalry this is ageofchivalry. The panel always writes it.
+
+Example: `-game ageofchivalry`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Age of Chivalry: `-secure`
+
+**VAC protection** (Server). Turns on Valve Anti-Cheat for the server, as the dossier's guide has it. The panel always writes it.
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Age of Chivalry: `+map`
+
+**Starting map** (World). The map the server loads when it starts. The panel writes aoc_siege, the map the guides use. Other map names are not listed in the dossier.
+
+Example: `+map aoc_siege`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Age of Chivalry: `+log`
+
+**Logging on** (Logs). Prints the server's output to the screen, which the guides say makes errors easier to find. The panel writes on.
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Age of Chivalry: `+maxplayers`
+
+**Max players** (Server). The most players the server takes. It can only be set when the server starts. The panel writes 32, the figure the guides use.
+
+Example: `+maxplayers 32`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Age of Chivalry: `-port`
+
+**Game port** (Network). The port the server listens on. The panel writes it from the Ports section when the server is created. Each server on one address needs its own port.
+
+Example: `-port 27030`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Age of Chivalry: `+ip`
+
+**Listen address** (Network). The address the server listens on. The panel writes 0.0.0.0, which means every address on this PC. The guides ask for the PC's own address instead, which the panel does not know.
+
+Example: `+ip 0.0.0.0`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### Age of Chivalry: `+exec`
+
+**Settings file** (Files). The file in the cfg folder that the server reads its settings from when it starts. The panel writes server.cfg.
+
+Example: `+exec server.cfg`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+## HumanitZ
+
+The panel starts the server with three arguments. The panel writes these three arguments when it creates the server, and their values come from the Ports section. Nothing here can be changed from this form. The server name, passwords and the other settings are in GameServerSettings.ini. These arguments are on the `HumanitZServer.exe` line of the server's start script.
+
+This game has no Launch options form. To change an argument, open the server's start script (**Edit Batch Files** on its page) and edit the line.
+
+### HumanitZ: `-log`
+
+**Console window** (Required). Opens a console window and shows the server's output in it. The panel uses it to read the server's log.
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### HumanitZ: `-port`
+
+**Game port** (Network). The UDP port the server listens on, which players connect to. The panel writes it from the Game Port you set when the server was created.
+
+Example: `-port=27090`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### HumanitZ: `-queryport`
+
+**Steam query port** (Network). The UDP port the server browser asks for the server's details. The panel writes it from the Steam Query Port you set when the server was created.
+
+Example: `-queryport=27092`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+## The Front
+
+The panel starts the server with the ports, the server name and the player cap. Every argument here is written by the panel, so none can be changed from this form. Other settings are in TheFrontManager\ServerConfig_.ini, which the Settings tab edits. These arguments are on the `TheFrontServer.exe` line of the server's start script.
+
+This game has no Launch options form. To change an argument, open the server's start script (**Edit Batch Files** on its page) and edit the line.
+
+### The Front: `-port`
+
+**Game port** (Network). The UDP port players connect to. The beacon, query and shutdown service ports are the three numbers above it. The panel writes it from the Ports section when the server is created.
+
+Example: `-port=7900`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### The Front: `-ServerName`
+
+**Server name** (Server). The name shown in the server browser. The panel writes it from the Server Name you typed.
+
+Example: `-ServerName="My Server"`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `-QueueThreshold`
+
+**Player cap** (Server). The most players that can be on the server at once. The panel writes 8, the value the host guide uses.
+
+Example: `-QueueThreshold=8`
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+## Empyrion - Galactic Survival
+
+Empyrion's dedicated server is started with these arguments on the command that starts it. The server's name, ports and passwords are in dedicated.yaml, which the panel writes. Changes apply the next time the server starts. These arguments are on the `EmpyrionDedicated.exe` line of the server's start script.
+
+The **Launch options** form on this game's Settings tab edits the arguments below that are offered in it. Everything else in the start script stays as it is.
+
+### Empyrion - Galactic Survival: `-batchmode`
+
+**Batch mode** (Required). Runs the server without a user interface, so it can run in the background.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Empyrion - Galactic Survival: `-nographics`
+
+**No graphics** (Required). Runs the server without drawing anything on screen. The panel sets it with batch mode.
+
+Not offered in the Launch options form; the panel sets it and it is best left alone.
+
+### Empyrion - Galactic Survival: `-logFile`
+
+**Log file** (Logs). Where the server writes its log. The Logs tab reads the default file, so change this only if you do not need the Logs tab.
+
+Example: `-logFile "../Logs/server/server.log"`
+
+## ATLAS
+
+The panel starts ATLAS with the map and its settings on one long line (the map name, then ports and passwords joined by question marks), followed by a few flags. Nothing here can be changed from this form: the panel sets all of it. These arguments are on the `ShooterGameServer.exe` line of the server's start script.
+
+This game has no Launch options form. To change an argument, open the server's start script (**Edit Batch Files** on its page) and edit the line.
+
+### ATLAS: `-log`
+
+**Log output** (Required). Set by the panel on every start, as in the guide examples. The developers do not describe this flag.
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### ATLAS: `-server`
+
+**Server mode** (Required). Set by the panel on every start, as in the guide examples. The developers do not describe this flag.
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### ATLAS: `-NoBattlEye`
+
+**BattlEye off** (Required). Starts the server with BattlEye anti-cheat turned off, as the guide examples do. The panel always sets it.
+
+The panel puts this on the line when it creates the server. It is in the Launch options form, but change it with care.
+
+### `-manualmanagedmods`
+
+**Manual mod updates** (Mods). Turns off the automatic download and update of Workshop mods when the server starts. The developers' page gives this flag for that. Use it only if you manage the mod files yourself.

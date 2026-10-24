@@ -188,7 +188,7 @@ describe("Valheim's launch options", () => {
 });
 
 describe("launch lines of every game with a Launch options form", () => {
-	const params = { name: "Test", sessionName: "My Server", serverPassword: "secret1", rconPassword: "rconpass1", port: 7777, queryPort: 7779, rconPort: 26000, telnetPort: 26001, maxPlayers: 12, instanceSlug: "main", maxMemoryGB: 6 };
+	const params = { name: "Test", sessionName: "My Server", serverPassword: "secret1", rconPassword: "rconpass1", port: 7777, queryPort: 7779, rconPort: 26000, telnetPort: 26001, maxPlayers: 12, instanceSlug: "main", maxMemoryGB: 6, installDir: "C:/Servers/test" };
 
 	it("is defined for each game that has a catalog file for it", () => {
 		for (const game of LAUNCH_EDITABLE_GAMES) expect(CONFIG_CATALOG[game]?.files["Launch options"], game).toBeTruthy();

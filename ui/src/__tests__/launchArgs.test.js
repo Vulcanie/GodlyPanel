@@ -17,6 +17,7 @@ const params = (extra = {}) => ({
 	maxPlayers: 12,
 	instanceSlug: "main",
 	maxMemoryGB: 6,
+	installDir: "C:/Servers/test",
 	...extra,
 });
 
@@ -58,6 +59,9 @@ describe("launch lines the panel writes", () => {
 			expect(parsed.at, `no launch line found in:\n${script}`).toBeGreaterThanOrEqual(0);
 			expect(serializeLaunchArgs(parsed, {})).toBe(script);
 			// Every argument the panel puts on the line that the form manages is read as a value.
+			// Minecraft's line carries only the managed --nogui, so none of its editable arguments appears on it.
+			// Wurm Unlimited's line carries only managed arguments too; its editable ones are added by the form.
+			if (game === "minecraft-vanilla" || game === "wurmunlimited") return;
 			expect(launchArgsEntries(parsed).some((e) => e.value !== "" && e.value !== "false"), game).toBe(true);
 		});
 	}

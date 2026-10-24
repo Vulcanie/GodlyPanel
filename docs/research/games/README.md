@@ -53,19 +53,80 @@ Nothing here is implemented. These are sourced dossiers (`sources.md` plus `01-b
 
 | Game | Folder | Caveats to resolve before implementing |
 |---|---|---|
-| Minecraft (vanilla) | `minecraft-vanilla` | Mojang version manifest with sha1; not a Steam install (use the zip install step) |
-| Terraria (vanilla) | `terraria-vanilla` | terraria.org zip, no published hash; many `NOT FOUND` |
-| The Forest | `theforest` | |
+| Minecraft (vanilla) | `minecraft-vanilla` | Verified-partial on a real install (2026-10-23): install, start, port, status and Stop work; clean save unproven |
+| Terraria (vanilla) | `terraria-vanilla` | Verified-partial (2026-10-23): needs XNA Framework 4.0 installed first; start, world, port, Stop work; Stop save unproven |
+| The Forest | `theforest` | Verified-partial (2026-10-23): install, config, start, ports, status work; the window close crashes the game and Stop force-kills after 15 s; save unproven |
+| Starbound | `starbound` | Built, not registered: app 533830 gives "No subscription" to an anonymous login (needs a Steam account that owns the game) |
+| Stormworks | `stormworks` | Built, not registered: app 1247090 is a stub that points to the base game (573090), which needs an owning account |
+| Wurm Unlimited | `wurmunlimited` | Verified-partial (2026-10-23): install, world seeded from dist on first start, start, TCP 8070 and UDP 8073, status, wurm.ini read, Stop work; save and players unproven |
 | Astroneer | `astroneer` | |
 | Eco | `eco` | Wiki blocked; config value types are inferred from defaults |
 | Killing Floor 2 | `killingfloor2` | Wiki blocked |
 | Stationeers | `stationeers` | Wiki blocked; most `NOT FOUND` |
-| Counter-Strike 2 | `counterstrike2` | Several sources are search snippets only; GSLT needed for public listing |
-| Team Fortress 2 | `teamfortress2` | Raw copies are summaries, not verbatim: re-check live pages; token required |
-| Mount & Blade II: Bannerlord | `bannerlord` | Config keys come from a co-op mod build; token required |
-| Mordhau | `mordhau` | Search-snippet sources |
-| The Isle (Evrima) | `theisle` | Community sources only; port and mod-folder conflicts recorded |
-| Insurgency: Sandstorm | `insurgencysandstorm` | Official guide blocked; GSLT required |
+| Counter-Strike 2 | `counterstrike2` | Built-unverified (2026-10-23): install is 60+ GB, over the test cap; GSLT needed for public listing |
+| Team Fortress 2 | `teamfortress2` | Verified-partial (2026-10-23): anonymous install, start without token, TCP+UDP port, config read-back, graceful Stop; srcds also binds UDP 27005; hostname and saves unproven |
+| Mount & Blade II: Bannerlord | `bannerlord` | Built, not verified: installs and starts, but no port opens without the token |
+| Mordhau | `mordhau` | Verified-partial (2026-10-23): Windows binary and WindowsServer config (not Linux); install, config, start, status, Stop work; query port never bound, save unproven |
+| The Isle (Evrima) | `theisle` | Built, unverified (2026-10-23): evrima install works, but the server exits without Epic Online Services credentials |
+| Insurgency: Sandstorm | `insurgencysandstorm` | Verified-partial 2026-10-23: starts with no GSLT, map loads |
+| Left 4 Dead | `l4d` | Verified-partial 2026-10-23: install, start, hostname and map via A2S, graceful Stop; co-op cap 4 players overrides `+maxplayers 8` |
+| No More Room in Hell | `nmrih` | Verified-partial 2026-10-23: install, start, hostname and map via A2S, graceful Stop; also binds UDP 27005 and 27020 |
+| Day of Defeat: Source | `dods` | Verified-partial 2026-10-23: install, start, hostname and map via A2S, graceful Stop |
+| Fistful of Frags | `fof` | Verified-partial 2026-10-23: `server.cfg` is the file read (hostname proves it), graceful Stop |
+| Zombie Panic! Source | `zps` | Verified-partial 2026-10-23: install, start, hostname and map via A2S, graceful Stop |
+| BrainBread 2 | `brainbread2` | Verified-partial 2026-10-23: runs on port 8072 (the 27015-27020 limit does not apply), graceful Stop |
+| Empires | `empires` | Verified-partial 2026-10-23: the researched default map did not exist; fixed to `con_district402`; start, A2S, graceful Stop |
+| Double Action: Boogaloo | `doubleaction` | Verified-partial 2026-10-23: `dab\cfg\server.cfg` is read, start, A2S, graceful Stop |
+| Dystopia | `dystopia` | Verified-partial 2026-10-23: starts from `bin\win32` with `-game ..\..\dystopia`, A2S, graceful Stop |
+| Insurgency (2014) | `insurgency` | Verified-partial 2026-10-23: `insurgency\cfg\server.cfg` is read, start, A2S, graceful Stop |
+| Pirates, Vikings, and Knights II | `pvkii` | Verified-partial 2026-10-23: runs as `srcds_win64.exe` (the `srcds.exe` launcher blocks a graceful Stop), A2S, config read |
+| Half-Life Dedicated Server (CS 1.6) | `hlds` | Verified-partial 2026-10-23: install needs the `cstrike` mod step (`updateMod`), config is `cstrike\server.cfg` (not `cfg\`), A2S; no graceful Stop; first start shows a Windows Firewall prompt |
+| Black Mesa | `blackmesa` | Verified-partial 2026-10-23: runs as `srcds.exe` (no `srcds_win64.exe`), A2S, config read, graceful Stop |
+| Military Conflict: Vietnam | `militaryconflictvietnam` | Verified-partial 2026-10-23: `srcds_x64.exe` confirmed, A2S, config read, graceful Stop |
+| SCP: Secret Laboratory | `scpsl` | Verified-partial 2026-10-23: LocalAdmin start line needs `--acceptEULA --useDefault`, A2S, graceful Stop; launch form off |
+| Eco | `eco` | Built-unverified 2026-10-23: needs a Strange Loop account to start; not registered |
+| Colony Survival | `colonysurvival` | Verified-partial 2026-10-23: config is nested NewOptions/ServerSettings, TCP game port, graceful Stop |
+| Rising World | `risingworld` | Verified-partial 2026-10-23: Unity exe (not Java), capitalised property keys, query port = game port - 1, A2S, graceful Stop |
+| Warfork | `warfork` | Verified-partial 2026-10-23: wf_server_x64.exe, +set overrides, fs_usehomedir 0, A2S, graceful Stop |
+| Natural Selection 2 | `ns2` | Verified-partial 2026-10-23: x64\Server.exe, A2S on port+1, config and log kept in the install, Stop is force-end |
+| Chivalry: Medieval Warfare | `chivalry` | Verified-partial 2026-10-23: anonymous install, both UDP ports, graceful Stop; no A2S |
+| Hurtworld | `hurtworld` | Verified-partial 2026-10-23: anonymous install, A2S on query port, Stop is force-end |
+| Euro Truck Simulator 2 | `ets2` | Verified-partial 2026-10-23: anonymous install, config in data\Euro Truck Simulator 2; needs server_packages from a game copy to start |
+| American Truck Simulator | `ats` | Verified-partial 2026-10-23: same as ETS2 |
+| Medieval Engineers | `medievalengineers` | Verified-partial 2026-10-23: DedicatedServer64, -console -path, A2S, Stop is force-end |
+| PixARK | `pixark` | Verified-partial 2026-10-23: anonymous install 3.7 GB, A2S on query port after about 4 min, graceful Stop |
+| Stationeers | `stationeers` | Verified-partial 2026-10-23: headless -LOAD Panel <World>, saves and setting.xml, graceful Stop, no A2S |
+| Wreckfest | `wreckfest` | Verified-partial 2026-10-23: Wreckfest_x64.exe in root, -server_set ports, log.txt, savestemp, clean Stop |
+| Rising Storm 2: Vietnam | `risingstorm2` | Verified-partial 2026-10-23: needs VC++ 2012 x64 runtime, -log, A2S, graceful Stop; 20 GB install |
+| Operation: Harsh Doorstop | `ohd` | Verified-partial 2026-10-23: current maps like Jaziira_AASSmall, A2S, Stop is a force-end |
+| Miscreated | `miscreated` | Verified-partial 2026-10-23: start-line path bug fixed, A2S on game port + 2, hosting.cfg, server.log, graceful Stop |
+| Craftopia | `craftopia` | Verified-partial 2026-10-23: ServerSetting.ini, saves, graceful Stop, no A2S; log is outside the server folder |
+| Ballistic Overkill | `ballisticoverkill` | Verified-partial 2026-10-23: BODS.exe, config.txt, A2S on the query port, graceful Stop |
+| Assetto Corsa Competizione | `acc` | Built, not registered: app 1430110 gives No subscription to an anonymous login |
+| Assetto Corsa | `assettocorsa` | Built, not registered: app 302550 gives No subscription to an anonymous login |
+| Killing Floor | `killingfloor` | Built, not registered: app 215350 gives No subscription to an anonymous login |
+| Red Orchestra: Ostfront 41-45 | `redorchestra` | Built, not registered: app 223240 gives No subscription to an anonymous login |
+| Blade Symphony | `bladesymphony` | Built, not registered: the anonymous install has only binaries; content needs the base game |
+| Age of Chivalry | `ageofchivalry` | Verified-partial 2026-10-23: srcds line, aoc_siege loads, graceful Stop; A2S blocked by a Windows rule |
+| HumanitZ | `humanitz` | Verified-partial 2026-10-23: launcher exe, ini from the reference, log path; A2S blocked by a Windows rule |
+| Survive the Nights | `survivethenights` | Verified-partial 2026-10-23: panel writes Config/ServerConfig.txt (port, UPnP off) |
+| Tower Unite | `towerunite` | Verified-partial 2026-10-23: root launcher exe fixed; stalls at Steam init without login tokens |
+| RuneScape: Dragonwilds | `runescapedragonwilds` | Duplicate: already the panel template `dragonwilds` |
+| The Front | `thefront` | Verified-partial 2026-10-23: TheFrontServer.exe holds 4 ports, A2S on game port +2 |
+| Day of Dragons | `dayofdragons` | Verified-partial 2026-10-23: only -QueryPort is honoured, no game port |
+| HYPERCHARGE: Unboxed | `hyperchargeunboxed` | Verified-partial 2026-10-23: runs via PlayFab, ports not honoured |
+| Day of Infamy | `dayofinfamy` | Verified-partial 2026-10-23: srcds_x64.exe, ports bound, A2S blocked by a Windows rule |
+| Killing Floor 2 | `killingfloor2` | Verified-partial 2026-10-23: needs the VC++ 2012 runtime, otherwise idle with no port |
+| Empyrion | `empyrion` | Verified-partial 2026-10-23: dedicated.yaml read from the install root, ports honoured |
+| Arma 3 | `arma3` | Built, not registered: anonymous install fails (No subscription) |
+| ATLAS | `atlas` | Verified-partial 2026-10-23: 33 GB, binds only the query port without a seamless-grid setup |
+| Motor Town | `motortown` | Built, not registered: needs an owning account plus beta code |
+| Pavlov VR | `pavlovvr` | Not built: Linux-only server |
+| Quake Live | `quakelive` | Not built: Linux-only server |
+| IOSoccer | `iosoccer` | Verified-partial 2026-10-23: runs as `srcds_win64.exe` (no `srcds.exe` in the install), A2S, config read, graceful Stop |
+| BATTALION: Legacy | `battalionlegacy` | Verified-partial 2026-10-23: exe is in the install root (a launcher), `-Port` sets the game port, A2S on the query port; no graceful Stop |
+| Nuclear Dawn | `nucleardawn` | Built, not registered: the anonymous install has no Windows server (no `ndsrv.exe`) |
+| Team Fortress 2 Classified | `tf2classified` | Built, not registered: installs, but the server exits at once ("No SteamApps connection.") |
 | Pavlov VR | `pavlovvr` | Linux-only server; wiki read through summaries; conflicts on RefreshListTime, `-PORT`, RCON location |
 | Motor Town | `motortown` | Server exe, anonymous SteamCMD install, Windows depot and config keys all unverified |
 

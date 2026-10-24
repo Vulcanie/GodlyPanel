@@ -7,6 +7,7 @@ import { trackSteamCmd, untrackSteamCmd } from "./processRegistry.js";
 import { existsSync } from "fs";
 import { resolveSteamCmdFor } from "./steamCmdProvisioner.js";
 import { sleep } from "../util/async.js";
+import { steamBranchArgs, steamModArgs } from "../util/steamBranch.js";
 import { serverStatus } from "./pollingService.js";
 import { stopServer, startServer } from "./serverControl.js";
 
@@ -95,8 +96,10 @@ export async function updateServer(
 		...(server.installDir ? ["+force_install_dir", server.installDir] : []),
 		"+login",
 		"anonymous",
+		...steamModArgs(server.updateAppId, server.updateMod),
 		"+app_update",
 		String(server.updateAppId),
+		...steamBranchArgs(server.updateBranch),
 		"validate",
 		"+quit",
 	];

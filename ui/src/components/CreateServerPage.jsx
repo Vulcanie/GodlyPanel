@@ -108,7 +108,7 @@ function Art({ type, height, children, sx }) {
 /** One game in the picker. The whole card is the button, and the game's name is its heading. */
 function GameCard({ template, onPick }) {
 	// A hint about what choosing it involves, only where it is not the usual one-step setup.
-	const note = template.fields?.includes("uploadId") ? "Needs a modpack zip" : template.sharedInstall ? "Shared install" : template.zipInstall ? "Downloaded from GitHub" : null;
+	const note = template.fields?.includes("uploadId") ? "Needs a modpack zip" : template.sharedInstall ? "Shared install" : template.zipInstall ? "Downloaded from GitHub" : template.webInstall ? "Downloaded from the maker's site" : null;
 	return (
 		<ButtonBase
 			onClick={() => onPick(template)}
@@ -229,6 +229,8 @@ function CreateServerPage({ onBack, userRole }) {
 	const [askSteamCmd, setAskSteamCmd] = React.useState(false);
 	// What a game that is downloaded from GitHub (not through SteamCMD) will fetch, while the person is being asked: { repo, asset, tag?, sizeText? }.
 	const [askZip, setAskZip] = React.useState(null);
+	// The same for a game downloaded from its maker's website (Minecraft, Terraria): { label, host?, version?, sizeText?, checksum? }.
+	const [askWeb, setAskWeb] = React.useState(null);
 	// The downloads already agreed to for this server, so that a second question doesn't lose the first answer.
 	const agreed = React.useRef({});
 	const [job, setJob] = React.useState(null);
@@ -312,6 +314,7 @@ function CreateServerPage({ onBack, userRole }) {
 		agreed.current = { ...agreed.current, ...accept };
 		setAskSteamCmd(false);
 		setAskZip(null);
+		setAskWeb(null);
 		setSubmitting(true);
 		setSubmitError(null);
 		try {
@@ -323,6 +326,7 @@ function CreateServerPage({ onBack, userRole }) {
 				...fields,
 				...(agreed.current.steamCmd ? { acceptSteamCmdDownload: true } : {}),
 				...(agreed.current.zip ? { acceptZipDownload: true } : {}),
+				...(agreed.current.web ? { acceptWebDownload: true } : {}),
 			};
 			for (const p of selected.ports) {
 				body[p.key] = Number(form[p.key]);
@@ -341,6 +345,10 @@ function CreateServerPage({ onBack, userRole }) {
 			}
 			if (e.code === "zip-download-not-accepted") {
 				setAskZip({ ...(selected.zipInstall ?? {}), ...(e.details ?? {}) });
+				return;
+			}
+			if (e.code === "web-download-not-accepted") {
+				setAskWeb({ ...(selected.webInstall ?? {}), ...(e.details ?? {}) });
 				return;
 			}
 			setSubmitError(e.message);
@@ -692,6 +700,59 @@ function CreateServerPage({ onBack, userRole }) {
 				<DialogActions>
 					<Button onClick={() => setAskZip(null)}>Cancel</Button>
 					<Button variant="contained" onClick={() => submit({ zip: true })}>
+						Download and continue
+					</Button>
+				</DialogActions>
+			</Dialog>
+
+			<Dialog open={Boolean(askWeb)} onClose={() => setAskWeb(null)}>
+				<DialogTitle>Download {selected?.displayName ?? "the server"} from its maker's website?</DialogTitle>
+				<DialogContent>
+					<DialogContentText component="div">
+						<Typography variant="body2" sx={{ mb: 1.5 }}>
+							This game is not installed through SteamCMD. The panel will download the server from the people who make it:
+						</Typography>
+						<Box component="ul" sx={{ m: 0, mb: 1.5, pl: 2.5 }}>
+							<li>
+								<b>What:</b> {askWeb?.label}
+								{askWeb?.version ? ` (version ${askWeb.version})` : ""}
+							</li>
+							<li>
+								<b>From:</b> {askWeb?.host ?? askWeb?.hosts?.[0]}
+							</li>
+							<li>
+								<b>Size:</b> {askWeb?.sizeText ?? "not known yet (the site could not be reached just now)"}
+							</li>
+						</Box>
+						<Typography variant="body2">
+							{askWeb?.checksum
+								? `It is fetched over https from that site only and checked against the ${askWeb.checksum} checksum the maker publishes (a download that doesn't match is thrown away).`
+								: "It is fetched over https from that site only. The maker publishes no checksum for it, so the panel can't check it; it shows the SHA-256 it computed in the install log so you can compare it."}{" "}
+							Nothing is downloaded until you press the button.
+						</Typography>
+						{askWeb?.extras?.length > 0 && (
+							<>
+								<Typography variant="body2" sx={{ mt: 1.5, mb: 1 }}>
+									It also needs {askWeb.extras.length === 1 ? "one more file" : "more files"} that the download does not include, so the panel fetches {askWeb.extras.length === 1 ? "it" : "them"} for you:
+								</Typography>
+								<Box component="ul" sx={{ m: 0, mb: 1.5, pl: 2.5 }}>
+									{askWeb.extras.map((x) => (
+										<li key={x.label}>
+											<b>{x.label}</b> ({x.sizeText}) from {x.host}
+											{x.why ? `: ${x.why}` : ""}
+										</li>
+									))}
+								</Box>
+								<Typography variant="body2">
+									Each is checked against a checksum built into the panel and must carry a valid {[...new Set(askWeb.extras.map((x) => x.signer))].join(" / ")} signature, or it is thrown away. Nothing is installed on this PC: the panel only takes the needed files out and puts them in the server's own folder. By continuing you accept the licence that comes with {askWeb.extras.length === 1 ? "that file" : "those files"}.
+								</Typography>
+							</>
+						)}
+					</DialogContentText>
+				</DialogContent>
+				<DialogActions>
+					<Button onClick={() => setAskWeb(null)}>Cancel</Button>
+					<Button variant="contained" onClick={() => submit({ web: true })}>
 						Download and continue
 					</Button>
 				</DialogActions>

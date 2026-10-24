@@ -24,6 +24,21 @@ import { GAME_MODULES } from "./games/index.js";
 //     must exist afterwards. Nothing is downloaded until the person creating the server has agreed: createServer answers 409 with
 //     code "zip-download-not-accepted" (and details: repo, asset, tag, size) until the request carries acceptZipDownload: true, and
 //     the create form shows a dialog first, like the one for SteamCMD. See services/zipInstall.js.
+//   webInstall: { label, hosts: [host, ...], kind: "file" | "zip", fileName (for "file"), maxBytes?, expect?: [file, ...], resolve }
+//     Installs the game from its maker's own website (Minecraft's server jar from Mojang, Terraria's zip from terraria.org). `resolve({
+//     fetchImpl })` works out what to fetch and returns { url, bytes, sha1?, sha256?, version, javaMajor? } (see services/webResolvers.js).
+//     The address must be https on one of `hosts` (exact names; a redirect off the list is refused) and within `maxBytes` (default
+//     1 GiB). A published sha1/sha256 must match or the download is deleted; when the maker publishes none, it is installed after
+//     consent and the SHA-256 the panel computed is logged. A "zip" is unpacked only after every name has been checked (no escapes,
+//     no links) and `expect` files exist; a "file" is saved as `fileName`. Consent: createServer answers 409 with code
+//     "web-download-not-accepted" (details: label, host, version, size, sizeText, checksum "SHA-1" | "SHA-256" | null) until the
+//     request carries acceptWebDownload: true. See services/webInstall.js.
+//     `extras: [{ label, why?, hosts, url, kind: "msi", bytes, sha256, signer, pick: RegExp, expect?, into }]` names files the game's own
+//     download lacks (Terraria's XNA Framework). Each is a fixed https address with a fixed size and SHA-256, and must carry a valid
+//     Authenticode signature whose subject has O=<signer>. An "msi" is only unpacked (msiexec /a, an administrative image, never an
+//     install) in a scratch folder; the files whose names match `pick` are copied into `into` (relative to the install folder), each
+//     `expect` name must be among them, and the scratch folder is removed. The consent details then also carry `extras: [{ label, why,
+//     host, size, sizeText, signer }]`, and the create form lists them in its dialog.
 //   needsSteamCmd(params) -> boolean
 //     For a template that is not installed through SteamCMD but still uses it afterwards (Workshop mod downloads in postWrite).
 //     Adds the same consent step as an install (acceptSteamCmdDownload) when SteamCMD is not on the PC yet, and has the job make

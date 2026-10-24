@@ -11,6 +11,7 @@ import { getConfig } from "../config/configStore.js";
 import { getSecrets } from "../config/secretsStore.js";
 import { ensureSteamCmd, isSteamCmdInstalled } from "./steamCmdProvisioner.js";
 import { installZipRelease, resolveRelease, describeSize } from "./zipInstall.js";
+import { installWebDownload, resolveWebDownload, describeWebSize, describeWebExtras } from "./webInstall.js";
 import { assertStorageHeadroom } from "./storageService.js";
 import { inspectFolder } from "./folderCheck.js";
 import { resolveResource } from "../../shared/resources.js";
@@ -18,6 +19,7 @@ import { deriveLaunch } from "./batchLaunch.js";
 import { writeMarker } from "./serverRemoval.js";
 import { implicitPortsOf, usageOf, firstSafePort, blockLayout, firstFreeRun } from "../data/portRules.js";
 import { portBusy } from "../util/portProbe.js";
+import { steamBranchArgs, steamModArgs } from "../util/steamBranch.js";
 import {
 	trackSteamCmd,
 	untrackSteamCmd,
@@ -72,6 +74,8 @@ export function listTemplates() {
 		sessionIsAddress: Boolean(t.sessionIsAddress),
 		// Where a game that is not installed through SteamCMD comes from, for the dialog that asks before anything is downloaded.
 		zipInstall: t.zipInstall ? { repo: t.zipInstall.repo, asset: t.zipInstall.asset } : null,
+		// The same for a game downloaded from its maker's website (Minecraft, Terraria): what it is called and the hosts it may come from.
+		webInstall: t.webInstall ? { label: t.webInstall.label, hosts: t.webInstall.hosts } : null,
 	}));
 }
 
@@ -324,7 +328,7 @@ export async function validateNewServer(template, name, ports, sharedInstallDir)
 	}
 }
 
-async function runSteamCmd(installDir, appId, logStream) {
+async function runSteamCmd(installDir, appId, logStream, branch, mod) {
 	// Resolves the configured path, or downloads SteamCMD from Valve the first
 	// time it's needed — a fresh install has none, and making the user go and
 	// find it is a poor first experience.
@@ -336,8 +340,10 @@ async function runSteamCmd(installDir, appId, logStream) {
 			installDir,
 			"+login",
 			"anonymous",
+			...steamModArgs(appId, mod),
 			"+app_update",
 			String(appId),
+			...steamBranchArgs(branch),
 			"validate",
 			"+quit",
 		];
@@ -391,11 +397,11 @@ async function tailOfFile(file, bytes = 64 * 1024) {
  * retried. Anything else (disk full, no such app) fails straight away with
  * SteamCMD's actual error rather than looping.
  */
-async function installWithRetries(installDir, appId, logStream, logPath, log, maxAttempts = 3) {
+async function installWithRetries(installDir, appId, logStream, logPath, log, maxAttempts = 3, branch = "", mod = "") {
 	const success = new RegExp(`Success! App '${appId}' (fully installed|already up to date)`, "i");
 
 	for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-		const code = await runSteamCmd(installDir, appId, logStream);
+		const code = await runSteamCmd(installDir, appId, logStream, branch, mod);
 		log(`SteamCMD exited with code ${code}.`);
 
 		// Let the log stream flush what SteamCMD wrote before reading it back.
@@ -454,10 +460,18 @@ async function runJob(jobId, template, params, deps = {}) {
 				onStage: (status) => setStatus(jobId, { status }),
 				...(deps.zip ?? {}),
 			});
+		} else if (!skipInstall && template.webInstall) {
+			// A game downloaded from its maker's website (webInstall, see gameTemplates.js).
+			log(`Installing ${template.displayName} from its maker's website to ${installDir} ...`);
+			await installWebDownload(template.webInstall, installDir, {
+				log,
+				onStage: (status) => setStatus(jobId, { status }),
+				...(deps.web ?? {}),
+			});
 		} else if (!skipInstall && template.updateAppId) {
 			setStatus(jobId, { status: "installing" });
 			log(`Installing appid ${template.updateAppId} to ${installDir} ...`);
-			await installWithRetries(installDir, template.updateAppId, logStream, logPath, log);
+			await installWithRetries(installDir, template.updateAppId, logStream, logPath, log, 3, template.updateBranch, template.updateMod);
 		}
 
 		setStatus(jobId, { status: "configuring" });
@@ -732,6 +746,29 @@ export async function createServer(templateId, rawParams, deps = {}) {
 			`${template.displayName} is downloaded from GitHub (${details.repo}, the file ${details.asset}${details.sizeText ? `, ${details.sizeText}` : ""}) and checked against the checksum GitHub publishes for it. Nothing is downloaded until you agree.`,
 		);
 		err.code = "zip-download-not-accepted";
+		err.details = details;
+		throw err;
+	}
+
+	// And a game from its maker's website: what, from which host, how big, and whether the maker publishes a checksum to check it by.
+	if (template.webInstall && rawParams.acceptWebDownload !== true) {
+		const label = template.webInstall.label ?? template.displayName;
+		let details = { label };
+		try {
+			const found = await resolveWebDownload(template.webInstall, { fetchImpl: deps.web?.fetchImpl });
+			details = { label, host: found.host, version: found.version, size: found.size, sizeText: describeWebSize(found.size), checksum: found.sha1 ? "SHA-1" : found.sha256 ? "SHA-256" : null };
+		} catch (e) {
+			if (e.refusal) throw e;
+			// The maker's site can't be reached just now: ask anyway, without a size. The download itself would fail with the real reason.
+		}
+		// Files the game needs besides its own download (fixed in the template, so they are described without the network).
+		const extras = describeWebExtras(template.webInstall);
+		if (extras.length > 0) details.extras = extras;
+		const extrasText = extras.map((x) => ` It also fetches ${x.label} (${x.sizeText}) from ${x.host}${x.why ? ` (${x.why})` : ""}; the panel checks its checksum and its ${x.signer} signature, and only unpacks it: nothing is installed on this PC.`).join("");
+		const err = new Error(
+			`${label} is downloaded from ${details.host ?? template.webInstall.hosts[0]}${details.sizeText ? ` (${details.sizeText})` : ""}. ${details.checksum ? `The panel checks it against the ${details.checksum} the maker publishes.` : details.host ? "The maker publishes no checksum for it, so it can't be checked; the panel shows the SHA-256 it computes." : ""}${extrasText} Nothing is downloaded until you agree.`,
+		);
+		err.code = "web-download-not-accepted";
 		err.details = details;
 		throw err;
 	}

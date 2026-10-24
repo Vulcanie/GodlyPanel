@@ -454,7 +454,7 @@ router.post("/servers", async (req, res) => {
 		res.json({ success: true, jobId });
 	} catch (e) {
 		// 409: the person has to agree to a download first (SteamCMD, or a game's GitHub release zip); the form asks and sends again.
-		const needsConsent = e.code === "steamcmd-not-installed" || e.code === "zip-download-not-accepted";
+		const needsConsent = e.code === "steamcmd-not-installed" || e.code === "zip-download-not-accepted" || e.code === "web-download-not-accepted";
 		res.status(needsConsent ? 409 : 400).json({ error: e.message, code: e.code, ...(e.details ? { details: e.details } : {}) });
 	}
 });

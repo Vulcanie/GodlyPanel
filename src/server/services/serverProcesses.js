@@ -17,9 +17,15 @@ export function serverRoots(server) {
 	return [server.installDir, server.workingDir].filter(Boolean).map(norm);
 }
 
+/** Does the program's command line name a file inside this folder? (Slash direction and letter case don't matter.) */
+const commandLineInside = (commandLine, root) =>
+	Boolean(commandLine) && String(commandLine).replace(/\//g, path.sep).toLowerCase().includes(`${root}${path.sep}`);
+
 /**
- * Split running programs with the server's image name into its own and foreign ones.
- * @param {{ pid: number, path: string|null }[]} running  every process with that name
+ * Split running programs with the server's image name into its own and foreign ones. A program is the server's own when it runs from
+ * inside the server's folder, or when its command line names a file inside it (a Java server is the JDK's java.exe running a jar
+ * from the folder).
+ * @param {{ pid: number, path: string|null, commandLine?: string }[]} running  every process with that name
  * @returns {{ owned: {pid:number,path:string}[], foreign: {pid:number,path:string|null}[], hasRoots: boolean }}
  */
 export function classify(server, running) {
@@ -28,7 +34,7 @@ export function classify(server, running) {
 	const owned = [];
 	const foreign = [];
 	for (const p of running) {
-		if (p.path && roots.some((r) => inside(norm(p.path), r))) owned.push(p);
+		if (roots.some((r) => (p.path && inside(norm(p.path), r)) || commandLineInside(p.commandLine, r))) owned.push(p);
 		else foreign.push(p);
 	}
 	return { owned, foreign, hasRoots: true };
@@ -48,7 +54,7 @@ export function listByName(imageName) {
 				"-NoProfile",
 				"-NonInteractive",
 				"-Command",
-				`Get-CimInstance Win32_Process -Filter "Name='${imageName.replace(/'/g, "''")}'" | ForEach-Object { "$($_.ProcessId)|$($_.ExecutablePath)" }`,
+				`Get-CimInstance Win32_Process -Filter "Name='${imageName.replace(/'/g, "''")}'" | ForEach-Object { "$($_.ProcessId)|$($_.ExecutablePath)|$($_.CommandLine -replace '\\r?\\n',' ')" }`,
 			],
 			{ windowsHide: true, timeout: 15000 },
 			(error, stdout) => {
@@ -58,8 +64,9 @@ export function listByName(imageName) {
 						.split(/\r?\n/)
 						.filter(Boolean)
 						.map((line) => {
-							const [pid, ...rest] = line.split("|");
-							return { pid: Number(pid), path: rest.join("|") || null };
+							const [pid, exe, ...rest] = line.split("|");
+							const commandLine = rest.join("|");
+							return { pid: Number(pid), path: exe || null, ...(commandLine ? { commandLine } : {}) };
 						})
 						.filter((p) => Number.isInteger(p.pid)),
 				);
@@ -88,7 +95,7 @@ function listEverything() {
 				if (error) return resolve(null);
 				try {
 					const parsed = JSON.parse(stdout);
-					resolve((Array.isArray(parsed) ? parsed : [parsed]).filter((p) => Number.isInteger(p?.ProcessId) && p.Name).map((p) => ({ pid: p.ProcessId, name: String(p.Name), path: p.ExecutablePath || null })));
+					resolve((Array.isArray(parsed) ? parsed : [parsed]).filter((p) => Number.isInteger(p?.ProcessId) && p.Name).map((p) => ({ pid: p.ProcessId, name: String(p.Name), path: p.ExecutablePath || null, ...(p.CommandLine ? { commandLine: String(p.CommandLine) } : {}) })));
 				} catch {
 					resolve(null);
 				}
@@ -112,7 +119,7 @@ export function createSharedLister({ run = listEverything, ttlMs = SNAPSHOT_TTL_
 		const all = await everything();
 		if (all === null) return null;
 		const wanted = imageName.toLowerCase();
-		return all.filter((p) => p.name.toLowerCase() === wanted).map(({ pid, path: exe }) => ({ pid, path: exe }));
+		return all.filter((p) => p.name.toLowerCase() === wanted).map(({ pid, path: exe, commandLine }) => ({ pid, path: exe, ...(commandLine ? { commandLine } : {}) }));
 	};
 }
 

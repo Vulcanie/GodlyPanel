@@ -80,6 +80,33 @@ describe("splitting running programs by where they run from", () => {
 	});
 });
 
+describe("a program that runs from somewhere else but is given this server's files", () => {
+	// A Java server is the JDK's java.exe (outside the server's folder) running a jar that is inside it, so only its command line says
+	// whose it is.
+	const java = server && { name: "Minecraft", processName: "java.exe", installDir: at("Servers", "Minecraft") + path.sep, workingDir: at("Servers", "Minecraft") };
+	const jdk = at("Program Files", "Java", "bin", "java.exe");
+	const own = { pid: 1, path: jdk, commandLine: `java  -Xmx4G -jar "${at("Servers", "Minecraft", "server.jar")}" --nogui` };
+	const sibling = { pid: 2, path: jdk, commandLine: `java -jar "${at("Servers", "MinecraftTwo", "server.jar")}" --nogui` };
+	const unrelated = { pid: 3, path: jdk, commandLine: "java -jar other.jar" };
+	const unknown = { pid: 4, path: jdk };
+
+	it("counts it as the server's own when its command line points into the server's folder", () => {
+		const { owned, foreign } = classify(java, [own, sibling, unrelated, unknown]);
+		assert.deepEqual(owned, [own]);
+		assert.deepEqual(foreign, [sibling, unrelated, unknown], "a folder that merely starts with the server's name, and a program with no command line, are not its own");
+	});
+
+	it("matches without regard to letter case or slash direction", () => {
+		const loud = { pid: 5, path: jdk, commandLine: `JAVA -JAR "${at("SERVERS", "MINECRAFT", "SERVER.JAR").replace(/\\/g, "/")}"` };
+		assert.deepEqual(classify(java, [loud]).owned, [loud]);
+	});
+
+	it("is passed on by the shared listing", async () => {
+		const list = createSharedLister({ run: async () => [{ pid: 1, name: "java.exe", path: jdk, commandLine: own.commandLine }] });
+		assert.deepEqual(await list("java.exe"), [{ pid: 1, path: jdk, commandLine: own.commandLine }]);
+	});
+});
+
 describe("one listing of the running programs for a whole poll cycle", () => {
 	const listing = [
 		{ pid: 1, name: "valheim_server.exe", path: "D:\\Servers\\A\\valheim_server.exe" },

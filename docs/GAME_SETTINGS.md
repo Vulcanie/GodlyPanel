@@ -49,6 +49,61 @@ Some games are set up by the arguments on the command that starts them, not by a
 - [Half-Life 2: Deathmatch](#half-life-2-deathmatch)
 - [Astroneer](#astroneer)
 - [Avorion](#avorion)
+- [Minecraft (vanilla)](#minecraft-vanilla)
+- [Terraria (vanilla)](#terraria-vanilla)
+- [The Forest](#the-forest)
+- [Wurm Unlimited](#wurm-unlimited)
+- [The Isle (Evrima)](#the-isle-evrima)
+- [Mordhau](#mordhau)
+- [Team Fortress 2](#team-fortress-2)
+- [Counter-Strike 2](#counter-strike-2)
+- [Mount & Blade II: Bannerlord](#mount--blade-ii-bannerlord)
+- [Insurgency: Sandstorm](#insurgency-sandstorm)
+- [Left 4 Dead](#left-4-dead)
+- [Zombie Panic! Source](#zombie-panic-source)
+- [BrainBread 2](#brainbread-2)
+- [Day of Defeat: Source](#day-of-defeat-source)
+- [Fistful of Frags](#fistful-of-frags)
+- [No More Room in Hell](#no-more-room-in-hell)
+- [Insurgency (2014)](#insurgency-2014)
+- [Pirates, Vikings, and Knights II](#pirates-vikings-and-knights-ii)
+- [Dystopia](#dystopia)
+- [Empires](#empires)
+- [Double Action: Boogaloo](#double-action-boogaloo)
+- [Half-Life Dedicated Server](#half-life-dedicated-server)
+- [IOSoccer](#iosoccer)
+- [BATTALION: Legacy](#battalion-legacy)
+- [Black Mesa](#black-mesa)
+- [Military Conflict: Vietnam](#military-conflict-vietnam)
+- [SCP: Secret Laboratory](#scp-secret-laboratory)
+- [Colony Survival](#colony-survival)
+- [Rising World](#rising-world)
+- [Warfork](#warfork)
+- [Natural Selection 2](#natural-selection-2)
+- [Chivalry: Medieval Warfare](#chivalry-medieval-warfare)
+- [Hurtworld](#hurtworld)
+- [Euro Truck Simulator 2](#euro-truck-simulator-2)
+- [American Truck Simulator](#american-truck-simulator)
+- [Medieval Engineers](#medieval-engineers)
+- [PixARK](#pixark)
+- [Stationeers](#stationeers)
+- [Wreckfest](#wreckfest)
+- [Operation: Harsh Doorstop](#operation-harsh-doorstop)
+- [Rising Storm 2: Vietnam](#rising-storm-2-vietnam)
+- [Miscreated](#miscreated)
+- [Craftopia](#craftopia)
+- [Ballistic Overkill](#ballistic-overkill)
+- [Age of Chivalry](#age-of-chivalry)
+- [HumanitZ](#humanitz)
+- [Survive the Nights](#survive-the-nights)
+- [Tower Unite](#tower-unite)
+- [The Front](#the-front)
+- [Day of Dragons](#day-of-dragons)
+- [HYPERCHARGE: Unboxed](#hypercharge-unboxed)
+- [Day of Infamy](#day-of-infamy)
+- [Killing Floor 2](#killing-floor-2)
+- [Empyrion - Galactic Survival](#empyrion---galactic-survival)
+- [ATLAS](#atlas)
 
 ## ARK: Survival Ascended / Evolved
 
@@ -4459,3 +4514,2678 @@ Use only plain English letters in paths and names: the server supports ASCII cha
 | Developer mode | `DevMode` in `[Game]` | Turns on the game's developer mode. Leave it off on a normal server. The default is off. |
 | Profiling | `profiling` in `[System]` | Records performance and memory details so the /status command prints a lot more; the server may run slightly slower. The default is off. |
 | Send crash reports | `sendCrashReports` in `[System]` | Whether the server sends crash reports. The default is on. |
+
+## Minecraft (vanilla)
+
+Minecraft's own Java server. The settings are in `server.properties` in the server's folder, and the options for the server program are on the launch line of the start script. The panel makes the server, accepts Mojang's EULA for you when you tick the box, and writes the message and the port.
+
+- `server.properties`: The server's settings: the message, the players allowed in, the game mode and difficulty, the world's name and type, and the distances the server works at. One `key=value` per line; the game fills in any key that is missing when it starts.
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#minecraft-vanilla).
+
+**Stopping.** Minecraft's own way to stop is the command `stop`, typed into the server's window. The panel cannot type into that window, so its Stop closes the window and, after 15 seconds, ends the java process. That skips the server's normal shutdown and its final save. Before you press Stop, update or restart, open the server's window (the panel keeps it minimized on the taskbar) and type `stop`, then wait for it to close.
+**Java 21.** This version needs Java 21 or newer on the PC, and the start script runs `java`, so it must be on the Windows PATH. If the window closes straight away, Java is probably missing or not on the PATH.
+**Memory.** The Max Memory field sets how much memory Java may use (`-Xmx`). The dossier suggests at least 2 GB for a small server and 4 GB or more for a bigger one. The panel's default is 4.
+**Port.** The game port is TCP. The panel writes it into `server-port` in server.properties, so change it from the server's Ports section, not here; and open it in Windows Firewall and on your router.
+**Settings** are read when the server starts: stop and start the server after a change. The game rewrites server.properties on each start and keeps your values.
+**Whitelist and operators** are the files `whitelist.json` and `ops.json` in the server's folder. They are not in this form.
+**Mods:** none for vanilla. Datapacks are not mods; they go in the world's `datapacks` folder, which the backup keeps with the world.
+**Logs:** the dossier does not say where the server writes its log, so the Logs tab shows nothing for this server. The window shows the server's output.
+
+### Minecraft vanilla: Server Info
+
+4 settings in `server.properties`, shown under **Server Info** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server Message | `motd` | The line of text shown under this server's name in the multiplayer server list. Keep it to about 59 characters, or the list can show a communication error. Colour codes work. |
+| Max Players | `max-players` | The most players allowed on the server at the same time. The default is 20. |
+| Show in Server List | `enable-status` | Whether the server appears as online in the server list. Off makes it show as offline, but players can still connect. Choices: `true` (On), `false` (Off). |
+| Hide Player List | `hide-online-players` | Hides the names of the players who are online from the server list. Choices: `true` (On), `false` (Off). |
+
+### Minecraft vanilla: Gameplay
+
+6 settings in `server.properties`, shown under **Gameplay** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Difficulty | `difficulty` | How hard the world is: how much damage monsters do, and how hunger and poison affect players. Choices: `peaceful` (Peaceful), `easy` (Easy), `normal` (Normal), `hard` (Hard). |
+| Default Game Mode | `gamemode` | The game mode players join in. Unless Force Default Game Mode is on, players come back in the mode they left. Choices: `survival` (Survival), `creative` (Creative), `adventure` (Adventure), `spectator` (Spectator). |
+| Force Default Game Mode | `force-gamemode` | Puts players into the default game mode each time they join, instead of the one they left in. Choices: `true` (On), `false` (Off). |
+| Hardcore Mode | `hardcore` | Turns on hardcore mode for newly created worlds. Choices: `true` (On), `false` (Off). |
+| Allow Flight | `allow-flight` | Lets players fly in survival mode without being kicked for it. With it on, griefers may become more common. Choices: `true` (On), `false` (Off). |
+| Spawn Protection | `spawn-protection` | The size of the area around the spawn point that players cannot change. It is a square with a side of 2 times this number plus 1. 0 turns the protection off. The default is 16. |
+
+### Minecraft vanilla: World
+
+5 settings in `server.properties`, shown under **World** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| World Folder Name | `level-name` | The name of the folder the world is saved in. The server loads that world if the folder holds one, and makes a new world there if not. The default is world. |
+| World Seed | `level-seed` | The seed a new world is generated from. Leave it blank for a random seed. Only used when a world is made. |
+| World Type | `level-type` | The kind of world made for a new world: normal, flat, large biomes, amplified (a higher build limit) or a single biome. Only used when a world is made. Choices: `minecraft:normal` (Normal), `minecraft:flat` (Flat), `minecraft:large_biomes` (Large Biomes), `minecraft:amplified` (Amplified), `minecraft:single_biome_surface` (Single Biome Surface). |
+| Generate Structures | `generate-structures` | Whether villages and other structures are generated in new areas. Dungeons still generate when this is off. Choices: `true` (On), `false` (Off). |
+| World Border Size | `max-world-size` | How far from the centre of the world the world border reaches, in blocks, from 1 to 29999984. The default is 29999984, and a higher number does nothing. |
+
+### Minecraft vanilla: Players and Access
+
+6 settings in `server.properties`, shown under **Players and Access** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Whitelist | `white-list` | Only players on the whitelist can join. Operators are always on it. Choices: `true` (On), `false` (Off). |
+| Enforce Whitelist | `enforce-whitelist` | Kicks players who are not on the whitelist as soon as the server reloads the whitelist, not only when they try to join. Choices: `true` (On), `false` (Off). |
+| Verify Player Accounts | `online-mode` | Lets in only players whose accounts Mojang verifies. Turn it off only for a server that is not on the Internet: fake accounts can then join. Choices: `true` (On), `false` (Off). |
+| Require Signed Chat | `enforce-secure-profile` | Lets in only players with a key signed by Mojang. Off lets unsigned chat through, and unsigned chat cannot be reported. Choices: `true` (On), `false` (Off). |
+| Idle Timeout (minutes) | `player-idle-timeout` | How many minutes a player can stay idle before being kicked. 0 means idle players are never kicked. |
+| Pause When Empty (seconds) | `pause-when-empty-seconds` | How many seconds after the last player leaves before the server pauses. The default is 60. |
+
+### Minecraft vanilla: Performance
+
+3 settings in `server.properties`, shown under **Performance** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| View Distance (chunks) | `view-distance` | How far, in chunks, the server sends world data to each player. 10 is the default and the recommended value. Higher numbers show more of the world but cost more processing; 3 to 32. |
+| Simulation Distance (chunks) | `simulation-distance` | How far, in chunks, from each player the server keeps mobs and growing crops active. 10 is the default and the recommended value; 3 to 32. |
+| Entity Range (%) | `entity-broadcast-range-percentage` | How far away mobs and other entities are sent to players, as a percentage. 100 is the default. Higher lets players see them from farther away and can cause more lag; 10 to 1000. |
+
+## Terraria (vanilla)
+
+This is the plain Terraria dedicated server from terraria.org, a console program (`TerrariaServer.exe`) in the server's platform folder. The world, its name and the password are in `serverconfig.txt`; the game port and the player limit are the **Launch options**. The panel installs it once, when the server is made.
+
+- `serverconfig.txt`: The world to load, how a new one is made (size, name, seed, difficulty), the password and message of the day, and a few network and rule settings. One `key=value` per line; a line starting with `#` is ignored.
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#terraria-vanilla).
+
+**The panel cannot stop the server cleanly.** The world is saved when `exit` is typed into the server's own console window. The panel has no way to type into a console, so Stop asks the window to close and ends the process after 15 seconds, and the world keeps only what the server saved before. The server also saves at dawn, about every 24 minutes, and the wiki warns that items moved between chests can be lost if the window is closed without `exit`. Before you press Stop, update or restart, open the server's window (the panel keeps it minimized on the taskbar), type `exit` and wait for it to close. `exit-nosave` shuts down without saving, so do not use it by mistake.
+**XNA Framework.** The Windows server needs Microsoft XNA Framework 4.0, which the Terraria download does not include. When you create the server the panel asks, then fetches Microsoft's XNA Redistributable itself, checks its checksum and Microsoft signature, and unpacks the DLLs next to `TerrariaServer.exe`. Nothing is installed on your PC. If the server's window closes straight away or shows an error about `Microsoft.Xna.Framework`, check that the `Microsoft.Xna.Framework*.dll` files are in the server's folder.
+**Port.** The game port is TCP. The wiki says UDP is only needed for cloud hosts. Open the port in Windows Firewall and forward it on your router. There is no query port, so the panel knows the server is running but not how many players are on.
+**Settings.** Stop the server before editing `serverconfig.txt`; it is read when the server starts. A line that starts with `#` is ignored. The game port and the player limit are on the launch line, not in this file. The world, its size, name, seed and difficulty only matter when a new world is made.
+**Worlds.** The panel keeps worlds in the `Worlds` folder of the server's platform folder, and the world line points there. To use a world made in the game, copy its `.wld` file into that folder and put its full path on the world line.
+**Mods.** This is the server without a mod loader. Mods for tModLoader are a different server (the Terraria (tModLoader) entry).
+**Updates.** The panel installs Terraria once, when the server is made, and does not update it afterwards. To change the version, make a new server.
+
+### Terraria vanilla: World
+
+2 settings in `serverconfig.txt`, shown under **World** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| World file | `world` in `[root]` | The full path of the world to load: the .wld file, written without quotes. The panel fills this in with a file named after the world in the server's Worlds folder. If that file does not exist, a new world is made there (see 'Create world if missing'). |
+| World folder | `worldpath` in `[root]` | The folder world files are stored in. The world line above is a full path, so this is only needed if you keep worlds somewhere else on purpose. Leave it out otherwise, so the backups find the worlds. |
+
+### Terraria vanilla: New world
+
+4 settings in `serverconfig.txt`, shown under **New world** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Create world if missing | `autocreate` in `[root]` | If the file named on the world line does not exist, the server makes a new world of this size there. It does nothing for a world that already exists. Choices: `1` (Small), `2` (Medium), `3` (Large). |
+| New world name | `worldname` in `[root]` | The name a newly made world is given. It has no effect on a world that already exists. |
+| World seed | `seed` in `[root]` | The seed a newly made world is generated from. Only used when a new world is made, the same as the size and name above. |
+| World difficulty | `difficulty` in `[root]` | The game mode of a newly made world. The wiki's server page gives 0 as Normal; its sample file calls 0 Classic, so the name shown in the game may differ. Mobile servers add 1 to each value, the wiki says. It only applies to a new world. Choices: `0` (Normal), `1` (Expert), `2` (Master), `3` (Journey). |
+
+### Terraria vanilla: Server
+
+5 settings in `serverconfig.txt`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server password | `password` in `[root]` | What players type to join. Leave the line out for a server anyone can join. The panel writes it when it makes the server. |
+| Message of the day | `motd` in `[root]` | A message shown to players when they join. |
+| Ban list file | `banlist` in `[root]` | The file that keeps banned players. Without this line the server uses banlist.txt in the folder it runs from, which is the platform folder. |
+| Extra cheat protection | `secure` in `[root]` | Turns on additional cheat protection on the server (the wiki's words: adds additional cheat protection). The wiki's example shows 1 and gives no other value. Choices: `1` (On), `0` (Off). Another value can be typed. |
+| Server language | `language` in `[root]` | Sets the server's language from its code. The wiki lists the codes offered here. Choices: `en-US` (English), `de-DE` (German), `it-IT` (Italian), `fr-FR` (French), `es-ES` (Spanish), `ru-RU` (Russian), `zh-Hans` (Chinese), `pt-BR` (Portuguese), `pl-PL` (Polish). |
+
+### Terraria vanilla: Network
+
+2 settings in `serverconfig.txt`, shown under **Network** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Auto port-forward (UPnP) | `upnp` in `[root]` | Asks your router to forward the game port by itself when the server starts. The wiki says this does not always work, so forward the port by hand if friends cannot join. The wiki's example shows 1 and gives no other value. Choices: `1` (On), `0` (Off). Another value can be typed. |
+| Enemy smoothing | `npcstream` in `[root]` | Reduces enemies skipping for players, at the cost of more data sent. The lower the number, the less skipping and the more data; 0 turns it off. The wiki's example uses 60. |
+
+### Terraria vanilla: Performance
+
+1 setting in `serverconfig.txt`, shown under **Performance** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Process priority | `priority` in `[root]` | How much processor time Windows gives the server compared with other programs: 0 Realtime, 1 High, 2 Above normal, 3 Normal, 4 Below normal, 5 Idle. The wiki's sample file uses 1 (High). The panel does not set it. Choices: `0` (Realtime), `1` (High), `2` (Above normal), `3` (Normal), `4` (Below normal), `5` (Idle). |
+
+### Terraria vanilla: Journey permissions
+
+11 settings in `serverconfig.txt`, shown under **Journey permissions** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Freeze time | `journeypermission_time_setfrozen` in `[root]` | Who may freeze the day and night clock. Who may use this Journey power in a Journey-mode world. It does nothing in other worlds. The wiki gives the values 0 (locked for everyone), 1 (only the host) and 2 (anyone). Choices: `0` (Locked for everyone), `1` (Only the host), `2` (Anyone). |
+| Set time to dawn | `journeypermission_time_setdawn` in `[root]` | Who may jump the time to dawn. Who may use this Journey power in a Journey-mode world. It does nothing in other worlds. The wiki gives the values 0 (locked for everyone), 1 (only the host) and 2 (anyone). Choices: `0` (Locked for everyone), `1` (Only the host), `2` (Anyone). |
+| Set time to noon | `journeypermission_time_setnoon` in `[root]` | Who may jump the time to noon. Who may use this Journey power in a Journey-mode world. It does nothing in other worlds. The wiki gives the values 0 (locked for everyone), 1 (only the host) and 2 (anyone). Choices: `0` (Locked for everyone), `1` (Only the host), `2` (Anyone). |
+| Set time to dusk | `journeypermission_time_setdusk` in `[root]` | Who may jump the time to dusk. Who may use this Journey power in a Journey-mode world. It does nothing in other worlds. The wiki gives the values 0 (locked for everyone), 1 (only the host) and 2 (anyone). Choices: `0` (Locked for everyone), `1` (Only the host), `2` (Anyone). |
+| Set time to midnight | `journeypermission_time_setmidnight` in `[root]` | Who may jump the time to midnight. Who may use this Journey power in a Journey-mode world. It does nothing in other worlds. The wiki gives the values 0 (locked for everyone), 1 (only the host) and 2 (anyone). Choices: `0` (Locked for everyone), `1` (Only the host), `2` (Anyone). |
+| Time speed | `journeypermission_time_setspeed` in `[root]` | Who may change how fast time passes. Who may use this Journey power in a Journey-mode world. It does nothing in other worlds. The wiki gives the values 0 (locked for everyone), 1 (only the host) and 2 (anyone). Choices: `0` (Locked for everyone), `1` (Only the host), `2` (Anyone). |
+| God mode | `journeypermission_godmode` in `[root]` | Who may turn on god mode. Who may use this Journey power in a Journey-mode world. It does nothing in other worlds. The wiki gives the values 0 (locked for everyone), 1 (only the host) and 2 (anyone). Choices: `0` (Locked for everyone), `1` (Only the host), `2` (Anyone). |
+| Wind strength | `journeypermission_wind_setstrength` in `[root]` | Who may set the wind strength. Who may use this Journey power in a Journey-mode world. It does nothing in other worlds. The wiki gives the values 0 (locked for everyone), 1 (only the host) and 2 (anyone). Choices: `0` (Locked for everyone), `1` (Only the host), `2` (Anyone). |
+| Freeze wind | `journeypermission_wind_setfrozen` in `[root]` | Who may freeze the wind. Who may use this Journey power in a Journey-mode world. It does nothing in other worlds. The wiki gives the values 0 (locked for everyone), 1 (only the host) and 2 (anyone). Choices: `0` (Locked for everyone), `1` (Only the host), `2` (Anyone). |
+| Rain strength | `journeypermission_rain_setstrength` in `[root]` | Who may set the rain strength. Who may use this Journey power in a Journey-mode world. It does nothing in other worlds. The wiki gives the values 0 (locked for everyone), 1 (only the host) and 2 (anyone). Choices: `0` (Locked for everyone), `1` (Only the host), `2` (Anyone). |
+| Freeze rain | `journeypermission_rain_setfrozen` in `[root]` | Who may freeze the rain. Who may use this Journey power in a Journey-mode world. It does nothing in other worlds. The wiki gives the values 0 (locked for everyone), 1 (only the host) and 2 (anyone). Choices: `0` (Locked for everyone), `1` (Only the host), `2` (Anyone). |
+
+## The Forest
+
+The Forest's server runs from `TheForestDedicatedServer.exe` in the server's folder. Its name, password and ports are in `config.cfg`, which the panel writes when the server is created and which you edit by hand. The admin password and the start type are on the start command (the **Launch options** on the Settings tab).
+
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#the-forest).
+
+**The panel cannot stop the server cleanly.** The game stops with ^C in its own console window. The panel has no way to type into a console, so Stop closes the window and ends the process after 15 seconds. Before you press Stop (or update), open the server's window, which the panel keeps minimized on the taskbar rather than hidden, press Ctrl+C, and wait for it to close.
+**Where config.cfg is read is not settled.** Sources name `TheForestDedicatedServer_Data\forest\config\config.cfg` (the egg and Game Server Kings), a `Server.cfg` under AppData\LocalLow, and a `config.cfg` in the server's root. The panel writes the first and passes the same path on the start command. Check on the first start that the server takes it.
+**The config format is `key value` lines with spaces**, for example `serverName My Server`. Write a value without a line break and without two slashes in a row.
+**Ports.** The game port (27455 by default) is used for UDP and TCP, the query port (27457) is the one players connect through, and the Steam port (8770) is for the server browser. The panel's firewall check opens UDP only, so allow the TCP ports in Windows Firewall yourself. Change a port in the Ports section and also in config.cfg, because the file is not rewritten from the Ports section.
+**The admin password is on the start command.** Without it nobody has the admin commands. It is not shown in the Settings tab.
+**Mods are not managed.** The community ModAPI launcher is a client-side tool; the dossier finds no server-side mod path or switch.
+
+## Wurm Unlimited
+
+Wurm Unlimited's server runs from `WurmServerLauncher.exe` in the server's folder. Each world is a folder in that folder, made first with the game's own launcher. The name, ports, player limit and passwords are on the start command (the **Launch options** on the Settings tab); the rest of the settings are in `wurm.ini` in the world's folder.
+
+- `wurm.ini`: The map, access, logging and performance settings the research describes. The panel does not create this file; it appears once the game has written it.
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#wurm-unlimited).
+
+**The panel cannot stop the server cleanly.** Use **Shutdown server** in the launcher's window first (it asks for a number of seconds and a reason). The panel has no way to press it, so Stop closes the window and ends the process after 15 seconds. Open the server's window, which the panel keeps minimized on the taskbar, use Shutdown server, wait for the window to close, and only then press Stop or update.
+**The world is made on the first start.** The start script copies the template that ships with the server (the Creative or Adventure folder under dist) into the server folder if the world is not there yet. A world with another name has to be made with the game's own launcher.
+**Ports.** The game port (3724, TCP) is what players connect through, and the Steam query port (UDP) is used by the server browser. The panel's firewall check opens UDP only, so allow the game port's TCP in Windows Firewall and forward it on your router. Change a port in the Ports section and also on the start command, because the panel does not rewrite it from the Ports section.
+**Admin commands** are unlocked by the admin password on the start command. Without it nobody has the in-game admin commands.
+**Mods are not managed.** Wurm Unlimited's mods need a community modloader, and the research found no safe path for the panel to set it up. Install a modloader and its mods by hand with the server stopped, and back up first.
+**Remote control is not used.** The game's remote control (RMI) is off unless `USE_INCOMING_RMI=true` is set in `wurm.ini`, and the research advises against turning it on without securing the server's ports. The panel does not use it.
+Use plain English letters and digits in names and passwords. The panel refuses quotes, spaces in passwords, and the characters the Windows command line acts on.
+
+### Wurm Unlimited: Map
+
+3 settings in `wurm.ini`, shown under **Map** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Save an ore picture | `CAVEIMG` in `[root]` | When on, the ores on the map are saved to a file called Ore.png in the server's folder each time the server starts. The default is off. Choices: `true` (Yes), `false` (No). |
+| Random forage and botanize spots | `CREATESEEDS` in `[root]` | When on, the server places forage and botanize resources on random tiles each time it starts. The default is off. Choices: `true` (Yes), `false` (No). |
+| Random hidden ores | `PROSPECT` in `[root]` | When on, the server randomly changes ores hidden in the rock layer. It turns itself off again when the file is saved. The default is off. Choices: `true` (Yes), `false` (No). |
+
+### Wurm Unlimited: Access
+
+2 settings in `wurm.ini`, shown under **Access** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Maintenance mode | `MAINTAINING` in `[root]` | When on, only players with a power level above 0 can log in, so you can work on the server without players. The default is off. Choices: `true` (Yes), `false` (No). |
+| Allow direct login | `IS_GAME_SERVER` in `[root]` | Whether players can log in directly to this server. The default is on. Turn it off only for a server meant to be used through another server. Choices: `true` (Yes), `false` (No). |
+
+### Wurm Unlimited: Logs
+
+1 setting in `wurm.ini`, shown under **Logs** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Player statistics log | `PLAYERLOG` in `[root]` | The file that player statistics are written to at regular intervals. It must end in .log and be writable, or the default is used. The default is numplayers.log in the server's folder. |
+
+### Wurm Unlimited: Performance
+
+1 setting in `wurm.ini`, shown under **Performance** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Wait between player connections (milliseconds) | `PLAYER_CONN_MILLIS` in `[root]` | How long the server waits between accepting one player's connection and the next, in milliseconds. The default is 1000. |
+
+### Wurm Unlimited: Advanced
+
+2 settings in `wurm.ini`, shown under **Advanced** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Developer mode | `DEVMODE` in `[root]` | Turns on extra logging and turns off sending email. Leave it off on a normal server. The default is off. Choices: `true` (Yes), `false` (No). |
+| Slow operation log (milliseconds) | `LAG_THRESHOLD` in `[root]` | Long-running operations that take longer than this many milliseconds are written to the log. The default is 1000. |
+
+## The Isle (Evrima)
+
+The Isle (Evrima) keeps its settings in `TheIsle\Saved\Config\WindowsServer\Game.ini`, inside the server's folder. The panel writes the name and join password when it creates the server, and the Settings tab edits the rest. Changes apply the next time the server starts.
+
+- `Game.ini`: The server's name, map, join password, dinosaur growth and wildlife, day and night, weather and migration. The settings are in the `[/Script/TheIsle.TIGameSession]` section.
+
+**Stop the server before you edit.** The game writes its settings again when it shuts down, so changes made while it runs are lost. The panel stops the server by closing its window; the game documents no save command, so a stop may lose the time since the game last saved.
+**The server does not start without Epic Online Services credentials.** It exits within seconds with "Unable to initialize EOS platform" until they are in `Engine.ini`. Add a `[EpicOnlineServices]` section to `Engine.ini` in the same folder, with `DedicatedServerClientId` and `DedicatedServerClientSecret`. The panel does not write them. The sources disagree on whether these values are shared by every server or set for each host, so take them from your own host or template, not from a guide.
+**Admins and the whitelist are not in the Settings tab.** Put Steam64 IDs, one per line, under `AdminsSteamIDs`, `WhitelistIDs` or `VIPs` in a `[/Script/TheIsle.TIGameStateBase]` section of `Game.ini` (the guides write that section name in lower case, which the dossier leaves unresolved). Put these IDs in that section, not in the game session section, or the game ignores them.
+**Players must be on the same beta branch.** A player on the default (Legacy) build cannot see an Evrima server. The panel installs and updates the server on the `evrima` beta, so do not change that by hand.
+**Mods** are not set up by the panel. The sources describe PAK and SIG files in the game's `Content\Paks` folder, and UE4SS mods on a Windows server, but they disagree on the folder. Steam Workshop mod IDs no longer work. Every player needs the same mods.
+**Ports:** the server listens on the game port (UDP) the panel gives it, and the guides say the query uses the same port. Some guides suggest also opening 7778 and 7779, and the game's queue and RCON ports are chosen by the server, so a second server on this PC may need its own range of ports.
+The research could not confirm which process stays running after `TheIsleServer.exe` starts, that a pre-written `Game.ini` survives the first start, or where the saves are kept.
+
+### The Isle: Server
+
+4 settings in `Game.ini`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server name | `ServerName` in `[/Script/TheIsle.TIGameSession]` | The name players see in the in-game server browser. The panel fills it in when it creates the server. |
+| Player limit | `MaxPlayerCount` in `[/Script/TheIsle.TIGameSession]` | The most players that can be on the server at once. The game's default is 100. More players need more memory and processor. |
+| Map | `MapName` in `[/Script/TheIsle.TIGameSession]` | The map the server loads. Gateway is the only official Evrima map, so leave it as Gateway unless you know another map name is installed. |
+| Discord invite | `Discord` in `[/Script/TheIsle.TIGameSession]` | A Discord invite link that players see. Leave it empty if you have none. |
+
+### The Isle: Access
+
+3 settings in `Game.ini`, shown under **Access** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Require a join password | `bServerPassword` in `[/Script/TheIsle.TIGameSession]` | Turns on the join password below. Off means anyone can join. Choices: `true` (Yes), `false` (No). |
+| Join password | `ServerPassword` in `[/Script/TheIsle.TIGameSession]` | The password players type to join. It is only used when the setting above is on. |
+| Whitelist only | `bServerWhitelist` in `[/Script/TheIsle.TIGameSession]` | Only the Steam accounts on the server's whitelist can join. Add the IDs by hand, as the guide explains. Choices: `true` (Yes), `false` (No). |
+
+### The Isle: Gameplay
+
+7 settings in `Game.ini`, shown under **Gameplay** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Dinosaur growth speed | `GrowthMultiplier` in `[/Script/TheIsle.TIGameSession]` | How fast young dinosaurs grow up. 1 is the game's normal speed. The guide says to keep it below 20, because higher numbers break growth. |
+| Corpse decay speed | `CorpseDecayMultiplier` in `[/Script/TheIsle.TIGameSession]` | How fast dead bodies disappear. 1 is the default; a higher number makes them disappear sooner. |
+| Allow human characters | `bEnableHumans` in `[/Script/TheIsle.TIGameSession]` | Lets players play as humans as well as dinosaurs. Off by default. Choices: `true` (Yes), `false` (No). |
+| Diet system | `bEnableDiets` in `[/Script/TheIsle.TIGameSession]` | Turns on the diet system, which decides what herbivores and carnivores can eat. On by default. Choices: `true` (Yes), `false` (No). |
+| Mutations | `bEnableMutations` in `[/Script/TheIsle.TIGameSession]` | Turns on the mutation system, which gives dinosaurs random traits. On by default. Choices: `true` (Yes), `false` (No). |
+| Allow replays | `bAllowReplay` in `[/Script/TheIsle.TIGameSession]` | Lets players record replays on the server. Off by default. Choices: `true` (Yes), `false` (No). |
+| Region spawning | `bUseRegionSpawning` in `[/Script/TheIsle.TIGameSession]` | Limits where players can spawn to certain regions of the map. Off by default. Choices: `true` (Yes), `false` (No). |
+
+### The Isle: Wildlife
+
+5 settings in `Game.ini`, shown under **Wildlife** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Spawn AI creatures | `bSpawnAI` in `[/Script/TheIsle.TIGameSession]` | Spawns the AI creatures that carnivores hunt for food. On by default. Choices: `true` (Yes), `false` (No). |
+| AI creature density | `AIDensity` in `[/Script/TheIsle.TIGameSession]` | How many AI creatures spawn, as a multiplier of the default. 1 is the default. |
+| AI spawn check (seconds) | `AISpawnInterval` in `[/Script/TheIsle.TIGameSession]` | Seconds between checks for spawning AI creatures. The default is 40. |
+| Spawn plants | `bSpawnPlants` in `[/Script/TheIsle.TIGameSession]` | Spawns the plants that herbivores eat. On by default. Choices: `true` (Yes), `false` (No). |
+| Plant density | `PlantSpawnMultiplier` in `[/Script/TheIsle.TIGameSession]` | How many plants grow, as a multiplier of the default. 1 is the default. |
+
+### The Isle: Time and weather
+
+5 settings in `Game.ini`, shown under **Time and weather** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Day length (minutes) | `ServerDayLengthMinutes` in `[/Script/TheIsle.TIGameSession]` | How long the daytime lasts, in real minutes. The default is 45. |
+| Night length (minutes) | `ServerNightLengthMinutes` in `[/Script/TheIsle.TIGameSession]` | How long the night lasts, in real minutes. The default is 20, shorter than the day on purpose. |
+| Changing weather | `bServerDynamicWeather` in `[/Script/TheIsle.TIGameSession]` | Changes the weather over time. On by default. Choices: `true` (Yes), `false` (No). |
+| Shortest time between weather changes (seconds) | `MinWeatherVariationInterval` in `[/Script/TheIsle.TIGameSession]` | The shortest time, in seconds, before the weather changes. The default is 600. |
+| Longest time between weather changes (seconds) | `MaxWeatherVariationInterval` in `[/Script/TheIsle.TIGameSession]` | The longest time, in seconds, before the weather changes. The default is 900. |
+
+### The Isle: Migration and patrols
+
+5 settings in `Game.ini`, shown under **Migration and patrols** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Migration zones | `bEnableMigration` in `[/Script/TheIsle.TIGameSession]` | Turns on the migration zones, where herds move around the map. On by default. Choices: `true` (Yes), `false` (No). |
+| Migration zone duration (seconds) | `MaxMigrationTime` in `[/Script/TheIsle.TIGameSession]` | How long a migration zone stays active, in seconds. The default is 5400 (1.5 hours). |
+| Mass migrations | `bEnableMassMigration` in `[/Script/TheIsle.TIGameSession]` | Turns on the larger migration events that happen every so often. On by default. Choices: `true` (Yes), `false` (No). |
+| Time between mass migrations (seconds) | `MassMigrationTime` in `[/Script/TheIsle.TIGameSession]` | Seconds between mass migration events. The default is 43200 (12 hours). |
+| Carnivore patrol zones | `bEnablePatrolZones` in `[/Script/TheIsle.TIGameSession]` | Turns on the zones where carnivores patrol. On by default. Choices: `true` (Yes), `false` (No). |
+
+## Mordhau
+
+Mordhau's server keeps its name and passwords in `Mordhau\Saved\Config\WindowsServer\Game.ini`, which the panel writes when the server is created and which the Settings tab edits. The player limit is on the start command (the **Launch options** on the Settings tab). The game rewrites Game.ini when it shuts down, so edit it only with the server stopped.
+
+- `Game.ini`: The server's name and passwords, in the server's session section. The game keeps its own settings for the rest, and rewrites the file when it shuts down.
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#mordhau).
+
+**The panel cannot stop the server cleanly.** The game stops with ^C in its own console window. The panel has no way to type into a console, so Stop closes the window and ends the process after 15 seconds. Before you press Stop (or update), open the server's window, which the panel keeps minimized on the taskbar, press Ctrl+C, and wait for it to close.
+**Two programs run.** The panel starts `MordhauServer.exe`, which starts `Mordhau\Binaries\Win64\MordhauServer-Win64-Shipping.exe`; the second one holds the ports.
+**The map is not in the form.** The start command uses the egg's first map, `/Game/Mordhau/Maps/Grad/FL_Grad`, as the first word after the program. Other maps are named as `MAPNAME/TYPE_NAME` in the egg's readme; change the map by editing the start script by hand.
+**Ports.** The game port (25900) is for UDP, the query port (25902) is the one the server browser asks, and the beacon port (25903) is one per server. The panel's firewall check opens UDP only. Change a port by editing the start script by hand, because the form does not rewrite the ports.
+**Map rotation and admins are not in the form.** Game.ini can list maps to rotate (MapRotation) and admins by SteamID, one line per entry. The sources disagree on which section holds MapRotation, so the panel does not offer them. Add them by hand only after you have checked the section on a real install.
+**Mods are not managed.** Mordhau's mods come from mod.io, not the Steam Workshop. The sources give the Mods= lines in Game.ini and a -ModDownload start flag, but they disagree on the section, so the panel does not set either.
+**Engine.ini is not in the Settings tab.** Its tick-rate keys come from one guide, which gives no defaults or allowed values. Edit it by hand only if you know what you want, with the server stopped.
+
+### Mordhau: Server
+
+1 setting in `Game.ini`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server name | `ServerName` in `[/Script/Mordhau.MordhauGameSession]` | The name players see in the in-game server browser. Up to 40 characters, the limit the Pterodactyl egg for this game uses. Changes apply the next time the server starts. |
+
+### Mordhau: Access
+
+2 settings in `Game.ini`, shown under **Access** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Join password | `ServerPassword` in `[/Script/Mordhau.MordhauGameSession]` | The password players must type to join. Leave it empty for a public server that anyone can join. Up to 20 characters, the limit the Pterodactyl egg uses. |
+| Admin password | `AdminPassword` in `[/Script/Mordhau.MordhauGameSession]` | A player who types AdminLogin in the in-game console, followed by this password, becomes an admin. Admins can add more admins, so share it only with people you fully trust. Up to 20 characters. |
+
+## Team Fortress 2
+
+Team Fortress 2 is set up with console variables ("convars"): lines of a name and a value in `server.cfg`, in the `tf\cfg` folder of the server. The panel writes that file with the server's name and password. The map, the player limit and the port are on the launch line.
+
+- `server.cfg`: The server's name and password, the remote console password, a contact address and the custom-content rules. Only the lines you set are in the file. The research found no other setting explained for this game, so the rest of the game's rules are not in the form.
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#team-fortress-2).
+
+The game reads the file when it starts, so stop and start the server after changing a setting.
+Friends join from the in-game console with `connect <your address>:<port>`, using the Game Port in the Ports section.
+The Steam login token is optional in GodlyPanel. The research says a token is needed to appear in the public server browser; without one the server still runs and can be joined by address. Add it with the Steam login token argument in Launch options. It is a secret: do not share it.
+The panel has no way to type into this server's console, so Stop closes its window and, after 15 seconds, ends the program. The research found no documented close command.
+Custom content: rules 1 need a whitelist file, pure_server_whitelist.txt, in tf\cfg, which the panel does not write. Add it yourself if you use rules 1.
+No mod support is set up: the research found no mod loader and no install method. A game update through the panel could reset files the game ships, so check the name and password after updating.
+The port in the Ports section is the game port (UDP for players, TCP for the remote console). The engine also uses UDP 27020 (SourceTV), UDP 27005 (client) and UDP 26900 (Steam). Two Source servers on one PC may clash on those; `-nohltv` turns SourceTV off.
+
+### Team Fortress 2: Server
+
+4 settings in `server.cfg`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server name | `hostname` | The name people see in the server browser. The panel writes it when it creates the server. |
+| Join password | `sv_password` | What players type to join. Leave it empty for a server anyone can join. |
+| Remote console password | `rcon_password` | The password that lets a remote console connect to the server (RCON). Choose a long one: anyone with it controls the server. The panel does not use the remote console for this server. |
+| Contact address | `sv_contact` | An e-mail address or other contact shown to players who look at the server's details, so they can reach whoever runs it. |
+
+### Team Fortress 2: Custom content
+
+1 setting in `server.cfg`, shown under **Custom content** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Custom content rules | `sv_pure` | Decides which custom skins, models and sprites players may use. The game's default is the minimal rules. Full rules (1) also read the whitelist file, pure_server_whitelist.txt, which the panel does not write: a server set to 1 without that file will not run as the rules say. Steam's own content only (2) blocks all custom content. Choices: `-1` (No file restrictions), `0` (Minimal rules (the game's default)), `1` (Full rules, plus the whitelist file), `2` (Steam's own content only). |
+
+## Counter-Strike 2
+
+Counter-Strike 2 is set up with console variables ("convars"): lines of a name and a value. `server.cfg` in the `game\csgo\cfg` folder holds the server's name, its password and whether it is LAN-only. The competitive mode's settings are in `gamemode_competitive_server.cfg` in the same folder. The map, the player limit and the port are on the launch line.
+
+- `server.cfg`: The server's name, its join password, the remote console password, who can join, whether cheats are allowed, sleep-when-empty and the bandwidth limit. Only the lines you set are in the file.
+- `gamemode_competitive_server.cfg`: The rules of the competitive mode: rounds, round and buy times, starting money, warm-up, friendly fire and team balancing. A setting you leave out keeps the game's own value.
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#counter-strike-2).
+
+The game reads the files when it starts, so stop and start the server after changing a setting.
+Friends join with the console command `connect <your address>:<port>`.
+The Steam login token is optional. Without one the server still starts, but it runs as LAN-only and is not listed publicly. Add it with the Steam login token argument in Launch options. It is a secret: do not share it.
+Create the token at steamcommunity.com/dev/managegameservers with app ID 730. The research found the account rules (a registered phone number and no community ban) on one host's page, not on Valve's; check them there.
+The game is a large download (about 60 GB). A game update through the panel is only effective when the server is updated too: stop every server first.
+The panel has no way to type into this server's console, so Stop closes its window and, after 15 seconds, ends the program. The research found no documented command to stop the server cleanly, so a match in progress may not be saved.
+Mods are not set up here. The plugin route is Metamod:Source with CounterStrikeSharp, but the research found no install steps, so plugins have to be added by hand under the server's addons folder.
+The competitive mode's file is only read in competitive mode. Starting the server in another mode with the Game mode argument uses that mode's own file, which this panel does not edit.
+The game port is UDP for players and the server list. SourceTV (UDP 27020) is off unless a setting turns it on, and the panel does not turn it on.
+
+### Counter-Strike 2 (server.cfg): Server
+
+3 settings in `server.cfg`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server name | `hostname` | The name people see in the server browser. The panel writes it when it creates the server. |
+| Join password | `sv_password` | What players type to join. Leave it empty for a server anyone can join. |
+| Remote console password | `rcon_password` | The password for the server's remote console (RCON). The panel does not use it, but anyone who knows it can control the server, so choose a long one. |
+
+### Counter-Strike 2 (server.cfg): Joining
+
+1 setting in `server.cfg`, shown under **Joining** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Who can join | `sv_lan` | Internet lets anyone join over the internet. LAN only restricts the server to players on your local network, so keep Internet for a server friends join from home. Choices: `0` (Internet), `1` (LAN only). |
+
+### Counter-Strike 2 (server.cfg): Game rules
+
+1 setting in `server.cfg`, shown under **Game rules** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Allow cheat commands | `sv_cheats` | Lets players use cheat commands, which have no effect while this is off. Keep it off on a server other people play on. Choices: `0` (Off), `1` (On). |
+
+### Counter-Strike 2 (server.cfg): Performance
+
+1 setting in `server.cfg`, shown under **Performance** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Sleep when empty | `sv_hibernate_when_empty` | When no one is connected, the server uses very little processor time. The Docker image's notes say this has been seen to crash servers, so leave it off unless you need it. Choices: `0` (Off), `1` (On). |
+
+### Counter-Strike 2 (server.cfg): Network
+
+1 setting in `server.cfg`, shown under **Network** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Highest bandwidth per player | `sv_maxrate` | The most data the server sends one player. 0 means no limit. |
+
+### Counter-Strike 2 (gamemode_competitive_server.cfg): Rounds
+
+3 settings in `gamemode_competitive_server.cfg`, shown under **Rounds** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Most rounds per match | `mp_maxrounds` | The number of rounds a match can run before it ends. The server's default is 24. |
+| Round time (minutes) | `mp_roundtime` | How many minutes a round lasts. The server's default is 1.92. |
+| Freeze time at round start | `mp_freezetime` | How long players are held still at the start of a round, before they can move. The server's default is 15. |
+
+### Counter-Strike 2 (gamemode_competitive_server.cfg): Money and time
+
+3 settings in `gamemode_competitive_server.cfg`, shown under **Money and time** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Buy time (seconds) | `mp_buytime` | How many seconds at the start of a round players can spend money on weapons. The server's default is 20. |
+| Starting money | `mp_startmoney` | How much money each player starts a match with. The server's default is 800. |
+| Warm-up length | `mp_warmuptime` | How long the warm-up before a match lasts. The server's default is 60. |
+
+### Counter-Strike 2 (gamemode_competitive_server.cfg): Teams and damage
+
+2 settings in `gamemode_competitive_server.cfg`, shown under **Teams and damage** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Friendly fire | `mp_friendlyfire` | Whether teammates can hurt each other. 1 turns it on and 0 turns it off; the server's default is 1. |
+| Balance teams automatically | `mp_autoteambalance` | Moves players between teams so the sides stay even. 1 turns it on and 0 turns it off; the server's default is 1. |
+
+## Mount & Blade II: Bannerlord
+
+Bannerlord's server reads its settings from `ds_config_server.txt` in the game's `Modules\Native` folder. The panel writes that file when it creates the server, with the name and the game mode. The login token, which players need to find the server in the public list, is typed into the server's creation form and sits in the start script.
+
+- `ds_config_server.txt`: The server's name, its game mode and the admin password for the web admin panel. The file also ends with the command that starts the server and its first mission, so the server does not wait in the intermission state. Only the lines the panel needs are in it.
+
+**The panel cannot stop the server cleanly.** The official page gives no stop command. Stop closes the server's window and ends the process after 15 seconds. Keep the window (it is minimized), and close it yourself first if you can.
+**The login token is a secret.** It is made in the game's multiplayer lobby with the console command `customserver.gettoken` (press the tilde key). It expires after 3 months, and the official page asks you to keep it private. The panel writes it into the start script.
+**Players need the same modules as the server.** Bannerlord's server takes mods as module folders, and the official page says players must load the same ones. The panel adds no mods.
+**No map is set by the panel.** The official page says maps must be registered in the config with commands such as `add_map_to_usable_maps`, and the research found no map names for the official build. Add maps by hand with the server stopped.
+**Ports.** The game port (25910) is UDP. The official page also gives TCP on the same number for the web admin panel and map downloads, which this panel has not checked.
+**Logs.** The panel starts the server with its log folder inside the server's folder, so the Logs tab can read them.
+
+### Bannerlord: Server
+
+2 settings in `ds_config_server.txt`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server name | `ServerName` | The name players see in the multiplayer server list. The official page's example is a plain sentence, so spaces are fine. |
+| Game mode | `GameType` | The mode the server plays: the official page lists Siege, Team deathmatch, Captain, Skirmish, Duel and Battle. The page does not say what each one plays like, and the panel does not check the mode against the game's maps. Choices: `Siege`, `TeamDeathmatch` (Team deathmatch), `Captain`, `Skirmish`, `Duel`, `Battle`. |
+
+### Bannerlord: Access
+
+1 setting in `ds_config_server.txt`, shown under **Access** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Admin password | `AdminPassword` | The password that protects the server's web admin panel. The official page says it is blank by default and says to set a strong one before the panel is reachable from outside your network. |
+
+## Insurgency: Sandstorm
+
+Insurgency: Sandstorm keeps most of its server settings in `Insurgency\Saved\Config\WindowsServer\Game.ini`, which this Settings tab edits. The map, the scenario and the player limit are on the start command, which the Launch options form shows in part. The admin list is `Insurgency\Config\Server\Admins.txt`, which the panel creates empty.
+
+- `Game.ini`: The game's settings, under the section headers the game reads. The Settings tab adds the ones listed here; the game keeps its own defaults for the rest.
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#insurgency-sandstorm).
+
+**The panel cannot stop the server cleanly.** The game stops with ^C in its own console window. The panel has no way to type into a console, so Stop closes the window and ends the process after 15 seconds. Before you press Stop (or update), open the server's window, which the panel keeps minimized on the taskbar, press Ctrl+C, and wait for it to close.
+**The map and scenario are fixed.** The start command uses the mod.io guide's example, `Oilfield?Scenario=Scenario_Refinery_Push_Security`, and the player limit is 28. Change them by editing the start script by hand. A typo in the map or scenario name makes the game fall back to Farmhouse, per the guide.
+**The join password is on the start command.** It is written after the map as `?Password=`, the form the mod.io guide shows. Changing it means editing the start script, or recreating the server.
+**Ports.** The game port (25940) is UDP. The query port (25942) is UDP and TCP, per the mod.io guide. The dossier's usual 27102 and 27131 are not used.
+**RCON is not set up, and the admin list is not in the form.** The RCON protocol and a stop command are not confirmed by the sources, so the panel does not use RCON. Edit Admins.txt by hand, with the server stopped.
+**Mods are not supported.** Mods come from mod.io and need a login that changed in update 1.20; the panel has no way to do that step.
+**Not confirmed on a real install.** Whether the server program is `InsurgencyServer.exe` in the install folder, and whether it is the process that stays running, are not confirmed by the sources. The Settings tab's keys and defaults come from the guide, not from the game's own files.
+
+### Insurgency: Sandstorm: Kill feed
+
+2 settings in `Game.ini`, shown under **Kill feed** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Kill feed | `bKillFeed` in `[/Script/Insurgency.INSGameMode]` | Shows who killed whom in a kill feed on screen. The game's default is off (False). Choices: `True` (Yes (True)), `False` (No (False)). |
+| Killer shown to the victim | `bKillerInfo` in `[/Script/Insurgency.INSGameMode]` | When a player dies, tells the victim who killed them and with what. The game's default is on (True). Choices: `True` (Yes (True)), `False` (No (False)). |
+
+### Insurgency: Sandstorm: Teams
+
+5 settings in `Game.ini`, shown under **Teams** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Team kills before a kick | `TeamKillLimit` in `[/Script/Insurgency.INSGameMode]` | How many team kills one player can make before the server kicks them. The game's default is 3. |
+| Friendly fire | `bAllowFriendlyFire` in `[/Script/Insurgency.INSMultiplayerMode]` | Lets players damage their own team. The game's default is on (True). Choices: `True` (Yes (True)), `False` (No (False)). |
+| Friendly fire damage | `FriendlyFireModifier` in `[/Script/Insurgency.INSMultiplayerMode]` | How much damage a friendly hit does, as a fraction of normal damage (0.2 means a fifth). The game's default is 0.2. |
+| Balance teams automatically | `bAutoBalanceTeams` in `[/Script/Insurgency.INSMultiplayerMode]` | Moves players between the two teams when one side has many more players. The game's default is on (True). Choices: `True` (Yes (True)), `False` (No (False)). |
+| Players may switch teams | `bAllowPlayerTeamSelect` in `[/Script/Insurgency.INSMultiplayerMode]` | Lets a player switch to the other team. The game's default is on (True). Choices: `True` (Yes (True)), `False` (No (False)). |
+
+### Insurgency: Sandstorm: Rounds and maps
+
+4 settings in `Game.ini`, shown under **Rounds and maps** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Map voting after a game | `bMapVoting` in `[/Script/Insurgency.INSMultiplayerMode]` | Lets players vote for the next map at the end of each game. The game's default is on (True). Choices: `True` (Yes (True)), `False` (No (False)). |
+| Use the map cycle | `bUseMapCycle` in `[/Script/Insurgency.INSMultiplayerMode]` | Keeps moving through the server's map cycle. If it is off, the current map repeats forever. The game's default is on (True). Choices: `True` (Yes (True)), `False` (No (False)). |
+| Freeze time at round start (seconds) | `PreRoundTime` in `[/Script/Insurgency.INSMultiplayerMode]` | How long players are frozen at the start of each round, in seconds. The game's default is 10. |
+| Intermission after a round (seconds) | `PostRoundTime` in `[/Script/Insurgency.INSMultiplayerMode]` | How long the screen between rounds stays up, in seconds. The game's default is 15. |
+
+### Insurgency: Sandstorm: Players
+
+3 settings in `Game.ini`, shown under **Players** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Idle kick time (seconds) | `IdleLimit` in `[/Script/Insurgency.INSMultiplayerMode]` | How long a player can stand still before the server kicks them, in seconds. The game's default is 150. |
+| Players needed per team to start | `MinimumPlayers` in `[/Script/Insurgency.INSMultiplayerMode]` | The fewest players each team needs before a game starts. The game's default is 1. |
+| AI bots | `bBots` in `[/Script/Insurgency.INSMultiplayerMode]` | Turns on AI bots to fill the teams. The game's default is off (False). Choices: `True` (Yes (True)), `False` (No (False)). |
+
+## Left 4 Dead
+
+Left 4 Dead is set up with console variables ("convars"): lines of a name and a value in `server.cfg`, in the `left4dead\cfg` folder of the server. The panel writes that file with the server's name, the password and `sv_lan 0`. The map, the player limit and the port are on the launch line.
+
+- `server.cfg`: The server's name, password and contact, the remote console password, whether it is local-network only, whether cheats and pausing are allowed, and the most data sent to one player. Only the lines you set are in the file.
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#left-4-dead).
+
+The game reads the file when it starts, so stop and start the server after changing a setting.
+Friends join with the console command `connect <your address>:<port>`.
+The form is short because the research found only a handful of settings that two sources agree on. Other settings still work by typing the name and its value as a new line in `server.cfg` (a setting the panel does not explain is still shown), but the panel cannot explain them yet.
+Add-ons (custom campaigns) are .vpk files in the `left4dead\addons` folder, put there by hand. Valve's page says to run `update_addon_paths;mission_reload` in the server console, or to restart the server. The panel has no console, so restart the server after adding one. The research found no Steam Workshop for this game.
+The Steam login token is optional. Valve says it is only needed when the server stops with error 18 or 106. Add it with the Steam login token argument in Launch options. It is a secret: do not share it.
+The panel has no way to type into this server's console, so Stop closes its window and, after 15 seconds, ends the program. The research found no documented close command.
+The port in the Ports section is the game port. The game also uses UDP 27020 (SourceTV). Two Source servers on one PC both want it, so the second one may take another number. `-nohltv` turns it off.
+
+### Left 4 Dead: Server
+
+4 settings in `server.cfg`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server name | `hostname` | The name people see in the server browser. The panel writes it when it creates the server. |
+| Join password | `sv_password` | What players type to join. Leave it empty for a server anyone can join. |
+| Admin contact | `sv_contact` | An email address or other contact for the person running the server. Shown to people who look at the server's details. |
+| Remote console password | `rcon_password` | The password for the server's remote console, which Valve says shares the game port. Choose a long one: anyone with it controls the server. The panel does not use the remote console for this server. |
+
+### Left 4 Dead: Joining
+
+1 setting in `server.cfg`, shown under **Joining** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Local network only | `sv_lan` | On makes a LAN server, useful to stop players joining from the internet: only players on your local network can join. Keep it off for a server friends join over the internet. Choices: `0` (Off), `1` (On). |
+
+### Left 4 Dead: Game rules
+
+2 settings in `server.cfg`, shown under **Game rules** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Allow cheat commands | `sv_cheats` | Lets players use cheat commands, which have no effect while this is off. Keep it off on a server other people play on. Choices: `0` (Off), `1` (On). |
+| Allow pausing | `sv_pausable` | Lets players pause the game. Off means nobody can pause it. Choices: `0` (Off), `1` (On). |
+
+### Left 4 Dead: Network
+
+1 setting in `server.cfg`, shown under **Network** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Most data per player | `sv_maxrate` | The most data, in bytes per second, the server sends to one player. 0 means no limit. Valve's page calls 0 unlimited. |
+
+## Zombie Panic! Source
+
+Zombie Panic! Source is set up with console variables ("convars"): lines of a name and a value in `server.cfg`, in the `zps\cfg` folder of the server. The panel writes that file with the server's name, the password and `sv_lan 0`. The map, the player limit and the port are on the launch line.
+
+- `server.cfg`: The server's name, password and contact, the remote console password, the browser region, whether it is local-network only, cheats, friendly fire, voice chat and file downloads. Only the lines you set are in the file.
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#zombie-panic-source).
+
+The game reads the file when it starts, so stop and start the server after changing a setting.
+Friends join with the console command `connect <your address>:<port>`.
+The form is short on purpose. The research found the settings above on two community pages, and the Valve pages for this game could not be read. Other settings still work by typing the name and its value as a new line in `server.cfg` (a setting the panel does not explain is still shown). The two pages disagree on some values, so those are not offered.
+Workshop items (`zps\data\collection.txt`), AngelScript plugins (`zps\default_plugins.json`), admin lists (`zps\data`) and map lists (`zps\mapcycle.txt`, `zps\maplist.txt`) are edited by hand; the panel does not manage them. The ZPS guide warns that a SteamCMD validate overwrites the admin, plugin and server configuration files, so keep a copy before an update.
+The Steam login token is optional. Valve says it is only needed when the server stops with error 18 or 106. Add it with the Steam login token argument in Launch options. It is a secret: do not share it.
+The panel has no way to type into this server's console, so Stop closes its window and, after 15 seconds, ends the program. The guide's way to stop the server is typing `quit` into the console, which the panel cannot do yet.
+The port in the Ports section is the game port. The game also uses UDP 27020 (SourceTV). Two Source servers on one PC both want it, so the second one may take another number. `-nohltv` turns it off.
+The first start downloads more game files and can take a long time (the Unraid template's note, from the research).
+
+### Zombie Panic! Source: Server
+
+5 settings in `server.cfg`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server name | `hostname` | The name people see in the server browser. The panel writes it when it creates the server. |
+| Join password | `sv_password` | What players type to join. Leave it empty for a server anyone can join. |
+| Admin contact | `sv_contact` | A contact email or other way to reach the person running the server. Shown to people who look at the server's details. |
+| Server region | `sv_region` | The part of the world the server is listed in the browser for. 255 means the whole world, which is the default. Choices: `0` (US East), `1` (US West), `2` (South America), `3` (Europe), `4` (Asia), `5` (Australia), `6` (Middle East), `7` (Africa), `255` (World (the default)). |
+| Remote console password | `rcon_password` | The password for the server's remote console. Anyone who enters it can run every server command, so choose a long one. The panel does not use the remote console for this server. |
+
+### Zombie Panic! Source: Joining
+
+1 setting in `server.cfg`, shown under **Joining** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Local network only | `sv_lan` | LAN-only mode, which hides the server from the internet, so only players on your local network can join. Keep it off for a server friends join over the internet. Choices: `0` (Off), `1` (On). |
+
+### Zombie Panic! Source: Game rules
+
+2 settings in `server.cfg`, shown under **Game rules** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Allow cheat commands | `sv_cheats` | Lets players use cheat commands, and turns off Steam achievements and stats for the server. Keep it off on a server other people play on. Choices: `0` (Off), `1` (On). |
+| Friendly fire | `mp_friendlyfire` | Lets players hurt their own team. Off by default; turn it on for team damage. Choices: `0` (Off), `1` (On). |
+
+### Zombie Panic! Source: Players and downloads
+
+2 settings in `server.cfg`, shown under **Players and downloads** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Voice chat | `sv_voiceenable` | Microphone voice chat between players. Off turns it off for the whole server. Choices: `0` (Off), `1` (On). |
+| Players can download files | `sv_allowdownload` | Lets players download custom files, such as maps or sounds, from the server when they join. Choices: `0` (Off), `1` (On). |
+
+## BrainBread 2
+
+BrainBread 2 is set up with console variables ("convars"): lines of a name and a value in `server.cfg`, in the `brainbread2\cfg` folder of the server. The panel writes that file with the server's name, the password and `sv_lan 0`. The map, the player limit, the port and the address are on the launch line.
+
+- `server.cfg`: The server's name, password and remote console password, whether it is local-network only, spectators, cheats, friendly fire, voice chat and file downloads. Only the lines you set are in the file.
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#brainbread-2).
+
+The game reads the file when it starts, so stop and start the server after changing a setting.
+Friends join with the console command `connect <your address>:<port>`.
+The port is the one thing to test first. The FireDaemon guide says it can be changed to anywhere from 27015 to 27020. The panel's default is 25954, outside that range, so a server on it may not be reachable as the guide describes. If it does not work, change the port in the Ports section to 27015, 27016, 27017, 27018, 27019 or 27020 and make sure no other server uses it.
+The `+ip` argument is 0.0.0.0 (all addresses). The guide says to use this PC's own address; that has not been tested with the panel.
+The form is short on purpose. The gameplay rules the XGamingServer page lists (zombie counts, round times, votes, scaling) are in files it runs from `server.cfg`; the research could not confirm that the game runs them, so they are not offered. Other settings still work by typing the name and its value as a new line in `server.cfg`, but the panel cannot explain them yet.
+Custom maps and content are files a person adds by hand: `.bsp` and `.nav` in `brainbread2\maps`, models, materials and sounds in their folders, and custom content under `brainbread2\custom`. The panel does not manage them. The Steam Workshop lines in `gameinfo.txt` may be removed if the server will not start, according to the guide.
+The Steam login token is optional. Valve's generic page says one is only needed when the server stops with error 18 or 106. Add it with the Steam login token argument in Launch options. It is a secret: do not share it.
+The panel has no way to type into this server's console, so Stop closes its window and, after 15 seconds, ends the program. The research found no console stop command for this game.
+
+### BrainBread 2: Server
+
+3 settings in `server.cfg`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server name | `hostname` | The name people see in the server browser. The panel writes it when it creates the server. |
+| Join password | `sv_password` | What players type to join. Leave it empty for a server anyone can join. |
+| Remote console password | `rcon_password` | The password for the server's remote console. Anyone who enters it can run every server command, so choose a long one. The panel does not use the remote console for this server. |
+
+### BrainBread 2: Joining
+
+2 settings in `server.cfg`, shown under **Joining** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Local network only | `sv_lan` | Makes a LAN server, which has no heartbeat to the server list and no authentication. Keep it off for a server friends join over the internet. Choices: `0` (Off), `1` (On). |
+| Allow spectators | `mp_allowspectators` | Lets people join as spectators, who watch the game without playing. Choices: `0` (Off), `1` (On). |
+
+### BrainBread 2: Game rules
+
+2 settings in `server.cfg`, shown under **Game rules** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Allow cheat commands | `sv_cheats` | Allows cheats on the server. It also disables Steam stats and achievements, the page's own note says. Keep it off on a server other people play on. Choices: `0` (Off), `1` (On). |
+| Friendly fire | `mp_friendlyfire` | Lets team members injure members of their own team. Choices: `0` (Off), `1` (On). |
+
+### BrainBread 2: Players and downloads
+
+2 settings in `server.cfg`, shown under **Players and downloads** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Voice chat | `sv_voiceenable` | Enables voice communication between players. Choices: `0` (Off), `1` (On). |
+| Players can download files | `sv_allowdownload` | Lets players download files, such as custom maps, from the server when they join. Choices: `0` (Off), `1` (On). |
+
+## Day of Defeat: Source
+
+Day of Defeat: Source is set up with console variables ("convars"): lines of a name and a value in `server.cfg`, in the `dod\cfg` folder of the server. The panel writes that file with the server's name, the password and `sv_lan 0`. The map, the player limit and the port are on the launch line.
+
+- `server.cfg`: The server's name and password, whether it is local-network only, whether cheats are allowed, the logging, and a few round and movement settings. Only the lines you set are in the file. Other game rules are not in the form because the research did not describe them.
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#day-of-defeat-source).
+
+The game reads the file when it starts, so stop and start the server after changing a setting.
+Friends join with the console command `connect <your address>:<port>`.
+The Steam login token is needed for other players to find the server in the public list. Create it for game id 232290 and add it with the Steam login token argument in Launch options. It is a secret: do not share it.
+The panel has no way to type into this server's console, so Stop closes its window and, after 15 seconds, ends the program. The research found no documented close command.
+No mod support is set up. The guides install SourceMod and MetaMod by hand; that is not covered here. A game update through the panel could reset a `server.cfg` that the game ships, so check the name and password after updating.
+The guides disagree on whether the game uses the port range 27015 to 27020 or a port of 2456 for players to connect. The panel uses the port set in the Ports section.
+
+### Day of Defeat: Source: Server
+
+3 settings in `server.cfg`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server name | `hostname` | The name people see in the server browser. The panel writes it when it creates the server. |
+| Join password | `sv_password` | What players type to join. Leave it empty for a server anyone can join. |
+| Remote console password | `rcon_password` | The password for the server's remote console (RCON). Anyone with it can run server commands, so choose a long one. The panel does not use it. |
+
+### Day of Defeat: Source: Joining
+
+1 setting in `server.cfg`, shown under **Joining** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Local network only | `sv_lan` | On makes a LAN server: only players on your local network can see and join it. Keep it off for a server friends join over the internet. Choices: `0` (Off), `1` (On). |
+
+### Day of Defeat: Source: Game rules
+
+5 settings in `server.cfg`, shown under **Game rules** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Allow cheat commands | `sv_cheats` | Lets players use cheat commands, which have no effect while this is off. Keep it off on a server other people play on. Choices: `0` (Off), `1` (On). |
+| Autoaim help | `sv_aim` | Turns on autoaim assistance, which helps players aim. The host example file turns it off. Choices: `0` (Off), `1` (On). |
+| Allow pausing | `pausable` | Lets players pause the game. The host example file turns it off. Choices: `0` (Off), `1` (On). |
+| Maximum movement speed | `sv_maxspeed` | The fastest a player can move. One host's example file sets 320; changing it changes how fast everyone runs. |
+| Round time limit (minutes) | `mp_timelimit` | How long a round or map lasts, in minutes, before the next one starts. Two host examples use 20 and 30. |
+
+### Day of Defeat: Source: Logging
+
+5 settings in `server.cfg`, shown under **Logging** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Write server logs | `log` | Turns the server's log output on or off. The guides suggest on, because it makes errors easier to track down. Choices: `on` (On), `off` (Off). |
+| Log bans | `sv_logbans` | Writes the server's bans into the server log. Choices: `0` (Off), `1` (On). |
+| Show log lines in the console | `sv_logecho` | Shows the log information in the server console as well. Choices: `0` (Off), `1` (On). |
+| Write logs to a file | `sv_logfile` | Writes the log information to a file. Choices: `0` (Off), `1` (On). |
+| Use one log file | `sv_log_onefile` | Writes the log into a single rolling file instead of separate files. Choices: `0` (Off), `1` (On). |
+
+## Fistful of Frags
+
+Fistful of Frags is set up with console variables ("convars"): lines of a name and a value in `server.cfg`, in the `fof\cfg` folder of the server. The panel writes that file with the server's name, the password and `sv_lan 0`. The map, the player limit and the port are on the launch line.
+
+- `server.cfg`: The server's name and password, the remote console password, the browser tags, the team and friendly-fire rules, bots, voice and downloads, and the logging. Only the lines you set are in the file.
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#fistful-of-frags).
+
+The game reads the file when it starts, so stop and start the server after changing a setting.
+Friends join with the console command `connect <your address>:<port>`, or the link `steam://connect/<address>:<port>`. The developer console must be on to type it.
+The guides disagree on the file name. This panel writes and edits `server.cfg`. One host guide says the server only reads `fofserver.cfg`; if your server ignores your changes, check which file it reads.
+The Steam login token is written into `server.cfg` as `sv_setsteamaccount`, the host guide's place for it. The research could not say whether public listing needs one. It is a secret: do not share it.
+The panel has no way to type into this server's console, so Stop closes its window and, after 15 seconds, ends the program. The guides disagree on whether the game answers a graceful shutdown.
+Plugins (Metamod:Source and SourceMod) are installed by hand; the panel does not set them up. Map files (.bsp) go in the fof\maps folder, and players need custom maps too.
+The game-mode setting (fof_sv_currentmode) is not in the form: the sources give different meanings for its numbers. A setting the file has that the panel does not explain is still shown.
+
+### Fistful of Frags: Server
+
+5 settings in `server.cfg`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server name | `hostname` | The name people see in the server browser. The panel writes it when it creates the server. |
+| Join password | `sv_password` | What players type to join. Leave it empty for a server anyone can join. |
+| Remote console password | `rcon_password` | The password for the server's remote console. Anyone with it can run server commands, so choose a long one. The panel does not use it. |
+| Browser tags | `sv_tags` | Words that show in the server browser so players can filter servers, such as vanilla or custom. |
+| Steam login token | `sv_setsteamaccount` | The Steam Game Server Login Token, which other players need to find the server in the public list. Create one at steamcommunity.com/dev/managegameservers for game id 295230. Treat it like a password. |
+
+### Fistful of Frags: Joining
+
+1 setting in `server.cfg`, shown under **Joining** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Local network only | `sv_lan` | On makes the server local-network only: it will not show on the internet, and only players on your network can join. Keep it off for a server friends join over the internet. Choices: `0` (Off), `1` (On). |
+
+### Fistful of Frags: Game rules
+
+6 settings in `server.cfg`, shown under **Game rules** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Allow cheat commands | `sv_cheats` | Lets players use cheat commands, which have no effect while this is off. Keep it off on a server other people play on. Choices: `0` (Off), `1` (On). |
+| Team play | `mp_teamplay` | Free-for-all puts every player against every other. Teams splits players into teams in the team modes. Choices: `0` (Free-for-all), `1` (Teams). |
+| Number of teams | `fof_sv_maxteams` | How many teams the server uses, from 2 to 4. The guide lists the team names for each number. Choices: `2` (2 teams), `3` (3 teams), `4` (4 teams). |
+| Friendly fire | `mp_friendlyfire` | Lets players hurt their own team. Off keeps teammates from injuring each other. Choices: `0` (Off), `1` (On). |
+| Map time limit (minutes) | `mp_timelimit` | Minutes on one map before the server moves to the next map by itself. 0 turns the limit off. One host example uses 45. |
+| Everyone hears everyone | `sv_alltalk` | Lets players hear all other players, whatever team they are on. Choices: `0` (Off), `1` (On). |
+
+### Fistful of Frags: Bots
+
+2 settings in `server.cfg`, shown under **Bots** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Let bots join | `fof_sv_bot_dynamicjoin` | Allows bots to join the server to fill its slots. Choices: `0` (Off), `1` (On). |
+| Bot share of slots | `fof_sv_bot_slotpct` | The share of the server's slots bots may take, written as the guide does: 0.40 in the example. |
+
+### Fistful of Frags: Voice and downloads
+
+3 settings in `server.cfg`, shown under **Voice and downloads** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Voice chat | `sv_voiceenable` | Lets players talk to each other through a microphone. Choices: `0` (Off), `1` (On). |
+| Players may download files | `sv_allowdownload` | Lets players download custom files, such as maps, from the server. It is slow; a web address is faster (see below). Choices: `0` (Off), `1` (On). |
+| Download web address | `sv_downloadurl` | A web address players download custom files from, if you host them on a web server. Leave it empty to use the server. |
+
+### Fistful of Frags: Logging
+
+4 settings in `server.cfg`, shown under **Logging** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Write server logs | `log` | Turns the server's log output on or off. The guides suggest on, because it makes errors easier to track down. Choices: `on` (On), `off` (Off). |
+| Log bans | `sv_logbans` | Writes the server's bans into the server log. Choices: `0` (Off), `1` (On). |
+| Show log lines in the console | `sv_logecho` | Shows the log information in the server console as well. Choices: `0` (Off), `1` (On). |
+| Write logs to a file | `sv_logfile` | Writes the log information to a file. Choices: `0` (Off), `1` (On). |
+
+## No More Room in Hell
+
+No More Room in Hell is set up with console variables ("convars"): lines of a name and a value in `server.cfg`, in the `nmrih\cfg` folder of the server. The panel writes that file with the server's name, the password and `sv_lan 0`. The map, the player limit and the port are on the launch line.
+
+- `server.cfg`: The server's name and password, the remote console password, the browser tags, the difficulty, the round and map rules, friendly fire, voice and downloads, and the logging. Only the lines you set are in the file.
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#no-more-room-in-hell).
+
+The game reads the file when it starts, so stop and start the server after changing a setting.
+Friends join with the console command `connect <your address>:<port>`.
+The install may need a Steam account that owns the game, and one source says anonymous login does not work for this server. If the install fails, the install step is the thing to check first.
+The Steam login token is needed for other players to join. It is a secret: do not share it.
+The guides disagree on the port players use: the generic 27015, or 2456 in one host guide. The panel uses the port set in the Ports section.
+The guides disagree on the start map (nmo_broadway or de_dust). The panel starts nmo_broadway; change it in the Launch options if it does not load.
+The panel has no way to type into this server's console, so Stop closes its window and, after 15 seconds, ends the program. No quit command was found.
+Map rotation (mapcycle.txt) and plugins (Metamod:Source and SourceMod) are not set up by the panel. Custom maps go in the nmrih\maps folder, and players need them too.
+
+### No More Room in Hell: Server
+
+5 settings in `server.cfg`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server name | `hostname` | The name people see in the server browser. The panel writes it when it creates the server. |
+| Join password | `sv_password` | What players type to join. Leave it empty for a server anyone can join. |
+| Remote console password | `rcon_password` | The password for the server's remote console. Anyone with it can run server commands, so choose a long one. The panel does not use it. |
+| Browser tags | `sv_tags` | Words that show in the server browser so players can filter servers: vanilla for the default rules, custom for custom gameplay or mods. |
+| Steam login token | `sv_setsteamaccount` | The Steam Game Server Login Token, which other players need to join the server. Create one at steamcommunity.com/dev/managegameservers for game id 317670. Treat it like a password. |
+
+### No More Room in Hell: Joining
+
+1 setting in `server.cfg`, shown under **Joining** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Local network only | `sv_lan` | On makes the server local-network only: it will not show on the internet, and only players on your network can join. Keep it off for a server friends join over the internet. Choices: `0` (Off), `1` (On). |
+
+### No More Room in Hell: Game rules
+
+6 settings in `server.cfg`, shown under **Game rules** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Allow cheat commands | `sv_cheats` | Lets players use cheat commands, which have no effect while this is off. Keep it off on a server other people play on. Choices: `0` (Off), `1` (On). |
+| Difficulty | `sv_difficulty` | The server's difficulty, casual or classic. The guide does not say what each one changes. Choices: `casual` (Casual), `classic` (Classic). |
+| Friendly fire | `mp_friendlyfire` | Lets players hurt their own team. Off keeps teammates from injuring each other. Choices: `0` (Off), `1` (On). |
+| Map time limit (minutes) | `mp_timelimit` | Minutes on one map before the server moves to the next map by itself. The guide's example uses 45. |
+| Rounds per map | `mp_maxrounds` | The number of rounds played on one map before the server moves to the next. The guide's example uses 2. |
+| Everyone hears everyone | `sv_alltalk` | Lets players hear all other players, whatever team they are on. Choices: `0` (Off), `1` (On). |
+
+### No More Room in Hell: Voice and downloads
+
+3 settings in `server.cfg`, shown under **Voice and downloads** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Voice chat | `sv_voiceenable` | Lets players talk to each other through a microphone. Choices: `0` (Off), `1` (On). |
+| Players may download files | `sv_allowdownload` | Lets players download custom files, such as maps, from the server. It is slow; a web address is faster (see below). Choices: `0` (Off), `1` (On). |
+| Download web address | `sv_downloadurl` | A web address players download custom files from, if you host them on a web server. Leave it empty to use the server. |
+
+### No More Room in Hell: Logging
+
+4 settings in `server.cfg`, shown under **Logging** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Write server logs | `log` | Turns the server's log output on or off. The guides suggest on, because it makes errors easier to track down. Choices: `on` (On), `off` (Off). |
+| Log bans | `sv_logbans` | Writes the server's bans into the server log. Choices: `0` (Off), `1` (On). |
+| Show log lines in the console | `sv_logecho` | Shows the log information in the server console as well. Choices: `0` (Off), `1` (On). |
+| Write logs to a file | `sv_logfile` | Writes the log information to a file. Choices: `0` (Off), `1` (On). |
+
+## Insurgency (2014)
+
+Insurgency (2014) is set up with console variables ("convars"): lines of a name and a value in `server.cfg`, in the `insurgency\cfg` folder of the server. The panel writes that file with the server's name and password. The map and the player limit are on the launch line.
+
+- `server.cfg`: The server's name, its join password, the remote console password, the minimum data rate and the map-rotation file. Only the lines you set are in the file. Other settings are not in the form because the research did not describe them clearly enough to explain them.
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#insurgency-2014).
+
+The game reads the file when it starts, so stop and start the server after changing a setting.
+Friends join from the in-game console with `connect <your address>:<port>`.
+The panel has no way to type into this server's console, so Stop closes its window and, after 15 seconds, ends the program. The research found no documented quit command.
+Matchmaking playlists (sv_playlist) are not offered: the sources disagree on the values they take.
+No mod support is set up: the research could not confirm how Workshop content is installed.
+
+### Insurgency (2014): Server
+
+3 settings in `server.cfg`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server name | `hostname` | The name people see in the server browser. The panel writes it when it creates the server. |
+| Join password | `sv_password` | What players type to join. Leave it empty for a server anyone can join. |
+| Remote console password | `rcon_password` | The password for the server's remote console (RCON). Anyone with it can run server commands, so choose a long one. The panel does not use it. |
+
+### Insurgency (2014): Network
+
+1 setting in `server.cfg`, shown under **Network** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Minimum data rate | `sv_minrate` | The lowest data rate, in bytes per second, a player's connection may be set to. The Valve page's example uses 30000; the page gives no default. |
+
+### Insurgency (2014): Maps
+
+1 setting in `server.cfg`, shown under **Maps** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Map rotation file | `mapcyclefile` | The file that lists the maps the server cycles through. The Valve page names the files below; mapcycle.txt holds the most popular options. Choices: `mapcycle.txt` (Mostly the popular modes (mapcycle.txt, the default)), `mapcycle_all.txt` (Every PvP map and mode combination (mapcycle_all.txt)), `mapcycle_ambush.txt` (Ambush (VIP) mode only (mapcycle_ambush.txt)), `mapcycle_attackdefend.txt` (A mix of attack and defend modes (mapcycle_attackdefend.txt)), `mapcycle_cooperative.txt` (Cooperative: checkpoint, outpost and hunt (mapcycle_cooperative.txt)), `mapcycle_firefight.txt` (All Firefight maps (mapcycle_firefight.txt)), `mapcycle_flashpoint.txt` (All Flashpoint maps (mapcycle_flashpoint.txt)), `mapcycle_infiltrate.txt` (All Infiltrate (capture the flag) maps (mapcycle_infiltrate.txt)), `mapcycle_objrespawn.txt` (Modes with respawns for completing objectives (mapcycle_objrespawn.txt)), `mapcycle_occupy.txt` (All Occupy maps (mapcycle_occupy.txt)), `mapcycle_push.txt` (All Push maps (mapcycle_push.txt)), `mapcycle_singlelife.txt` (A mix of the single-life modes (mapcycle_singlelife.txt)), `mapcycle_skirmish.txt` (All Skirmish maps (mapcycle_skirmish.txt)), `mapcycle_workshop.txt` (The Workshop rotation (mapcycle_workshop.txt)). |
+
+## Pirates, Vikings, and Knights II
+
+Pirates, Vikings, and Knights II is set up with console variables ("convars"): lines of a name and a value in `server.cfg`, in the `pvkii\cfg` folder of the server. The panel writes that file with the server's name, the password and `sv_lan 0`. The map, the player limit and the port are on the launch line.
+
+- `server.cfg`: The server's name and password, whether it is listed on the internet, the download settings, the round and map timing, the friendly-fire and voice settings, and the logging. Only the lines you set are in the file.
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#pirates-vikings-and-knights-ii).
+
+The game reads the file when it starts, so stop and start the server after changing a setting.
+Friends join with the console command `connect <your address>:<port>`.
+The panel has no way to type into this server's console, so Stop closes its window and, after 15 seconds, ends the program. The research found no developer statement of a quit command.
+No Steam login token is asked for. The research could not say whether this game needs one for the public server list.
+SourceMod plugins are not set up here: a host guide copies them into the folders by hand, which the panel does not do.
+
+### Pirates, Vikings, and Knights II: Server
+
+5 settings in `server.cfg`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server name | `hostname` | The name people see in the server browser. The panel writes it when it creates the server. |
+| Join password | `sv_password` | What players type to join. Leave it empty for a server anyone can join. |
+| Remote console password | `rcon_password` | The password for the server's remote console (RCON). Anyone with it can run server commands, so choose a long one. The panel does not use it. |
+| Admin email | `sv_contact` | The server admin's email address, the server's contact. The page's example is email@example.com; use an address you are happy to share. |
+| Browser tags | `sv_tags` | Words, separated by commas, that help players filter the server in the in-game browser. The page's examples are vanilla and custom. |
+
+### Pirates, Vikings, and Knights II: Joining
+
+3 settings in `server.cfg`, shown under **Joining** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Local network only | `sv_lan` | On makes a LAN server: it is not listed on the internet. Keep it off for a server friends join over the internet. Choices: `0` (Off), `1` (On). |
+| Players may download maps | `sv_allowdownload` | Lets players download custom maps and textures from the server, at the slow speed the page gives (20 kbps). Turn it off to stop that. Choices: `0` (Off), `1` (On). |
+| Download web address | `sv_downloadurl` | A web address players can download custom maps and textures from, with no transfer limit. The page's example is http://example.com/custom. |
+
+### Pirates, Vikings, and Knights II: Game rules
+
+8 settings in `server.cfg`, shown under **Game rules** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Minutes per map | `mp_timelimit` | How many minutes one map is played before the game moves to the next one. The file's example uses 20. |
+| Wait for round end before changing map | `mp_timelimit_waitroundend` | When the map time is up, wait for the current round to end before changing map. Choices: `0` (Off), `1` (On). |
+| Round length (minutes) | `mp_roundtime` | How long one round lasts, in minutes. The page's default is 3. |
+| Rounds per map | `mp_roundlimit` | How many rounds are played on a map before it changes. The page's default is 0. |
+| Wins to end the game | `mp_winlimit` | How many round wins end the game. The page's default is 0. |
+| Friendly fire | `mp_friendlyfire` | On lets team members hurt their own team. Off keeps teammates safe from each other. Choices: `0` (Off), `1` (On). |
+| Voice chat | `sv_voiceenable` | Lets players talk to each other by microphone. The page's default is on. Choices: `0` (Off), `1` (On). |
+| Everyone hears everyone | `sv_alltalk` | On lets all players hear each other's voice chat, not only their team's. Choices: `0` (Off), `1` (On). |
+
+### Pirates, Vikings, and Knights II: Logging
+
+5 settings in `server.cfg`, shown under **Logging** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Write server logs | `log` | Turns the server's logging on or off. The page's description covers logging to a file, the console and over the network. Choices: `on` (On), `off` (Off). |
+| Log bans | `sv_logbans` | Writes the server's bans into the server log. The page's default is on. Choices: `0` (Off), `1` (On). |
+| Show log lines in the console | `sv_logecho` | Shows the log information in the server console as well. The page's default is on. Choices: `0` (Off), `1` (On). |
+| Write logs to a file | `sv_logfile` | Writes the log information to a file. The page's default is on. Choices: `0` (Off), `1` (On). |
+| Use one log file | `sv_log_onefile` | Writes the log into a single file instead of separate files. The page's default is off. Choices: `0` (Off), `1` (On). |
+
+## Dystopia
+
+Dystopia is set up with console variables ("convars"): lines of a name and a value in `server.cfg`, in the `dystopia\cfg` folder of the server. The panel writes that file with the server's name, the password, `sv_lan 0` and `log on`. The map and the port are on the launch line.
+
+- `server.cfg`: The server's name and password, whether it shows on the internet, the round and map timing, the friendly-fire and team settings, the vote settings, and the logging. Only the lines you set are in the file.
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#dystopia).
+
+The game reads the file when it starts, so stop and start the server after changing a setting.
+Friends join from the in-game console with `connect <your address>:<port>`.
+No Steam login token is asked for: the guides say a server without one still shows in the server browser.
+The panel has no way to type into this server's console, so Stop closes its window and, after 15 seconds, ends the program. The research found no documented quit command.
+The map list (cfg\mapcycle.txt) is not offered: the research did not find its format.
+No mod support is set up. The research found no server-side mod install method for Dystopia.
+
+### Dystopia: Server
+
+4 settings in `server.cfg`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server name | `hostname` | The name people see in the server browser. The panel writes it when it creates the server. |
+| Join password | `sv_password` | What players type to join. Leave it empty for a server anyone can join. |
+| Remote console password | `rcon_password` | The password for the server's remote console (RCON). Anyone with it can run server commands, so choose a long one. The panel does not use it. |
+| Admin email | `sv_contact` | The server admin's email address, as the server's contact. The guide's example is email@example.com. |
+
+### Dystopia: Joining
+
+2 settings in `server.cfg`, shown under **Joining** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Local network only | `sv_lan` | On makes a LAN server: the server does not show on the internet. Keep it off for a server friends join over the internet. Choices: `0` (Off), `1` (On). |
+| Everyone hears everyone | `sv_alltalk` | On lets all players hear each other's voice chat, not only their team's. Choices: `0` (Off), `1` (On). |
+
+### Dystopia: Game rules
+
+9 settings in `server.cfg`, shown under **Game rules** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Minutes per round | `mp_timelimit` | How long a round lasts, in minutes, before the next one starts. The file says the usual value for Dystopia is 20. |
+| Rounds per map | `mp_rounds` | How many rounds are played before the map changes. Setting it to 0 is the same as 1, the file says. |
+| Stopwatch mode | `mp_stopwatch` | On gives twice the number of rounds set by Rounds per map on each map, as Stopwatch play does. Choices: `0` (Off), `1` (On). |
+| Friendly fire | `mp_friendlyfire` | On lets players hurt their own team. Off keeps teammates safe from each other. Choices: `0` (Off), `1` (On). |
+| Keep teams even | `mp_autoteambalance` | On lets the server move players automatically so the teams stay even. Choices: `0` (Off), `1` (On). |
+| Chat time after a round (seconds) | `mp_chattime` | How many seconds players can chat after a round ends, before the next one starts. |
+| Allow cheat commands | `sv_cheats` | Lets players use cheat commands, which have no effect while this is off. Keep it off on a server other people play on. Choices: `0` (Off), `1` (On). |
+| Kick idle players | `sv_idlekick` | What happens to players who sit idle: 0 never kicks them, 1 kicks non-spectators, 2 kicks any player. Choices: `0` (Never), `1` (Non-spectators), `2` (Anyone). |
+| Team-kill punish votes | `mp_punishvotes` | How many punish votes against a team-killer ban him from the server. The file says 0 turns this off. |
+
+### Dystopia: Voting
+
+9 settings in `server.cfg`, shown under **Voting** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Players may call votes | `mp_allowvoting` | On lets players start votes at all. The other vote settings only matter when this is on. Choices: `0` (Off), `1` (On). |
+| Vote to change map | `mp_allowvoting_map` | On lets players vote to change the map. Choices: `0` (Off), `1` (On). |
+| Vote to restart map | `mp_allowvoting_maprestart` | On lets players vote to restart the map. Choices: `0` (Off), `1` (On). |
+| Vote to balance teams | `mp_allowvoting_balanceteams` | On lets players vote to balance the teams. Choices: `0` (Off), `1` (On). |
+| Vote to kick players | `mp_allowvoting_kick` | On lets players vote to kick or ban another player. Choices: `0` (Off), `1` (On). |
+| Vote-ban length (minutes) | `mp_votekick_bantime` | How long a player banned by a vote stays banned, in minutes. 0 means a vote only kicks the player out. |
+| Votes needed to pass (percent) | `mp_votepct` | The share of players, as a percentage, needed for a vote to pass. The file's example is 51. |
+| Vote to toggle Stopwatch | `mp_allowvoting_stopwatch` | On lets players vote to switch Stopwatch mode on or off. Choices: `0` (Off), `1` (On). |
+| Vote to move a player to spectators | `mp_allowvoting_forcespec` | On lets players vote to move another player onto the spectators' team. Choices: `0` (Off), `1` (On). |
+
+### Dystopia: Logging
+
+5 settings in `server.cfg`, shown under **Logging** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Write server logs | `log` | Turns the server's logging on or off. The panel writes log on, which the guides recommend. Choices: `on` (On), `off` (Off). |
+| Log bans | `sv_logbans` | Writes the server's bans into the server log. Choices: `0` (Off), `1` (On). |
+| Show log lines in the console | `sv_logecho` | Shows the log information in the server console as well. Choices: `0` (Off), `1` (On). |
+| Write logs to a file | `sv_logfile` | Writes the log information to a file. Choices: `0` (Off), `1` (On). |
+| Use one log file | `sv_log_onefile` | Writes the log into a single file instead of separate files. Choices: `0` (Off), `1` (On). |
+
+## Empires
+
+Empires is set up with console variables ("convars"): lines of a name and a value in `server.cfg`, in the `empires\cfg` folder of the server. The panel writes that file with the server's name and the password. The map, the player limit and the port are on the launch line.
+
+- `server.cfg`: The server's name, the join password, the remote console password and whether cheat commands are allowed. Only the lines you set are in the file. The research found no other setting names for this game with a description, so the rest of the game's rules are not in the form.
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#empires).
+
+The game reads the file when it starts, so stop and start the server after changing a setting.
+Friends join with the console command `connect <your address>:<port>`.
+The form is short because the research found only a handful of named settings. A setting the file has that the panel does not explain is still shown, and you can type a new one as a line in `server.cfg`.
+The panel has no way to type into this server's console, so Stop closes its window and, after 15 seconds, ends the program. The research found no documented close command, so a save may not finish.
+Mods (SourceMod and Metamod plugins) are not set up by the panel. They are copied into the server's folders by hand, and players must run the same Empires version as the server. Keep updates on.
+The map and player limit come from the research's example launch line. Check the map name against the game's own maps before you rely on it.
+
+### Empires: Server
+
+3 settings in `server.cfg`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server name | `hostname` | The name people see in the server browser. The panel writes it when it creates the server. |
+| Join password | `sv_password` | What players type to join. Leave it empty for a server anyone can join. |
+| Remote console password | `rcon_password` | The password for the server's remote console (RCON). Anyone with it can run server commands, so choose a long one. The host guide says 8 to 32 letters, numbers, dashes or underscores. The panel does not use it. |
+
+### Empires: Game rules
+
+1 setting in `server.cfg`, shown under **Game rules** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Allow cheat commands | `sv_cheats` | Lets players use cheat commands. The sample server.cfg has it at 0 (off). Keep it off on a server other people play on. |
+
+## Double Action: Boogaloo
+
+Double Action is set up with console variables ("convars"): lines of a name and a value in `server.cfg`, in the `dab\cfg` folder of the server. The panel writes that file with the server's name, the password and `sv_lan 0`. The map, the player limit and the port are on the launch line.
+
+- `server.cfg`: The server's name and password, the remote console password, whether it is local-network only, votes, teams, friendly fire and downloads. Only the lines you set are in the file. The values are typed in, since the research found no list of allowed values.
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#double-action-boogaloo).
+
+The game reads the file when it starts, so stop and start the server after changing a setting.
+Friends join with the console command `connect <your address>:<port>`.
+The game does not respond to a graceful shutdown, according to its vendor. The panel's Stop closes the window and, after 15 seconds, ends the program, so changes that are only in memory may be lost. Stop the server before an update.
+The folder of the settings file (dab\cfg) and the port protocol are not confirmed by the research. Check that the server reads the file the panel writes.
+The Steam store page says the dedicated server is no longer on the store. The install still comes from SteamCMD, according to the vendor guides, but that may change.
+No mods are set up by the panel: the research found no server mod method.
+
+### Double Action: Server
+
+3 settings in `server.cfg`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server name | `hostname` | The name people see in the server browser. The panel writes it when it creates the server. |
+| Join password | `sv_password` | What players type to join. Leave it empty for a server anyone can join. |
+| Remote console password | `rcon_password` | The password for the server's remote console (RCON). Anyone with it can run server commands, so choose a long one. The panel does not use it. |
+
+### Double Action: Joining
+
+3 settings in `server.cfg`, shown under **Joining** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Local network only | `sv_lan` | Set 0 for a server friends join over the internet. 1 keeps it off the internet: no listing and no Steam connection, so only players on your local network can join. |
+| Allow votes | `sv_allow_votes` | Lets players vote on things such as changing the map. Set 1 to allow votes, 0 to stop them. |
+| Allow spectators | `mp_allowspectators` | Lets players watch the game without playing. Set 1 to allow spectators, 0 to stop them. |
+
+### Double Action: Game rules
+
+7 settings in `server.cfg`, shown under **Game rules** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Team play | `mp_teamplay` | Turns on team-based play, where players fight in teams. Set 0 for free-for-all. |
+| Friendly fire | `mp_friendlyfire` | Lets team members injure each other. Set 1 to allow it, 0 to protect teammates. |
+| Fall damage | `mp_falldamage` | Players take damage from long falls. Set 1 to turn it on, 0 to turn it off. |
+| Force respawn | `mp_forcerespawn` | Makes every player respawn when they die, so nobody waits to come back. Set 1 to turn it on, 0 to turn it off. |
+| Kill limit | `mp_fraglimit` | The number of kills at which the map ends. Set 0 for no kill limit. |
+| Time limit (minutes) | `mp_timelimit` | How long each map lasts, in minutes. The sample uses 20. Set 0 for no time limit. |
+| Team size difference | `mp_limitteams` | The most players one team can have over the other before players are blocked from joining it. Set 0 to turn the check off. |
+
+### Double Action: Voice and chat
+
+2 settings in `server.cfg`, shown under **Voice and chat** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Voice chat | `sv_voiceenable` | Turns voice chat on (1) or off (0) for players. |
+| Everyone hears everyone | `sv_alltalk` | Lets players hear all other players, whatever team they are on. Set 1 to allow it, 0 to keep teams apart. |
+
+### Double Action: Downloads
+
+3 settings in `server.cfg`, shown under **Downloads** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Allow downloads | `sv_allowdownload` | Lets players download files they are missing, such as maps or models, from the server. It is slow, so a download site (below) is better. |
+| Allow uploads | `sv_allowupload` | Lets players upload their own customisation files to the server. |
+| Download website | `sv_downloadurl` | The web address players can get missing files from, instead of the server itself. Leave it empty if you do not have one. |
+
+### Double Action: Bots
+
+1 setting in `server.cfg`, shown under **Bots** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Number of bots | `bot_quota` | How many bots the server tries to keep in the game. The sample uses 2. |
+
+## Half-Life Dedicated Server
+
+This server runs Counter-Strike 1.6 from the `cstrike` folder. Its settings are lines of a name and a value in `server.cfg`, in the `cstrike` folder of the server (it replaces the stock one). The panel writes that file with the server's name, the password and `sv_lan 0`. The map, the player limit and the port are on the launch line.
+
+- `server.cfg`: The server's name and password, whether it is local-network only, whether cheats are allowed, and a few round and movement settings. Only the lines you set are in the file.
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#half-life-dedicated-server).
+
+The server runs Counter-Strike 1.6 from the cstrike folder. Other games that use this program need other folders and are not set up here.
+The settings are in server.cfg. The game reads it when it starts, so stop and start the server after changing a setting.
+Friends join with the console command `connect <your address>:<port>`.
+Valve no longer updates this server, and the guides suggest ReHLDS for a newer engine. This panel does not install ReHLDS or any mod.
+The panel has no way to type into this server's console, so Stop closes its window and, after 15 seconds, ends the program. The research found no documented close command.
+
+### Half-Life (GoldSrc) server: Server
+
+2 settings in `server.cfg`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server name | `hostname` | The name people see in the server browser. The panel writes it when it creates the server. |
+| Join password | `sv_password` | What players type to join. Leave it empty for a server anyone can join. |
+
+### Half-Life (GoldSrc) server: Joining
+
+1 setting in `server.cfg`, shown under **Joining** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Local network only | `sv_lan` | On makes a LAN server: only players on your local network can see and join it. Keep it off for a server friends join over the internet. Choices: `0` (Off), `1` (On). |
+
+### Half-Life (GoldSrc) server: Game rules
+
+4 settings in `server.cfg`, shown under **Game rules** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Allow cheat commands | `sv_cheats` | Lets players use cheat commands. The example server file turns them off; keep them off on a server other people play on. Choices: `0` (Off), `1` (On). |
+| Maximum movement speed | `sv_maxspeed` | The fastest a player can move. One example file sets 320; changing it changes how fast everyone runs. |
+| Map time limit (minutes) | `mp_timelimit` | How many minutes a map lasts before it changes. The example server file uses 20. |
+| Rounds before map change | `mp_maxrounds` | The number of rounds played before the map changes. |
+
+## IOSoccer
+
+IOSoccer is set up with console variables ("convars"): lines of a name and a value in `server.cfg`, in the `iosoccer\cfg` folder of the server. The panel writes that file with the server's name, the password and `sv_lan 0`. The map, the player limit and the port are on the launch line.
+
+- `server.cfg`: The server's name and password, whether it is local-network only, and the match rules: extra time, penalties, offside, keepers and captains. It also has the voice chat, file download settings and logging. Only the lines you set are in the file.
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#iosoccer).
+
+The game reads the file when it starts, so stop and start the server after changing a setting.
+Friends join with the console command `connect <your address>:<port>`.
+The panel has no way to type into this server's console, so Stop closes its window and, after 15 seconds, ends the program. The research found no stop command the panel can send.
+No mod support is set up. The hosting guides install Metamod:Source and SourceMod by hand, and custom maps and team kits need a download server; none of that is covered here. Server-side plugins and custom maps change how the server is run, so check the server after each game update.
+Not in the form: the per-side player limit (mp_maxplayers, 1 to 11) and the time settings for breaks between halves, because the sources give different names or no units for them. Set them by hand in the server's cfg folder if you need them.
+
+### IOSoccer: Server
+
+4 settings in `server.cfg`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server name | `hostname` | The name people see in the server browser. The panel writes it when it creates the server. |
+| Join password | `sv_password` | What players type to join. Leave it empty for a server anyone can join. |
+| Remote console password | `rcon_password` | The password for the server's remote console (RCON). Anyone with it can run server commands, so choose a long one. The panel does not use it. |
+| Local network only | `sv_lan` | On makes a LAN server: no heartbeat, no authentication and no public listing, so only players on your local network can join. Keep it off for a server friends join over the internet. Choices: `0` (Off), `1` (On). |
+
+### IOSoccer: Match
+
+8 settings in `server.cfg`, shown under **Match** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Extra time | `mp_extratime` | Turns extra time on or off when a match is level at full time. Choices: `0` (Off), `1` (On). |
+| Penalty shootout | `mp_penalties` | Turns the penalty shootout on or off when a match is still level after extra time. Choices: `0` (Off), `1` (On). |
+| Offside rule | `mp_offside` | Turns the offside ruling on or off. Choices: `0` (Off), `1` (On). |
+| Goalkeepers | `mp_botkeepers` | Whether the keepers are AI bots (1) or human players (0). Choices: `1` (AI keepers), `0` (Human keepers). |
+| Away captain | `mp_captaincy_away` | Lets players take over as captain of the away team. Off means nobody can pick up that role. Choices: `0` (Off), `1` (On). |
+| Cross the mid-line in warm-up | `mp_shield_block_opponent_half` | Lets players cross the middle line during the warm-up. Off keeps each side on its own half. Choices: `0` (Off), `1` (On). |
+| Block charged kicks at kick-off | `sv_ball_kickoff_chargeblock` | Blocks the right mouse button (secondary attack) at kick-off, so players cannot charge a kick straight away. Turn it off to allow it. Choices: `0` (Off), `1` (On). |
+| Red card ban (minutes) | `sv_ball_player_banduration` | How many in-game minutes a player is banned for after a red card. |
+
+### IOSoccer: Voice and chat
+
+2 settings in `server.cfg`, shown under **Voice and chat** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Voice chat | `sv_voiceenable` | Turns voice communication between players on or off. Choices: `0` (Off), `1` (On). |
+| Everyone hears everyone | `sv_alltalk` | On lets players hear all other players, including the other team. Off keeps voice to each team. Choices: `0` (Off), `1` (On). |
+
+### IOSoccer: Downloads
+
+2 settings in `server.cfg`, shown under **Downloads** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Players may upload files | `sv_allowupload` | Lets players upload customisation files to the server. Choices: `0` (Off), `1` (On). |
+| Players may download files | `sv_allowdownload` | Lets players download files from the server that they are missing. Choices: `0` (Off), `1` (On). |
+
+### IOSoccer: Logging
+
+2 settings in `server.cfg`, shown under **Logging** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Write logs to a file | `sv_logfile` | Writes server information to the log file. Choices: `0` (Off), `1` (On). |
+| Log bans | `sv_logbans` | Writes the server's bans into the server log. Choices: `0` (Off), `1` (On). |
+
+## BATTALION: Legacy
+
+BATTALION: Legacy's server has no settings file the panel edits. Its name, its admin password and its query port are on the start command, which the panel writes when the server is created; the **Launch options** on the Settings tab can add to that line.
+
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#battalion-legacy).
+
+**No settings file.** The example Game.ini in the community's configuration repository has the name and admin password as keys, but no page says where the server reads it, and a forum report says edits did nothing. The panel therefore writes no file, and the name and the admin password go on the start command instead.
+**The panel cannot stop the server cleanly.** The game stops with Ctrl+C in its own console window. The panel has no way to type into a console, so Stop closes the window and ends the process after 15 seconds. Open the server's window (kept minimized on the taskbar), press Ctrl+C, wait for it to close, and only then press Stop or update.
+**Two ports, plus one.** The game port (`-Port`) is where players connect and the query port (`-QueryPort`) answers the server browser. The server also opens the port just above the game port, so leave that one free.
+**No join password.** The forum's `-Password` flag conflicts with the egg, which does not use it, so the form does not offer a join password.
+**No mods.** No official mod path was found, so none is managed. The hosting guides describe a file-manager upload that is not a documented mod method.
+**Updates.** The server checks Steam for a new version every time it starts, and players can only join a server running the same version as their game.
+
+## Black Mesa
+
+Black Mesa is set up with console variables ("convars"): lines of a name and a value in `server.cfg`, in the `bms\cfg` folder of the server. The panel writes that file with the server's name, the password and `sv_lan 0`. The map, the player limit and the port are on the launch line.
+
+- `server.cfg`: The server's name and password, whether it is listed on the internet, the download settings, the deathmatch rules such as kills to end a map and friendly fire, and the logging. Only the lines you set are in the file.
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#black-mesa).
+
+The game reads the file when it starts, so stop and start the server after changing a setting.
+Friends join with the console command `connect <your address>:<port>`.
+The panel has no way to type into this server's console, so Stop closes its window and, after 15 seconds, ends the program. The guides give `quit` as the console's stop command, but the panel cannot send it.
+No Steam login token is asked for. The guides do not say whether this server needs one for the public server list.
+Maps and add-ons are not set up here: they are copied into the bms folders by hand and listed in bms\addonlist.txt, which the panel does not do.
+
+### Black Mesa: Server
+
+4 settings in `server.cfg`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server name | `hostname` | The name people see in the server browser. The panel writes it when it creates the server. |
+| Join password | `sv_password` | What players type to join. Leave it empty for a server anyone can join. |
+| Remote console password | `rcon_password` | The password for the server's remote console (RCON). Anyone with it can run server commands, so choose a long one. The panel does not use it. |
+| Map rotation file | `mapcyclefile` | The name of the text file that lists the maps the server cycles through, one map per line. The guides use mapcycle.txt, kept in the bms\cfg folder. |
+
+### Black Mesa: Joining
+
+5 settings in `server.cfg`, shown under **Joining** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Local network only | `sv_lan` | On makes a LAN server: no heartbeat, no authentication, and only local addresses. Keep it off for a server friends join over the internet. Choices: `0` (Off), `1` (On). |
+| Players may upload files | `sv_allowupload` | Lets players upload customisation files to the server. The guides' example turns it on. Choices: `0` (Off), `1` (On). |
+| Players may download files | `sv_allowdownload` | Lets players download files they are missing from the server. The guides' example turns it on. Choices: `0` (Off), `1` (On). |
+| Download web address | `sv_downloadurl` | A web address players can download missing files from. Leave it empty to download from the server itself. |
+| Allow spectators | `mp_allowspectators` | Lets people watch a match without playing. The guides' examples differ, so check it once the server runs. |
+
+### Black Mesa: Game rules
+
+11 settings in `server.cfg`, shown under **Game rules** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Kills to end the map | `mp_fraglimit` | The number of kills that ends the map. 0 turns this off. The guides' examples use 30 and 45. |
+| Seconds empty before a map change | `mp_mapcycle_empty_timeout_seconds` | If the server stays empty on one map for this many seconds, it moves to the next map in the rotation. 0 turns this off. The guide's example is 900. |
+| Team play | `mp_teamplay` | Turns on team games (marines against scientists). 0 is free-for-all deathmatch, where every player is on their own. |
+| Friendly fire | `mp_friendlyfire` | On lets team members hurt their own team. Off keeps teammates safe from each other. Choices: `0` (Off), `1` (On). |
+| Respawn without asking | `mp_forcerespawn` | On respawns players straight away, without the respawn prompt. Off lets each player choose when to respawn. Choices: `0` (Off), `1` (On). |
+| Fall damage | `mp_falldamage` | On lets players take damage from falls. Off makes falls harmless. |
+| Flashlight | `mp_flashlight` | On allows players to use the flashlight. Choices: `0` (Off), `1` (On). |
+| Warm-up time (seconds) | `mp_warmup_time` | How long the warm-up round lasts, in seconds, before the match starts. |
+| Chat time after a map (seconds) | `mp_chattime` | How many seconds players can chat after the map ends, before the next one starts. |
+| Voice chat | `sv_voiceenable` | Lets players talk to each other by microphone. |
+| Everyone hears everyone | `sv_alltalk` | On lets all players hear each other's voice chat, not only their team's. |
+
+### Black Mesa: Logging
+
+3 settings in `server.cfg`, shown under **Logging** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Write logs to a file | `sv_logfile` | Writes the server's information into a log file. Where the file is saved is not stated in the guides. Choices: `0` (Off), `1` (On). |
+| Show log lines in the console | `sv_logecho` | Shows the log information in the server console as well. Choices: `0` (Off), `1` (On). |
+| Log bans | `sv_logbans` | Writes the server's bans into the server log. |
+
+## Military Conflict: Vietnam
+
+Military Conflict: Vietnam is set up with console variables ("convars"): lines of a name and a value in `server.cfg`, in the `vietnam\cfg` folder of the server. The panel writes that file with the server's name, the password and `sv_lan 0`. The map and the player limit are on the launch line.
+
+- `server.cfg`: The server's name and password, the download address, the round and map timing, the friendly-fire and team settings, the bots and cheats. Only the lines you set are in the file.
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#military-conflict-vietnam).
+
+The game reads the file when it starts, so stop and start the server after changing a setting.
+Friends join with the console command `connect <your address>:<port>`.
+Game type and game mode (for example Classic and TeamDeathmatch) are not offered here: the research found no launch argument or file key for them, and the host's guide sets them in its own panel.
+The panel has no way to type into this server's console, so Stop closes its window and, after 15 seconds, ends the program. The research found no developer statement of a quit command.
+No Steam login token is asked for. The research could not say whether this game needs one for the public server list.
+SourceMod and Metamod plugins are not set up here: a host guide copies them into the folders by hand, which the panel does not do.
+
+### Military Conflict: Vietnam: Server
+
+4 settings in `server.cfg`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server name | `hostname` | The name people see in the server browser. The panel writes it when it creates the server. |
+| Join password | `sv_password` | What players type to join. Leave it empty for a server anyone can join. |
+| Remote console password | `rcon_password` | The password for the server's remote console. Anyone with it can run server commands, so choose a long one. The panel does not use it. |
+| Download web address | `sv_downloadurl` | A web address players can download custom maps and files from. The host's FastDL page says it adds this line for you when FastDL is on. |
+
+### Military Conflict: Vietnam: Game rules
+
+7 settings in `server.cfg`, shown under **Game rules** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Minutes per map | `mp_timelimit` | How many minutes of game time one map is played for. The host's page gives 15 as the default. |
+| Round length (minutes) | `mp_roundtime` | How many minutes one round runs for. The host's page gives 2 as the default. |
+| Friendly fire | `mp_friendlyfire` | Lets players damage their own teammates. The host's page gives 0 (off) as the default. |
+| Balance teams automatically | `mp_autoteambalance` | Evens up the teams automatically when they drift apart. The host's page gives 0 (off) as the default. |
+| Bots | `bot_quota` | How many bots fill out the server. The host's page gives 0 as the default, which is none. |
+| Everyone hears everyone | `sv_alltalk` | Lets both teams hear each other on voice chat. The host's page gives 1 (on) as the default. |
+| World gravity | `sv_gravity` | Sets how strongly things fall in the world. The host's page gives 800 as the default. |
+
+### Military Conflict: Vietnam: Cheats
+
+1 setting in `server.cfg`, shown under **Cheats** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Allow cheat commands | `sv_cheats` | Allows cheat commands to be used on the server. The host's page gives 0 (off) as the default; leave it off unless you know you need it. |
+
+## SCP: Secret Laboratory
+
+The server's settings are text files in `%APPDATA%SCP Secret Laboratoryconfig<port>`, in a folder named for the server's port. The panel does not edit them yet. Stop the server before you change them, because the server may write its own copy when it stops.
+
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#scp-secret-laboratory).
+
+The panel does not write the settings files. The server name, the join password and every gameplay setting are set by hand in `config_gameplay.txt` in the folder above. Whether the server creates these files on its first start is not documented, so look in the folder after the first start.
+The panel stops the server by closing its window and, after 15 seconds, ending the process. SCP: Secret Laboratory has no documented console command or remote command to stop cleanly, so a round in progress may be lost.
+The launch line sets the port, the EULA acceptance and the default-settings option. The game keys the settings folder by port, so after a port change the settings are found in a different folder.
+Server plugins (LabAPI, which ships with the server, and EXILED, installed separately) are not managed by the panel. Their folders are not confirmed.
+
+## Colony Survival
+
+Colony Survival keeps its server settings in `server.config.json`, in the server's folder next to `colonyserver.exe`. The panel writes that file when it creates the server, and the game reads it at each start. The settings here are the ones the setup guides explain.
+
+- `server.config.json`: The server's name and password, the port it uses, the world it loads, the player limit, the difficulty and the remote console password. JSON, one key per setting.
+
+Settings are read when the server starts: stop it and start it again after a change.
+The panel stops the server by closing its window, which the guides do not describe as a clean save. Back up the world before updates or mod changes, and stop the server first when you copy it.
+Mods are folders in `gamedata/mods/<ModName>/`, each with a `modInfo.json`, and are switched on in the world's `worldconfig.json`. The server cannot download Workshop mods by itself: subscribe on a PC, then copy the folder over. This panel does not manage mods.
+The game's own list of settings is longer than the form, and the guides do not explain some of its entries, so those are left out on purpose.
+
+### Colony Survival: Server
+
+2 settings in `server.config.json`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server name | `ServerSettings.ServerName` | The name this server shows in the server list. The panel writes it when it creates the server, from the Server Name you typed. |
+| Join password | `ServerSettings.ServerPassword` | The password players type to join. Leave it empty for an open server. |
+
+### Colony Survival: Network
+
+3 settings in `server.config.json`, shown under **Network** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Address to listen on | `ServerSettings.ServerIP` | The address the server listens on. 0.0.0.0 means every address the PC has, which is right unless the PC has several network connections and you want it on one of them. |
+| Game port | `ServerSettings.ServerGamePort` | The port players connect to. The panel sets it when it creates the server, and the port beside it is kept free. |
+| Network type | `ServerSettings.NetworkType` | How the server is reached. SteamOnline is the only value the setup guides name, and the panel writes it. Choices: `SteamOnline` (Steam online). Another value can be typed. |
+
+### Colony Survival: Players
+
+1 setting in `server.config.json`, shown under **Players** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Most players | `ServerSettings.MaxPlayerCount` | The most players who can be online at once. The current guides give 10 as the template's number. |
+
+### Colony Survival: World
+
+1 setting in `server.config.json`, shown under **World** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| World name | `NewOptions.WorldName` | The name of the world the server loads. Its saves are kept in the gamedata/savegames folder, in a folder with this name. |
+
+### Colony Survival: Rules
+
+1 setting in `server.config.json`, shown under **Rules** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Difficulty | `NewOptions.DifficultyKey` | How hard the game is, from Peaceful to Very High. The guides give the five levels and their numbers; they do not say exactly what each one changes. Choices: `0` (Peaceful), `1` (Low), `2` (Normal), `3` (High), `4` (Very High). |
+
+### Colony Survival: Remote console
+
+1 setting in `server.config.json`, shown under **Remote console** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Remote console password | `ServerSettings.RCONPassword` | The password for the game's remote console (RCON). Leave it empty if you do not need RCON, which this panel does not use. |
+
+## Rising World
+
+Rising World's server is a Unity program, `RisingWorldServer.exe`, started by the panel's start script with `-batchmode -nographics`. Its settings are in `server.properties`, which the panel writes with the name and the port; the game fills in every other key the first time it starts.
+
+- `server.properties`: The server's settings, one `Key=Value` per line with a comment above each. The panel writes the name and the port; the game adds the rest on its first start. Key names are case sensitive: a lowercase name is ignored.
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#rising-world).
+
+The game port is UDP. The server's web and query port is the port just below it (TCP and UDP): with the default 4255 that is 4254. The panel holds the game port and the port above it, but not this one, so keep the port below free too, and forward both if players are outside your network.
+Settings are read when the server starts, and the game rewrites server.properties on the first start to add every key with its comment. Edit it while the server is stopped.
+The panel's Stop closed the server cleanly on a real install: the server saved, shut down and wrote the end of its log (the panel reported "closed gracefully"). The game's own clean stop is the console command `shutdown`; still back up the world before you copy or update the server.
+Plugins go in the `Plugins` folder beside server.properties, and worlds are in `Worlds`. Both are in the panel's backup.
+World settings such as the game mode and the seed apply only when a world is first created. Change `World_Name` to start a new world.
+
+### Rising World: Server
+
+5 settings in `server.properties`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server name | `Server_Name` | The name shown in the server list. The panel writes it when it creates the server, from the Server Name you typed. |
+| Join password | `Server_Password` | If set, players are asked for this password to join. Leave it empty for an open server. |
+| Description | `Server_Description` | A text shown in the server browser when a player selects the server, up to 4096 characters. |
+| Admins | `Server_Admins` | The IDs of the server's admins, separated by semicolons. |
+| Show in the server list | `Server_Visible` | Whether the server appears in the server list. Remember to change the server name if it does. Choices: `True`, `False`. |
+
+### Rising World: Players
+
+2 settings in `server.properties`, shown under **Players** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Most players | `Settings_MaxPlayers` | The most players who can be online at once. The game's default is 64. |
+| Only whitelisted players | `Server_UseWhitelist` | If on, only players in the server's whitelist file can join. Choices: `True`, `False`. |
+
+### Rising World: Network
+
+3 settings in `server.properties`, shown under **Network** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Game port | `Server_Port` | The port the server listens on, over UDP. The panel sets it when it creates the server, so change it from the server's Ports section. The web and query port is the port just below it. |
+| Address to listen on | `Server_IP` | The address the server binds to. Leave it empty to listen on every address, which is right unless the PC has several network connections. |
+| Web server | `Server_WebserverEnabled` | Whether the server's built-in web server runs. It is needed for the server list and for queries, and a server without it does not show up in the server list. Choices: `True`, `False`. |
+
+### Rising World: World
+
+3 settings in `server.properties`, shown under **World** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| World name | `World_Name` | The name of the world to load. If it does not exist, the server creates it. Worlds are kept in the Worlds folder. |
+| Game mode for a new world | `World_GameMode` | The game mode of a world when it is first created: Survival or Creative. It does not change a world that already exists. Choices: `Survival`, `Creative`. |
+| World seed | `World_Seed` | The seed used when a new world is created. Leave it empty for a random seed. |
+
+## Warfork
+
+Warfork's server is `wf_server_x64.exe`, started by the panel's start script. The panel passes the server name and the ports on the launch line. Every other setting is in the shipped `basewfdedicated_autoexec.cfg`, which the panel does not show in the Settings tab.
+
+**The name and ports come from the launch line, not from a file.** The start script passes `+set sv_hostname`, `+set sv_port` and `+set sv_http_port`, which override the shipped file. Names with a quote, a semicolon or a backslash are refused, because the game reads them as console text. A `basewfserver.cfg` is not read by this server.
+**Other settings are edited by hand.** They are `set name "value"` console lines in `basewfdedicated_autoexec.cfg` (the password, rcon password, most players, public listing, gametypes and votes). Edit it while the server is stopped; the game never rewrites it. Changing the name or a port there has no effect, since the launch line wins.
+**Ports:** the game port (44400 by default) is UDP and answers server queries. The port after it is a TCP port the server uses to send files to players. The panel moves both together, so keep the next port free.
+**Files stay in the install.** The panel adds `+set fs_usehomedir 0`; without it the game would keep its log, demos and configs in Documents\My Games\Warfork 2.1, shared by every server on the PC. The log is `basewfwfconsole.log`.
+**Stop** closes the server cleanly on a real install; if it does not exit within 15 seconds the panel ends the program.
+
+## Natural Selection 2
+
+Natural Selection 2's server is x64\Server.exe, installed from Steam app 4940. The panel starts it with a name, a map, a player limit, a port, and a config and log folder inside the server's folder. The game writes its config files on the first start; the panel's form covers the map rotation file, MapCycle.json.
+
+- `mapcycle.json`: The map rotation: which maps the server plays, in what order, how many minutes each lasts, and the Workshop mods it keeps using. Written by the game (or by you) in the config folder.
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#natural-selection-2).
+
+The panel stops this server by closing its window, then ending the program after 15 seconds. The game has no clean stop command the panel uses. Stop the server before you update it, and back up first.
+The server's own settings (serverconfig.json) and admin list (serveradmin.json) are in the config folder, but this panel does not show their settings: the game's keys are not documented in the sources the panel was built from. Edit them with a text editor while the server is stopped, and keep them valid JSON, since bad JSON stops the server.
+The game port is 27040 by default in this panel, not the 27015 the sources name, because another template already uses 27015. The game may also use the port above it, so keep that one free.
+Workshop mods listed with -mods are downloaded when the server starts. Mods listed in mapcycle.json are kept for every map.
+The panel starts the server with -logdir, so the log is serverlogs\log-Server.txt in the server's folder, and the Logs tab shows it. Workshop mods are still stored under AppData\Roaming\Natural Selection 2\workshop.
+The server answers status queries on the port after the game port (27041 by default), so keep it free.
+
+### Natural Selection 2: Rotation
+
+2 settings in `mapcycle.json`, shown under **Rotation** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Map order | `mode` | How the server picks the next map: order plays the maps in the list in turn, random shuffles them. Read when the server starts. Choices: `order`, `random`. |
+| Minutes per map | `time` | How many minutes each map is played before the server switches, counted from when the round ends. The community guide's example is 30. |
+
+### Natural Selection 2: Maps
+
+1 setting in `mapcycle.json`, shown under **Maps** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Maps | `maps` | The map names in the order they are played, as a JSON list such as ["ns2_summit", "ns2_veil"]. Map names are case sensitive. Do not list the same map twice when the order is set to order. |
+
+### Natural Selection 2: Mods
+
+1 setting in `mapcycle.json`, shown under **Mods** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Mods for every map | `mods` | Workshop mod IDs in hexadecimal, as a JSON list such as ["706D242"]. The server keeps using these mods on every map. |
+
+## Chivalry: Medieval Warfare
+
+Chivalry's server is a UDK program, `UDK.exe`, in `Binaries\Win64`. The panel starts it with the map and its two UDP ports on the map name, and writes the server name and the admin password into `PCServer-UDKGame.ini`. The rest of that file is the game's own.
+
+- `PCServer-UDKGame.ini`: The server's settings, in `[Section]` headers with `Key=Value` lines. The panel writes the server name and the admin password; the form changes those and a few more keys, and leaves the rest of the file alone.
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#chivalry-medieval-warfare).
+
+Not checked on a real install yet. The settings names, the start line and the ports come from the research notes and community sources; the first start should be watched closely (see the build notes for the checks).
+The game port is UDP (default 7000) and the query port is UDP (default 7010). Forward both if players are outside your network. The panel keeps the port just above the game port free, but not the query port.
+The admin password is required, because the Unraid template for the server says it can't be empty. Choose one you do not use elsewhere; it is written in the settings file in plain text.
+The panel's Stop closes the server window. The game does not respond to a graceful shutdown request, so the server may not save the world on the way out. Make a backup before you stop it, and do not rely on Stop to save.
+Mods come from the Steam Workshop. The panel does not download them and adds no mod setting. Workshop items have to be fetched with the game's own Workshop tool, and clients then download them automatically; the server and the clients must end up on the same versions.
+Keys in the file that are not on the form are left as they are, so edits made in the file itself are kept.
+
+### Chivalry: Server
+
+2 settings in `PCServer-UDKGame.ini`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server name | `ServerName` in `[Engine.GameReplicationInfo]` | The name shown in the in-game server browser. The panel writes it when it creates the server, from the Server Name you typed. |
+| Admin password | `AdminPassword` in `[Engine.AccessControl]` | The password a player types in the game to get admin (cheat) commands. The panel writes it from the Admin Password you typed when creating the server. |
+
+### Chivalry: Players
+
+1 setting in `PCServer-UDKGame.ini`, shown under **Players** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Most players | `MaxPlayers` in `[Engine.GameInfo]` | The most players who can be on the server at once. The example config uses 32; the game's own upper limit is not confirmed. |
+
+### Chivalry: Votes
+
+4 settings in `PCServer-UDKGame.ini`, shown under **Votes** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Vote to kick | `bEnableVoteKick` in `[AOC.AOCGame]` | Lets players start a vote to remove another player from the server. Choices: `True`, `False`. |
+| Vote to change map | `bEnableVoteChangeMap` in `[AOC.AOCGame]` | Lets players start a vote to switch to another map. Choices: `True`, `False`. |
+| Vote to restart map | `bEnableVoteResetMap` in `[AOC.AOCGame]` | Lets players start a vote to restart the current map. Choices: `True`, `False`. |
+| Only admins start votes | `bOnlyAdminsCanInitiateVotes` in `[AOC.AOCGame]` | If on, only admins can start a vote. Players can still vote when one is started. Choices: `True`, `False`. |
+
+### Chivalry: Maps
+
+1 setting in `PCServer-UDKGame.ini`, shown under **Maps** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Leave out the SDK maps | `bDontAddSdkMapsToList` in `[AOC.AOCGame]` | If on, the game does not add its built-in SDK maps to the map list automatically. The sample file's own comment describes this setting. Choices: `True`, `False`. |
+
+## Hurtworld
+
+Hurtworld's server is Hurtworld.exe, started by the panel's start script headless. The panel passes the game port, the query port and the server name in a -exec string, so there is no settings file to edit here.
+
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#hurtworld).
+
+The game port and the query port are both listed as UDP by one source and as UDP and TCP by another. Keep both free and forward them if players are outside your network.
+The server's settings beyond the name and the ports are set through commands in its autoexec.cfg. The panel does not write that file, because its folder and whether the game creates it are not known yet.
+Admins are added with the game's addadmin command, which needs a 64-bit Steam ID. This panel does not ask for one, so set admins by hand once the game's settings file is known.
+The panel's Stop closes the server window. The game's own clean stop is the console command `quit` (sent over RCON, which this panel does not set up), so back up the world before you stop, update or copy the server.
+Where the world is saved is not known yet, so the panel's backup keeps nothing. Copy the save folder by hand before you update the server.
+Mods are loaded with loadmod lines in autoexec.cfg, or as Oxide plugins. This panel does not manage either.
+
+## Euro Truck Simulator 2
+
+Euro Truck Simulator 2's server is started by the panel's start script with the program bin\win_x64\eurotrucks2_server.exe. That program name is not confirmed by any source yet. The panel writes the server's settings file (server_config.sii) with the name and the two ports, so there is no settings form in this panel.
+
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#euro-truck-simulator-2).
+
+The server program's name is not confirmed. The start script uses eurotrucks2_server.exe, inferred from the American Truck Simulator server. Check the server folder's bin\win_x64 for the real name and make sure the server starts before you rely on it.
+Before the first start, copy server_packages.sii and server_packages.dat into the server's data folder. The server does not start without them. The game makes them: open a copy of the game with a map loaded, open the console, and run export_server_packages. The panel cannot make them.
+The settings are in data\Euro Truck Simulator 2\server_config.sii inside the server's folder. The panel writes the name, the two ports and the player limit. To change the rest, stop the server first, then edit the file by hand. The defaults conflict between sources, so the panel leaves the timezone to the game.
+The panel's Stop closes the server window and, after 15 seconds, ends the program. The dossier names Ctrl + C as the only way to stop the server, so there is no clean save. Back up the data folder before you stop or update.
+Public listing: a persistent logon token may be needed to be listed by the Steam server browser. This panel does not ask for a token, so the server uses an anonymous ID. Direct search still works.
+Moderators are added in server_config.sii by Steam ID, which this panel does not ask for.
+
+## American Truck Simulator
+
+American Truck Simulator's server is amtrucks_server.exe, started by the panel's start script. The panel writes the server's settings file (server_config.sii) with the name and the two ports, so there is no settings form in this panel.
+
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#american-truck-simulator).
+
+Before the first start, copy server_packages.sii and server_packages.dat into the server's data folder. The server does not start without them. The game makes them: open a copy of the game with a map loaded, open the console, and run export_server_packages. The panel cannot make them.
+The settings are in data\American Truck Simulator\server_config.sii inside the server's folder. The panel writes the name, the two ports and the player limit. To change the rest, stop the server first, then edit the file by hand. The defaults are not confirmed by an official page.
+The panel's Stop closes the server window and, after 15 seconds, ends the program. The dossier names Ctrl + C as the only way to stop the server, so there is no clean save. Back up the data folder before you stop or update.
+Public listing: a persistent logon token is needed to be listed by the Steam server browser. This panel does not ask for a token, so the server uses an anonymous ID. Direct search still works.
+Moderators are added in server_config.sii by Steam ID, which this panel does not ask for.
+Mods are not read from mod folders. Exported package files carry them. This panel does not manage those files.
+
+## Medieval Engineers
+
+Medieval Engineers' server is `DedicatedServer64\MedievalEngineersDedicated.exe`, started by the panel's start script in console mode. The panel writes its first config file, `Data\MedievalEngineers-Dedicated.cfg`, with the server name, the world name and the port. The game's other settings are not offered in this panel: edit the file by hand while the server is stopped.
+
+**What the panel set up.** The config file names the server and the world after the name you typed, uses 0.0.0.0 for the address and the game port you chose (UDP), and switches the remote web API off. It also names a scenario from the game's sample (`SafeAreaStart`). The data folder is `Data` in the server's folder; the game is told to keep its config and saves there.
+**Checked on a real install.** The start line is `-console -path` (with dashes; the bare words the official page lists leave a process that never starts the game). The server starts, creates its world in `DataSaves`, lists under its name and answers status queries on the game port. The log is `DataMedievalEngineersDedicated.log`, shown in the Logs tab.
+**Stop.** The panel closes the server's window and, if it does not exit within 15 seconds, ends it. The official guide says a normal `taskkill` saves the world and `taskkill /F` does not, so the panel's close request is probably the safe kind; the save was not checked.
+**Mods are not set by the panel.** The sources disagree on where mods go (a Mods list in the config file, `<Mods>` in the world's `sandbox.sbc`, or the server's settings page). Add mods by hand only after a backup, and test one at a time.
+**Admins and bans** are in the config file under the names the game documents (Administrators as Steam IDs, one per line). Edit them with the server stopped.
+
+## PixARK
+
+PixARK's server is `ShooterGame\Binaries\Win64\PixARKServer.exe`, started by the panel's start script. The name, player limit, ports and passwords are written into the start line, and the server's rules are in `GameUserSettings.ini` (ShooterGame\Saved\Config\WindowsServer), which the Settings tab shows for the one setting it offers.
+
+- `GameUserSettings.ini`: The server's rules. Only the PvE switch is shown here; the file holds many more settings, which you can edit by hand while the server is stopped.
+
+**Ports.** The game and query ports are UDP, and the cube port (which sends terrain to players) is TCP. The RCON port is written on the line but RCON is off, so it is only reserved. The panel starts them at 27730, 27740, 27750 and 27760, away from the defaults other servers here use. Forward the game and query ports on your router.
+**Passwords.** The join and admin passwords go into the start line, so only letters, numbers and `- _ . @ # $ * + ~` are allowed. A password left blank is not passed, which makes the server public.
+**Settings on the line are overridden by the config file.** The dossier says the file wins where the two disagree. The Settings tab edits only the PvE switch in the file.
+**Mods are copied in by hand.** The server cannot download Workshop mods. You subscribe on a PC, run the game once to unpack them, then copy each mod's folder and its `<ModID>.mod` file into `ShooterGame\Content\Mods` on the server. Players need the same mods, and a mod that is missing from the server may stop it from starting. Back up before you add one.
+**Stop does not save.** The game has no save or stop command the panel can send; its own guide uses Ctrl+C. The panel closes the window and, if the game does not exit within 15 seconds, ends it. Back up before you stop or update.
+
+### PixARK: Server
+
+1 setting in `GameUserSettings.ini`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| PvE mode | `ServerPVE` in `[ServerSettings]` | Turns the server's PvE (player versus environment) mode on or off. The Nodecraft settings page says true is creative and false is Fury (survival); a 2018 forum post calls true Pioneering. Check how the server plays after changing it, because the modes differ between game versions. Choices: `true` (On (PvE: creative, or Pioneering)), `false` (Off (survival: Fury)). |
+
+## Stationeers
+
+Stationeers' dedicated server is rocketstation_DedicatedServer.exe, started by the panel's start script. The panel passes the world type, the server name, the ports and the password on the launch line, so there is no settings file to edit here.
+
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#stationeers).
+
+On a restart the server loads the Panel save, and changing the world type in the script does not make a new world, and the world type only matters the first time; delete saves\Panel to start over.
+The panel's Stop closes the server gracefully. Back up the world before you update or copy the server anyway.
+The world is saved in saves\Panel and the game keeps its own settings in setting.xml, both in the server folder. The panel backs both up but does not edit setting.xml. The server log is server.log.
+Ports and the password are only read from the launch line, according to one guide, so change them by recreating the server rather than editing a file.
+Mods are installed through the Steam Workshop and a plugin loader (BepInEx or StationeersLaunchPad). This panel does not manage them. Every player needs the same mods as the server.
+
+## Wreckfest
+
+Wreckfest's server is Wreckfest_x64.exe, started by the panel's start script with -s and the settings file server_config.cfg in the install folder. The game makes that file from initial_server_config.cfg the first time it starts; the panel adds nothing to it.
+
+- `server_config.cfg`: The server's settings, one key=value per line; lines starting with # are comments. Edit it while the server is stopped; changes typed in the console are not saved to it.
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#wreckfest).
+
+The defaults for every setting are not in the sources we could read. The keys and descriptions here come from an example file of December 2019, so check the names against the file your server created.
+The join password is left out: the example file gives it no explanation. Set one by editing server_config.cfg if you know the key, or by hand from the game.
+The panel's Stop closes the server cleanly. Back up the server before you update it anyway.
+The panel passes the game, query and Steam ports to the server with -server_set, so they override the ports in server_config.cfg.
+The game keeps its save data in the savestemp folder and writes log.txt, both in the server folder. The panel's backup keeps server_config.cfg and savestemp, and the Logs tab shows log.txt.
+Mods are copied into a mods folder by hand and named in the mods= setting, and every player needs the same mods. The panel does not manage either. A changed mod list takes effect only after the second restart.
+
+### Wreckfest: Players
+
+2 settings in `server_config.cfg`, shown under **Players** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Most players | `max_players` | The most players who can be on the server at once. The example file uses 24, which the game's own notes give as its limit. |
+| Bots at start | `bots` | How many computer-controlled bots the server starts with, from 0 to 24. |
+
+### Wreckfest: Lobby
+
+7 settings in `server_config.cfg`, shown under **Lobby** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Hidden from Quick Match | `exclude_from_quickplay` | Whether players who use Quick Match can be sent to this server. 0 leaves it open to Quick Match; 1 hides it from it. Choices: `0` (Visible to Quick Match), `1` (Hidden from Quick Match). |
+| Clear old rights at start | `clear_users` | Whether the admin and moderator rights players had before are cleared each time the server starts. 0 keeps them; 1 clears them. Choices: `0` (Keep them), `1` (Clear them). |
+| Owner rights for the first player | `owner_disabled` | Whether the first player to join gets owner rights. 0 gives them to the first player; 1 gives nobody owner rights. Choices: `0` (First player gets owner rights), `1` (Nobody gets owner rights). |
+| Who starts the countdown | `admin_control` | Whether the countdown before a race starts by itself or when the admin readies up. 0 starts it automatically; 1 lets the admin start it. Choices: `0` (Starts automatically), `1` (Admin starts it). |
+| Countdown length (seconds) | `lobby_countdown` | How many seconds the countdown before a race lasts, from 30 to 127. |
+| Players ready for automatic countdown (%) | `ready_players_required` | The percentage of players who must be ready before the automatic countdown starts. |
+| Track voting | `enable_track_vote` | Whether players vote for the next track after one ends. It needs event rotation set up, and players can start a vote with the console command startvote. Choices: `0` (Off), `1` (On). |
+
+### Wreckfest: Admins
+
+2 settings in `server_config.cfg`, shown under **Admins** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Admin Steam IDs | `admin_steam_ids` | The 64-bit Steam IDs of players who get admin rights automatically, separated by commas. |
+| Moderator Steam IDs | `op_steam_ids` | The 64-bit Steam IDs of players who get moderator rights automatically, separated by commas. |
+
+### Wreckfest: Race
+
+7 settings in `server_config.cfg`, shown under **Race** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Track | `track` | The track to race on. The console command tracks lists the names. |
+| Game mode | `gamemode` | The game mode, such as racing or derby. The console command gamemodes lists the names. |
+| Laps | `laps` | How many laps a race has, from 1 to 60. |
+| Time limit (minutes) | `time_limit` | The time limit of a deathmatch game, in minutes. |
+| Number of teams | `num_teams` | The number of teams in team game modes, from 2 to 4. Choices: `2`, `3`, `4`. |
+| Elimination interval | `elimination_interval` | For elimination races: how often a player is eliminated. 0 means after every lap; the other choices are seconds. Choices: `0` (After every lap), `20` (20 seconds), `30` (30 seconds), `45` (45 seconds), `60` (60 seconds), `90` (90 seconds), `120` (120 seconds). |
+| Event weather | `weather` | The weather for events. The console command weathers lists the names. |
+
+### Wreckfest: Vehicles
+
+7 settings in `server_config.cfg`, shown under **Vehicles** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Vehicle damage | `vehicle_damage` | How much damage cars take: normal, intense or realistic. Choices: `normal`, `intense`, `realistic`. |
+| Fastest car class allowed | `car_class_restriction` | Allows only cars up to a class, from class A (fastest) to class D. Choices: `a` (Class A (fastest)), `b` (Class B), `c` (Class C), `d` (Class D). |
+| Only one car | `car_restriction` | Allows only one specific car when it is filled in. The console command cars lists the names. |
+| Special vehicles off | `special_vehicles_disabled` | Whether special vehicles are not allowed. 0 allows them; 1 does not. Choices: `0` (Allowed), `1` (Not allowed). |
+| Car resets off | `car_reset_disabled` | Whether players can reset their car. 0 allows resets; 1 turns them off. Choices: `0` (Allowed), `1` (Turned off). |
+| Car reset delay (seconds) | `car_reset_delay` | The delay before a car reset takes effect: 0 for none, or 1 to 20 seconds. |
+| Wrong-way speed limit off | `wrong_way_limiter_disabled` | Whether the speed limit for players driving the wrong way is turned off. 0 keeps it; 1 turns it off. Choices: `0` (Speed limit kept), `1` (Speed limit off). |
+
+### Wreckfest: Network
+
+1 setting in `server_config.cfg`, shown under **Network** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Update frequency | `frequency` | How often the server sends updates to players. Low uses less bandwidth but more processing on players' PCs; high is the other way round. Choices: `low` (Low), `high` (High). |
+
+### Wreckfest: Logs
+
+1 setting in `server_config.cfg`, shown under **Logs** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Log file | `log` | The file the server saves its messages to, in the server's folder, such as log.txt. |
+
+## Operation: Harsh Doorstop
+
+Operation: Harsh Doorstop's server is an Unreal Engine program in HarshDoorstop\Binaries\Win64. The panel starts it with the map, the server name and two ports on the launch line. The settings are not written by the panel yet.
+
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#operation-harsh-doorstop).
+
+Checked on a real install: the server starts, answers the Steam query on the query port and sets its name and player count from the start script.
+The panel's Game Port and Steam Query Port are its own picks (27050 and 27052), not the game's published defaults. Forward both if players are outside your network.
+Settings such as the round time, the friendly fire and the admins are in the game's Game.ini file, but the sources disagree on key names, so the panel does not offer them.
+Mods: the sources disagree on how they reach a server (a Workshop list in a host panel, or files copied in by hand). The panel does not manage mods.
+The server does not close on the panel's Stop request, so the panel force-ends it after about 15 seconds. Back up the server before you stop, update or copy it. The panel's backup keeps the WindowsServer config folder, and the Logs tab shows HarshDoorstop.log.
+The map names are case-sensitive. Jaziira_AASSmall is the one the panel uses by default and the one checked on a real server. The older names from host pages (Anviloy, Khafji, Salhan and so on) do not exist in the current build: the server then falls back to the AAS-TestMap test map. Other maps in the files are named like Jaziira_AASLarge.
+
+## Rising Storm 2: Vietnam
+
+Rising Storm 2: Vietnam's server is VNGame.exe in Binaries\Win64 (Windows only). The panel starts it with the map and two ports, and writes the server name and the join password into ROGame\Config\ROGame.ini. The rest of that file is the game's.
+
+- `ROGame.ini`: The server's rules and settings, in `[Section]` headers with `Key=Value` lines. The panel writes the server name and the join password when it creates the server; the form changes the keys listed here and leaves the rest of the file alone.
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#rising-storm-2-vietnam).
+
+Checked on a real install: the server starts, answers the Steam query on the query port and writes Launch.log. The setting keys come from the official wiki, which was partly copied from another game, so a key that does not change anything on a real server is possible. The wiki gives no default for any key, so none is shown.
+The panel's Game Port and Steam Query Port are its own picks (27070 and 27072), not the game's published defaults. Forward both if players are outside your network.
+Workshop items, the Green Army Men add-on and custom maps are not managed by the panel. Their sources disagree on the setup steps, and the add-on needs files copied from a game install.
+The server needs the Visual C++ 2012 x64 redistributable (vcredist_x64 from Microsoft, version 11.0). Without it VNGame.exe stops at a hidden 'MSVCP110.dll was not found' message and opens no ports. Install it on the PC before the first start; the panel cannot do it for you.
+The panel's Stop closes the server window, which the game handles cleanly. The panel starts it with -log, so the Logs tab shows ROGame\Logs\Launch.log.
+Stop the server before you edit ROGame.ini. The wiki says changes made while the server runs can be overwritten at the next restart.
+The map names use the GameMode-MapName form, such as VNSU-SongBe (Supremacy) or VNTE-CuChi (Territories). The panel's map box takes the name only.
+
+### Rising Storm 2: Server
+
+3 settings in `ROGame.ini`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server name | `ServerName` in `[Engine.GameReplicationInfo]` | The name shown to players in the server browser and in the server. The panel writes it when it creates the server. |
+| Admin contact | `AdminContact` in `[Engine.GameReplicationInfo]` | A contact shown in the server browser for whoever runs the server. The wiki's example is an email address. |
+| LAN only | `bLANServer` in `[ROGame.ROGameInfo]` | On: the server is only visible on the same local network. Off: it is listed on the internet. Choices: `True` (On), `False` (Off). |
+
+### Rising Storm 2: Access
+
+1 setting in `ROGame.ini`, shown under **Access** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Join password | `GamePassword` in `[Engine.AccessControl]` | The password players must type to join the server. The panel writes it from the Join Password you typed when creating the server. |
+
+### Rising Storm 2: Rounds
+
+5 settings in `ROGame.ini`, shown under **Rounds** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Players needed to start | `MinNetPlayers` in `[ROGame.ROGameInfo]` | How many players must be on the server before a round starts (1 to 64). |
+| Rounds per map | `RoundLimit` in `[ROGame.ROGameInfo]` | 0 uses the game mode's own setting, 1 is one round, 2 is two rounds, and 3 or more is best of that many. |
+| Seconds before next map | `EndOfMapDelay` in `[ROGame.ROGameInfo]` | How long, in seconds, the server waits after a match before it loads the next map. |
+| Ready-up system | `bUseReadySystem` in `[ROGame.ROGameInfo]` | On: players must ready up before the first round can start. Choices: `True` (On), `False` (Off). |
+| Everyone must ready up | `bAllPlayersMustReadyUp` in `[ROGame.ROGameInfo]` | On: every player must ready up before the game starts. Off: a majority is enough. Only matters when the ready-up system is on. Choices: `True` (On), `False` (Off). |
+
+### Rising Storm 2: Team balance
+
+3 settings in `ROGame.ini`, shown under **Team balance** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Balance teams | `bBalanceTeams` in `[ROGame.ROGameInfo]` | On: the game keeps the two teams close in size. Choices: `True` (On), `False` (Off). |
+| Largest team difference | `MaxTeamDifference` in `[ROGame.ROGameInfo]` | The most players one team may have more than the other (1 to 63). Only matters when team balance is on. |
+| Balance teams on death | `bAutoBalanceTeamsOnDeath` in `[ROGame.ROGameInfo]` | On: players who die are moved to even the teams. Only matters when team balance is on. Choices: `True` (On), `False` (Off). |
+
+### Rising Storm 2: Team damage
+
+3 settings in `ROGame.ini`, shown under **Team damage** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Team damage scale | `FriendlyFireScale` in `[ROGame.ROGameInfo]` | How much damage a teammate's bullets do to you: 0 is none, 0.5 is half, 1 is full damage (0 to 1). |
+| Punishment for team damage | `FriendlyFirePunishment` in `[ROGame.ROGameInfo]` | What happens to a player who goes over the team-damage or team-kill limits. Choices: `0` (Kick the player), `1` (Session ban), `2` (Permanent ban). |
+| Allow forgiving team kills | `bEnableTeamKillForgiving` in `[ROGame.ROGameInfo]` | On: a player can forgive a team kill by typing NP in the chat after it. Choices: `True` (On), `False` (Off). |
+
+### Rising Storm 2: Voting
+
+4 settings in `ROGame.ini`, shown under **Voting** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Map voting | `bEnableMapVoting` in `[ROGame.ROGameInfo]` | On: players vote for the next map at the end of a match. Off: the map cycle moves on by itself. Choices: `True` (On), `False` (Off). |
+| Map vote time (seconds) | `MapVotingTime` in `[ROGame.ROGameInfo]` | How long players have to vote for the next map, when map voting is on. |
+| Kick voting | `bEnableKickVoting` in `[ROGame.ROGameInfo]` | On: players can start a vote to kick another player. Choices: `True` (On), `False` (Off). |
+| Kick vote time (seconds) | `KickVotingTime` in `[ROGame.ROGameInfo]` | How long a kick vote has to gather enough votes before it fails. |
+
+### Rising Storm 2: Chat
+
+1 setting in `ROGame.ini`, shown under **Chat** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Voice chat | `bEnableVOIP` in `[ROGame.ROGameInfo]` | On: players can talk to each other by voice. Choices: `True` (On), `False` (Off). |
+
+### Rising Storm 2: Messages
+
+3 settings in `ROGame.ini`, shown under **Messages** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server message | `ServerAdvertisementMessages` in `[ROGame.ROGameInfo]` | A message the server prints for all players in the text chat area, repeated at the interval below. |
+| Message interval (seconds) | `ServerAdvertisementInterval` in `[ROGame.ROGameInfo]` | How often, in seconds, the server message is sent to players. |
+| Death messages | `KillMessageMode` in `[ROGame.ROGameInfo]` | Which death messages players see: none, their own deaths, their own kills, or all deaths. Choices: `ROKMM_None` (None), `ROKMM_OwnDeath` (Own deaths only), `ROKMM_Own` (Player's own kills), `ROKMM_ALL` (All deaths). |
+
+## Miscreated
+
+Miscreated's server is MiscreatedServer.exe in the Bin64_dedicated folder, started by the panel's start script. The panel sets the game port and the server name on the launch line. The rest of the settings are in hosting.cfg, which the panel leaves for you to edit by hand.
+
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#miscreated).
+
+Checked on a real install: the server starts, answers the Steam query on the game port plus 2, and Stop closes it gracefully. The Logs tab shows server.log. hosting.cfg is not created by the game; make it in the server folder to override the shipped dedicated.cfg.
+-sv_bind: the Docker guide says the server fails to start on the newest build without -sv_bind and the public IP address, and says to leave it out when Steam Workshop mods are used. The panel does not write it, because it does not know the public address. If the server does not start, this is the first thing to check.
+RCON: the panel does not open the RCON service. The guides say it has no password unless http_password is set in hosting.cfg, so set that by hand if you use it.
+Mods: Workshop mods are added by hand, by putting their numeric IDs on the steam_ugc line of hosting.cfg, separated by commas. The panel does not manage this line.
+Keep the -mis_gameserverid value fixed. Changing it on a server that already has a world wipes that world.
+Back up miscreated.db, the world database, before you update the server. The panel's backup copies it.
+
+## Craftopia
+
+Craftopia's server is Craftopia.exe, started by the panel's start script with -batchmode -showlogs. Its settings are in ServerSetting.ini in the server folder: the panel writes the file with the world name and the port, and the game reads it when it starts.
+
+- `ServerSetting.ini`: The server's settings, in sections such as [GameWorld] and [Host], written as key=value lines. The panel writes the name and the port when it creates the server.
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#craftopia).
+
+Version: one Steam forum thread says the dedicated server works only with the legacy build of Craftopia, and a later post says a trial was reopened. Check which build the server runs on, and which beta branch to install, before you rely on the server.
+Checked on a real install: anonymous install works, the server starts on the port from ServerSetting.ini, creates DedicatedServerSave/Craftopia.db and a world, and the panel's Stop closes it gracefully. It does not answer the Steam query. The game's own log is Player log files in %USERPROFILE%/AppData/LocalLow/PocketPair/Craftopia/Logs_DS (outside the server folder, so the Logs tab cannot show it).
+Password: the game takes only a number of up to 8 digits. Set Use a password and the Password on the Settings tab if you want one.
+Save folder: the Steam news says the saves moved next to Craftopia.exe in a December update. The panel's backup reads the default folder, DedicatedServerSave. Some guides name Saves instead, so check where the saves are after the first start.
+Ports: the game port is TCP and UDP. The guides also list Steam ports in the 27015 to 27037 range; the panel does not reserve those.
+Changes to ServerSetting.ini are read when the server starts. Stop the server before you edit it.
+
+### Craftopia: World
+
+3 settings in `ServerSetting.ini`, shown under **World** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| World name | `name` in `[GameWorld]` | The name of the world, shown to players. The panel sets it from the Server Name you typed when it creates the server. |
+| Difficulty | `difficulty` in `[GameWorld]` | How hard the monsters and dungeons are. Easy, Normal (the default), Hard or Very hard. Choices: `0` (Easy), `1` (Normal), `2` (Hard), `3` (Very hard). |
+| Game mode | `gameMode` in `[GameWorld]` | The world's mode: Normal (the default, survival), Creative build, or Creative play. Choices: `1` (Normal (survival)), `2` (Creative build), `3` (Creative play). |
+
+### Craftopia: Players
+
+3 settings in `ServerSetting.ini`, shown under **Players** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Most players | `maxPlayerNumber` in `[Host]` | The most players who can be online at once, from 1 to 127. The panel writes 7, the default in the file. |
+| Use a password | `usePassword` in `[Host]` | Whether players must type a password to join. Off by default. The password itself is set in the file, as a number. Choices: `0` (Off), `1` (On). |
+| Password | `serverPassword` in `[Host]` | A number of up to 8 digits that players type to join, if the password is on. The setup guides say only numbers work. |
+
+### Craftopia: Network
+
+3 settings in `ServerSetting.ini`, shown under **Network** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Game port | `port` in `[Host]` | The port the server listens on, over TCP and UDP. The panel writes it when it creates the server. Forward it on your router if players are outside your network. |
+| Steam lobby | `isUseSteamLobby` in `[Host]` | Whether the server uses a Steam lobby. Leave it Off: the setup guide marks the Steam lobby as not supported. Choices: `0` (Off), `1` (On (not supported)). |
+| Address to listen on | `bindAddress` in `[Host]` | The address the server binds to. 0.0.0.0 listens on every address, which is right unless the PC has several network connections. |
+
+### Craftopia: Saves
+
+3 settings in `ServerSetting.ini`, shown under **Saves** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Auto-save every (seconds) | `autoSaveSec` in `[Save]` | How often the world is saved, in seconds. Set -1 to turn automatic saving off. |
+| Also save every hour | `autoSavePerHour` in `[Save]` | Whether the server also saves once an hour, in addition to the timed saves. Choices: `0` (Off), `1` (On). |
+| Save folder | `savePath` in `[Save]` | Where the saved worlds are kept. A relative path is taken from the server's folder. The panel's backup reads the default folder, DedicatedServerSave. |
+
+### Craftopia: Creative mode
+
+10 settings in `ServerSetting.ini`, shown under **Creative mode** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Players cannot die | `noDeath` in `[CreativeModeSetting]` | When on, a player's character does not die. Applies to the creative settings. Choices: `0` (Off), `1` (On). |
+| Players take no damage | `noDamage` in `[CreativeModeSetting]` | When on, a player's character takes no damage. Choices: `0` (Off), `1` (On). |
+| No hunger | `noHunger` in `[CreativeModeSetting]` | When on, a player's character does not get hungry. Choices: `0` (Off), `1` (On). |
+| Infinite stamina | `infinitStamina` in `[CreativeModeSetting]` | When on, a player's character has endless stamina. Choices: `0` (Off), `1` (On). |
+| No building | `noBuild` in `[CreativeModeSetting]` | When on, players cannot place new buildings. Choices: `0` (Off), `1` (On). |
+| Buildings take no damage | `buildingIgnoreDamage` in `[CreativeModeSetting]` | When on, buildings do not take damage. Choices: `0` (Off), `1` (On). |
+| Craft without the item cost | `quickCraft` in `[CreativeModeSetting]` | When on, crafting does not check the cost of the items used. Choices: `0` (Off), `1` (On). |
+| Fixed time of day | `forceDayTime` in `[CreativeModeSetting]` | Sets the world's time of day, from 0 to 24. Set -1 to turn the override off. |
+| Island level override | `islandLevel` in `[CreativeModeSetting]` | Sets the level of monsters and dungeons on the islands. Set -1 to turn the override off. |
+| Age level | `ageLevel` in `[CreativeModeSetting]` | The age level of the game world, which changes the crafting recipes. The file's default is 7. |
+
+## Ballistic Overkill
+
+Ballistic Overkill keeps its settings in config.txt, one Key=value per line, in the server's folder. The panel writes the name, the two ports and the password when it creates the server; the rest is on the Settings tab.
+
+- `config.txt`: The server's settings: its name and password, the match rules (map, mode, time, teams) and the login banner. The panel writes the name, the ports and the password; the game's own defaults apply to the rest.
+
+Changing a setting takes effect when the server restarts (the example file says so). Stop the server from the panel, then start it again.
+The ports are not on this page: the panel sets them from the server's Ports section, and it writes them into config.txt when the server is created. If you change a port later, change it in the file too, or the server will not match the panel's record.
+Stopping: no quit command or remote console is documented for this game. The panel's Stop asks the server window to close and, after 15 seconds, ends the program.
+Checked on a real install: the anonymous install works without the base game, BODS.exe starts with the settings from config.txt, answers the Steam query on the query port and the panel's Stop closes it gracefully. The game keeps no log in the server folder, so the Logs tab is empty.
+Not in the form: the number of rounds and the round time (the dossier gives only their names), the broadcast mode (its sources disagree) and the game's mod support, which the dossier did not find.
+
+### Ballistic Overkill: Server
+
+5 settings in `config.txt`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server name | `ServerName` | The name shown in the server browser. The panel writes it when it creates the server. |
+| Join password | `Password` | Only players who type this password can enter the match. Leave it empty for an open server. |
+| Max players | `MaxPlayers` | The most players allowed on the server, from 2 to 16 (the example file's own note). |
+| Max ping (milliseconds) | `MaxPing` | A player whose ping is above this many milliseconds is kicked from the server. 0 turns the check off. |
+| Owner Steam ID | `OwnerId` | The SteamID64 of the server's owner. Only that player can send special commands from chat. The dossier does not list those commands. |
+
+### Ballistic Overkill: Match
+
+7 settings in `config.txt`, shown under **Match** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Start map | `GameMap` | The map the server starts on, by its number in the example file's list. Choices: `1` (Sunnsquare Mall), `2` (Corporate Park), `3` (Hollow), `4` (Nox Museum), `5` (Overhead), `6` (Citadel), `7` (Hakim), `8` (Blackfield), `9` (Wonderdome), `10` (Reinstate). |
+| Game mode | `GameMode` | The mode the matches are played in, by its number in the example file's list. Choices: `1` (Team Deathmatch), `2` (Conquest), `3` (King of the Hill), `4` (Rounds), `5` (Free for all). |
+| Match time (minutes) | `MatchTime` | How long a match lasts, in minutes. |
+| Rounds | `Rounds` | How many rounds are played (the file gives no further detail). |
+| Round time | `RoundTime` | How long each round lasts (the file gives no unit or further detail). |
+| Warm-up time (seconds) | `WarmUpTime` | The wait between one match and the next, in seconds, before players spawn into the next match. |
+| Balance teams automatically | `Autobalance` | Whether the two teams are kept even as players join and leave. Choices: `0` (Off), `1` (On). |
+
+### Ballistic Overkill: Login banner
+
+2 settings in `config.txt`, shown under **Login banner** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Login banner image | `BannerURL` | The image shown while players log into the server. Use a JPG or PNG that is 328 by 82 pixels. |
+| Banner link | `ClickURL` | The web address that opens when a player clicks the login banner. |
+
+## Age of Chivalry
+
+Age of Chivalry's server is srcds.exe in the server's install folder, and the mod is the ageofchivalry folder inside it. Its settings are in ageofchivalry/cfg/server.cfg, one command per line. The panel writes the start line and the first few settings.
+
+- `server.cfg`: The server's settings as console commands: the name, the join password, the admin email, LAN visibility, the time per map and team damage.
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#age-of-chivalry).
+
+Not checked on a real install. Before relying on this server, run it once and check the items in the server's implementation notes.
+Stopping: the panel closes the server's window and, after 15 seconds, ends it. The guides say Age of Chivalry does not respond to a normal shutdown, and no console command to quit was found, so the last few minutes of play may not be saved.
+Anonymous install: the panel installs the server with an anonymous SteamCMD login. The Valve list and a community tool say that works, but the FireDaemon guide logs in with a Steam account. If the install fails, that is the first thing to check.
+Mods: the guides say nothing about how a dedicated server loads mods, so the panel adds no mod setting.
+Ports: the game uses the port you chose. The guides also mention SourceTV and a client port, which the panel does not set; if another server is using those ports, it may fail to start.
+Updates: the Windows build of the server does not update itself, so the panel's SteamCMD update runs when you ask it to. Stop the server first.
+
+### Age of Chivalry: Server
+
+2 settings in `server.cfg`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server name | `hostname` | The name shown in the server browser. The panel sets it from the Server Name you typed when it creates the server. |
+| Admin email | `sv_contact` | The server admin's email address, as the config file's example shows it. Leave it empty to show nothing. |
+
+### Age of Chivalry: Access
+
+1 setting in `server.cfg`, shown under **Access** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Join password | `sv_password` | The password players must type to join. Leave it empty for a server anyone can join. |
+
+### Age of Chivalry: Network
+
+1 setting in `server.cfg`, shown under **Network** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Hide from the internet | `sv_lan` | On: the server does not show on the internet, so only players on this network can find it. Off is the default. Choices: `0` (Off), `1` (On). |
+
+### Age of Chivalry: Rules
+
+2 settings in `server.cfg`, shown under **Rules** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Map time limit (minutes) | `mp_timelimit` | How many minutes a map is played before the server switches to the next map by itself. |
+| Team damage | `mp_friendlyfire` | On: players can hurt their own team. Off: they cannot. Choices: `0` (Off), `1` (On). |
+
+### Age of Chivalry: Logs
+
+1 setting in `server.cfg`, shown under **Logs** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Logging | `log` | Turns on logging to a file, the console and the network. The config file's own recommendation is on. Choices: `on` (On), `off` (Off). |
+
+## HumanitZ
+
+HumanitZ's settings are in GameServerSettings.ini in the HumanitZServer folder, in two sections: Host settings (the name, passwords and player limit) and World settings (the difficulty, loot, time and building rules). The panel copies the game's own default file there the first time, and the game reads it when the server starts.
+
+- `GameServerSettings.ini`: Every setting of the server: the host settings in [Host Settings] and the world's rules in [World Settings].
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#humanitz).
+
+Not checked on a real install. Before relying on this server, run it once and check the items in the server's implementation notes.
+Stop the server before you change the settings file. The game reads it when the server starts, so a change made while it runs is lost or not used.
+Stopping: the panel closes the server's window and, after 15 seconds, ends it. The developers' RCON shutdown is not used by the panel, and no Windows stop command was found, so the last few minutes may not be saved.
+Mods: HumanitZ has no official mod support yet. The developer advises against unofficial mods until version 1.0, because they can damage saves. The panel adds no mod setting.
+Server name: the name is ServerName in the Settings tab. Do not use the word Official in it.
+Versions: the settings file the panel copies is the one shipped with the install. Some values on the guides' websites disagree with it, and the file's own values are the ones used here.
+
+### HumanitZ: Server
+
+2 settings in `GameServerSettings.ini`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server name | `ServerName` in `[Host Settings]` | The name shown in the server browser. Avoid the word "Official" in it, or the server may not start or show up in the list. |
+| Search group | `SearchID` in `[Host Settings]` | A tag that puts the server in a group players can search for. Changing it hides the server from the default list, so players must search for this tag. |
+
+### HumanitZ: Access
+
+3 settings in `GameServerSettings.ini`, shown under **Access** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Join password | `Password` in `[Host Settings]` | The password players must type to join. Leave it empty for a public server. |
+| Admin password | `AdminPass` in `[Host Settings]` | The password an admin types in the game (with /adminaccess) to use the admin commands. |
+| Use the global ban list | `UseGlobalBanList` in `[Host Settings]` | When on, the server turns away players the game has banned from its official servers. Choices: `false` (Off), `true` (On). |
+
+### HumanitZ: Players
+
+2 settings in `GameServerSettings.ini`, shown under **Players** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Max players | `MaxPlayers` in `[Host Settings]` | The most players who can be on at once. The game's default is 16. |
+| Reserved slots | `ReserveSlots` in `[Host Settings]` | How many places are kept for certain players, listed by their NetID in F_ReservedSlots.txt. 0 turns reserved slots off. |
+
+### HumanitZ: Messages
+
+3 settings in `GameServerSettings.ini`, shown under **Messages** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Hide death notices | `NoDeathFeedback` in `[Host Settings]` | When on, players do not get a notice when someone dies. Admins still see them. Choices: `false` (Off), `true` (On). |
+| Hide join and leave notices | `NoJoinFeedback` in `[Host Settings]` | When on, players do not get a notice when someone joins or leaves. Admins still see them. Choices: `false` (Off), `true` (On). |
+| Limited spawn points | `LimitedSpawns` in `[Host Settings]` | When on, players only spawn at the random coast spawns and the spawn point, if there is one. Choices: `false` (Off), `true` (On). |
+
+### HumanitZ: Progress
+
+5 settings in `GameServerSettings.ini`, shown under **Progress** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Experience multiplier | `XpMultiplier` in `[World Settings]` | How fast players gain experience. 1 is the default, 2 is twice as fast, 0.5 is half as fast. |
+| Permanent death | `PermaDeath` in `[World Settings]` | When on, a player who dies loses the character and must make a new one. Choices: `false` (Off), `true` (On). |
+| What you lose when you die | `OnDeath` in `[World Settings]` | What a player loses on death: 0 nothing, 1 the backpack and the weapon in hand, 2 also the pockets and backpack, 3 also the equipment. Choices: `0` (Nothing), `1` (Backpack and weapon in hand), `2` (Also pockets and backpack), `3` (Also equipment). |
+| Respawn wait (seconds) | `RespawnTimer` in `[World Settings]` | How long a player waits after dying before they can spawn again. |
+| Logout wait (seconds) | `LogoutTimer` in `[World Settings]` | How long a player must wait before they can log out, when PvP is on. 0 turns the wait off. |
+
+### HumanitZ: Combat
+
+3 settings in `GameServerSettings.ini`, shown under **Combat** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| PvP | `PVP` in `[World Settings]` | On: players can hurt each other. This also decides whether players can interact with other players' items, such as cars and containers. Choices: `false` (Off), `true` (On). |
+| Weapons break | `WeaponBreak` in `[World Settings]` | When on, a weapon breaks and is removed from the inventory when its durability reaches 0%. Off turns weapon breaking off. Choices: `false` (Off), `true` (On). |
+| Cars a player can own | `MaxOwnedCars` in `[World Settings]` | How many cars a player may claim. Cars that nobody has claimed cannot be driven, but they can be looted. |
+
+### HumanitZ: Difficulty
+
+6 settings in `GameServerSettings.ini`, shown under **Difficulty** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Zombie health | `ZombieDiffHealth` in `[World Settings]` | How tough the zombies are: 0 very easy to 5 nightmare, 2 is the default. Choices: `0` (Very easy), `1` (Easy), `2` (Default), `3` (Hard), `4` (Very hard), `5` (Nightmare). |
+| Zombie speed | `ZombieDiffSpeed` in `[World Settings]` | How fast the zombies move: 0 very easy to 5 nightmare, 2 is the default. Choices: `0` (Very easy), `1` (Easy), `2` (Default), `3` (Hard), `4` (Very hard), `5` (Nightmare). |
+| Zombie damage | `ZombieDiffDamage` in `[World Settings]` | How hard the zombies hit: 0 very easy to 5 nightmare, 2 is the default. Choices: `0` (Very easy), `1` (Easy), `2` (Default), `3` (Hard), `4` (Very hard), `5` (Nightmare). |
+| Bandit health | `HumanHealth` in `[World Settings]` | How tough the human bandits are: 0 very easy to 5 nightmare, 2 is the default. Choices: `0` (Very easy), `1` (Easy), `2` (Default), `3` (Hard), `4` (Very hard), `5` (Nightmare). |
+| Bandit speed | `HumanSpeed` in `[World Settings]` | How fast the human bandits move: 0 very easy to 5 nightmare, 2 is the default. Choices: `0` (Very easy), `1` (Easy), `2` (Default), `3` (Hard), `4` (Very hard), `5` (Nightmare). |
+| Bandit damage | `HumanDamage` in `[World Settings]` | How hard the human bandits hit: 0 very easy to 5 nightmare, 2 is the default. Choices: `0` (Very easy), `1` (Easy), `2` (Default), `3` (Hard), `4` (Very hard), `5` (Nightmare). |
+
+### HumanitZ: Population
+
+8 settings in `GameServerSettings.ini`, shown under **Population** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Zombie amount | `ZombieAmountMulti` in `[World Settings]` | Multiplies the number of zombies. 2 is twice as many, 0.5 is half. |
+| Bandit amount | `HumanAmountMulti` in `[World Settings]` | Multiplies the number of human bandits. 2 is twice as many, 0.5 is half. |
+| Zombie dog amount | `ZombieDogMulti` in `[World Settings]` | Multiplies the number of zombie dogs, which mainly appear at night. 2 is twice as many, 0.5 is half. |
+| Animal amount | `AnimalMulti` in `[World Settings]` | Multiplies the number of animals. The default is 1. |
+| Zombie respawn (minutes) | `ZombieRespawnTimer` in `[World Settings]` | How long it takes zombies to respawn. 0 turns zombie respawning off. |
+| Bandit respawn (minutes) | `HumanRespawnTimer` in `[World Settings]` | How long it takes human bandits to respawn. 0 turns bandit respawning off. |
+| Animal respawn (minutes) | `AnimalRespawnTimer` in `[World Settings]` | How long it takes animals to respawn. 0 turns animal respawning off. |
+| Raids and AI events | `AIEvent` in `[World Settings]` | How often the game sends zombies or bandits to raid where you are: 0 off, 1 low, 2 default, 3 high, 4 insane. Choices: `0` (Off), `1` (Low), `2` (Default), `3` (High), `4` (Insane). |
+
+### HumanitZ: Companions
+
+5 settings in `GameServerSettings.ini`, shown under **Companions** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Companion dogs can be found | `DogEnabled` in `[World Settings]` | When on, you can find dogs in the world that you can recruit as companions. Choices: `false` (Off), `true` (On). |
+| Companion dogs can be recruited | `RecruitDog` in `[World Settings]` | When on, players can recruit companion dogs by dropping food and claiming the dog. Choices: `false` (Off), `true` (On). |
+| Most companion dogs in the world | `DogNum` in `[World Settings]` | The most companion dogs that can be found in the world. Dogs respawn when they are needed. |
+| Companion dog health | `CompanionHealth` in `[World Settings]` | How healthy companion dogs are: 0 low, 1 default, 2 high. This is a fixed level, not a multiplier. Choices: `0` (Low), `1` (Default), `2` (High). |
+| Companion dog damage | `CompanionDmg` in `[World Settings]` | How hard companion dogs hit: 0 low, 1 default, 2 high. This is a fixed level, not a multiplier. Choices: `0` (Low), `1` (Default), `2` (High). |
+
+### HumanitZ: Loot
+
+14 settings in `GameServerSettings.ini`, shown under **Loot** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Air drops | `AirDrop` in `[World Settings]` | When on, air drops with loot land on the map. Choices: `false` (Off), `true` (On). |
+| Air drop interval (game days) | `AirDropInterval` in `[World Settings]` | How many game days pass between air drops. |
+| Loot respawns | `LootRespawn` in `[World Settings]` | When on, loot containers and pickups come back. When off, they never respawn. Choices: `false` (Off), `true` (On). |
+| Loot container respawn (minutes) | `LootRespawnTimer` in `[World Settings]` | If loot respawns, how long a loot container takes to come back. |
+| Pickup respawn (minutes) | `PickupRespawnTimer` in `[World Settings]` | If loot respawns, how long a dropped pickup takes to come back. |
+| Dropped item cleanup (game days) | `PickupCleanup` in `[World Settings]` | How many game days a dropped item lasts before it is removed. 0 keeps them for good. |
+| Food rarity | `RarityFood` in `[World Settings]` | How much of this kind of loot there is: 0 scarce, 1 low, 2 default, 3 plentiful, 4 abundant. Applies to food. Choices: `0` (Scarce), `1` (Low), `2` (Default), `3` (Plentiful), `4` (Abundant). |
+| Drink rarity | `RarityDrink` in `[World Settings]` | How much of this kind of loot there is: 0 scarce, 1 low, 2 default, 3 plentiful, 4 abundant. Applies to drinks. Choices: `0` (Scarce), `1` (Low), `2` (Default), `3` (Plentiful), `4` (Abundant). |
+| Melee weapon rarity | `RarityMelee` in `[World Settings]` | How much of this kind of loot there is: 0 scarce, 1 low, 2 default, 3 plentiful, 4 abundant. Applies to melee weapons. Choices: `0` (Scarce), `1` (Low), `2` (Default), `3` (Plentiful), `4` (Abundant). |
+| Ranged weapon rarity | `RarityRanged` in `[World Settings]` | How much of this kind of loot there is: 0 scarce, 1 low, 2 default, 3 plentiful, 4 abundant. Applies to guns and bows. Choices: `0` (Scarce), `1` (Low), `2` (Default), `3` (Plentiful), `4` (Abundant). |
+| Ammo rarity | `RarityAmmo` in `[World Settings]` | How much of this kind of loot there is: 0 scarce, 1 low, 2 default, 3 plentiful, 4 abundant. Applies to ammunition. Choices: `0` (Scarce), `1` (Low), `2` (Default), `3` (Plentiful), `4` (Abundant). |
+| Armour rarity | `RarityArmor` in `[World Settings]` | How much of this kind of loot there is: 0 scarce, 1 low, 2 default, 3 plentiful, 4 abundant. Applies to armour. Choices: `0` (Scarce), `1` (Low), `2` (Default), `3` (Plentiful), `4` (Abundant). |
+| Resource rarity | `RarityResources` in `[World Settings]` | How much of this kind of loot there is: 0 scarce, 1 low, 2 default, 3 plentiful, 4 abundant. Applies to crafting resources. Choices: `0` (Scarce), `1` (Low), `2` (Default), `3` (Plentiful), `4` (Abundant). |
+| Other item rarity | `RarityOther` in `[World Settings]` | How much of this kind of loot there is: 0 scarce, 1 low, 2 default, 3 plentiful, 4 abundant. Applies to everything else. Choices: `0` (Scarce), `1` (Low), `2` (Default), `3` (Plentiful), `4` (Abundant). |
+
+### HumanitZ: Saves
+
+1 setting in `GameServerSettings.ini`, shown under **Saves** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Save every (seconds) | `SaveIntervalSec` in `[World Settings]` | How often the server saves the world. 0 turns automatic saving off. |
+
+### HumanitZ: Survival
+
+3 settings in `GameServerSettings.ini`, shown under **Survival** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Hunger and thirst speed | `VitalDrain` in `[World Settings]` | How fast a player's vitals drain: 0 slow, 1 normal, 2 fast. Choices: `0` (Slow), `1` (Normal), `2` (Fast). |
+| Food decay speed | `FoodDecay` in `[World Settings]` | How fast food goes off. 1 is the default, 0 turns decay off, 0.5 is half speed and values above 1 speed it up. |
+| Generator fuel use | `GenFuel` in `[World Settings]` | How fast a house generator uses fuel. 1 is the default; less than 1 uses it more slowly. Between 0.01 and 4. |
+
+### HumanitZ: Building
+
+10 settings in `GameServerSettings.ini`, shown under **Building** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Players can dismantle their buildings | `AllowDismantle` in `[World Settings]` | When on, players can take apart the buildings they made. Choices: `false` (Off), `true` (On). |
+| Players can dismantle house props | `AllowHouseDismantle` in `[World Settings]` | When on, players can take apart the props inside houses. Choices: `false` (Off), `true` (On). |
+| Building health | `BuildingHealth` in `[World Settings]` | How healthy the buildings players make are. A multiplier: 1 is the default. |
+| Territory | `Territory` in `[World Settings]` | When on, players cannot build in someone's spawn area. Clan members who are not recruits can. Choices: `false` (Off), `true` (On). |
+| No-build zones | `NoBuildZone` in `[World Settings]` | When on, players cannot build in certain zones. Choices: `false` (Off), `true` (On). |
+| Free building (experimental) | `FreeBuild` in `[World Settings]` | When off, some buildings need a foundation, which cuts down on floating buildings. The game's developers call this experimental. Choices: `false` (Off), `true` (On). |
+| Spawn point decay (real days) | `Decay` in `[World Settings]` | How many real days a spawn point takes to go from full health to destroyed. Player buildings start to decay once it is gone. |
+| Building decay (real days) | `BuildingDecay` in `[World Settings]` | How many real days a player building takes to decay fully. 0 turns decay off. No decay happens inside a spawn point's protection. |
+| Blueprint cleanup (minutes) | `FakeBuildingCleanup` in `[World Settings]` | How long the white blueprint of an unfinished building lasts before it is removed. 0 keeps it. |
+| Claimed car recycling (real days) | `RecycleCar` in `[World Settings]` | After how many real days a claimed car goes back into the pool and spawns somewhere else. 0 turns recycling off. |
+
+### HumanitZ: Time and weather
+
+7 settings in `GameServerSettings.ini`, shown under **Time and weather** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Freeze time when empty | `FreezeTime` in `[World Settings]` | When on, the game clock stops while no one is on the server. Choices: `false` (Off), `true` (On). |
+| Day length (minutes) | `DayDur` in `[World Settings]` | How long a game day lasts, in real minutes. |
+| Night length (minutes) | `NightDur` in `[World Settings]` | How long a game night lasts, in real minutes. |
+| Days per season | `DaysPerSeason` in `[World Settings]` | How many game days each season lasts. |
+| Starting season | `StartingSeason` in `[World Settings]` | The season a new world starts in. Choices: `0` (Summer), `1` (Autumn), `2` (Winter), `3` (Spring). |
+| Shared sleep passes time | `MultiplayerSleep` in `[World Settings]` | When on, time passes if everyone sleeps at the same time. When off, sleeping together does not pass time. Choices: `false` (Off), `true` (On). |
+| Sleep deprivation | `Sleep` in `[World Settings]` | When on, staying awake too long has an effect on the player. Choices: `false` (Off), `true` (On). |
+
+### HumanitZ: Other
+
+1 setting in `GameServerSettings.ini`, shown under **Other** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Voice chat | `Voip` in `[World Settings]` | When on, players can talk to each other with voice chat. Choices: `false` (Off), `true` (On). |
+
+## Survive the Nights
+
+Survive the Nights' server is installed with SteamCMD and started by the panel's start script, which runs STN_Dedicated_Server.exe with no arguments. The panel writes the server name, the game port and UPnP off into Config/ServerConfig.txt before the first start. The other settings are in that file.
+
+Checked on a real install: the server starts with no arguments and listens on the port the panel wrote. The panel's Stop may not save the world first.
+Port: the game's own default is 7950 (UDP) with UPnP on. The panel writes the port you chose and turns UPnP off, so the game does not open ports on your router by itself.
+Settings: Config/ServerConfig.txt holds the settings (owner, name, password, day length, weather, zombies, loot). The panel does not show them.
+Saves: the world is in .stn-server-V8.db in the server folder; the panel's backup covers it and the Config folder.
+Mods: the dossier finds no developer statement on mods. Hosting sites say Steam Workshop is supported, but no mod folder or ID is documented, so the panel adds nothing for mods.
+
+## Tower Unite
+
+Tower Unite's dedicated server hosts one condo. The panel starts TowerServer.exe with the official map and arguments, and writes the settings file TowerServer.ini. The login tokens are needed to list the condo, and the panel does not write them: add them on the Settings tab.
+
+- `TowerServer.ini`: The condo's settings: its title, the number of players, the two login tokens, the admins (one Steam ID per line) and the save options. The panel writes the title and leaves the tokens empty.
+
+Login tokens: the official guides say both tokens are required to list the condo on the server list. Get the Steam token from the Steam game server management page (App ID 394690) and the Tower token from Tower Unite's server management page. Never share them.
+Ports: the panel uses game port 7800 (UDP), because the game's default port 7777 is used by other games in the panel. The query port is fixed at 27016 on the launch line, as the official guide asks. Port 27016 is also the default of Sons of the Forest here, so do not run both with that default.
+Stop: the panel closes the server window. The guides name no command that saves the condo before the server stops, so the last changes may not be saved if the server is stopped while players are on it.
+Program: TowerServer.exe in the install root starts the real server, Tower/Binaries/Win64/TowerServer-Win64-Shipping.exe.
+Bans: the ban list is Tower/Saved/Config/WindowsServer/TowerBans.ini. The guides say to edit it by hand; the panel does not show it.
+Condo maps: the panel starts the condo C_Condo. Other maps (such as C_House and C_Studio) are named in the official guide, and their save files go in Tower/Condos/<map name>/.
+
+### Tower Unite: Server
+
+2 settings in `TowerServer.ini`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Condo title | `ServerTitle` in `[/script/towernetworking.dedicatedserveroptions]` | The name of the condo server. It is the title shown for the server, and the panel sets it when the server is created. |
+| Max players | `MaxPlayers` in `[/script/towernetworking.dedicatedserveroptions]` | How many players can be on the server at once. The game allows 2 to 64, and its default is 32. |
+
+### Tower Unite: Login tokens
+
+2 settings in `TowerServer.ini`, shown under **Login tokens** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Steam login token | `SteamLoginToken` in `[/script/towernetworking.dedicatedserveroptions]` | A token from Steam that gives this server a fixed Steam ID. The condo cannot be listed without it. Treat it like a password: the official guides say never to share it. |
+| Tower login token | `TowerLoginToken` in `[/script/towernetworking.dedicatedserveroptions]` | A token from Tower Unite's server site that lets the condo join the public server list. Treat it like a password: the official guides say never to share it. |
+
+### Tower Unite: Admins
+
+1 setting in `TowerServer.ini`, shown under **Admins** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Admin Steam ID | `AdminSteamID` in `[Administration]` | The 64-bit Steam ID (a number) of one admin. For more admins, add another AdminSteamID line for each one. |
+
+### Tower Unite: Condo
+
+2 settings in `TowerServer.ini`, shown under **Condo** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Auto-save the condo | `CondoAutoSave` in `[DedicatedCondoOptions]` | Saves the condo on its own after changes have been made, so a crash loses less of the work. Choices: `True` (On), `False` (Off). |
+| Keep a backup on each save | `CondoBackupsEnabled` in `[DedicatedCondoOptions]` | Makes a backup copy of the condo each time it is saved, so an earlier save can be restored. Choices: `True` (On), `False` (Off). |
+
+## The Front
+
+The Front's server is TheFrontServer.exe in ProjectWar\Binaries\Win64, started by the panel's start script with the game port and the server name. The settings the game reads are in TheFrontManager\ServerConfig_.ini, which this tab edits. Most of the settings are not documented by the sources the panel was built from, so only the documented ones are shown.
+
+- `ServerConfig_.ini`: The server's settings, in one [BaseServerConfig] section of Key=Value lines. The panel writes the server name and join password when it creates the server.
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#the-front).
+
+Stop: the panel closes the server's window to stop it. The dossier found no console or RCON command for a clean save, so progress since the last automatic save (Save interval) may be lost.
+Backups: the panel backs up the settings file only. The world is kept in a database and files whose folders the sources do not name, so copy the world by hand until its location is known.
+Logs: no log file is known for this server, so the Logs tab is empty.
+A host guide says the settings file overrides the launch line, so change a value in this tab rather than on the start script.
+Not shown: the fight mode values, the chat and mail switches and the self-damage switch. The sources do not give their values, so type a value only after you have checked it in the game.
+Version: the server and the game client must run the same version. After an update, check that the server still starts before you tell players.
+Mods: no official mod support was found for the dedicated server, so the panel does not offer a mods field.
+
+### The Front: Server
+
+3 settings in `ServerConfig_.ini`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server name | `ServerName` in `[BaseServerConfig]` | The name shown in the server browser. Make it easy to search for. |
+| Server title | `ServerTitle` in `[BaseServerConfig]` | A short description shown under the name in the server list. |
+| Player cap | `QueueThreshold` in `[BaseServerConfig]` | The most players that can be on the server at once. The guides use 8. |
+
+### The Front: Access
+
+3 settings in `ServerConfig_.ini`, shown under **Access** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Join password | `ServerPassword` in `[BaseServerConfig]` | What players type to join. Leave it empty for a public server. A host guide advises plain letters and numbers. |
+| Admin Steam IDs | `ServerAdminAccounts` in `[BaseServerConfig]` | The Steam64 IDs of the people who get admin commands, separated by semicolons (;). Restart the server after you change it. |
+| Anti-cheat | `UseACE` in `[BaseServerConfig]` | Turns the anti-cheat on. A host guide says to set it to true and leave it on. |
+
+### The Front: Gameplay
+
+2 settings in `ServerConfig_.ini`, shown under **Gameplay** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Fight mode | `ServerFightModeType` in `[BaseServerConfig]` | Sets PvP (players fight players) or PvE (players fight the environment). The guides do not list the values, so type the number the game uses; the sample uses 1. |
+| Experience rate | `PlayerAddExpRate` in `[BaseServerConfig]` | A multiplier for how fast players gain experience. 1 is normal, 2 is double, 0.5 is half, and 0 turns it off. |
+
+### The Front: Saving
+
+1 setting in `ServerConfig_.ini`, shown under **Saving** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Save interval (seconds) | `SaveWorldInterval` in `[BaseServerConfig]` | How often the world is saved on its own, in seconds. The default is 300 (every five minutes); some hosts use 120. |
+
+### The Front: Messages
+
+1 setting in `ServerConfig_.ini`, shown under **Messages** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Welcome message | `WelcomeMessage` in `[BaseServerConfig]` | Text shown to players when they join. One line is plenty. |
+
+## Day of Dragons
+
+Day of Dragons' settings are in Game.ini, under the developer's section header. The panel creates the file with that header when it creates the server, and the Settings tab edits the keys the developer documents. The server's name is set at start with -SteamServerName.
+
+- `Game.ini`: The server's settings, under one section header. Stop the server before you edit it, so the running game cannot overwrite your change.
+
+Not checked on a real install. Before relying on this server, run it once and check the items in the server's implementation notes.
+Port: the panel passes it as -QueryPort. The server opens no game port of its own (players connect through Steam), so this is the port the server list and the online check use.
+Stop: no quit command or RCON is documented. The panel closes the server's window and, after 15 seconds, ends it, so the last few minutes may not be saved.
+Settings the developer documents are in the Settings tab. Keys from other hosting guides are left out, because their names and defaults conflict with the developer's.
+Mods: no mod support is documented for the dedicated server, so the panel adds no mod setting.
+
+### Day of Dragons: Game rules
+
+10 settings in `Game.ini`, shown under **Game rules** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server type | `iServerType` in `[/game/_dev/runtime/classes/dragonsgi.dragonsgi_c]` | What kind of fighting is allowed: 0 is PvP (players can fight anyone), 1 is PvE (no player fighting), 2 is DvE (only faction PvP), 3 is CvC (only faction and clan PvP). Choices: `0` (PvP), `1` (PvE), `2` (DvE (faction PvP only)), `3` (CvC (faction and clan PvP only)). |
+| Map | `sMap` in `[/game/_dev/runtime/classes/dragonsgi.dragonsgi_c]` | The map the server loads. The developer lists sv_Forest, the Forgotten Forest survival map, and test, a map with a PvP arena for deathmatch. Choices: `sv_Forest` (Forgotten Forest (survival)), `test` (Test map (PvP arena)). Another value can be typed. |
+| Growth speed | `iGrowthRateMultiplier` in `[/game/_dev/runtime/classes/dragonsgi.dragonsgi_c]` | How fast young dragons grow. This only applies when growth is on (Disable growth is off). Choices: `0` (0.5x), `1` (1.0x (default)), `2` (1.5x), `3` (2.0x). |
+| Disable growth | `bDisableGrowth` in `[/game/_dev/runtime/classes/dragonsgi.dragonsgi_c]` | When on, growth is turned off and every egg hatches into an adult-sized dragon. Choices: `False` (Off), `True` (On). |
+| Normal egg stats | `bForceNormalizedEggStats` in `[/game/_dev/runtime/classes/dragonsgi.dragonsgi_c]` | When on, every egg spawns with the same stats, so no player gets a random genetic advantage when they start. Choices: `False` (Off), `True` (On). |
+| Disable nesting | `bDisableNesting` in `[/game/_dev/runtime/classes/dragonsgi.dragonsgi_c]` | When on, players cannot nest to get skins or to raise their stats. Choices: `False` (Off), `True` (On). |
+| Same species groups only | `bForceSameSpeciesGroups` in `[/game/_dev/runtime/classes/dragonsgi.dragonsgi_c]` | When on, only dragons of the same species can group together. The developer says this does not work on CvC servers. Choices: `False` (Off), `True` (On). |
+| Flag hatchling killers | `bFlagHatchlingKillers` in `[/game/_dev/runtime/classes/dragonsgi.dragonsgi_c]` | When on, an adult or elder dragon that kills a hatchling gets red glowing eyes for 20 minutes. Works only on PvP servers. Choices: `False` (Off), `True` (On). |
+| Group members can hurt each other | `bEnableGroupDamage` in `[/game/_dev/runtime/classes/dragonsgi.dragonsgi_c]` | When on, members of the same group can damage each other, if they are in PvP or flagged. Choices: `False` (Off), `True` (On). |
+| Disable global chat | `bDisableGlobalChat` in `[/game/_dev/runtime/classes/dragonsgi.dragonsgi_c]` | When on, players who are not admins cannot use the global chat. Choices: `False` (Off), `True` (On). |
+
+### Day of Dragons: Players and clans
+
+7 settings in `Game.ini`, shown under **Players and clans** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Max players | `iMaxPlayers` in `[/game/_dev/runtime/classes/dragonsgi.dragonsgi_c]` | The most players who can be on the server at once. The developer's range is 1 to 200, and recommends no more than 100 for the best performance. |
+| Max clans | `iMaxClans` in `[/game/_dev/runtime/classes/dragonsgi.dragonsgi_c]` | How many clans the server allows. 0 turns clan creation off; the developer's range is 2 to 255. |
+| Max clan members | `iMaxClanMembers` in `[/game/_dev/runtime/classes/dragonsgi.dragonsgi_c]` | The most members one clan may have. This needs Max clans to be above 0. The developer's range is 10 to 1000. |
+| Max ping (ms) | `iMaxLatencyMS` in `[/game/_dev/runtime/classes/dragonsgi.dragonsgi_c]` | The highest ping a player may have, in milliseconds, before the server kicks them. 0 turns the check off; otherwise the range is 120 to 800. |
+| Always show name tags | `bAlwaysShowPlayerTags` in `[/game/_dev/runtime/classes/dragonsgi.dragonsgi_c]` | When on, every player's name tag shows, not only the tags of players in your group or clan. Choices: `False` (Off), `True` (On). |
+| Always show admin tags | `bAlwaysShowAdminTags` in `[/game/_dev/runtime/classes/dragonsgi.dragonsgi_c]` | When on, admin tags show to every player on the server. Choices: `False` (Off), `True` (On). |
+| Roleplay tag | `bRoleplay` in `[/game/_dev/runtime/classes/dragonsgi.dragonsgi_c]` | When on, the server is listed with the RP tag in the server browser, and the roleplay features, such as custom names, are turned on. Choices: `False` (Off), `True` (On). |
+
+### Day of Dragons: Corpses, saves and restarts
+
+3 settings in `Game.ini`, shown under **Corpses, saves and restarts** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Corpse removal time (seconds) | `iCorpseDespawnTime` in `[/game/_dev/runtime/classes/dragonsgi.dragonsgi_c]` | How long a corpse stays on the server before it is removed. The developer's range is 60 to 1500 seconds; hosting guides quote a much larger maximum. |
+| Save every (seconds) | `iAutoSaveSeconds` in `[/game/_dev/runtime/classes/dragonsgi.dragonsgi_c]` | How often the server saves, in seconds. The developer's range is 60 to 3600. |
+| Daily restart hour (UTC) | `iDailyRestartHour` in `[/game/_dev/runtime/classes/dragonsgi.dragonsgi_c]` | The hour, in UTC, when the server restarts each day. 0 turns the daily restart off; 1 to 24 pick the hour. |
+
+### Day of Dragons: Access and chat
+
+1 setting in `Game.ini`, shown under **Access and chat** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server password | `sServerPassword` in `[/game/_dev/runtime/classes/dragonsgi.dragonsgi_c]` | The password players must type to join. Empty means no password. With a password set, admins use /admin password to reach the admin panel. |
+
+## HYPERCHARGE: Unboxed
+
+HYPERCHARGE: Unboxed's server is installed with SteamCMD and started by the panel's start script, which runs UnboxedServer.exe on the Garage map in co-op mode, with the game port and the query port. The game's other options are not set from the panel.
+
+Not checked on a real install. The program name, the start line and the install id all come from a 2020 community guide and a Steam lookup. Before relying on this server, run it once and check the items in the server's implementation notes.
+Ports: the panel passes the game port and the query port to the server as -Port and -QueryPort. The guide gives these flags as examples only, and on a real install the server did not listen on them: it uses PlayFab (an invite code appears in its log), so no port needs opening.
+Settings: the game's options, such as the mode, the difficulty and the player limit, are not in a settings file, and the panel does not set them. The map and mode are fixed in the start script: the Garage map in co-op mode.
+Stop: no quit command or RCON is documented. The panel closes the server's window and, after 15 seconds, ends it, so the last few minutes may not be saved.
+Mods: no mod support is documented for this game, so the panel adds no mod setting.
+
+## Day of Infamy
+
+Day of Infamy's settings are console lines (`name value`) in `server.cfg`. The panel writes that file with the server's name, the password and `sv_lan 0` when it creates the server, and the launch line points the server at it. The map and the game port are set when the server is created.
+
+- `server.cfg`: The server's name and password, whether it is a LAN server, voice and spectating, team and player rules, and the time limits. Only the lines you set are in the file.
+
+The file's location and whether the game reads it from there are not confirmed: the research found no page that says where the dedicated server reads its settings. Check after the first start that a change you make here takes effect.
+The research found no engine defaults for these settings, and the sample file they come from uses its own values. The form does not show a default.
+The panel has no way to type into the server's console, so Stop closes its window and, after 15 seconds, ends the program. No stop command is documented.
+Mods are not set up: the research did not find a way for a dedicated server to load Workshop mods.
+The map and the game mode are the ones the panel starts with (sicily, frontline). Other maps are not offered in the form.
+
+### Day of Infamy: Server
+
+4 settings in `server.cfg`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server name | `hostname` | The name people see in the server browser. The panel writes it when it creates the server. |
+| Join password | `sv_password` | What players type to join. Leave it empty for a server anyone can join. |
+| Local network only | `sv_lan` | Makes this a LAN server: the server does not list itself online and does not check players' accounts. Keep it off for a server friends join over the internet. Choices: `0` (Off), `1` (On). |
+| Bots per team when empty | `doi_bot_quota` | How many bots to place on each team when no players are present. |
+
+### Day of Infamy: Voice and spectating
+
+3 settings in `server.cfg`, shown under **Voice and spectating** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Voice chat | `sv_voiceenable` | Turns voice communication between players on or off. Choices: `0` (Off), `1` (On). |
+| Everyone hears everyone | `sv_alltalk` | When on, players can hear all other players, with no team restrictions. Choices: `0` (Off), `1` (On). |
+| Allow spectators | `mp_allowspectators` | Turns spectator mode on or off, so people can watch without playing. Choices: `0` (Off), `1` (On). |
+
+### Day of Infamy: Team rules
+
+3 settings in `server.cfg`, shown under **Team rules** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Team play | `mp_teamplay` | Turns team-based play on or off. Choices: `0` (Off), `1` (On). |
+| Balance teams automatically | `mp_autoteambalance` | Lets the game balance the two teams by itself in team play: when on, it moves players so the sides stay even. Choices: `0` (Off), `1` (On). |
+| Friendly fire | `mp_friendlyfire` | Lets team members injure each other. Leave it off for a friendly server. Choices: `0` (Off), `1` (On). |
+
+### Day of Infamy: Player rules
+
+2 settings in `server.cfg`, shown under **Player rules** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Fall damage | `mp_falldamage` | Turns damage from falls on or off. Choices: `0` (Off), `1` (On). |
+| Force respawn | `mp_forcerespawn` | Makes every player respawn when they die, so nobody waits to come back. Choices: `0` (Off), `1` (On). |
+
+### Day of Infamy: Map and timers
+
+4 settings in `server.cfg`, shown under **Map and timers** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Time per map (minutes) | `mp_timelimit` | Game time per map, in minutes, before the map ends. |
+| Kill limit | `mp_fraglimit` | The number of kills at which the map ends. |
+| Pre-round timer (seconds) | `mp_timer_preround` | How long the countdown lasts before each round starts, in seconds. |
+| Post-round timer (seconds) | `mp_timer_postround` | How long the screen waits after a round ends before the next one, in seconds. |
+
+## Killing Floor 2
+
+Killing Floor 2 keeps its settings in `PCServer-KFGame.ini` in the `KFGame\Config` folder of the server. The game makes that file the first time the server runs, so the form is available after the first start. The map and the two ports are set when the server is created.
+
+- `PCServer-KFGame.ini`: The server's name, its join and admin passwords, the difficulty and wave count, the player limit, the votes and whether the server is listed in the server browser.
+
+Start the server once before changing anything here: the game writes this file on its first run, and the research advises against creating it by hand first. Stop the server before you save a change, or the game may overwrite it when it stops.
+The server's executable name for Windows (KFServer.exe) is not confirmed by any page the research read. If the server does not start, check the name in the Binaries\Win64 folder.
+The panel has no way to type into the server's console, so Stop closes its window and, after 15 seconds, ends the program. The research found no safe stop command for Windows.
+Workshop maps and the web admin page are not set up by this form. The research found the Workshop settings in two different files, so they are not offered.
+Several settings the research named have no stated default or range. They are not in the form; a value you type in the file by hand is kept.
+
+### Killing Floor 2: Server
+
+4 settings in `PCServer-KFGame.ini`, shown under **Server** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Server name | `ServerName` in `[Engine.GameReplicationInfo]` | The name shown to all players in the server browser. |
+| Short name | `ShortName` in `[Engine.GameReplicationInfo]` | A shortened name for the server, shown where there is little room. |
+| Join password | `GamePassword` in `[Engine.AccessControl]` | The password players need to join. Leave it empty for a server anyone can join. |
+| Admin password | `AdminPassword` in `[Engine.AccessControl]` | The password for logging in as an admin, such as through the web admin page. Choose a long one, and do not use the join password here. |
+
+### Killing Floor 2: Difficulty and waves
+
+2 settings in `PCServer-KFGame.ini`, shown under **Difficulty and waves** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Difficulty | `GameDifficulty` in `[KFGame.KFGameInfo]` | How hard the zombies are. Normal is the easiest. Choices: `0` (Normal), `1` (Hard), `2` (Suicidal), `3` (Hell on Earth). |
+| Game length | `GameLength` in `[KFGame.KFGameInfo]` | How many waves a game lasts before the players win. Choices: `0` (Short (4 waves)), `1` (Medium (7 waves)), `2` (Long (10 waves)). |
+
+### Killing Floor 2: Players and lobby
+
+3 settings in `PCServer-KFGame.ini`, shown under **Players and lobby** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Maximum players | `MaxPlayers` in `[KFGame.KFGameInfo]` | How many players can join. The research gives 1 to 6 for Survival and 1 to 12 for Versus Survival. |
+| Turn off kick votes | `bDisableKickVote` in `[KFGame.KFGameInfo]` | When Yes, players cannot vote to kick someone out of the game. Choices: `false` (No), `true` (Yes). |
+| Turn off map votes | `bDisableMapVote` in `[KFGame.KFGameInfo]` | When Yes, players cannot vote on the next map between rounds. Choices: `false` (No), `true` (Yes). |
+
+### Killing Floor 2: Listing
+
+1 setting in `PCServer-KFGame.ini`, shown under **Listing** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Hide from the server browser | `bDisablePublish` in `[KFGame.KFGameInfo]` | When Yes, the server does not appear in the server browser, so only people with its address can find it. Choices: `false` (No), `true` (Yes). |
+
+## Empyrion - Galactic Survival
+
+Empyrion's server reads dedicated.yaml, which the panel writes when it creates the server (the server's name, the join password, the ports and the save name). The Settings tab offers the launch arguments, because the file's format has no editor here yet.
+
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#empyrion---galactic-survival).
+
+Not checked on a real install. Before relying on this server, run it once and check the items in the server's implementation notes.
+Windows only: the game has no Linux server, so a Linux host needs Wine, which the panel does not set up.
+Stop: the panel asks the server to save and exit through its telnet console, then closes the window. The save has not been checked on a real install, so the last few minutes may not be saved.
+Telnet: the telnet console has no password and is for this PC only. Do not open its port in your router or firewall.
+Ports: the game port and the three ports after it must be open. The telnet port stays on this PC.
+Settings: only the name, the join password and the ports are set from the panel. Other settings in dedicated.yaml take the game's own defaults.
+Mods: the game's mods are scenarios (folders in Content/Scenarios). The panel does not install them, so set the scenario by hand.
+
+## ATLAS
+
+ATLAS's server is ShooterGameServer.exe, started by the panel's start script on the Ocean seamless-grid map. Its rates and join password are in GameUserSettings.ini (ShooterGame\Saved\Config\WindowsServer), and the Workshop mod ids for a seamless grid are in ShooterGame\ServerGrid.json.
+
+- `GameUserSettings.ini`: The server's rates and join password, under the [ServerSettings] section. Stop the server before you edit it.
+- `ServerGrid.json`: The seamless grid's settings. The panel shows only the Workshop mod ids; the game's grid editor makes the rest of the file.
+- Launch arguments: the **Launch options** file on the Settings tab edits them. See the [launch arguments guide](LAUNCH_ARGUMENTS.md#atlas).
+
+Not checked on a real install. Before relying on this server, run it once and check the items in its implementation notes.
+Ports: the panel uses 7400 for the game and 7402 for the query port, away from the guide defaults (7777 and 27015) that other servers here use. Forward both on your router. The guides' firewall table lists the game port for TCP and UDP, while the panel's firewall check opens UDP only, so allow TCP too.
+The map: the server starts the Ocean seamless-grid map. A seamless grid normally needs a ServerGrid.json from the game's grid editor, which the panel does not make. Check that the server starts and lists itself before you rely on it.
+Passwords: the admin password is written on the start line and the join password in GameUserSettings.ini. Only letters, numbers and the marks - _ . @ # $ * + ~ are allowed in either.
+Stop: the developers document no quit command or RCON. The panel closes the window and, after 15 seconds, ends the server, so the last minutes may not be saved. Back up before you stop or update.
+Mods: the guides give three places for Workshop ids (ServerGrid.json, a mod list in the grid editor, and ActiveMods in an ini file) and do not say which one wins. This panel offers the ServerGrid.json list only.
+
+### ATLAS (GameUserSettings.ini): Rates
+
+3 settings in `GameUserSettings.ini`, shown under **Rates** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Experience rate | `XPMultiplier` in `[ServerSettings]` | How fast players earn experience. 1.0 is the normal rate, 2.0 doubles it and 0.5 halves it. |
+| Taming rate | `TamingSpeedMultiplier` in `[ServerSettings]` | How fast creatures are tamed. 1.0 is the normal rate, 2.0 doubles it and 0.5 halves it. |
+| Gathering rate | `HarvestAmountMultiplier` in `[ServerSettings]` | How much players get from each resource they gather. 1.0 is the normal rate, 2.0 doubles it and 0.5 halves it. |
+
+### ATLAS (GameUserSettings.ini): Access
+
+1 setting in `GameUserSettings.ini`, shown under **Access** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Join password | `ServerPassword` in `[ServerSettings]` | The password players must type to join. Leave it empty for a server anyone can join. It is separate from the admin password, so a player who knows only this one cannot use admin commands. |
+
+### ATLAS (ServerGrid.json): Mods
+
+1 setting in `ServerGrid.json`, shown under **Mods** on the Settings tab.
+
+| Setting | Name in the file | What it does |
+| --- | --- | --- |
+| Workshop mod ids | `ModIDs` | The Steam Workshop ids of the mods for this server, separated by commas, in the order they should load. Leave it empty for no mods. |
