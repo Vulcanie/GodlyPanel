@@ -54,6 +54,8 @@ try {
 		}
 		check(`${t.displayName}: the form opens with its ports filled in`, portsOk);
 		const needsUpload = t.fields?.includes("uploadId");
+		// A game with a licence to accept (Minecraft) stays disabled until the box is ticked.
+		if (t.requiresEula) await page.getByLabel(/EULA/).check();
 		if (!needsUpload) check(`${t.displayName}: the suggested ports are accepted`, await createBtn.isEnabled());
 		if (t.fields?.includes("adminPassword")) check(`${t.displayName}: it asks for an admin password`, (await page.getByLabel(/Admin Password/).count()) > 0);
 		await page.getByRole("button", { name: "Choose a different game" }).click();
