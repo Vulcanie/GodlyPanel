@@ -40,7 +40,7 @@
 		"gamedig": "^5.3.3",
 		"jsonwebtoken": "^9.0.3",
 		"multer": "^2.4.0",
-		"nodemailer": "^10.0.13",
+		"nodemailer": "^10.1.4",
 		"rcon-client": "^4.2.5"
 	},
 	"build": {
