@@ -6,6 +6,7 @@ import { findServerProcesses, ownedProgramRunning } from "../services/serverProc
 import { pollServers, serverStatus } from "../services/pollingService.js";
 import { startServer, stopServer, sendRconCommand } from "../services/serverControl.js";
 import { updateServer } from "../services/updateService.js";
+import { rollbackUpdate, rollbackState } from "../services/updateSafety.js";
 import { runDetached, currentOperation, cancelOperation, isCancelled, waitUntilIdle } from "../services/serverOps.js";
 import { waitUntilStopped, waitUntilOnline, stopAndWait, startAndWait } from "../services/serverLifecycle.js";
 import { requirePermission } from "../middleware/permissions.js";
@@ -157,15 +158,34 @@ router.post("/control/:serverName/:action", (req, res, next) => {
 	}
 });
 
-// What the last game updates did to this server: the newest five (newest first), the latest on its own, and the health timeout the
-// panel is using. Its own path, so it cannot be mistaken for an action in the POST route above.
+// What the last game updates did to this server: the newest five (newest first), the latest on its own, the health timeout the
+// panel is using, and whether the newest update can be rolled back. Its own path, so it cannot be mistaken for an action in the POST
+// route above.
 router.get("/control/:serverName/update/status", requirePermission("server.update"), async (req, res) => {
 	const history = await listHistory(req.server.name);
 	res.json({
 		history: history.slice(-5).reverse(),
 		latest: history.at(-1) ?? null,
 		healthTimeoutMin: getConfig().gameUpdates.healthTimeoutMin,
+		rollback: await rollbackState(req.server),
 	});
+});
+
+// Puts the save files back to the backup taken before the newest update. Only a literal true restarts the server afterwards. The
+// game files are not rolled back, and the result says so. Its own path with three parts after the server name, so it cannot be read as
+// an action in the POST route above.
+router.post("/control/:serverName/update/rollback", requirePermission("server.update"), async (req, res) => {
+	const restart = req.body?.restart === true;
+	try {
+		const started = await runDetached(req.server.name, "rolling back", async (report) => {
+			const result = await rollbackUpdate(req.server, { restart, onReady: () => report({ started: true }) });
+			report({ started: true, ...result });
+		});
+		res.status(202).json(started);
+	} catch (e) {
+		if (!e.status) console.error(`rollback error for ${req.server.name}:`, e);
+		res.status(e.status ?? 500).json({ error: e.message, ...(e.code ? { code: e.code } : {}) });
+	}
 });
 
 export default router;
