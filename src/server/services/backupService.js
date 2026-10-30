@@ -202,8 +202,6 @@ async function scanSpec(spec) {
 	return scan;
 }
 
-const sizeOf = async (spec) => (await scanSpec(spec)).bytes;
-
 /**
  * A fingerprint of what a backup would hold: each folder's path, bytes, newest file time and file count, sorted, then hashed.
  * Two backups with the same fingerprint hold the same files as far as size and time can tell, so the second one isn't
@@ -214,7 +212,9 @@ export async function fingerprintOf(specs, scans = null) {
 	for (let i = 0; i < specs.length; i += 1) {
 		const spec = specs[i];
 		const scan = scans ? scans[i] : await scanSpec(spec);
-		parts.push(`${spec.path.toLowerCase()}|${scan.bytes}|${scan.newestMs}|${scan.files}`);
+		// The exclude list is part of it: widening or narrowing what is left out changes what a backup holds.
+		const excluded = (spec.exclude ?? []).map((e) => e.toLowerCase()).sort().join(",");
+		parts.push(`${spec.path.toLowerCase()}|${scan.bytes}|${scan.newestMs}|${scan.files}|${excluded}`);
 	}
 	parts.sort();
 	return crypto.createHash("sha1").update(parts.join("\n")).digest("hex");
@@ -370,7 +370,8 @@ export async function applyRetention(server) {
 	const scheduled = all.filter((b) => b.kind === "scheduled");
 	if (tiers.keepDaily > 0 || tiers.keepWeekly > 0 || tiers.keepMonthly > 0) {
 		const keep = pickRetained(scheduled, tiers);
-		scheduled.filter((b) => !keep.has(b.id)).forEach((b) => doomed.add(b.id));
+		// A backup whose date can't be read is left alone: it can't be placed in a period, so deleting it would be a guess.
+		scheduled.filter((b) => Number.isFinite(Date.parse(b.createdAt)) && !keep.has(b.id)).forEach((b) => doomed.add(b.id));
 	} else {
 		scheduled.slice(keepCount).forEach((b) => doomed.add(b.id));
 		if (keepDays > 0) {

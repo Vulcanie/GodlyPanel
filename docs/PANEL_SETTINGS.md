@@ -291,6 +291,48 @@ Per server. Older scheduled backups are deleted; ones you made by hand never are
 
 Use this to stop old backups piling up, for example 14 keeps two weeks of scheduled backups.
 
+### Backup file format
+
+zip opens anywhere. zstd and xz are smaller, but only this panel and modern tools open them.
+
+Existing backups are never changed. Restoring works for all three formats, so you can switch at any time.
+
+### How hard to compress backups
+
+fast makes backups quickly and a little larger; max makes them smallest and takes longest.
+
+balanced is a good middle. Compression runs while the server is stopped or saving, so a slower level means a longer wait.
+
+### Keep one backup per day for this many days
+
+Set any of daily, weekly or monthly above 0 to keep a spread of scheduled backups instead of the newest N.
+
+Then "Scheduled backups to keep" and the age limit are ignored. 7 daily, 4 weekly and 3 monthly keeps a week of recent copies and a few older ones.
+
+### Keep one backup per week for this many weeks
+
+The newest backup of each week (weeks start on Monday, UTC).
+
+Works together with the daily and monthly settings; a backup kept by any of them stays.
+
+### Keep one backup per month for this many months
+
+The newest backup of each month (UTC).
+
+Works together with the daily and weekly settings; a backup kept by any of them stays.
+
+### Manual backups to keep
+
+0 never removes a backup you made by hand.
+
+Above 0, the oldest manual backups beyond this many are deleted when a new backup is made.
+
+### Skip a scheduled backup when nothing has changed
+
+Saves space and disk wear when a server sits idle.
+
+Judged by file sizes, times and count. A backup you ask for by hand, or one taken before a restore or update, is always made.
+
 ### Refuse backups below this much free space (GB)
 
 A backup that would leave the drive with less than this is not started.
