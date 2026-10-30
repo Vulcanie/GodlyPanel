@@ -1,6 +1,7 @@
 import React from "react";
 import { api, setUnauthenticatedHandler } from "./api/client";
 import { setLocale, languageFromBrowser } from "./i18n";
+import { accountLanguage } from "./utils/preferences";
 
 // The role comes from the server, every time, via /api/auth/me.
 //
@@ -18,13 +19,19 @@ export function SessionProvider({ children }) {
 		user: null,
 	});
 
-	// The language the person chose for their account. The session doesn't carry it yet, so this stays null and the browser's
-	// language (or English) is used. Once it does, the panel switches to it as soon as the person is signed in.
-	const preferredLanguage = state.user?.preferences?.language ?? null;
+	// Signed in, the panel shows the language saved on the account; otherwise the browser's language applies. A reply that
+	// arrives after the status has changed again is ignored.
 	React.useEffect(() => {
-		// With no account preference (including after signing out) the browser's language applies again.
-		setLocale(preferredLanguage ?? languageFromBrowser());
-	}, [preferredLanguage]);
+		let current = true;
+		if (state.status === "signedIn") {
+			accountLanguage().then((code) => current && setLocale(code));
+		} else {
+			setLocale(languageFromBrowser());
+		}
+		return () => {
+			current = false;
+			};
+		}, [state.status]);
 
 	const refresh = React.useCallback(async () => {
 		try {

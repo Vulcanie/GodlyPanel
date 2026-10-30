@@ -72,4 +72,28 @@ describe("what a person has chosen to hide", () => {
 		const log = (await api.get("/api/activity?limit=200", { cookie: admin })).json.map((e) => e.message).join("\n");
 		assert.doesNotMatch(log, /preferences/);
 	});
+	it("keeps the chosen language, and gives it back from another sign-in", async () => {
+		assert.equal((await put({ language: "es" }, admin)).json.prefs.language, "es");
+		const elsewhere = await panel.api.cookieFor(ADMIN, { "user-agent": "Some other browser" });
+		assert.equal((await get(elsewhere)).language, "es");
+	});
+
+	it("clears the language when set to null", async () => {
+		assert.equal((await put({ language: null }, admin)).status, 200);
+		assert.equal("language" in (await get(admin)), false);
+	});
+
+	it("refuses anything that does not look like a language code", async () => {
+		for (const value of ["../x", "EN", "english", "es_ES", "", 5, "e", "es-419", "a".repeat(20)]) {
+			const r = await put({ language: value }, admin);
+			assert.equal(r.status, 400, JSON.stringify(value));
+		}
+		assert.equal("language" in (await get(admin)), false);
+	});
+
+	it("keeps each person's language to themselves", async () => {
+		await put({ language: "en-XA" }, viewer);
+		assert.equal((await get(viewer)).language, "en-XA");
+		assert.equal("language" in (await get(admin)), false);
+	});
 });

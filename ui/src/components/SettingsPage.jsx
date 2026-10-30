@@ -31,6 +31,7 @@ import {
 import ServerLocations from "./ServerLocations";
 import { api } from "../api/client";
 import AppearanceSettings from "./AppearanceSettings";
+import LanguagePicker from "./LanguagePicker";
 import FolderField from "./FolderField";
 import PanelUpdateCard from "./PanelUpdateCard";
 import NotificationEvents from "./NotificationEvents";
@@ -111,6 +112,7 @@ const WORDS = {
 	communityView: "community view public address tunnel cloudflare cloudflared staff sign in administrators moderators outside internet",
 	communityAccess: "community code invite friends guest viewer sign up join accounts",
 	appearance: "appearance artwork theme colour color banner image card picture custom",
+	language: "language locale translate translation english pseudo",
 	more: "other extra",
 };
 
@@ -247,6 +249,10 @@ function buildSectionDefs({ data, storage, installingSteam, installSteamCmd, res
 			card: () => <CommunityAccessCard />,
 		},
 
+		{
+			id: "language", category: "appearance", title: "Language", hint: "The language the panel is shown in", words: WORDS.language,
+			card: () => <LanguagePicker />,
+		},
 		{
 			id: "appearance", category: "appearance", title: "Appearance", hint: "Artwork, colours and images for your servers", words: WORDS.appearance,
 			card: () => <AppearanceSettings />,
