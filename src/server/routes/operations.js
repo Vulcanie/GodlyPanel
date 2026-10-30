@@ -143,7 +143,7 @@ router.post("/server/:serverName/backups/:id/restore", requirePermission("backup
 
 // What gets backed up, how, and how many are kept.
 router.put("/server/:serverName/backups/settings", requirePermission("backup.settings"), async (req, res) => {
-	const { paths, mode, keepCount, keepDays, format, level } = req.body ?? {};
+	const { paths, mode, keepCount, keepDays, keepDaily, keepWeekly, keepMonthly, keepManual, skipUnchanged, format, level } = req.body ?? {};
 	const patch = {};
 	try {
 		if (paths !== undefined) patch.paths = paths === null ? null : validateBackupPaths(paths);
@@ -161,12 +161,19 @@ router.put("/server/:serverName/backups/settings", requirePermission("backup.set
 			if (level !== null && (typeof level !== "string" || !["fast", "balanced", "max"].includes(level))) throw new BackupError('level must be "fast", "balanced", "max" or null.', "bad_level");
 			patch.level = level;
 		}
-		for (const [key, value] of Object.entries({ keepCount, keepDays })) {
+		// The limits for each whole-number setting. keepDays 0 means "no age limit"; keepCount 0 would delete each scheduled
+		// backup as soon as it was made. The keys are fixed here, so a request can't name any other option.
+		const limits = { keepCount: { min: 1, max: 3650 }, keepDays: { min: 0, max: 3650 }, keepDaily: { min: 0, max: 3650 }, keepWeekly: { min: 0, max: 3650 }, keepMonthly: { min: 0, max: 3650 }, keepManual: { min: 0, max: 500 } };
+		const numbers = { keepCount, keepDays, keepDaily, keepWeekly, keepMonthly, keepManual };
+		for (const [key, value] of Object.entries(numbers)) {
 			if (value === undefined) continue;
-			// keepDays 0 means "no age limit"; keepCount 0 would delete each scheduled backup as soon as it was made.
-			const min = key === "keepCount" ? 1 : 0;
-			if (value !== null && (!Number.isInteger(value) || value < min || value > 3650)) throw new BackupError(`${key} must be a whole number${min ? ` of at least ${min}` : ""} or null.`, "bad_number");
+			const { min, max } = limits[key];
+			if (value !== null && (!Number.isInteger(value) || value < min || value > max)) throw new BackupError(`${key} must be a whole number from ${min} to ${max}, or null.`, "bad_number");
 			patch[key] = value;
+		}
+		if (skipUnchanged !== undefined) {
+			if (skipUnchanged !== null && typeof skipUnchanged !== "boolean") throw new BackupError("skipUnchanged must be true, false or null.", "bad_bool");
+			patch.skipUnchanged = skipUnchanged;
 		}
 		await setOptions(req.server.name, { backup: patch });
 		res.json(await backupOverview(req.server));

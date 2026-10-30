@@ -167,9 +167,14 @@ export function validateBackupPaths(list) {
 	return clean;
 }
 
-async function sizeOf(spec) {
+/**
+ * What a folder (or single file) holds right now: its bytes, the newest modified time among its files, and how many files.
+ * The walk leaves out exactly what the archive leaves out, so a change to an excluded folder (logs, say) doesn't count as
+ * a change worth a new backup.
+ */
+async function scanSpec(spec) {
 	const skip = new Set((spec.exclude ?? []).map((e) => e.toLowerCase()));
-	let total = 0;
+	const scan = { bytes: 0, newestMs: 0, files: 0 };
 	async function walk(dir) {
 		let entries;
 		try {
@@ -180,15 +185,39 @@ async function sizeOf(spec) {
 		for (const entry of entries) {
 			if (skip.has(entry.name.toLowerCase())) continue;
 			const full = path.join(dir, entry.name);
-			if (entry.isDirectory()) await walk(full);
-			else if (entry.isFile()) total += (await fs.stat(full).catch(() => ({ size: 0 }))).size;
+			if (entry.isDirectory()) {
+				await walk(full);
+			} else if (entry.isFile()) {
+				const stat = await fs.stat(full).catch(() => null);
+				scan.bytes += stat?.size ?? 0;
+				scan.newestMs = Math.max(scan.newestMs, stat?.mtimeMs ?? 0);
+				scan.files += 1;
+			}
 		}
 	}
 	const stat = await exists(spec.path);
-	if (!stat) return 0;
-	if (stat.isFile()) return stat.size;
+	if (!stat) return scan;
+	if (stat.isFile()) return { bytes: stat.size, newestMs: stat.mtimeMs, files: 1 };
 	await walk(spec.path);
-	return total;
+	return scan;
+}
+
+const sizeOf = async (spec) => (await scanSpec(spec)).bytes;
+
+/**
+ * A fingerprint of what a backup would hold: each folder's path, bytes, newest file time and file count, sorted, then hashed.
+ * Two backups with the same fingerprint hold the same files as far as size and time can tell, so the second one isn't
+ * needed. `scans` (from scanSpec, in the same order as `specs`) is used when given, so a folder is only walked once.
+ */
+export async function fingerprintOf(specs, scans = null) {
+	const parts = [];
+	for (let i = 0; i < specs.length; i += 1) {
+		const spec = specs[i];
+		const scan = scans ? scans[i] : await scanSpec(spec);
+		parts.push(`${spec.path.toLowerCase()}|${scan.bytes}|${scan.newestMs}|${scan.files}`);
+	}
+	parts.sort();
+	return crypto.createHash("sha1").update(parts.join("\n")).digest("hex");
 }
 
 async function freeBytes(dir) {
@@ -251,6 +280,7 @@ export async function listBackups(server) {
 			serverWasRunning: manifest?.serverWasRunning ?? null,
 			entries: manifest?.entries?.map((e) => ({ label: e.label, path: e.path })) ?? [],
 			hasRecord: Boolean(manifest),
+			fingerprint: manifest?.fingerprint ?? null,
 		});
 	}
 	return out.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
@@ -278,6 +308,46 @@ export async function deleteBackup(server, id) {
 	logActivity({ type: "backup.deleted", server: server.name, message: `Deleted backup ${id}.` });
 }
 
+// The calendar periods the tiered rules count in. All in UTC, so a backup's period doesn't depend on the PC's clock zone.
+const dayKey = (d) => d.toISOString().slice(0, 10);
+const monthKey = (d) => d.toISOString().slice(0, 7);
+const weekKey = (d) => {
+	// Weeks start on Monday: getUTCDay() is 0 for Sunday, so Monday's offset is 0 and Sunday's is 6.
+	const sinceMonday = (d.getUTCDay() + 6) % 7;
+	return dayKey(new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - sinceMonday)));
+};
+
+/**
+ * The ids to keep among scheduled backups under the tiered rules. `list` is [{ id, createdAt }]. The newest backup is always
+ * kept. Each rule keeps the newest backup of each of the most recent periods (days, weeks, months) that contain one, so a
+ * stretch with no backups never empties the folder. Items whose date doesn't parse are ignored.
+ * @returns {Set<string>}
+ */
+export function pickRetained(list, { keepDaily = 0, keepWeekly = 0, keepMonthly = 0 } = {}) {
+	// Newest first, so the first backup seen in each period is the newest one in it.
+	const dated = list
+		.map((b) => ({ id: b.id, when: new Date(b.createdAt) }))
+		.filter((b) => Number.isFinite(b.when.getTime()))
+		.sort((a, b) => b.when - a.when);
+	const keep = new Set();
+	if (dated.length === 0) return keep;
+	keep.add(dated[0].id);
+
+	const keepNewestPer = (periodOf, count) => {
+		if (count <= 0) return;
+		const newestInPeriod = new Map(); // a Map keeps insertion order, so the periods come out newest first
+		for (const b of dated) {
+			const period = periodOf(b.when);
+			if (!newestInPeriod.has(period)) newestInPeriod.set(period, b.id);
+		}
+		for (const id of [...newestInPeriod.values()].slice(0, count)) keep.add(id);
+	};
+	keepNewestPer(dayKey, keepDaily);
+	keepNewestPer(weekKey, keepWeekly);
+	keepNewestPer(monthKey, keepMonthly);
+	return keep;
+}
+
 /** Scheduled backups are trimmed to the keep rules; safety backups to the last few; manual ones never. */
 export async function applyRetention(server) {
 	const config = getConfig().backups;
@@ -285,14 +355,31 @@ export async function applyRetention(server) {
 	// At least one: "keep 0" would delete each scheduled backup the moment it is made, leaving nothing to restore from.
 	const keepCount = Math.max(1, options.keepCount ?? config.keepCount);
 	const keepDays = options.keepDays ?? config.keepDays;
+	// The tiered rules (daily, weekly, monthly) replace "keep the newest N" and the age limit for scheduled backups once any is
+	// above 0. Off by default, so nothing changes until someone asks for it.
+	const tiers = {
+		keepDaily: options.keepDaily ?? config.keepDaily,
+		keepWeekly: options.keepWeekly ?? config.keepWeekly,
+		keepMonthly: options.keepMonthly ?? config.keepMonthly,
+	};
+	// Manual backups are never removed unless this is above 0, and then only the oldest beyond it.
+	const keepManual = options.keepManual ?? config.keepManual;
 	const all = await listBackups(server);
 	const doomed = new Set();
 
 	const scheduled = all.filter((b) => b.kind === "scheduled");
-	scheduled.slice(keepCount).forEach((b) => doomed.add(b.id));
-	if (keepDays > 0) {
-		const cutoff = Date.now() - keepDays * 86_400_000;
-		scheduled.filter((b) => Date.parse(b.createdAt) < cutoff).forEach((b) => doomed.add(b.id));
+	if (tiers.keepDaily > 0 || tiers.keepWeekly > 0 || tiers.keepMonthly > 0) {
+		const keep = pickRetained(scheduled, tiers);
+		scheduled.filter((b) => !keep.has(b.id)).forEach((b) => doomed.add(b.id));
+	} else {
+		scheduled.slice(keepCount).forEach((b) => doomed.add(b.id));
+		if (keepDays > 0) {
+			const cutoff = Date.now() - keepDays * 86_400_000;
+			scheduled.filter((b) => Date.parse(b.createdAt) < cutoff).forEach((b) => doomed.add(b.id));
+		}
+	}
+	if (keepManual > 0) {
+		all.filter((b) => b.kind === "manual").slice(keepManual).forEach((b) => doomed.add(b.id));
 	}
 	for (const kind of SAFETY_KINDS) {
 		all.filter((b) => b.kind === kind).slice(SAFETY_KEEP).forEach((b) => doomed.add(b.id));
@@ -328,8 +415,9 @@ export function resolveMode(server, requested) {
  * @param {string|null} [options.reason]
  * @param {"stop"|"live"|null} [options.mode]
  * @param {() => void} [options.onReady]  called once the checks have passed and the real work begins
+ * @param {boolean} [options.skipIfUnchanged]  for a scheduled run: skip it (returning { skipped: true }) when nothing has changed since the newest backup
  */
-export async function createBackup(server, { kind = "manual", reason = null, mode = null, onReady = null } = {}) {
+export async function createBackup(server, { kind = "manual", reason = null, mode = null, onReady = null, skipIfUnchanged = false } = {}) {
 	const startedAt = Date.now();
 	const { specs } = await backupSpecsFor(server);
 	if (specs.length === 0) {
@@ -350,10 +438,28 @@ export async function createBackup(server, { kind = "manual", reason = null, mod
 	const dir = serverBackupDir(server);
 	await fs.mkdir(dir, { recursive: true });
 
-	// Room first: a backup that fills the drive is worse than none.
+	// One walk of the folders serves the room check, the skip check and the record. The server is not touched yet.
 	progress(server, "checking");
-	let sourceBytes = 0;
-	for (const spec of present) sourceBytes += await sizeOf(spec);
+	const scans = [];
+	for (const spec of present) scans.push(await scanSpec(spec));
+	const sourceBytes = scans.reduce((sum, scan) => sum + scan.bytes, 0);
+	const fingerprint = await fingerprintOf(present, scans);
+
+	// Only a scheduled run is skipped, and only when the setting allows it and the newest backup holds exactly these files.
+	// A backup asked for by hand, or taken before a restore or update, is always made. Comparing against the newest one of
+	// any kind is right: after a restore, the newest is the safety copy of what was replaced, so the next run isn't skipped.
+	const options = getOptions(server.name).backup;
+	const skippingOn = (options.skipUnchanged ?? getConfig().backups.skipUnchanged) === true;
+	if (skipIfUnchanged && kind === "scheduled" && skippingOn) {
+		const newest = (await listBackups(server))[0];
+		if (newest?.fingerprint && newest.fingerprint === fingerprint) {
+			logActivity({ type: "backup.skipped", server: server.name, message: `Skipped the scheduled backup of ${server.name}: no changes since the last backup.` });
+			progress(server, "done");
+			return { skipped: true, reason: "no changes since last backup" };
+		}
+	}
+
+	// Room first: a backup that fills the drive is worse than none.
 	const minFree = getConfig().backups.minFreeGB * GIB;
 	const free = await freeBytes(dir);
 	if (free - sourceBytes * 1.05 < minFree) {
@@ -372,7 +478,6 @@ export async function createBackup(server, { kind = "manual", reason = null, mod
 	let consistent = true;
 
 	// The format and level are fixed here, when the backup starts: a change made while it runs applies to the next one.
-	const options = getOptions(server.name).backup;
 	// A name the options file holds by hand-editing that isn't a known one falls back to the safe default instead of failing the backup.
 	const wantedFormat = options.format ?? getConfig().backups.format;
 	const format = Object.hasOwn(FORMATS, wantedFormat) ? wantedFormat : "zip";
@@ -423,6 +528,7 @@ export async function createBackup(server, { kind = "manual", reason = null, mod
 			serverWasRunning: wasRunning,
 			consistent,
 			sourceBytes,
+			fingerprint,
 			archiveFormat: format,
 			archiveLevel: level,
 			entries: present.map((s) => ({ name: s.leaf, path: s.path, label: s.label, type: s.isDirectory ? "dir" : "file", exclude: s.exclude })),
@@ -682,9 +788,10 @@ export async function backupOverview(server) {
 	const { source, specs } = await backupSpecsFor(server);
 	const options = getOptions(server.name).backup;
 	const backups = await listBackups(server);
+	const config = getConfig().backups;
 	// The format and level a new backup would use: this server's own choice, else the panel-wide one.
-	const effectiveFormat = options.format ?? getConfig().backups.format;
-	const effectiveLevel = options.level ?? getConfig().backups.level;
+	const effectiveFormat = options.format ?? config.format;
+	const effectiveLevel = options.level ?? config.level;
 	const dir = serverBackupDir(server);
 	let free = null;
 	try {
@@ -702,10 +809,20 @@ export async function backupOverview(server) {
 		effectiveMode: resolveMode(server, null),
 		keepCount: options.keepCount,
 		keepDays: options.keepDays,
+		keepDaily: options.keepDaily,
+		keepWeekly: options.keepWeekly,
+		keepMonthly: options.keepMonthly,
+		keepManual: options.keepManual,
+		skipUnchanged: options.skipUnchanged,
 		format: options.format,
 		level: options.level,
 		effectiveFormat,
 		effectiveLevel,
+		effectiveKeepDaily: options.keepDaily ?? config.keepDaily,
+		effectiveKeepWeekly: options.keepWeekly ?? config.keepWeekly,
+		effectiveKeepMonthly: options.keepMonthly ?? config.keepMonthly,
+		effectiveKeepManual: options.keepManual ?? config.keepManual,
+		effectiveSkipUnchanged: options.skipUnchanged ?? config.skipUnchanged,
 		canSaveOnCommand: Boolean(getSaveCommand(server) && server.rconPort && server.rconPassword),
 		totalBytes: backups.reduce((sum, b) => sum + b.sizeBytes, 0),
 		backups,

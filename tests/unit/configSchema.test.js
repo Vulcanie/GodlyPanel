@@ -53,6 +53,19 @@ describe("config coercion", () => {
 		assert.equal(issues.length, 2);
 	});
 
+	it("tiered backup retention is off by default, manual backups are kept, and skipping unchanged backups is on", () => {
+		const { config, issues } = coerceConfig(null);
+		assert.deepEqual(issues, []);
+		assert.deepEqual(
+			{ keepDaily: config.backups.keepDaily, keepWeekly: config.backups.keepWeekly, keepMonthly: config.backups.keepMonthly, keepManual: config.backups.keepManual, skipUnchanged: config.backups.skipUnchanged },
+			{ keepDaily: 0, keepWeekly: 0, keepMonthly: 0, keepManual: 0, skipUnchanged: true },
+		);
+		const { config: clamped, issues: clampIssues } = coerceConfig({ backups: { keepManual: 501, keepDaily: -1 } });
+		assert.equal(clamped.backups.keepManual, 500);
+		assert.equal(clamped.backups.keepDaily, 0);
+		assert.equal(clampIssues.length, 2);
+	});
+
 	it("every setting the form generates has a label and a valid type", () => {
 		const types = new Set(["int", "bool", "string", "enum", "intArray", "stringArray"]);
 		for (const spec of FIELD_SPECS) {
