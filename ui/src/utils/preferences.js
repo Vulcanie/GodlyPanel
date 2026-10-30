@@ -1,5 +1,6 @@
 import React from "react";
 import { api } from "../api/client";
+import { languageFromBrowser } from "../i18n";
 
 /**
  * What the signed-in person has chosen to hide ("don't show this again"), kept on their account on the server so it holds in every
@@ -48,4 +49,17 @@ export function usePreferences(legacy = []) {
 	}, []);
 
 	return [prefs, save];
+}
+
+/**
+ * The language saved on the signed-in person's account, or the browser's when none is saved or the account cannot be read. Never
+ * throws: a failed read must not stop the panel from opening.
+ */
+export async function accountLanguage() {
+	try {
+		const r = await api.get("/api/auth/preferences");
+		return r?.prefs?.language ?? languageFromBrowser();
+	} catch {
+		return languageFromBrowser();
+	}
 }

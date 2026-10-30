@@ -192,6 +192,8 @@ const PREFERENCES = {
 	checklistDismissed: (v) => typeof v === "boolean",
 	// The version of the panel whose "update available" banner was closed; the next version shows it again.
 	updateBannerDismissed: (v) => v === null || (typeof v === "string" && v.length > 0 && v.length <= 64),
+	// The panel's language, as a code like "es" or "en-XA". Only the shape is checked: the UI ignores codes it does not ship.
+	language: (v) => v === null || (typeof v === "string" && /^[a-z]{2,3}(-[A-Z]{2})?$/.test(v)),
 };
 
 export function getPreferences(id) {
