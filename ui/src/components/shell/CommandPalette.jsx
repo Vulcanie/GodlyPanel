@@ -14,8 +14,9 @@ import {
 	RestartAlt as RestartIcon,
 } from "@mui/icons-material";
 import LiveDot from "../ui/LiveDot";
-import { isOperator } from "../../permissions";
+import { canAnywhere } from "../../permissions";
 import { serverTabs } from "../../serverTabs";
+import { useSession } from "../../SessionContext";
 
 /**
  * Ctrl+K: type to jump anywhere. Pages, servers, a server's tabs ("Valheim backups"), and start, stop or restart a server. Every
@@ -26,7 +27,8 @@ function CommandPalette({ open, onClose, servers, allowedServers, role, go, onAc
 	const [active, setActive] = React.useState(0);
 	const listRef = React.useRef(null);
 	const admin = role === "admin";
-	const operator = isOperator(role);
+	const { user, operator, can } = useSession();
+	const activityVisible = canAnywhere(user, "activity.view");
 
 	React.useEffect(() => {
 		if (open) {
@@ -38,7 +40,7 @@ function CommandPalette({ open, onClose, servers, allowedServers, role, go, onAc
 	const items = React.useMemo(() => {
 		const out = [{ id: "p:dashboard", group: "Go to", icon: <DashboardIcon fontSize="small" />, label: "Dashboard", words: "home overview servers", run: () => go("dashboard", null) }];
 		if (admin) out.push({ id: "p:create", group: "Go to", icon: <CreateIcon fontSize="small" />, label: "Create a server", words: "new add install", run: () => go("createServer") });
-		if (operator) out.push({ id: "p:activity", group: "Go to", icon: <ActivityIcon fontSize="small" />, label: "Activity", words: "log history audit events", run: () => go("activity") });
+		if (activityVisible) out.push({ id: "p:activity", group: "Go to", icon: <ActivityIcon fontSize="small" />, label: "Activity", words: "log history audit events", run: () => go("activity") });
 		if (admin) {
 			out.push({ id: "p:people", group: "Go to", icon: <PeopleIcon fontSize="small" />, label: "People", words: "users accounts moderators", run: () => go("users") });
 			out.push({ id: "p:settings", group: "Go to", icon: <SettingsIcon fontSize="small" />, label: "Settings", words: "configuration backups discord notifications folders", run: () => go("settings") });
@@ -51,19 +53,22 @@ function CommandPalette({ open, onClose, servers, allowedServers, role, go, onAc
 				const s = servers[name];
 				const dot = <LiveDot state={s?.online ? "online" : "offline"} size={8} pulse={false} />;
 				out.push({ id: `s:${name}`, group: "Servers", icon: dot, label: name, hint: s?.online ? `${s.playerCount ?? 0} players` : "offline", words: `${s?.type ?? ""} ${s?.sessionName ?? ""}`, run: () => go("config", name) });
-				for (const tab of serverTabs(admin)) {
+				for (const tab of serverTabs(admin, (p) => can(p, name))) {
 					out.push({ id: `t:${name}:${tab.key}`, group: "Server pages", icon: <TabIcon fontSize="small" />, label: `${name}: ${tab.label}`, words: `${tab.words ?? ""} ${s?.type ?? ""}`, run: () => go("config", name, tab.key), rank: 2 });
 				}
-				if (s?.online) {
-					out.push({ id: `a:stop:${name}`, group: "Actions", icon: <StopIcon fontSize="small" />, label: `Stop ${name}`, words: "shut down", run: () => onAction(name, "stop"), rank: 3 });
-					out.push({ id: `a:restart:${name}`, group: "Actions", icon: <RestartIcon fontSize="small" />, label: `Restart ${name}`, words: "reboot", run: () => onAction(name, "restart"), rank: 3 });
-				} else {
-					out.push({ id: `a:start:${name}`, group: "Actions", icon: <StartIcon fontSize="small" />, label: `Start ${name}`, words: "launch run", run: () => onAction(name, "start"), rank: 3 });
+				// Start, stop and restart need control of this server, not just a place in the list.
+				if (can("server.control", name)) {
+					if (s?.online) {
+						out.push({ id: `a:stop:${name}`, group: "Actions", icon: <StopIcon fontSize="small" />, label: `Stop ${name}`, words: "shut down", run: () => onAction(name, "stop"), rank: 3 });
+						out.push({ id: `a:restart:${name}`, group: "Actions", icon: <RestartIcon fontSize="small" />, label: `Restart ${name}`, words: "reboot", run: () => onAction(name, "restart"), rank: 3 });
+					} else {
+						out.push({ id: `a:start:${name}`, group: "Actions", icon: <StartIcon fontSize="small" />, label: `Start ${name}`, words: "launch run", run: () => onAction(name, "start"), rank: 3 });
+					}
 				}
 			}
 		}
 		return out;
-	}, [servers, allowedServers, admin, operator, go, onAction]);
+	}, [servers, allowedServers, admin, operator, activityVisible, can, go, onAction]);
 
 	const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
 	const results = React.useMemo(() => {

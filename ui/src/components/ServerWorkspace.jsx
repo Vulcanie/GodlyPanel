@@ -13,16 +13,18 @@ import ModsPanel from "./ModsPanel";
 import ActivityPanel from "./ActivityPanel";
 import AutomationPanel from "./AutomationPanel";
 import { serverTabs, DEFAULT_TAB } from "../serverTabs";
+import { useSession } from "../SessionContext";
 
 const REMEMBER = "gp.serverTab";
 
 /**
  * Everything about one server: its header (status, join details, Start/Stop/Restart) and tabs for each thing you do with it.
- * Administrators get all of them; a moderator gets the ones they may use.
+ * Administrators get all of them; anyone else gets the ones their permissions reach on this server.
  */
 function ServerWorkspace({ serverName, serverStatus, serverStats, servers, appearance, userRole, tab, onTab, onBack, onEditBatchFiles, onOpenServer, onAction }) {
 	const isAdmin = userRole === "admin";
-	const tabs = React.useMemo(() => serverTabs(isAdmin), [isAdmin]);
+	const { can } = useSession();
+	const tabs = React.useMemo(() => serverTabs(isAdmin, (permission) => can(permission, serverName)), [isAdmin, can, serverName]);
 	const serverNames = React.useMemo(() => Object.keys(servers ?? {}), [servers]);
 
 	// The tab from the address/history, else the one last used this visit, else the first.
@@ -34,7 +36,8 @@ function ServerWorkspace({ serverName, serverStatus, serverStats, servers, appea
 		}
 	}, []);
 	const wanted = tab ?? remembered ?? DEFAULT_TAB;
-	const active = tabs.some((t) => t.key === wanted) ? wanted : tabs[0].key;
+	// With no tab at all (no permission reaches this server), nothing below renders; an empty list must not crash here.
+	const active = tabs.some((t) => t.key === wanted) ? wanted : tabs[0]?.key;
 
 	const choose = (key) => {
 		onTab(key);

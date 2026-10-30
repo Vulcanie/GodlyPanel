@@ -5,7 +5,7 @@ import ServerCard from "./ServerCard";
 import EmptyState from "./ui/EmptyState";
 import PageHeader from "./ui/PageHeader";
 import { getGameInfo } from "../gameCatalog";
-import { isOperator } from "../permissions";
+import { useSession } from "../SessionContext";
 
 const UNTAGGED = "Untagged";
 
@@ -102,7 +102,7 @@ function DashboardPage({ servers, systemStats, serverStats, loading, apiError, u
 	const [tagFilter, setTagFilter] = React.useState(() => remembered("tagFilter", []));
 	const [groupBy, setGroupBy] = React.useState(() => remembered("groupBy", "game"));
 
-	const operator = isOperator(userRole);
+	const { operator } = useSession();
 	const admin = userRole === "admin";
 
 	const allTags = React.useMemo(() => [...new Set(Object.values(servers).flatMap((s) => s.tags ?? []))].sort((a, b) => a.localeCompare(b)), [servers]);
