@@ -8,7 +8,7 @@ import { t, useT } from "../i18n";
 import ConfirmDialog from "./ui/ConfirmDialog";
 import SectionCard from "./ui/SectionCard";
 import InfoTip from "./InfoTip";
-import { needsBackupOverride, updateBody } from "./updatePanel.js";
+import { needsBackupOverride, updateBody } from "./updateRules.js";
 
 /**
  * Start, stop, restart and update: what is needed to run a server. Administrators also get the switch that has the server follow

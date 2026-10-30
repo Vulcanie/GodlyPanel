@@ -2,7 +2,7 @@ import React from "react";
 import { Box, Typography } from "@mui/material";
 import { Info as InfoIcon, ShowChart as ChartIcon } from "@mui/icons-material";
 import ServerControls from "./ServerControls";
-import UpdatePanel from "./UpdatePanel.jsx";
+import UpdatePanel from "./UpdatePanel";
 import RconConsole from "./RconConsole";
 import StatsPanel from "./StatsPanel";
 import SessionEditor from "./SessionEditor";

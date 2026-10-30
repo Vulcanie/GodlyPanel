@@ -8,7 +8,7 @@ import { t, useT } from "../i18n";
 import ConfirmDialog from "./ui/ConfirmDialog";
 import SectionCard from "./ui/SectionCard";
 import InfoTip from "./InfoTip";
-import { outcomeLabel, outcomeColor, buildChange, rollbackHint, rollbackBody, shouldPoll } from "./updatePanel.js";
+import { outcomeLabel, outcomeColor, buildChange, rollbackHint, rollbackBody, shouldPoll } from "./updateRules.js";
 
 const POLL_MS = 10000; // how often to ask while an update is still waiting to be seen to come back online
 const HISTORY_SHOWN = 5;
@@ -51,6 +51,7 @@ function UpdatePanel({ serverName, isAdmin = false }) {
 	const [status, setStatus] = React.useState(null); // null while loading, or when the panel is hidden
 	const [beforeUpdate, setBeforeUpdate] = React.useState(null); // this server's effective backup-before-update, null when not shown
 	const [beforeBusy, setBeforeBusy] = React.useState(false);
+	const [hasUpdate, setHasUpdate] = React.useState(false); // whether the game updates through SteamCMD at all
 	const [rollbackOpen, setRollbackOpen] = React.useState(false);
 	const [restart, setRestart] = React.useState(false);
 
@@ -105,6 +106,18 @@ function UpdatePanel({ serverName, isAdmin = false }) {
 		return () => clearInterval(id);
 	}, [polling, loadStatus]);
 
+	// A game with no SteamCMD update has nothing to show here, unless an update was run for it once.
+	React.useEffect(() => {
+		let alive = true;
+		api
+			.get(`${base}/overview`)
+			.then((r) => alive && setHasUpdate(Boolean(r?.hasUpdate)))
+			.catch(() => {});
+		return () => {
+			alive = false;
+		};
+	}, [base]);
+
 	React.useEffect(() => {
 		if (!isAdmin) return undefined;
 		let alive = true;
@@ -157,6 +170,7 @@ function UpdatePanel({ serverName, isAdmin = false }) {
 	if (!status) return null;
 
 	const history = (status.history ?? []).slice(0, HISTORY_SHOWN);
+	if (!hasUpdate && history.length === 0) return null;
 
 	return (
 		<SectionCard title={t("update.title")}>
