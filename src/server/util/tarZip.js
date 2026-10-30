@@ -1,5 +1,6 @@
 import { execFile } from "node:child_process";
 import path from "node:path";
+import { FORMATS } from "./archiveFormats.js";
 
 // Zip files made and read by the tar.exe that ships with Windows 10 and 11
 // (bsdtar). It streams, so a multi-gigabyte world doesn't have to fit in memory
@@ -11,14 +12,16 @@ import path from "node:path";
 
 const TAR = path.join(process.env.SystemRoot || "C:\\Windows", "System32", "tar.exe");
 
+// stdout comes back as a Buffer: bsdtar writes entry names in the Windows ANSI code page, not UTF-8, so the caller decodes.
 function run(args, { timeoutMs = 6 * 60 * 60 * 1000 } = {}) {
 	return new Promise((resolve, reject) => {
-		execFile(TAR, args, { windowsHide: true, timeout: timeoutMs, maxBuffer: 64 * 1024 * 1024 }, (error, stdout, stderr) => {
+		execFile(TAR, args, { windowsHide: true, timeout: timeoutMs, maxBuffer: 64 * 1024 * 1024, encoding: "buffer" }, (error, stdout, stderr) => {
+			const errorText = stderr.toString();
 			if (error) {
-				const detail = (stderr || error.message).toString().trim().split("\n").slice(0, 4).join(" ");
+				const detail = (errorText || error.message).trim().split("\n").slice(0, 4).join(" ");
 				return reject(new Error(`tar failed: ${detail}`));
 			}
-			resolve({ stdout: stdout.toString(), stderr: stderr.toString() });
+			resolve({ stdout, stderr: errorText });
 		});
 	});
 }
@@ -50,12 +53,49 @@ export async function createZip(outFile, entries, exclude = []) {
 /** Every entry name in the archive, as stored. Throws if it can't be read as an archive. */
 export async function listZip(file) {
 	const { stdout } = await run(["-tf", file]);
-	return stdout.split(/\r?\n/).filter(Boolean);
+	return stdout.toString().split(/\r?\n/).filter(Boolean);
 }
 
 /** Extract the named top-level entries (and everything under them) into `destDir`. */
 export async function extractZip(file, destDir, names = []) {
 	assertPlainNames(names);
+	await run(["-xf", file, "-C", destDir, ...names]);
+}
+
+/**
+ * Writes an archive in the given format (see archiveFormats.js). Unlike createZip this never lets bsdtar pick the format
+ * from the file name, so the format and level are exactly what was asked for. Throws for an unknown format or level.
+ */
+export async function createArchive(outFile, entries, { format = "zip", level = "balanced", exclude = [] } = {}) {
+	if (!Object.hasOwn(FORMATS, format)) throw new Error(`unknown archive format "${format}"`);
+	const formatArgs = FORMATS[format].args(level);
+	assertPlainNames(entries.map((e) => e.name));
+	const args = ["-c", "-f", outFile, ...formatArgs];
+	for (const pattern of exclude) args.push("--exclude", pattern);
+	for (const { dir, name } of entries) args.push("-C", dir, name);
+	await run(args);
+}
+
+/**
+ * Every entry name in an archive of any format bsdtar reads, as stored. Throws if it can't be read as an archive.
+ * Names are decoded as Windows-1252 (the ANSI code page bsdtar writes in on this machine). A name outside it can't be
+ * made by createArchive in the first place, and ASCII decodes the same in any code page, so the "../" check is unaffected.
+ */
+export async function listArchive(file) {
+	const { stdout } = await run(["-tf", file]);
+	return new TextDecoder("windows-1252").decode(stdout).split(/\r?\n/).filter(Boolean);
+}
+
+/**
+ * Extracts the named top-level entries (or everything, if none are named) into `destDir`, which must exist. The archive is
+ * listed first: if any entry would land outside `destDir`, this throws and extracts nothing.
+ */
+export async function extractArchive(file, destDir, names = []) {
+	assertPlainNames(names);
+	const unsafe = unsafeEntries(await listArchive(file));
+	if (unsafe.length) {
+		throw new Error(`${path.basename(file)} holds an entry outside its own folder ("${unsafe[0].slice(0, 80)}"), so nothing was extracted.`);
+	}
 	await run(["-xf", file, "-C", destDir, ...names]);
 }
 
