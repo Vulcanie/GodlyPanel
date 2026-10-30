@@ -102,13 +102,14 @@ export async function runCountdown(server, minutes, action, { sleepFn = sleep, i
 async function runOnServer(task, server) {
 	switch (task.kind) {
 		case "backup": {
-			await runOperation(
+			// runOperation with wait hands back what the work returned, so a skipped run can be told apart here.
+			const made = await runOperation(
 				server.name,
 				"backing up",
-				() => createBackup(server, { kind: "scheduled", reason: task.name || "Scheduled backup", mode: task.options.mode ?? null }),
+				() => createBackup(server, { kind: "scheduled", reason: task.name || "Scheduled backup", mode: task.options.mode ?? null, skipIfUnchanged: true }),
 				{ wait: true },
 			);
-			return "backed up";
+			return made?.skipped ? "no changes since last backup, skipped" : "backed up";
 		}
 		case "restart": {
 			if (!(await isServerRunning(server))) return "wasn't running, so left alone";

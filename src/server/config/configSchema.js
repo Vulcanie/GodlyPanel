@@ -88,6 +88,15 @@ export const DEFAULTS = {
 		level: "balanced",
 		keepCount: 10,
 		keepDays: 0,
+		// Tiered keeping of scheduled backups: the newest of each of the last N days, weeks and months that have one. Off (all 0)
+		// until one is set above 0, which then replaces keepCount and keepDays for scheduled backups.
+		keepDaily: 0,
+		keepWeekly: 0,
+		keepMonthly: 0,
+		// Manual backups are never removed at 0. Above 0, only the oldest beyond this many are.
+		keepManual: 0,
+		// A scheduled backup is skipped when nothing has changed since the newest backup.
+		skipUnchanged: true,
 		minFreeGB: 2,
 	},
 
@@ -467,6 +476,49 @@ export const FIELD_SPECS = [
 		restart: false,
 		label: "Delete scheduled backups older than (days)",
 		help: "0 keeps them until the count above pushes them out.",
+	},
+	{
+		path: "backups.keepDaily",
+		type: "int",
+		min: 0,
+		max: 3650,
+		restart: false,
+		label: "Keep one backup per day for this many days",
+		help: "Set any of daily/weekly/monthly above 0 to keep a spread of scheduled backups instead of 'keep the newest N'. Then 'Scheduled backups to keep' and the age limit are ignored.",
+	},
+	{
+		path: "backups.keepWeekly",
+		type: "int",
+		min: 0,
+		max: 3650,
+		restart: false,
+		label: "Keep one backup per week for this many weeks",
+		help: "Weeks start on Monday (UTC). See the daily setting for how these combine.",
+	},
+	{
+		path: "backups.keepMonthly",
+		type: "int",
+		min: 0,
+		max: 3650,
+		restart: false,
+		label: "Keep one backup per month for this many months",
+		help: "Months are counted in UTC. See the daily setting for how these combine.",
+	},
+	{
+		path: "backups.keepManual",
+		type: "int",
+		min: 0,
+		max: 500,
+		restart: false,
+		label: "Manual backups to keep",
+		help: "0 never removes a backup you made by hand. Above 0, the oldest manual backups beyond this many are deleted.",
+	},
+	{
+		path: "backups.skipUnchanged",
+		type: "bool",
+		restart: false,
+		label: "Skip a scheduled backup when nothing has changed",
+		help: "Saves space and wear when a server sits idle. A backup you ask for by hand is always made.",
 	},
 	{
 		path: "backups.minFreeGB",

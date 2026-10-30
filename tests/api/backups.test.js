@@ -177,6 +177,28 @@ describe("backups", () => {
 		await until(idle);
 	});
 
+	it("saves the tiered keep rules, the manual keep limit and the skip setting, and refuses values that are not right", async () => {
+		const set = await api.put(`${base}/backups/settings`, { keepDaily: 7, keepWeekly: 4, keepMonthly: 3, keepManual: 500, skipUnchanged: false });
+		assert.equal(set.status, 200, JSON.stringify(set.json));
+		assert.equal(set.json.keepDaily, 7);
+		assert.equal(set.json.effectiveKeepDaily, 7);
+		assert.equal(set.json.keepManual, 500);
+		assert.equal(set.json.skipUnchanged, false);
+		assert.equal(set.json.effectiveSkipUnchanged, false);
+
+		for (const body of [{ keepDaily: -1 }, { keepManual: 501 }, { skipUnchanged: "yes" }, { keepWeekly: 1.5 }]) {
+			const r = await api.put(`${base}/backups/settings`, body);
+			assert.equal(r.status, 400, JSON.stringify(body));
+			assert.equal(r.json.code, body.skipUnchanged !== undefined ? "bad_bool" : "bad_number", JSON.stringify(body));
+		}
+		assert.equal((await list()).keepDaily, 7, "a refused change leaves the setting as it was");
+
+		const back = await api.put(`${base}/backups/settings`, { keepDaily: null, keepWeekly: null, keepMonthly: null, keepManual: null, skipUnchanged: null });
+		assert.equal(back.status, 200, "null goes back to the panel-wide setting");
+		assert.equal(back.json.keepDaily, null);
+		assert.equal(back.json.effectiveSkipUnchanged, true);
+	});
+
 	it("stops a running server for the copy, then starts it again", async () => {
 		assert.equal((await api.post("/api/control/Fake%20Backup/start")).status, 200);
 		assert.equal(await until(online), true);
