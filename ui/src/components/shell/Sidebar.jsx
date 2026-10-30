@@ -250,7 +250,7 @@ function Sidebar({ nav, go, servers, allowedServers, systemStats, connection, us
 							{user.username}
 						</Typography>
 						<Typography variant="caption" sx={{ color: "text.secondary" }}>
-							{roleLabel(role)}
+							{typeof user.roleName === "string" && user.roleName ? user.roleName : roleLabel(role)}
 						</Typography>
 					</Box>
 				</Box>
