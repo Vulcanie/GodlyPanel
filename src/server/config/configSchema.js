@@ -82,6 +82,10 @@ export const DEFAULTS = {
 	backups: {
 		// "" means a folder inside the data directory.
 		dir: "",
+		// The archive format new backups are written in: zip opens anywhere; zstd and xz are smaller.
+		format: "zip",
+		// How hard the archive is squeezed: fast is quickest, max is smallest and slowest.
+		level: "balanced",
 		keepCount: 10,
 		keepDays: 0,
 		minFreeGB: 2,
@@ -429,6 +433,22 @@ export const FIELD_SPECS = [
 		restart: false,
 		label: "Backup folder",
 		help: "Where backups are stored. Blank uses a folder inside your data directory. Put it on another drive to survive a disk failure.",
+	},
+	{
+		path: "backups.format",
+		type: "enum",
+		values: ["zip", "zstd", "xz"],
+		restart: false,
+		label: "Backup file format",
+		help: "zip opens anywhere. zstd and xz are smaller, but only this panel and modern tools open them. Existing backups are never changed.",
+	},
+	{
+		path: "backups.level",
+		type: "enum",
+		values: ["fast", "balanced", "max"],
+		restart: false,
+		label: "How hard to compress backups",
+		help: "fast makes them quickly and a little larger. max makes them smallest and takes longest.",
 	},
 	{
 		path: "backups.keepCount",

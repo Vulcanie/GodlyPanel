@@ -14,14 +14,15 @@ import { logActivity } from "./activityLog.js";
 import { protectedReason } from "./serverRemoval.js";
 import { broadcastSseEvent } from "./sseHub.js";
 import { canAccessServer } from "../middleware/permissions.js";
-import { createZip, listZip, extractZip, unsafeEntries } from "../util/tarZip.js";
+import { createArchive, listArchive, extractArchive, unsafeEntries } from "../util/tarZip.js";
+import { splitArchiveName, ALL_EXTENSIONS, FORMATS } from "../util/archiveFormats.js";
 import { sleep } from "../util/async.js";
 import { flagValue, optionValue, propertyValue } from "../util/launchOptions.js";
 
 // Re-exported: callers (and tests) have always imported these from here.
 export { flagValue, optionValue, propertyValue };
 
-// Backups of a server's saves and settings, as one zip each with a small JSON
+// Backups of a server's saves and settings, as one archive each (zip, zstd or xz; see archiveFormats.js) with a small JSON
 // record beside it. The panel decides what to copy (the game's known save
 // folders, or the ones the owner chose), makes sure there is room, stops the
 // server for the copy when the game can't be saved on command, checks the archive
@@ -219,11 +220,17 @@ export async function listBackups(server) {
 		return [];
 	}
 	const out = [];
+	const seen = new Set();
 	for (const name of names) {
-		if (!name.endsWith(".zip")) continue;
-		const id = name.slice(0, -4);
-		const zipStat = await exists(path.join(dir, name));
-		if (!zipStat) continue;
+		// Anything that isn't a finished archive (a .partial left by a crash, a record) has no split and is skipped.
+		const split = splitArchiveName(name);
+		if (!split || split.stem === "") continue;
+		const id = split.stem;
+		// Two archives with the same name (say a .zip and a .tar.zst): the first one listed is the backup, the other is ignored.
+		if (seen.has(id)) continue;
+		const archiveStat = await exists(path.join(dir, name));
+		if (!archiveStat) continue;
+		seen.add(id);
 		let manifest = null;
 		try {
 			manifest = JSON.parse(await fs.readFile(path.join(dir, `${id}.json`), "utf8"));
@@ -232,10 +239,12 @@ export async function listBackups(server) {
 		}
 		out.push({
 			id,
+			format: split.format,
+			level: manifest?.archiveLevel ?? null,
 			kind: manifest?.kind ?? "unknown",
 			reason: manifest?.reason ?? null,
-			createdAt: manifest?.createdAt ?? zipStat.mtime.toISOString(),
-			sizeBytes: zipStat.size,
+			createdAt: manifest?.createdAt ?? archiveStat.mtime.toISOString(),
+			sizeBytes: archiveStat.size,
 			sourceBytes: manifest?.sourceBytes ?? null,
 			mode: manifest?.mode ?? null,
 			consistent: manifest?.consistent ?? null,
@@ -247,16 +256,25 @@ export async function listBackups(server) {
 	return out.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
 }
 
-function backupFile(server, id) {
+/**
+ * The file of a backup, whichever format it was written in, or null if there is no such backup. The id is checked first, so
+ * a name with a slash or "..", from a request, can never point outside the server's backup folder.
+ */
+export async function backupArchivePath(server, id) {
 	if (!SAFE_ID.test(id ?? "")) throw new BackupError("That isn't a valid backup id.", "bad_id");
-	return path.join(serverBackupDir(server), `${id}.zip`);
+	for (const ext of ALL_EXTENSIONS) {
+		const file = path.join(serverBackupDir(server), `${id}${ext}`);
+		if (await exists(file)) return file;
+	}
+	return null;
 }
 
 export async function deleteBackup(server, id) {
-	const file = backupFile(server, id);
-	if (!(await exists(file))) throw new BackupError("That backup doesn't exist.", "not_found", 404);
+	const file = await backupArchivePath(server, id);
+	if (!file) throw new BackupError("That backup doesn't exist.", "not_found", 404);
 	await fs.rm(file, { force: true });
-	await fs.rm(file.replace(/\.zip$/, ".json"), { force: true });
+	// The record is always named from the id, never worked out from the archive's name.
+	await fs.rm(path.join(serverBackupDir(server), `${id}.json`), { force: true });
 	logActivity({ type: "backup.deleted", server: server.name, message: `Deleted backup ${id}.` });
 }
 
@@ -281,8 +299,10 @@ export async function applyRetention(server) {
 	}
 
 	for (const id of doomed) {
-		await fs.rm(backupFile(server, id), { force: true }).catch(() => {});
-		await fs.rm(backupFile(server, id).replace(/\.zip$/, ".json"), { force: true }).catch(() => {});
+		const file = await backupArchivePath(server, id);
+		if (!file) continue;
+		await fs.rm(file, { force: true }).catch(() => {});
+		await fs.rm(path.join(serverBackupDir(server), `${id}.json`), { force: true }).catch(() => {});
 	}
 	return [...doomed];
 }
@@ -351,9 +371,14 @@ export async function createBackup(server, { kind = "manual", reason = null, mod
 	let savesPaused = false;
 	let consistent = true;
 
+	// The format and level are fixed here, when the backup starts: a change made while it runs applies to the next one.
+	const options = getOptions(server.name).backup;
+	const format = options.format ?? getConfig().backups.format;
+	const level = options.level ?? getConfig().backups.level;
+
 	const id = `${slug(server.name)}_${stamp()}_${kind}`;
-	const zipPath = path.join(dir, `${id}.zip`);
-	const partial = `${zipPath}.partial`;
+	const archivePath = path.join(dir, `${id}${FORMATS[format].ext}`);
+	const partial = `${archivePath}.partial`;
 
 	try {
 		if (wasRunning && chosenMode === "stop") {
@@ -395,6 +420,8 @@ export async function createBackup(server, { kind = "manual", reason = null, mod
 			serverWasRunning: wasRunning,
 			consistent,
 			sourceBytes,
+			archiveFormat: format,
+			archiveLevel: level,
 			entries: present.map((s) => ({ name: s.leaf, path: s.path, label: s.label, type: s.isDirectory ? "dir" : "file", exclude: s.exclude })),
 		};
 
@@ -402,20 +429,20 @@ export async function createBackup(server, { kind = "manual", reason = null, mod
 		try {
 			await fs.writeFile(path.join(scratch, MANIFEST_NAME), JSON.stringify(manifest, null, 2));
 			const exclude = present.flatMap((s) => s.exclude.map((e) => `${s.leaf}/${e}`));
-			await createZip(partial, [{ dir: scratch, name: MANIFEST_NAME }, ...present.map((s) => ({ dir: path.dirname(s.path), name: s.leaf }))], exclude);
+			await createArchive(partial, [{ dir: scratch, name: MANIFEST_NAME }, ...present.map((s) => ({ dir: path.dirname(s.path), name: s.leaf }))], { format, level, exclude });
 		} finally {
 			await fs.rm(scratch, { recursive: true, force: true }).catch(() => {});
 		}
 
-		// A zip that can't be read back is not a backup.
+		// An archive that can't be read back is not a backup.
 		progress(server, "verifying");
-		const names = await listZip(partial);
+		const names = await listArchive(partial);
 		if (!names.includes(MANIFEST_NAME) || names.length < 2) {
 			throw new BackupError("The backup was written but couldn't be read back, so it was discarded.", "verify_failed", 500);
 		}
-		await fs.rename(partial, zipPath);
-		const sizeBytes = (await fs.stat(zipPath)).size;
-		const record = { ...manifest, sizeBytes, durationMs: Date.now() - startedAt };
+		await fs.rename(partial, archivePath);
+		const sizeBytes = (await fs.stat(archivePath)).size;
+		const record = { ...manifest, sizeBytes, bytesBefore: sourceBytes, bytesAfter: sizeBytes, durationMs: Date.now() - startedAt };
 		await fs.writeFile(path.join(dir, `${id}.json`), JSON.stringify(record, null, 2));
 
 		await applyRetention(server);
@@ -455,10 +482,10 @@ export async function createBackup(server, { kind = "manual", reason = null, mod
 
 // ---- restoring --------------------------------------------------------------
 
-async function readManifest(zipFile) {
+async function readManifest(archiveFile) {
 	const scratch = await fs.mkdtemp(path.join(os.tmpdir(), "gp-restore-read-"));
 	try {
-		await extractZip(zipFile, scratch, [MANIFEST_NAME]);
+		await extractArchive(archiveFile, scratch, [MANIFEST_NAME]);
 		return JSON.parse(await fs.readFile(path.join(scratch, MANIFEST_NAME), "utf8"));
 	} catch {
 		throw new BackupError("That backup has no readable record of what it holds, so it can't be restored safely.", "no_manifest");
@@ -482,8 +509,8 @@ async function readManifest(zipFile) {
  * @returns {Promise<{ restored: string[], safetyBackup: string|null, restarted: boolean, online: boolean|null }>}
  */
 export async function restoreBackup(server, id, { safety = true, onReady = null, allowShared = false, restart = false } = {}) {
-	const zipFile = backupFile(server, id);
-	if (!(await exists(zipFile))) throw new BackupError("That backup doesn't exist.", "not_found", 404);
+	const archiveFile = await backupArchivePath(server, id);
+	if (!archiveFile) throw new BackupError("That backup doesn't exist.", "not_found", 404);
 	const wasRunning = await isServerRunning(server);
 	if (wasRunning && !restart) {
 		throw new BackupError("Stop the server first. Restoring replaces files the game is using. (\"Restart and use this backup\" stops it for you.)", "server_running", 409);
@@ -495,13 +522,13 @@ export async function restoreBackup(server, id, { safety = true, onReady = null,
 	progress(server, "checking");
 	let names;
 	try {
-		names = await listZip(zipFile);
+		names = await listArchive(archiveFile);
 	} catch (err) {
 		throw new BackupError(`That backup can't be read (${err.message}), so nothing was changed. It may be damaged.`, "unreadable");
 	}
 	const unsafe = unsafeEntries(names);
 	if (unsafe.length > 0) throw new BackupError(`That archive contains paths outside its folders (${unsafe[0]}), so it won't be restored.`, "unsafe_archive");
-	const manifest = await readManifest(zipFile);
+	const manifest = await readManifest(archiveFile);
 
 	// The backup can only go back where this server's folders are now.
 	const { specs } = await backupSpecsFor(server);
@@ -570,7 +597,7 @@ export async function restoreBackup(server, id, { safety = true, onReady = null,
 				const staging = path.join(parent, `.gp-restore-${at}`);
 				await fs.mkdir(staging, { recursive: true });
 				cleanup.push(staging);
-				await extractZip(zipFile, staging, [entry.name]);
+				await extractArchive(archiveFile, staging, [entry.name]);
 				const staged = path.join(staging, entry.name);
 				if (!(await exists(staged))) throw new Error(`${entry.name} was not found in the archive.`);
 
@@ -652,6 +679,9 @@ export async function backupOverview(server) {
 	const { source, specs } = await backupSpecsFor(server);
 	const options = getOptions(server.name).backup;
 	const backups = await listBackups(server);
+	// The format and level a new backup would use: this server's own choice, else the panel-wide one.
+	const effectiveFormat = options.format ?? getConfig().backups.format;
+	const effectiveLevel = options.level ?? getConfig().backups.level;
 	const dir = serverBackupDir(server);
 	let free = null;
 	try {
@@ -669,6 +699,10 @@ export async function backupOverview(server) {
 		effectiveMode: resolveMode(server, null),
 		keepCount: options.keepCount,
 		keepDays: options.keepDays,
+		format: options.format,
+		level: options.level,
+		effectiveFormat,
+		effectiveLevel,
 		canSaveOnCommand: Boolean(getSaveCommand(server) && server.rconPort && server.rconPassword),
 		totalBytes: backups.reduce((sum, b) => sum + b.sizeBytes, 0),
 		backups,

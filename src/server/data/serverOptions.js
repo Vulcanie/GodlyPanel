@@ -31,6 +31,9 @@ export const OPTION_DEFAULTS = Object.freeze({
 		// null = the panel-wide setting.
 		keepCount: null,
 		keepDays: null,
+		// null = the panel-wide setting.
+		format: null,
+		level: null,
 	}),
 });
 
