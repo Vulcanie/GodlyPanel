@@ -502,7 +502,7 @@ export function resolveMode(server, requested) {
  * Makes room under a server's size limit (set per server; see serverOptions.js) for a backup about to be made. The new backup is
  * estimated at the size of the newest backup, or 60% of the files' size when there is none yet. While it wouldn't fit, the oldest
  * scheduled backup goes. The newest backup of any kind is never removed, and manual and safety backups are never removed here.
- * Still over with nothing left to remove: a manual or scheduled backup is refused. A safety backup (before a restore or an update)
+ * If removing every scheduled backup still wouldn't make it fit, a manual or scheduled backup is refused and nothing is removed. A safety backup (before a restore or an update)
  * is always made, and the overrun is only logged, because refusing it would block the restore that needs it.
  */
 async function makeRoomUnderLimit(server, { kind, sourceBytes, limit }) {
@@ -511,6 +511,11 @@ async function makeRoomUnderLimit(server, { kind, sourceBytes, limit }) {
 	const estimate = newest ? newest.sizeBytes : Math.round(sourceBytes * 0.6);
 	let used = backups.reduce((sum, b) => sum + b.sizeBytes, 0);
 	const candidates = backups.filter((b) => b.kind === "scheduled" && b.id !== newest?.id).reverse(); // oldest scheduled first
+	// A refused backup must not cost the scheduled ones: if clearing every candidate still wouldn't make it fit, nothing is removed.
+	const freeable = candidates.reduce((sum, c) => sum + c.sizeBytes, 0);
+	if (used - freeable + estimate > limit && !SAFETY_KINDS.includes(kind)) {
+		throw new BackupError(`Backups for ${server.name} would use more than the ${formatBytes(limit)} limit. Delete some, or raise the limit.`, "over_budget", 409);
+	}
 	while (used + estimate > limit && candidates.length > 0) {
 		const doomed = candidates.shift();
 		await deleteBackup(server, doomed.id);

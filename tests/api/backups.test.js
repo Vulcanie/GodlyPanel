@@ -652,13 +652,16 @@ describe("the per-server size budget", () => {
 		assert.equal(trimmed.message, "Removed backup budget_scheduled_older to stay within the size limit.");
 	});
 
-	it("refuses a manual backup that still doesn't fit once the scheduled ones are gone, and keeps every manual backup", async () => {
+	it("refuses a manual backup that would not fit even with every scheduled one gone, and removes nothing", async () => {
 		assert.equal((await api.put(`${base}/backups/settings`, { maxTotalBytes: 1_000_000 })).status, 200);
 		const manualBefore = await manualIds();
+		const allBefore = (await list()).backups.map((b) => b.id).sort();
+		assert.ok(allBefore.includes("budget_scheduled_newer"), "a scheduled backup is there to lose");
 		const r = await refusedBackup();
 		assert.equal(r.status, 409, JSON.stringify(r.json));
 		assert.equal(r.json.code, "over_budget");
 		assert.deepEqual(await manualIds(), manualBefore, "no manual backup was removed");
+		assert.deepEqual((await list()).backups.map((b) => b.id).sort(), allBefore, "a refused backup costs nothing: the scheduled one is still there");
 	});
 
 	it("still makes a safety backup before a restore when the server is over the limit, and logs it", async () => {

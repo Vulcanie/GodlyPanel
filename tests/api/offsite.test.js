@@ -157,6 +157,8 @@ describe("off-machine backups", () => {
 
 		it("keeps its own number of scheduled backups, independent of the local folder", async () => {
 			await api.put(`/api/settings/backup-destinations/${dest.id}`, { keepCount: 3 });
+			// Nothing changes between these runs, so without this the scheduler would (rightly) skip all but the first.
+			assert.equal((await api.put(`${base}/backups/settings`, { skipUnchanged: false })).status, 200);
 			const made = (await api.post("/api/schedules", { kind: "backup", name: "Hourly", servers: ["Fake Offsite"], when: { type: "interval", everyMinutes: 60 } })).json;
 			const tasks = async () => (await api.get(`${base}/backups`)).json.backups.filter((b) => b.kind === "scheduled");
 			for (let i = 0; i < 4; i += 1) {
