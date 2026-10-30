@@ -8,7 +8,6 @@ import { NavContext } from "./NavContext";
 import { useNavigation } from "./hooks/useNavigation";
 import { usePanelData } from "./hooks/usePanelData";
 import { api } from "./api/client";
-import { isOperator } from "./permissions";
 import Sidebar, { SIDEBAR_WIDTH } from "./components/shell/Sidebar";
 import TopBar from "./components/shell/TopBar";
 import CommandPalette from "./components/shell/CommandPalette";
@@ -37,12 +36,14 @@ const CONFIRM = {
 };
 
 function Panel() {
-	const { status, user, role, isAdmin, logout } = useSession();
+	const { status, user, role, isAdmin, operator, logout } = useSession();
 	const signedIn = status === "signedIn";
 	const toast = useToast();
 
+	// Only a limited operator (not an administrator) has a server list to fetch: the server says which servers they may use.
+	const limitedOperator = operator && role !== "admin";
 	const { nav, go, back, setTab } = useNavigation(signedIn);
-	const data = usePanelData(signedIn, role);
+	const data = usePanelData(signedIn, limitedOperator);
 	const { servers, loading } = data;
 
 	const wide = useMediaQuery((t) => t.breakpoints.up("md"));
@@ -54,7 +55,7 @@ function Panel() {
 
 	// Ctrl+K (or Cmd+K) opens the palette from anywhere, once signed in.
 	React.useEffect(() => {
-		if (!signedIn || !isOperator(role)) return undefined;
+		if (!signedIn || !operator) return undefined;
 		const onKey = (e) => {
 			if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
 				e.preventDefault();
@@ -63,7 +64,7 @@ function Panel() {
 		};
 		window.addEventListener("keydown", onKey);
 		return () => window.removeEventListener("keydown", onKey);
-	}, [signedIn, role]);
+	}, [signedIn, operator]);
 
 	// A server deleted from another window while its page is open.
 	React.useEffect(() => {
@@ -131,7 +132,7 @@ function Panel() {
 				)}
 
 				<Box component="main" sx={{ flex: 1, minWidth: 0 }}>
-					<TopBar nav={nav} go={go} onMenu={() => setMenuOpen(true)} onPalette={() => setPaletteOpen(true)} showPalette={isOperator(role)} />
+					<TopBar nav={nav} go={go} onMenu={() => setMenuOpen(true)} onPalette={() => setPaletteOpen(true)} showPalette={operator} />
 
 					<Box sx={{ px: { xs: 2, md: 4 }, py: { xs: 2, md: 3 }, maxWidth: 1480, mx: "auto", animation: "gp-rise .25s ease-out" }} key={`${nav.page}:${nav.server ?? ""}`}>
 						{isAdmin && nav.page === "dashboard" && <UpdateBanner onOpenSettings={() => go("settings")} />}

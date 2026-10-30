@@ -10,7 +10,7 @@ import { emitLive } from "../liveEvents";
  *
  * `connection` is "live" (the stream is delivering), "polling" (asking every few seconds) or "offline" (the panel isn't answering).
  */
-export function usePanelData(signedIn, role) {
+export function usePanelData(signedIn, limitedOperator) {
 	const [servers, setServers] = React.useState({});
 	const [systemStats, setSystemStats] = React.useState(null);
 	const [serverStats, setServerStats] = React.useState([]);
@@ -43,8 +43,8 @@ export function usePanelData(signedIn, role) {
 				.get("/api/appearance")
 				.then(({ types }) => alive && setAppearance(types))
 				.catch(() => {});
-			// A moderator may be limited to some servers; everyone else can open any they are allowed to see.
-			const mine = (role === "moderator" ? api.get("/api/my-servers") : Promise.resolve(null))
+			// An operator may be limited to some servers; everyone else can open any they are allowed to see.
+			const mine = (limitedOperator ? api.get("/api/my-servers") : Promise.resolve(null))
 				.then((list) => alive && setAllowedServers(list))
 				.catch(() => alive && setAllowedServers(null));
 			await Promise.all([status, system, perServer, art, mine]);
@@ -142,7 +142,7 @@ export function usePanelData(signedIn, role) {
 			clearInterval(fallback);
 			events.close();
 		};
-	}, [signedIn, role]);
+	}, [signedIn, limitedOperator]);
 
 	return { servers, systemStats, serverStats, appearance, apiError, loading, allowedServers, connection };
 }

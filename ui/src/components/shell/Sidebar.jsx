@@ -35,7 +35,8 @@ import {
 import LiveDot from "../ui/LiveDot";
 import ThemeToggle from "../ThemeToggle";
 import { useOperations, operationLabel } from "../../OperationsContext";
-import { isOperator, ROLE_LABELS } from "../../permissions";
+import { canAnywhere, roleLabel } from "../../permissions";
+import { useSession } from "../../SessionContext";
 
 export const SIDEBAR_WIDTH = 268;
 const SERVER_LIST_SHORT = 8;
@@ -120,7 +121,8 @@ function Sidebar({ nav, go, servers, allowedServers, systemStats, connection, us
 	const [filter, setFilter] = React.useState("");
 	const [showAll, setShowAll] = React.useState(false);
 	const [anchor, setAnchor] = React.useState(null);
-	const operator = isOperator(role);
+	const { operator } = useSession();
+	const activityVisible = canAnywhere(user, "activity.view");
 	const admin = role === "admin";
 
 	const move = (page, server, tab) => {
@@ -160,7 +162,7 @@ function Sidebar({ nav, go, servers, allowedServers, systemStats, connection, us
 				<List dense disablePadding>
 					<NavItem icon={<DashboardIcon fontSize="small" />} label="Dashboard" active={nav.page === "dashboard"} onClick={() => move("dashboard", null)} testId="nav-dashboard" />
 					{admin && <NavItem icon={<CreateIcon fontSize="small" />} label="Create server" active={nav.page === "createServer"} onClick={() => move("createServer")} testId="nav-create" />}
-					{operator && <NavItem icon={<ActivityIcon fontSize="small" />} label="Activity" active={nav.page === "activity"} onClick={() => move("activity")} testId="nav-activity" />}
+					{activityVisible && <NavItem icon={<ActivityIcon fontSize="small" />} label="Activity" active={nav.page === "activity"} onClick={() => move("activity")} testId="nav-activity" />}
 					{admin && <NavItem icon={<PeopleIcon fontSize="small" />} label="People" active={nav.page === "users"} onClick={() => move("users")} testId="nav-people" />}
 					{admin && <NavItem icon={<SettingsIcon fontSize="small" />} label="Settings" active={nav.page === "settings"} onClick={() => move("settings")} testId="nav-settings" />}
 				</List>
@@ -246,7 +248,7 @@ function Sidebar({ nav, go, servers, allowedServers, systemStats, connection, us
 							{user.username}
 						</Typography>
 						<Typography variant="caption" sx={{ color: "text.secondary" }}>
-							{ROLE_LABELS[role] ?? role}
+							{roleLabel(role)}
 						</Typography>
 					</Box>
 				</Box>

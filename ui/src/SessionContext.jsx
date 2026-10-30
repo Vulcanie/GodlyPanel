@@ -2,6 +2,7 @@ import React from "react";
 import { api, setUnauthenticatedHandler } from "./api/client";
 import { setLocale, languageFromBrowser } from "./i18n";
 import { accountLanguage } from "./utils/preferences";
+import { can, isOperator } from "./permissions";
 
 // The role comes from the server, every time, via /api/auth/me.
 //
@@ -59,24 +60,44 @@ export function SessionProvider({ children }) {
 		return () => setUnauthenticatedHandler(null);
 	}, [refresh]);
 
-	const login = React.useCallback(async (username, password) => {
-		const data = await api.post("/api/auth/login", { username, password });
-		setState({ status: "signedIn", user: data.user });
-		return data.user;
+	// The sign-in replies carry the role but not what it may do, so the session reads /me straight after. If that read fails the
+	// person is still signed in, with just what the sign-in gave, so the panel shows less rather than refusing to open.
+	const signedInAs = React.useCallback(async (signInUser) => {
+		let user = signInUser;
+		try {
+			const data = await api.get("/api/auth/me");
+			user = data.user;
+		} catch {
+			// Keep the sign-in user: without permissions the panel simply offers less.
+		}
+		setState({ status: "signedIn", user });
+		return user;
 	}, []);
+
+	const login = React.useCallback(
+		async (username, password) => {
+			const data = await api.post("/api/auth/login", { username, password });
+			return signedInAs(data.user);
+		},
+		[signedInAs],
+	);
 
 	// Someone with the community code makes their own guest account.
-	const join = React.useCallback(async (code, username, password) => {
-		const data = await api.post("/api/auth/join", { code, username, password });
-		setState({ status: "signedIn", user: data.user });
-		return data.user;
-	}, []);
+	const join = React.useCallback(
+		async (code, username, password) => {
+			const data = await api.post("/api/auth/join", { code, username, password });
+			return signedInAs(data.user);
+		},
+		[signedInAs],
+	);
 
-	const completeSetup = React.useCallback(async (username, password, serversRoot = "") => {
-		const data = await api.post("/api/setup/admin", { username, password, serversRoot });
-		setState({ status: "signedIn", user: data.user });
-		return data.user;
-	}, []);
+	const completeSetup = React.useCallback(
+		async (username, password, serversRoot = "") => {
+			const data = await api.post("/api/setup/admin", { username, password, serversRoot });
+			return signedInAs(data.user);
+		},
+		[signedInAs],
+	);
 
 	const logout = React.useCallback(async () => {
 		try {
@@ -91,6 +112,9 @@ export function SessionProvider({ children }) {
 			...state,
 			isAdmin: state.user?.role === "admin",
 			role: state.user?.role ?? null,
+			// What this person may do, from the server's own list. Admin-only screens still key off isAdmin.
+			can: (permission, serverName) => can(state.user, permission, serverName),
+			operator: isOperator(state.user),
 			login,
 			join,
 			logout,

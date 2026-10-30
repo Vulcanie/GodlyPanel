@@ -28,7 +28,7 @@ import {
 	PersonAdd as AddPersonIcon,
 } from "@mui/icons-material";
 import { api } from "../api/client";
-import { ROLE_LABELS } from "../permissions";
+import { roleLabel } from "../permissions";
 import { useToast } from "../ToastContext";
 import PageHeader from "./ui/PageHeader";
 import SectionCard from "./ui/SectionCard";
@@ -190,7 +190,7 @@ function UsersPage({ onBack, currentUser }) {
 								</Typography>
 								<Chip
 									size="small"
-									label={ROLE_LABELS[u.role] ?? u.role}
+									label={roleLabel(u.role)}
 									color={u.role === "admin" ? "primary" : u.role === "moderator" ? "secondary" : "default"}
 								/>
 								{u.role === "moderator" && (
