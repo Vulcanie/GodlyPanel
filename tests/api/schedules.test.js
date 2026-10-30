@@ -87,6 +87,8 @@ describe("schedules", () => {
 	});
 
 	it("runs a backup on demand, marked as scheduled, and keeps only the newest few", async () => {
+		// The repeated runs change nothing on disk, so skip-unchanged would skip them; this test is about trimming.
+		assert.equal((await api.put(`${base}/backups/settings`, { skipUnchanged: false })).status, 200);
 		await api.post(`${base}/backups`, { mode: "stop" }); // one by hand: never trimmed
 		await until(idle);
 		const made = (await api.post("/api/schedules", { kind: "backup", name: "Hourly", servers: [SERVER], when: { type: "interval", everyMinutes: 60 } })).json;
