@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { setLocale } from "../i18n/index.js";
-import { outcomeLabel, outcomeColor, buildChange, rollbackHint, needsBackupOverride, updateBody, rollbackBody, shouldPoll } from "../components/updatePanel.js";
+import { outcomeLabel, outcomeColor, buildChange, rollbackHint, needsBackupOverride, updateBody, rollbackBody, shouldPoll } from "../components/updateRules.js";
 
 // The Game updates panel's rules: how an update record reads on screen, when Rollback is offered, when the "update without a backup"
 // question is asked, and the exact bodies sent to the server. Only literal true turns a flag on, so nothing is sent by accident.
 
-describe("updatePanel", () => {
+describe("updateRules", () => {
 	beforeAll(async () => {
 		await setLocale("en");
 	});
