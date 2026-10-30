@@ -27,6 +27,7 @@ export const EVENT_LABELS = {
 	"disk.low": "A drive is running low on space",
 	"panel.update_available": "A new version of GodlyPanel is available",
 	"panel.update_failed": "An update of GodlyPanel didn't work",
+	"update.failed": "A server didn't come back after a game update",
 };
 
 // Sent whenever destinationStaleHours is above 0, rather than being picked from the list of events: they were added after people

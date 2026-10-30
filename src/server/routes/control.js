@@ -11,6 +11,8 @@ import { waitUntilStopped, waitUntilOnline, stopAndWait, startAndWait } from "..
 import { requirePermission } from "../middleware/permissions.js";
 import { resetRecovery } from "../services/crashWatcher.js";
 import { isServerRunning } from "../services/serverState.js";
+import { listHistory } from "../services/updateHistory.js";
+import { getConfig } from "../config/configStore.js";
 
 const router = express.Router();
 
@@ -153,6 +155,17 @@ router.post("/control/:serverName/:action", (req, res, next) => {
 		// The code lets the UI tell "the backup failed" (and offer to go ahead without one) from any other failure.
 		res.status(e.status ?? 500).json({ error: e.message, ...(e.code ? { code: e.code } : {}) });
 	}
+});
+
+// What the last game updates did to this server: the newest five (newest first), the latest on its own, and the health timeout the
+// panel is using. Its own path, so it cannot be mistaken for an action in the POST route above.
+router.get("/control/:serverName/update/status", requirePermission("server.update"), async (req, res) => {
+	const history = await listHistory(req.server.name);
+	res.json({
+		history: history.slice(-5).reverse(),
+		latest: history.at(-1) ?? null,
+		healthTimeoutMin: getConfig().gameUpdates.healthTimeoutMin,
+	});
 });
 
 export default router;

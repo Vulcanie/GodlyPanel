@@ -102,6 +102,11 @@ export const DEFAULTS = {
 		minFreeGB: 2,
 	},
 
+	gameUpdates: {
+		// After an update-and-reboot, how many minutes a restarted server has to report online before the update is marked failed.
+		healthTimeoutMin: 10,
+	},
+
 	startup: {
 		openAtLogin: false,
 		startHidden: true,
@@ -140,6 +145,7 @@ export const DEFAULTS = {
 			"disk.low",
 			"panel.update_available",
 			"panel.update_failed",
+			"update.failed",
 		],
 		diskLowGB: 10,
 		// Warn when a backup is this many hours old and still hasn't reached an off-site destination (0 = never).
@@ -528,6 +534,16 @@ export const FIELD_SPECS = [
 		restart: false,
 		label: "Back up before updating a game",
 		help: "Takes a backup of the server's save folders after it has been stopped and before the game files are updated. If that backup fails the update is not run.",
+	},
+	{
+		path: "gameUpdates.healthTimeoutMin",
+		type: "int",
+		// Written as a whole number of minutes: the settings validator rounds, so a fraction such as 0.5 is not possible. The smallest is one minute.
+		min: 1,
+		max: 120,
+		restart: false,
+		label: "Wait for a server to come back after an update (minutes)",
+		help: "After an update-and-reboot the panel waits this long for the server to report online. If it doesn't, the update is marked failed, you're told, and you can roll back from the Update panel.",
 	},
 	{
 		path: "backups.minFreeGB",

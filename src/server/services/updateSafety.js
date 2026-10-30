@@ -1,6 +1,8 @@
 import { getConfig } from "../config/configStore.js";
 import { getOptions } from "../data/serverOptions.js";
 import { createBackup, BackupError } from "./backupService.js";
+import { serverStatus } from "./pollingService.js";
+import { sleep } from "../util/async.js";
 
 // Backing up before a game update: a copy of each server's save folders, taken while the server is stopped, so the
 // copy is clean. It lives here, not in updateService.js, so the update code can import it without an import cycle.
@@ -23,6 +25,9 @@ export function beforeUpdateEnabled(serverChoice, panelSetting) {
  */
 export async function snapshotBeforeUpdate(group) {
 	const backupIds = [];
+	// The same ids by server name, so a record of the update can name the backup that belongs to it. A null-prototype map, so a
+	// server called "constructor" is just another key.
+	const byServer = Object.create(null);
 	const skipped = [];
 	const failed = [];
 
@@ -35,6 +40,7 @@ export async function snapshotBeforeUpdate(group) {
 		try {
 			const backup = await createBackup(server, { kind: "pre-update", reason: "Before updating the game", mode: "live" });
 			backupIds.push(backup.id);
+			byServer[server.name] = backup.id;
 		} catch (err) {
 			// No folders set up, or none on disk yet: nothing to protect, so the update goes on.
 			if (err instanceof BackupError && ["no_paths", "nothing_to_back_up"].includes(err.code)) {
@@ -45,5 +51,22 @@ export async function snapshotBeforeUpdate(group) {
 		}
 	}
 
-	return { backupIds, skipped, failed };
+	return { backupIds, byServer, skipped, failed };
+}
+
+/**
+ * Waits for a restarted server to report online. Returns "ok" the first time it is seen online, or "failed" when that has not
+ * happened by the timeout (the setting, in minutes, unless a timeout is given). Only the first time counts: what happens after
+ * that is the crash recovery's job.
+ *
+ * @returns {Promise<"ok" | "failed">}
+ */
+export async function watchHealth(server, { timeoutMs = null, pollMs = 1000 } = {}) {
+	const limit = timeoutMs ?? getConfig().gameUpdates.healthTimeoutMin * 60_000;
+	const deadline = Date.now() + limit;
+	while (true) {
+		if (serverStatus[server.name]?.online) return "ok";
+		if (Date.now() >= deadline) return "failed";
+		await sleep(pollMs);
+	}
 }

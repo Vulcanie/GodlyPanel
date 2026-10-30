@@ -16,6 +16,7 @@ Settings are saved in `config.json` in your data folder. Keys and passwords are 
 - [New servers](#new-servers)
 - [Discord](#discord)
 - [Backups](#backups)
+- [Game updates](#game-updates)
 - [Starting with Windows](#starting-with-windows)
 - [Charts and history](#charts-and-history)
 - [Panel updates](#panel-updates)
@@ -344,6 +345,14 @@ Takes a backup of the server's save folders after it has been stopped and before
 A backup that would leave the drive with less than this is not started.
 
 Stops a backup from filling the drive and taking the servers down with it. The default of 2 GB is a sensible floor.
+
+## Game updates
+
+### Wait for a server to come back after an update (minutes)
+
+After an update-and-reboot the panel waits this long for the server to report online. If it doesn't, the update is marked failed, you're told, and you can roll back from the Update panel.
+
+The wait starts when the server is started again after the game files were updated. A server that comes online within the time is recorded as verified. One that does not is recorded as failed, and a line in the Activity log says so. Nothing is rolled back for you: restore the save folders from the backup taken before the update on the server's Backups tab. The shortest wait is 1 minute.
 
 ## Starting with Windows
 
