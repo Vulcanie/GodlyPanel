@@ -185,7 +185,7 @@ router.post("/server/:serverName/backups/:id/restore", requirePermission("backup
 
 // What gets backed up, how, and how many are kept.
 router.put("/server/:serverName/backups/settings", requirePermission("backup.settings"), async (req, res) => {
-	const { paths, mode, keepCount, keepDays, keepDaily, keepWeekly, keepMonthly, keepManual, skipUnchanged, format, level, maxTotalBytes } = req.body ?? {};
+	const { paths, mode, keepCount, keepDays, keepDaily, keepWeekly, keepMonthly, keepManual, skipUnchanged, beforeUpdate, format, level, maxTotalBytes } = req.body ?? {};
 	const patch = {};
 	try {
 		if (paths !== undefined) patch.paths = paths === null ? null : validateBackupPaths(paths);
@@ -225,6 +225,10 @@ router.put("/server/:serverName/backups/settings", requirePermission("backup.set
 		if (skipUnchanged !== undefined) {
 			if (skipUnchanged !== null && typeof skipUnchanged !== "boolean") throw new BackupError("skipUnchanged must be true, false or null.", "bad_bool");
 			patch.skipUnchanged = skipUnchanged;
+		}
+		if (beforeUpdate !== undefined) {
+			if (beforeUpdate !== null && typeof beforeUpdate !== "boolean") throw new BackupError("beforeUpdate must be true, false or null.", "bad_bool");
+			patch.beforeUpdate = beforeUpdate;
 		}
 		await setOptions(req.server.name, { backup: patch });
 		res.json(await backupOverview(req.server));

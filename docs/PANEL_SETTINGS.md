@@ -333,6 +333,12 @@ Saves space and disk wear when a server sits idle.
 
 Judged by file sizes, times and count. A backup you ask for by hand, or one taken before a restore or update, is always made.
 
+### Back up before updating a game
+
+Keeps the save folders safe if an update goes wrong.
+
+Takes a backup of the server's save folders after it has been stopped and before the game files are updated. If that backup fails the update is not run. A server can choose its own setting; this one applies to servers that don't.
+
 ### Refuse backups below this much free space (GB)
 
 A backup that would leave the drive with less than this is not started.

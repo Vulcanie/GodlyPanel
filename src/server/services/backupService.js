@@ -940,6 +940,7 @@ export async function backupOverview(server) {
 		keepMonthly: options.keepMonthly,
 		keepManual: options.keepManual,
 		skipUnchanged: options.skipUnchanged,
+		beforeUpdate: options.beforeUpdate,
 		format: options.format,
 		level: options.level,
 		effectiveFormat,
@@ -949,6 +950,8 @@ export async function backupOverview(server) {
 		effectiveKeepMonthly: options.keepMonthly ?? config.keepMonthly,
 		effectiveKeepManual: options.keepManual ?? config.keepManual,
 		effectiveSkipUnchanged: options.skipUnchanged ?? config.skipUnchanged,
+		// The same rule as beforeUpdateEnabled in updateSafety.js, written out here because that module imports this one.
+		effectiveBeforeUpdate: (options.beforeUpdate ?? config.beforeUpdate) === true,
 		canSaveOnCommand: Boolean(getSaveCommand(server) && server.rconPort && server.rconPassword),
 		totalBytes: backups.reduce((sum, b) => sum + b.sizeBytes, 0),
 		// Read from each archive's real size, not its recorded one: a recompressed archive's record can be out of date.

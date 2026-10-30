@@ -88,29 +88,31 @@ const CONTROL_ACTIONS = {
 			report(await stopServer(server));
 			await waitUntilStopped(server).catch(() => {});
 		}),
-	update: (server) =>
+	// The body can ask to go ahead without a backup that failed. Only the literal true counts, so nothing else can switch the safety off.
+	update: (server, body = {}) =>
 		runDetached(server.name, "updating", async (report) => {
-			const started = await updateServer(server, { restart: false });
+			const started = await updateServer(server, { restart: false, proceedWithoutBackup: body.proceedWithoutBackup === true });
 			report(describeUpdate(server, started, false));
 			await started.finished;
 		}),
-	"update-reboot": (server) =>
+	"update-reboot": (server, body = {}) =>
 		runDetached(server.name, "updating", async (report) => {
-			const started = await updateServer(server, { restart: true });
+			const started = await updateServer(server, { restart: true, proceedWithoutBackup: body.proceedWithoutBackup === true });
 			report(describeUpdate(server, started, true));
 			await started.finished;
 		}),
 };
 
-function describeUpdate(server, { groupNames, logPath }, restart) {
+function describeUpdate(server, { groupNames, logPath, preUpdateBackupIds }, restart) {
 	const who =
 		groupNames.length > 1 ? `${groupNames.join(", ")} (shared install)` : server.name;
 	const afterward = restart
 		? "they'll start back up automatically once the update finishes"
 		: "left stopped when it's done";
+	const backedUp = preUpdateBackupIds.length > 0 ? " Backed up first." : "";
 	return {
 		success: true,
-		message: `Update${restart ? " + reboot" : ""} started for ${who}. This can take several minutes; ${afterward}. Log: ${logPath}`,
+		message: `Update${restart ? " + reboot" : ""} started for ${who}.${backedUp} This can take several minutes; ${afterward}. Log: ${logPath}`,
 	};
 }
 
@@ -144,7 +146,7 @@ router.post("/control/:serverName/:action", (req, res, next) => {
 	if (!run) return res.status(400).json({ error: "Invalid action." });
 
 	try {
-		res.json(await run(server));
+		res.json(await run(server, req.body ?? {}));
 		pollServers().catch(() => {});
 	} catch (e) {
 		if (!e.status) console.error(`${action} error for ${server.name}:`, e);
