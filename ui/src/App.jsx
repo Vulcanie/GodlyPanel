@@ -26,6 +26,7 @@ const BatchFileEditor = React.lazy(() => import("./components/BatchFileEditor"))
 const CreateServerPage = React.lazy(() => import("./components/CreateServerPage"));
 const SettingsPage = React.lazy(() => import("./components/SettingsPage"));
 const UsersPage = React.lazy(() => import("./components/UsersPage"));
+const RolesPage = React.lazy(() => import("./components/RolesPage"));
 const ActivityPage = React.lazy(() => import("./components/ActivityPage"));
 
 const Loading = () => <CircularProgress sx={{ display: "block", mx: "auto", mt: 10 }} />;
@@ -36,7 +37,7 @@ const CONFIRM = {
 };
 
 function Panel() {
-	const { status, user, role, isAdmin, operator, logout } = useSession();
+	const { status, user, role, isAdmin, operator, can, logout } = useSession();
 	const signedIn = status === "signedIn";
 	const toast = useToast();
 
@@ -70,6 +71,11 @@ function Panel() {
 	React.useEffect(() => {
 		if (!loading && signedIn && (nav.page === "config" || nav.page === "batchEditor") && nav.server && !servers[nav.server]) go("dashboard", null);
 	}, [loading, signedIn, nav.page, nav.server, servers, go]);
+
+	// The roles page is for people who may manage roles. Someone who opens it another way (a saved history entry, say) goes home.
+	React.useEffect(() => {
+		if (signedIn && nav.page === "roles" && !can("roles.manage")) go("dashboard", null);
+	}, [signedIn, nav.page, can, go]);
 
 	const run = React.useCallback(
 		async (name, action) => {
@@ -159,6 +165,8 @@ function Panel() {
 								<SettingsPage onBack={() => back("dashboard")} />
 							) : nav.page === "users" ? (
 								<UsersPage onBack={() => back("dashboard")} currentUser={user} />
+							) : nav.page === "roles" && can("roles.manage") ? (
+								<RolesPage onBack={() => back("dashboard")} />
 							) : nav.page === "activity" ? (
 								<ActivityPage isAdmin={isAdmin} />
 							) : nav.page === "config" && nav.server ? (
