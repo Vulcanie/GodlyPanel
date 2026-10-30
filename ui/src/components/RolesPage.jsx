@@ -191,7 +191,7 @@ function RoleDialog({ role, permissions, groups, commandPresets, actorPermission
 	const currentScope = { mode: scopeMode, patterns: scopeMode === "all" ? [] : normalizePatterns(scopeText) };
 	// The scope only matters while the console is ticked, because that is when its section is shown. Saving is blocked on a bad scope
 	// only then, so a hidden section can never block a save.
-	const scopeError = consoleOn ? scopeProblem(currentScope) : "";
+	const scopeError = consoleOn && isAdmin ? scopeProblem(currentScope) : "";
 	const canSave = trimmed.length > 0 && trimmed.length <= NAME_MAX && !saving && scopeError === "";
 
 	const applyPresetToForm = (preset) => {
@@ -307,8 +307,8 @@ function RoleDialog({ role, permissions, groups, commandPresets, actorPermission
 								disabled={!isAdmin}
 								value={scopeText}
 								onChange={(e) => setScopeText(e.target.value)}
-								error={isAdmin && Boolean(scopeError)}
-								helperText={isAdmin && scopeError ? scopeError : "Use * for any ending, e.g. kick*. Only the first word of what is typed is checked."}
+								error={Boolean(scopeError)}
+								helperText={scopeError ? scopeError : "Use * for any ending, e.g. kick*. Only the first word of what is typed is checked."}
 								sx={{ mt: 1.5 }}
 							/>
 						)}
