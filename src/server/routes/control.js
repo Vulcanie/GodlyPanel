@@ -14,6 +14,8 @@ import { resetRecovery } from "../services/crashWatcher.js";
 import { isServerRunning } from "../services/serverState.js";
 import { listHistory } from "../services/updateHistory.js";
 import { getConfig } from "../config/configStore.js";
+import { checkCommand, firstToken } from "../services/commandScope.js";
+import { logActivity } from "../services/activityLog.js";
 
 const router = express.Router();
 
@@ -134,6 +136,20 @@ router.post("/control/:serverName/:action", (req, res, next) => {
 		const { command } = req.body || {};
 		if (!command || typeof command !== "string") {
 			return res.status(400).json({ error: "A command is required." });
+		}
+		// The one gate for free-form commands: a role may be limited to some commands (see commandScope.js).
+		const verdict = checkCommand(req.user, server.name, command);
+		if (!verdict.ok) {
+			// Only the command's first word goes in the log, with quotes and control characters taken out: the arguments can hold
+			// passwords, and a quote could break out of the message.
+			const word = firstToken(command).replace(/["\u0000-\u001f\u007f]/g, "").slice(0, 32);
+			logActivity({
+				type: "console.denied",
+				server: server.name,
+				message: `${req.user.username} was blocked from running "${word}" on ${server.name}.`,
+				data: { user: req.user.username },
+			});
+			return res.status(403).json({ error: verdict.reason, code: "command_denied" });
 		}
 		try {
 			res.json({ success: true, response: await sendRconCommand(server, command) });
