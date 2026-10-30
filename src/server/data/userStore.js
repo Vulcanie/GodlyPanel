@@ -5,20 +5,31 @@ import { paths } from "../paths.js";
 import { writeJsonAtomic, readJson, createWriteQueue } from "../util/atomicJson.js";
 import { getSecrets, patchSecrets } from "../config/secretsStore.js";
 import { passwordProblem } from "../util/passwordRules.js";
+import { isKnownRole } from "./roleStore.js";
 
 const STORE_PATH = path.join(paths.dataDir, "users.json");
 const SCHEMA_VERSION = 1;
 const BCRYPT_ROUNDS = 12;
 const enqueue = createWriteQueue();
+// Caps how many per-server roles one account can carry, so a request can't bloat users.json.
+const MAX_SERVER_ROLES = 50;
+// Control characters, which have no place in a server name.
+const CONTROL_CHARS = /[\u0000-\u001f\u007f-\u009f]/;
 
 export { ROLES } from "../middleware/permissions.js";
-import { ROLES } from "../middleware/permissions.js";
 
 let users = [];
 
 function publicView(user) {
 	const { passwordHash, ...rest } = user;
-	return rest;
+	// Accounts saved before per-server roles existed have no field; report them as null, without rewriting the file.
+	return { ...rest, serverRoles: rest.serverRoles ?? null };
+}
+
+// Admins always have every permission, and guests can't be limited to a list of servers. Every other role can be,
+// so a custom role can be given to some servers only.
+function canBeLimited(role) {
+	return role !== "admin" && role !== "guest";
 }
 
 async function persist() {
@@ -65,6 +76,8 @@ function makeUser(username, role, passwordHash) {
 		sessionVersion: 1,
 		// null = may act on every server; a list limits a moderator to those servers.
 		servers: null,
+		// null, or { [serverName]: roleId }: on a server named here that role applies instead of the account's own role.
+		serverRoles: null,
 		disabled: false,
 		createdAt: new Date().toISOString(),
 	};
@@ -143,13 +156,13 @@ export async function createUser({ username, password, role, servers = null }) {
 	return enqueue(async () => {
 		assertValidUsername(username);
 		assertValidPassword(password, username);
-		if (!ROLES.includes(role)) throw new Error(`Unknown role "${role}".`);
+		if (!isKnownRole(role)) throw new Error(`Unknown role "${role}".`);
 		if (getByUsername(username)) {
 			throw new Error(`A user named "${username}" already exists.`);
 		}
 
 		const user = makeUser(username, role, await bcrypt.hash(password, BCRYPT_ROUNDS));
-		user.servers = role === "moderator" ? assertValidServers(servers) : null;
+		user.servers = canBeLimited(role) ? assertValidServers(servers) : null;
 		users = [...users, user];
 		await persist();
 		return publicView(user);
@@ -230,21 +243,73 @@ export async function setPassword(id, password) {
 
 export async function setRole(id, role) {
 	return enqueue(async () => {
-		if (!ROLES.includes(role)) throw new Error(`Unknown role "${role}".`);
+		if (!isKnownRole(role)) throw new Error(`Unknown role "${role}".`);
 		const user = getById(id);
 		if (!user) throw new Error("No such user.");
 		if (user.role !== role) assertNotLastAdmin(user, { changingRole: true });
-		return mutate(id, { role, ...(role === "moderator" ? {} : { servers: null }) }, { bumpSession: true });
+		return mutate(
+			id,
+			{
+				role,
+				servers: canBeLimited(role) ? (user.servers ?? null) : null,
+				// An admin has every permission already, so per-server roles on one would do nothing and only confuse.
+				serverRoles: role === "admin" ? null : (user.serverRoles ?? null),
+			},
+			{ bumpSession: true },
+		);
 	});
 }
 
-/** Limit a moderator to some servers, or pass null to allow all. */
+/** Limit an account to some servers, or pass null to allow all. Admins and guests are never limited. */
 export async function setServers(id, servers) {
 	return enqueue(async () => {
 		const user = getById(id);
 		if (!user) throw new Error("No such user.");
-		return mutate(id, { servers: user.role === "moderator" ? assertValidServers(servers) : null }, { bumpSession: true });
+		return mutate(id, { servers: canBeLimited(user.role) ? assertValidServers(servers) : null }, { bumpSession: true });
 	});
+}
+
+// Checks a { [serverName]: roleId } map. Returns the map to store, or null for "no per-server roles".
+function cleanServerRoles(map) {
+	if (map === null || map === undefined) return null;
+	const shapeProblem = "The per-server roles must be a list of server names, each with one role.";
+	if (!map || typeof map !== "object" || Array.isArray(map)) throw new Error(shapeProblem);
+	// Must be a plain object: a class instance would carry its own behaviour into what gets saved.
+	const proto = Object.getPrototypeOf(map);
+	if (proto !== Object.prototype && proto !== null) throw new Error(shapeProblem);
+	const entries = Object.entries(map);
+	if (entries.length === 0) return null;
+	if (entries.length > MAX_SERVER_ROLES) {
+		throw new Error(`An account can have at most ${MAX_SERVER_ROLES} per-server roles.`);
+	}
+	for (const [server, roleId] of entries) {
+		if (typeof server !== "string" || [...server].length < 1 || [...server].length > 100 || CONTROL_CHARS.test(server)) {
+			throw new Error("Each server name is 1 to 100 characters with no control characters.");
+		}
+		if (typeof roleId !== "string" || roleId === "admin" || !isKnownRole(roleId)) {
+			throw new Error(`Server "${server}" needs a role that exists. Administrator can't be given for a single server.`);
+		}
+	}
+	// Object.fromEntries defines each key as an ordinary property, so a key such as "__proto__" can't change the prototype.
+	return Object.fromEntries(entries);
+}
+
+/** Give an account a different role on some servers. Admin accounts can't have these, since they already have everything. */
+export async function setServerRoles(id, map) {
+	return enqueue(async () => {
+		const user = getById(id);
+		if (!user) throw new Error("No such user.");
+		if (user.role === "admin") throw new Error("Administrators already have every permission.");
+		return mutate(id, { serverRoles: cleanServerRoles(map) }, { bumpSession: true });
+	});
+}
+
+/**
+ * How many accounts use this role, either as their own role or on one server. An account counts once even if it uses the
+ * role both ways. Synchronous on purpose: the role store only lets a plain 0 mean "unused".
+ */
+export function countWithRole(roleId) {
+	return users.filter((u) => u.role === roleId || Object.values(u.serverRoles ?? {}).includes(roleId)).length;
 }
 
 export async function setDisabled(id, disabled) {
