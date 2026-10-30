@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { checkI18n, pseudoLocalize } from "../../scripts/i18n-check.mjs";
+import { checkI18n, pseudoLocalize, buildPseudoWords } from "../../scripts/i18n-check.mjs";
 
 // Every word the panel shows through t() has to exist in English, and every translation has to use the same {placeholders} as its
 // English, or a screen would show a raw key or a missing value to the person using it.
@@ -11,6 +11,15 @@ import { checkI18n, pseudoLocalize } from "../../scripts/i18n-check.mjs";
 describe("the translation files in ui/src", () => {
 	it("have every literal t() and tn() key in en.json, and locale files that match English", () => {
 		assert.deepEqual(checkI18n(), []);
+	});
+});
+
+describe("the pseudo-language file", () => {
+	it("is current with en.json (regenerate with: node scripts/i18n-check.mjs --pseudo)", () => {
+		const dir = path.join(import.meta.dirname, "..", "..", "ui", "src", "locales");
+		const en = JSON.parse(fs.readFileSync(path.join(dir, "en.json"), "utf8"));
+		const xa = JSON.parse(fs.readFileSync(path.join(dir, "en-XA.json"), "utf8"));
+		assert.deepEqual(xa, buildPseudoWords(en));
 	});
 });
 
