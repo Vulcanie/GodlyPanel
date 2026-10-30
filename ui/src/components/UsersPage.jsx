@@ -28,19 +28,18 @@ import {
 	PersonAdd as AddPersonIcon,
 } from "@mui/icons-material";
 import { api } from "../api/client";
-import { roleLabel } from "../permissions";
 import { useToast } from "../ToastContext";
+import { canBeLimited, roleNameOf, roleOptions, serverRoleRows, serverRolesFromRows } from "../roleEditor";
 import PageHeader from "./ui/PageHeader";
 import SectionCard from "./ui/SectionCard";
 import ConfirmDialog from "./ui/ConfirmDialog";
 import TipRow from "./TipRow";
 
-// The three levels of access, in the order they are offered.
-const ROLES = [
-	["guest", "Viewer"],
-	["moderator", "Moderator"],
-	["admin", "Administrator"],
-];
+// Two maps are the same when they hold the same servers with the same roles. null (no per-server roles) only matches null.
+const sameServerRoles = (a, b) => JSON.stringify(a ? Object.entries(a).sort() : null) === JSON.stringify(b ? Object.entries(b).sort() : null);
+
+/** How many servers this person has a role of their own on. */
+const customCount = (u) => (u.serverRoles && typeof u.serverRoles === "object" ? Object.keys(u.serverRoles).length : 0);
 
 // Lets an admin invite people from the community to view server status
 // without handing them control of anything.
@@ -55,6 +54,9 @@ function UsersPage({ onBack, currentUser }) {
 	const [role, setRole] = React.useState("guest");
 	const [servers, setServers] = React.useState(null); // null = every server (moderators only)
 	const [serverNames, setServerNames] = React.useState([]);
+	// The roles from the server, custom ones included. Until they load, or if they fail, the three built-in roles are offered.
+	const [roles, setRoles] = React.useState(null);
+	const options = roleOptions(roles);
 	const [editing, setEditing] = React.useState(null);
 	// What is being asked about stays set after the dialog closes, so its text does not blank out while it fades away.
 	const [removing, setRemoving] = React.useState(null);
@@ -76,6 +78,10 @@ function UsersPage({ onBack, currentUser }) {
 		api
 			.get("/api/status")
 			.then((s) => setServerNames(Object.keys(s ?? {}).sort()))
+			.catch(() => {});
+		api
+			.get("/api/roles")
+			.then((r) => setRoles(Array.isArray(r?.roles) ? r.roles : null))
 			.catch(() => {});
 	}, [load]);
 
@@ -99,7 +105,7 @@ function UsersPage({ onBack, currentUser }) {
 	const create = async () => {
 		const name = username.trim();
 		const ok = await run(async () => {
-			await api.post("/api/users", { username: name, password, role, ...(role === "moderator" ? { servers } : {}) });
+			await api.post("/api/users", { username: name, password, role, ...(canBeLimited(role) ? { servers } : {}) });
 		}, `Added ${name}.`);
 		if (!ok) return;
 		setUsername("");
@@ -145,14 +151,14 @@ function UsersPage({ onBack, currentUser }) {
 					</TipRow>
 					<TipRow id="users.role" sx={{ flex: "1 1 160px", maxWidth: 240 }}>
 						<TextField select label="Access" size="small" fullWidth value={role} onChange={(e) => setRole(e.target.value)}>
-							{ROLES.map(([value, label]) => (
-								<MenuItem key={value} value={value}>
-									{label}
+							{options.map(({ id, name }) => (
+								<MenuItem key={id} value={id}>
+									{name}
 								</MenuItem>
 							))}
 						</TextField>
 					</TipRow>
-					{role === "moderator" && <ServerPicker names={serverNames} value={servers} onChange={setServers} />}
+					{canBeLimited(role) && <ServerPicker names={serverNames} value={servers} onChange={setServers} />}
 					<Button variant="contained" disabled={!canCreate} onClick={create}>
 						Add
 					</Button>
@@ -190,11 +196,14 @@ function UsersPage({ onBack, currentUser }) {
 								</Typography>
 								<Chip
 									size="small"
-									label={roleLabel(u.role)}
+									label={roleNameOf(roles, u.role)}
 									color={u.role === "admin" ? "primary" : u.role === "moderator" ? "secondary" : "default"}
 								/>
-								{u.role === "moderator" && (
+								{canBeLimited(u.role) && (
 									<Chip size="small" variant="outlined" label={Array.isArray(u.servers) ? `${u.servers.length} server${u.servers.length === 1 ? "" : "s"}` : "All servers"} />
+								)}
+								{customCount(u) > 0 && (
+									<Chip size="small" variant="outlined" label={`Custom on ${customCount(u)} server${customCount(u) === 1 ? "" : "s"}`} />
 								)}
 								{u.disabled && <Chip size="small" label="Suspended" color="warning" />}
 								<Box sx={{ display: "flex", alignItems: "center" }}>
@@ -284,6 +293,7 @@ function UsersPage({ onBack, currentUser }) {
 				<AccessDialog
 					user={editing}
 					serverNames={serverNames}
+					options={options}
 					error={error}
 					onClose={() => setEditing(null)}
 					onSave={async (next) => {
@@ -291,7 +301,8 @@ function UsersPage({ onBack, currentUser }) {
 							// The password first: it signs them out, and the role change would do the same.
 							if (next.password) await api.put(`/api/users/${editing.id}/password`, { password: next.password });
 							if (next.role !== editing.role) await api.put(`/api/users/${editing.id}/role`, { role: next.role });
-							if (next.role === "moderator") await api.put(`/api/users/${editing.id}/servers`, { servers: next.servers });
+							if (canBeLimited(next.role)) await api.put(`/api/users/${editing.id}/servers`, { servers: next.servers });
+							if (next.serverRoles !== undefined) await api.put(`/api/users/${editing.id}/server-roles`, { serverRoles: next.serverRoles });
 						}, `Saved changes for ${editing.username}.`);
 						if (ok) setEditing(null);
 					}}
@@ -320,11 +331,22 @@ function ServerPicker({ names, value, onChange }) {
 	);
 }
 
-function AccessDialog({ user, serverNames, error, onClose, onSave }) {
+function AccessDialog({ user, serverNames, options, error, onClose, onSave }) {
 	const [role, setRole] = React.useState(user.role);
 	const [servers, setServers] = React.useState(Array.isArray(user.servers) ? user.servers : null);
+	// Kept as one map and the rows are rebuilt from it, so a server list that loads late still gets its rows.
+	const [perServer, setPerServer] = React.useState(() => user.serverRoles ?? null);
 	const [password, setPassword] = React.useState("");
 	const tooShort = password.length > 0 && password.length < 8;
+
+	const rows = serverRoleRows(serverNames, perServer);
+	const nextServerRoles = serverRolesFromRows(rows);
+	// Compared the way it would be saved, so a server put back on the person's own access is not counted as a change.
+	const serverRolesChanged = !sameServerRoles(nextServerRoles, serverRolesFromRows(serverRoleRows(serverNames, user.serverRoles)));
+	const setRowRole = (server, value) => setPerServer(serverRolesFromRows(rows.map((r) => (r.server === server ? { ...r, role: value } : r))));
+	// Administrators see every server anyway, so a role for one server means nothing to them and is not offered.
+	const rowOptions = options.filter((o) => o.id !== "admin");
+
 	return (
 		<Dialog open onClose={onClose} fullWidth maxWidth="xs">
 			<DialogTitle>{user.username}: access and password</DialogTitle>
@@ -332,14 +354,46 @@ function AccessDialog({ user, serverNames, error, onClose, onSave }) {
 				{error && <Alert severity="error">{error}</Alert>}
 				<TipRow id="users.role">
 					<TextField select fullWidth size="small" label="Access" value={role} onChange={(e) => setRole(e.target.value)}>
-						{ROLES.map(([value, label]) => (
-							<MenuItem key={value} value={value}>
-								{label}
+						{options.map(({ id, name }) => (
+							<MenuItem key={id} value={id}>
+								{name}
 							</MenuItem>
 						))}
 					</TextField>
 				</TipRow>
-				{role === "moderator" && <ServerPicker names={serverNames} value={servers} onChange={setServers} />}
+				{canBeLimited(role) && <ServerPicker names={serverNames} value={servers} onChange={setServers} />}
+				{role !== "admin" && serverNames.length > 0 && (
+					<Box>
+						<Typography variant="subtitle2">Different access on some servers</Typography>
+						<Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1 }}>
+							On a server left at "Same as their access", the access above applies.
+						</Typography>
+						<Box sx={{ display: "flex", flexDirection: "column", gap: 1, maxHeight: 220, overflow: "auto" }}>
+							{rows.map(({ server, role: value }) => (
+								<Box key={server} sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+									<Typography sx={{ flex: "1 1 120px", minWidth: 0, wordBreak: "break-word" }}>{server}</Typography>
+									<TextField
+										select
+										size="small"
+										value={value}
+										onChange={(e) => setRowRole(server, e.target.value)}
+										sx={{ flex: "0 1 180px", minWidth: 140 }}
+										inputProps={{ "aria-label": `Access on ${server}` }}
+									>
+										<MenuItem value="">Same as their access</MenuItem>
+										{rowOptions.map(({ id, name }) => (
+											<MenuItem key={id} value={id}>
+												{name}
+											</MenuItem>
+										))}
+										{/* A role that has since been deleted still shows, so the row is not blank. */}
+										{value !== "" && !rowOptions.some((o) => o.id === value) && <MenuItem value={value}>{value}</MenuItem>}
+									</TextField>
+								</Box>
+							))}
+						</Box>
+					</Box>
+				)}
 				<TipRow id="users.password">
 					<TextField
 						fullWidth
@@ -356,7 +410,11 @@ function AccessDialog({ user, serverNames, error, onClose, onSave }) {
 			</DialogContent>
 			<DialogActions>
 				<Button onClick={onClose}>Cancel</Button>
-				<Button variant="contained" disabled={tooShort} onClick={() => onSave({ role, servers, password })}>
+				<Button
+					variant="contained"
+					disabled={tooShort}
+					onClick={() => onSave({ role, servers, password, serverRoles: role !== "admin" && serverRolesChanged ? nextServerRoles : undefined })}
+				>
 					Save
 				</Button>
 			</DialogActions>

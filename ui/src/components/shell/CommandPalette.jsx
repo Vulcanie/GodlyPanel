@@ -7,6 +7,7 @@ import {
 	Timeline as ActivityIcon,
 	Group as PeopleIcon,
 	Settings as SettingsIcon,
+	AdminPanelSettings as RolesIcon,
 	Dns as ServerIcon,
 	Tune as TabIcon,
 	PlayArrow as StartIcon,
@@ -45,6 +46,7 @@ function CommandPalette({ open, onClose, servers, allowedServers, role, go, onAc
 			out.push({ id: "p:people", group: "Go to", icon: <PeopleIcon fontSize="small" />, label: "People", words: "users accounts moderators", run: () => go("users") });
 			out.push({ id: "p:settings", group: "Go to", icon: <SettingsIcon fontSize="small" />, label: "Settings", words: "configuration backups discord notifications folders", run: () => go("settings") });
 		}
+		if (can("roles.manage")) out.push({ id: "p:roles", group: "Go to", icon: <RolesIcon fontSize="small" />, label: "Roles", words: "permissions access custom", run: () => go("roles") });
 		if (operator) {
 			const names = Object.keys(servers)
 				.filter((n) => !allowedServers || allowedServers.includes(n))

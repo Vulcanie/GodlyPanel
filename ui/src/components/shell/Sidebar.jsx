@@ -23,6 +23,7 @@ import {
 	AddCircleOutline as CreateIcon,
 	Timeline as ActivityIcon,
 	Group as PeopleIcon,
+	AdminPanelSettings as RolesIcon,
 	Settings as SettingsIcon,
 	HelpOutline as HelpIcon,
 	Lock as PasswordIcon,
@@ -121,7 +122,7 @@ function Sidebar({ nav, go, servers, allowedServers, systemStats, connection, us
 	const [filter, setFilter] = React.useState("");
 	const [showAll, setShowAll] = React.useState(false);
 	const [anchor, setAnchor] = React.useState(null);
-	const { operator } = useSession();
+	const { operator, can } = useSession();
 	const activityVisible = canAnywhere(user, "activity.view");
 	const admin = role === "admin";
 
@@ -164,6 +165,7 @@ function Sidebar({ nav, go, servers, allowedServers, systemStats, connection, us
 					{admin && <NavItem icon={<CreateIcon fontSize="small" />} label="Create server" active={nav.page === "createServer"} onClick={() => move("createServer")} testId="nav-create" />}
 					{activityVisible && <NavItem icon={<ActivityIcon fontSize="small" />} label="Activity" active={nav.page === "activity"} onClick={() => move("activity")} testId="nav-activity" />}
 					{admin && <NavItem icon={<PeopleIcon fontSize="small" />} label="People" active={nav.page === "users"} onClick={() => move("users")} testId="nav-people" />}
+					{can("roles.manage") && <NavItem icon={<RolesIcon fontSize="small" />} label="Roles" active={nav.page === "roles"} onClick={() => move("roles")} testId="nav-roles" />}
 					{admin && <NavItem icon={<SettingsIcon fontSize="small" />} label="Settings" active={nav.page === "settings"} onClick={() => move("settings")} testId="nav-settings" />}
 				</List>
 

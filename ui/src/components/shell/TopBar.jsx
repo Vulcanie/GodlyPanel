@@ -7,6 +7,7 @@ const PAGE_TITLES = {
 	createServer: "Create a server",
 	settings: "Settings",
 	users: "People",
+	roles: "Roles",
 	activity: "Activity",
 };
 
