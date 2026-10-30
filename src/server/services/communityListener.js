@@ -8,7 +8,8 @@ import { verifyCredentials, getById, needsSetup, setPassword, getPreferences, se
 import { auditActions, auditSignInFailed, auditSignedOut, auditPasswordChanged } from "./auditTrail.js";
 import sessionRoutes from "../routes/sessions.js";
 import { revokeUserSessions, revokeSession } from "./sessionStore.js";
-import { attachUser, endSession, issueSession, requireRole, clientAddress } from "../middleware/auth.js";
+import { attachUser, endSession, issueSession, requireRole, requireViewer, clientAddress } from "../middleware/auth.js";
+import { describeAccess } from "../middleware/permissions.js";
 import { createLoginLimiter, passwordChangeGuard, recordPasswordChangeFailure, clearPasswordChangeFailures } from "../middleware/loginLimiter.js";
 import { securityHeaders } from "../middleware/securityHeaders.js";
 import { sameOriginOnly } from "../middleware/sameOrigin.js";
@@ -163,11 +164,11 @@ export function createCommunityApp({ hostRule, uiDir, staffSignIn = () => false 
 		res.json({ success: true });
 	});
 
-	app.use("/api/auth/sessions", requireRole("admin", "moderator", "guest"), sessionRoutes);
+	app.use("/api/auth/sessions", requireViewer, sessionRoutes);
 
 	app.get("/api/auth/me", (req, res) => {
 		if (!req.user) return res.status(401).json({ error: "Not signed in.", code: "unauthenticated", setupRequired: false });
-		res.json({ user: req.user });
+		res.json({ user: { ...req.user, ...describeAccess(req.user) } });
 	});
 
 	app.get("/api/auth/join", (req, res) => res.json({ open: !needsSetup() && joiningIsOpen() }));
@@ -188,7 +189,7 @@ export function createCommunityApp({ hostRule, uiDir, staffSignIn = () => false 
 	});
 
 	// A staff session only exists here while staff sign-in is on, so the role list needs no further check.
-	app.post("/api/auth/change-password", requireRole("admin", "moderator", "guest"), passwordChangeGuard, async (req, res) => {
+	app.post("/api/auth/change-password", requireViewer, passwordChangeGuard, async (req, res) => {
 		const { currentPassword, newPassword } = req.body || {};
 		const user = getById(req.user.id);
 		if (!user || !(await verifyCredentials(user.username, currentPassword))) {
@@ -212,8 +213,8 @@ export function createCommunityApp({ hostRule, uiDir, staffSignIn = () => false 
 
 	// What this person has chosen to hide ("don't show again"), kept on their account like at the panel's own address. The panel's
 	// routes aren't shared with a guest, and an administrator's staffApi below doesn't carry the sign-in routes, so it is answered here.
-	app.get("/api/auth/preferences", requireRole("admin", "moderator", "guest"), (req, res) => res.json({ prefs: getPreferences(req.user.id) }));
-	app.put("/api/auth/preferences", requireRole("admin", "moderator", "guest"), async (req, res) => {
+	app.get("/api/auth/preferences", requireViewer, (req, res) => res.json({ prefs: getPreferences(req.user.id) }));
+	app.put("/api/auth/preferences", requireViewer, async (req, res) => {
 		try {
 			res.json({ prefs: await setPreferences(req.user.id, req.body) });
 		} catch (e) {
@@ -222,7 +223,7 @@ export function createCommunityApp({ hostRule, uiDir, staffSignIn = () => false 
 	});
 
 	// Live updates for everyone allowed in here. A staff session is only present while staff sign-in is on.
-	app.get("/api/events", requireRole("admin", "moderator", "guest"), (req, res) => addSseClient(req, res, req.user, { ...SSE_GROUP, address: req.communityClientIp }));
+	app.get("/api/events", requireViewer, (req, res) => addSseClient(req, res, req.user, { ...SSE_GROUP, address: req.communityClientIp }));
 
 	// ---- staff: the panel itself -------------------------------------------------------------------------
 	// The panel's own routes with their own role checks, so a moderator is still a moderator here. Whatever

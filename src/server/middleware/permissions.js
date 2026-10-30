@@ -46,6 +46,32 @@ export function canAccessServer(user, serverName) {
 	return !Array.isArray(user.servers) || user.servers.includes(serverName);
 }
 
+// The permissions one role grants, as names the UI can show: all of them for admin, otherwise the role's own (sorted).
+function permissionNamesFor(roleId) {
+	const granted = permissionsFor(roleId);
+	if (granted === null) return [...PERMISSIONS];
+	return PERMISSIONS.filter((p) => granted.has(p)).sort();
+}
+
+/**
+ * What a signed-in user may do, for the panel's own screens (the page reads this from /api/auth/me). Only names are returned:
+ * this is for showing, not for deciding, and the routes still check each permission themselves.
+ * `serverPermissions` lists the per-server roles by server name. An "admin" entry is left out, for the same reason as in roleIdFor.
+ */
+export function describeAccess(user) {
+	if (!user) return { permissions: [], serverPermissions: {} };
+	// Object.entries reads only the object's own keys. Object.fromEntries then writes each one as a plain property, so a server
+	// named "__proto__" is listed like any other and never changes the prototype of the result. Nothing here indexes a plain
+	// object with a name from the user.
+	const serverRoles = user.serverRoles && typeof user.serverRoles === "object" ? user.serverRoles : {};
+	const serverPermissions = Object.fromEntries(
+		Object.entries(serverRoles)
+			.filter(([, roleId]) => typeof roleId === "string" && roleId !== "admin")
+			.map(([server, roleId]) => [server, permissionNamesFor(roleId)]),
+	);
+	return { permissions: permissionNamesFor(user.role), serverPermissions };
+}
+
 /**
  * Route guard. When the route has a :serverName the server limit is enforced too,
  * so a moderator limited to one game can't reach another by editing the address.
@@ -53,7 +79,8 @@ export function canAccessServer(user, serverName) {
 export function requirePermission(permission) {
 	return (req, res, next) => {
 		if (!req.user) return res.status(401).json({ error: "Sign in required.", code: "unauthenticated" });
-		if (!can(req.user, permission)) return res.status(403).json({ error: "You don't have access to that.", code: "forbidden" });
+		// The server's name is passed so a per-server role applies on that server.
+		if (!can(req.user, permission, req.server?.name)) return res.status(403).json({ error: "You don't have access to that.", code: "forbidden" });
 		if (req.server && !canAccessServer(req.user, req.server.name)) {
 			return res.status(403).json({ error: "You don't have access to that server.", code: "forbidden_server" });
 		}

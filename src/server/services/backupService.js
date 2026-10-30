@@ -13,7 +13,7 @@ import { startServer, sendRconCommand } from "./serverControl.js";
 import { logActivity } from "./activityLog.js";
 import { protectedReason } from "./serverRemoval.js";
 import { broadcastSseEvent } from "./sseHub.js";
-import { canAccessServer } from "../middleware/permissions.js";
+import { can, canAccessServer } from "../middleware/permissions.js";
 import { createArchive, listArchive, extractArchive, unsafeEntries } from "../util/tarZip.js";
 import { splitArchiveName, formatForFile, ALL_EXTENSIONS, FORMATS } from "../util/archiveFormats.js";
 import { sleep } from "../util/async.js";
@@ -234,11 +234,16 @@ const stamp = (d = new Date()) => {
 	return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
 };
 
+/**
+ * Whether a live-update client may see a server's backup progress: it needs server.backup on that server, and the server must be one
+ * it may reach. Fails closed: a guest or an unknown role sees nothing.
+ */
+export function backupProgressVisibleTo(client, serverName) {
+	return can(client, "server.backup", serverName) && canAccessServer(client, serverName);
+}
+
 function progress(server, phase, detail = null) {
-	broadcastSseEvent(
-		{ type: "backup_progress", serverName: server.name, phase, detail },
-		(client) => (client.role === "admin" || client.role === "moderator") && canAccessServer(client, server.name),
-	);
+	broadcastSseEvent({ type: "backup_progress", serverName: server.name, phase, detail }, (client) => backupProgressVisibleTo(client, server.name));
 }
 
 export async function listBackups(server) {
