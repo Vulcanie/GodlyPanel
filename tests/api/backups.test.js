@@ -1,6 +1,7 @@
 import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import crypto from "node:crypto";
 import { spawn } from "node:child_process";
 import path from "node:path";
 import { startInstance, freePort, sleep } from "../helpers/instance.js";
@@ -75,6 +76,9 @@ describe("backups", () => {
 		assert.equal(b.kind, "manual");
 		assert.equal(b.serverWasRunning, false);
 		assert.ok(b.sizeBytes > 0);
+		// The size before compression is in the record, so the overview can say how much the archive saves.
+		assert.ok(b.bytesBefore > 0, "the listed backup says how big its files were");
+		assert.equal(typeof o.savedBytes, "number", "the overview totals what the backups save");
 		const zip = path.join(o.directory, `${b.id}.zip`);
 		const names = await listZip(zip);
 		assert.ok(names.includes("gp-backup.json"));
@@ -175,6 +179,58 @@ describe("backups", () => {
 		fs.writeFileSync(world, "world v1\n");
 		// Left stopped, as it was found: the next test starts the server itself.
 		await until(idle);
+	});
+
+	it("recompresses a zip backup to zstd in place, and the world still restores byte-identical", async () => {
+		fs.writeFileSync(world, "world recompress - must come back byte for byte\n");
+		const bytes = fs.readFileSync(world);
+		assert.equal((await api.put(`${base}/backups/settings`, { format: "zip", level: "balanced" })).status, 200);
+		assert.equal((await api.post(`${base}/backups`, {})).status, 202);
+		await until(idle);
+		const made = (await list()).backups[0];
+		assert.equal(made.format, "zip");
+		const directory = (await list()).directory;
+
+		const r = await api.post(`${base}/backups/recompress`, { format: "zstd", level: "fast", ids: [made.id] });
+		assert.equal(r.status, 202, JSON.stringify(r.json));
+		await until(idle);
+		assert.equal(fs.existsSync(path.join(directory, `${made.id}.zip`)), false, "the zip is gone");
+		assert.ok(fs.existsSync(path.join(directory, `${made.id}.tar.zst`)), "the zstd archive is in its place");
+		const after = (await list()).backups.find((b) => b.id === made.id);
+		assert.equal(after.format, "zstd");
+		assert.equal(after.level, "fast");
+		assert.equal(after.kind, "manual", "still a manual backup");
+
+		fs.writeFileSync(world, "changed after the recompress\n");
+		// No safety backup here: the safety copies are capped at three, and the tests after this count them.
+		const restored = await api.post(`${base}/backups/${made.id}/restore`, { confirmName: "Fake Backup", safety: false });
+		assert.equal(restored.status, 202, JSON.stringify(restored.json));
+		await until(idle);
+		assert.ok(fs.readFileSync(world).equals(bytes), "the world is byte-identical to what was backed up");
+
+		assert.equal((await api.put(`${base}/backups/settings`, { format: null, level: null })).status, 200);
+		// The tests after this expect the world to be "world v1", as the zstd test left it.
+		fs.writeFileSync(world, "world v1\n");
+	});
+
+	it("refuses a recompress request with a format, level or ids it can't use, before doing any work", async () => {
+		const before = (await list()).backups.map((b) => b.id).sort();
+		const cases = [
+			[{ format: "rar", level: "fast" }, "bad_format"],
+			[{ format: "__proto__", level: "fast" }, "bad_format"],
+			[{ format: "zip", level: "ultra" }, "bad_level"],
+			[{ format: "zip" }, "bad_level"],
+			[{ format: "zip", level: "fast", ids: "all" }, "bad_ids"],
+			[{ format: "zip", level: "fast", ids: Array.from({ length: 201 }, (_, i) => `b${i}`) }, "bad_ids"],
+			[{ format: "zip", level: "fast", ids: ["../x"] }, "bad_id"],
+			[{ format: "zip", level: "fast", ids: ["ok", 7] }, "bad_id"],
+		];
+		for (const [body, code] of cases) {
+			const r = await api.post(`${base}/backups/recompress`, body);
+			assert.equal(r.status, 400, JSON.stringify(body));
+			assert.equal(r.json.code, code, JSON.stringify(body));
+		}
+		assert.deepEqual((await list()).backups.map((b) => b.id).sort(), before, "nothing was touched");
 	});
 
 	it("saves the tiered keep rules, the manual keep limit and the skip setting, and refuses values that are not right", async () => {
@@ -479,6 +535,7 @@ describe("backups", () => {
 
 		it("gives a guest none of it", async () => {
 			assert.equal((await api.get(`${base}/backups`, { cookie: guest })).status, 403);
+			assert.equal((await api.post(`${base}/backups/recompress`, { format: "zip", level: "fast" }, { cookie: guest })).status, 403);
 			assert.equal((await api.post("/api/control/Fake%20Backup/stop", {}, { cookie: guest })).status, 403);
 			assert.equal((await api.get("/api/status", { cookie: guest })).status, 200);
 		});
@@ -487,5 +544,130 @@ describe("backups", () => {
 			const status = (await api.get("/api/status", { cookie: mod })).json["Fake Backup"];
 			assert.equal("serverPassword" in status, false);
 		});
+	});
+});
+
+// The per-server size limit. The world here is random bytes, so each archive is about as big as the file and the sizes can be
+// worked out from the first backup. Only scheduled backups are ever removed to make room, oldest first; manual and safety
+// backups are kept.
+describe("the per-server size budget", () => {
+	let panel;
+	let api;
+	let folder;
+
+	const base = "/api/server/Fake%20Budget";
+	const list = async () => (await api.get(`${base}/backups`)).json;
+	const idle = async () => !(await api.get("/api/operations")).json["Fake Budget"];
+	const world = () => path.join(folder, "ConanSandbox", "Saved", "world.sav");
+	const manualIds = async () => (await list()).backups.filter((b) => b.kind === "manual").map((b) => b.id).sort();
+
+	// Ids are named to the second, so each backup waits a moment to get its own name.
+	const backup = async () => {
+		await sleep(1100);
+		const r = await api.post(`${base}/backups`, {});
+		assert.equal(r.status, 202, JSON.stringify(r.json));
+		await until(idle);
+	};
+	const refusedBackup = async () => {
+		await sleep(1100);
+		return api.post(`${base}/backups`, {});
+	};
+
+	before(async () => {
+		const rconPort = await freePort();
+		panel = await startInstance({
+			servers: (dir) => {
+				folder = path.join(dir, "fake-budget");
+				return [makeFakeGame(folder, { name: "Fake Budget", rconPort, exe: "gp-fake-budget.exe" })];
+			},
+		});
+		api = panel.api;
+		fs.mkdirSync(path.dirname(world()), { recursive: true });
+		fs.writeFileSync(world(), crypto.randomBytes(400_000));
+		// Nothing here should age out on its own: only the budget decides what is removed.
+		assert.equal((await api.put(`${base}/backups/settings`, { keepCount: 10, keepDays: 0 })).status, 200);
+	});
+	after(async () => {
+		killFakeGames(folder);
+		await panel.stop();
+	});
+
+	it("refuses limits that are not whole byte counts, and saves a good one, which the overview shows", async () => {
+		assert.equal((await list()).maxTotalBytes, null, "no limit until one is set");
+		for (const value of [0, -5, 1.5, "big", 999_999_999_999_999]) {
+			const r = await api.put(`${base}/backups/settings`, { maxTotalBytes: value });
+			assert.equal(r.status, 400, JSON.stringify(value));
+			assert.equal(r.json.code, "bad_number", JSON.stringify(value));
+		}
+		const set = await api.put(`${base}/backups/settings`, { maxTotalBytes: 1_000_000 });
+		assert.equal(set.status, 200, JSON.stringify(set.json));
+		assert.equal(set.json.maxTotalBytes, 1_000_000);
+		assert.equal((await api.put(`${base}/backups/settings`, { maxTotalBytes: null })).json.maxTotalBytes, null);
+	});
+
+	it("makes two manual backups with no limit set", async () => {
+		await backup();
+		await backup();
+		assert.equal((await manualIds()).length, 2);
+	});
+
+	it("refuses a manual backup that would go over the limit when there is nothing older to remove, and removes nothing", async () => {
+		const before = await manualIds();
+		assert.equal((await api.put(`${base}/backups/settings`, { maxTotalBytes: 1_000_000 })).status, 200);
+		const r = await refusedBackup();
+		assert.equal(r.status, 409, JSON.stringify(r.json));
+		assert.equal(r.json.code, "over_budget");
+		assert.match(r.json.error, /Delete some, or raise the limit\./);
+		assert.deepEqual(await manualIds(), before, "both manual backups are still there");
+		assert.equal((await list()).backups.length, 2);
+	});
+
+	it("removes the oldest scheduled backup to make room for the new one, and keeps every manual backup", async () => {
+		const overview = await list();
+		const newest = overview.backups[0];
+		const size = newest.sizeBytes;
+		// Two old scheduled backups, copies of the newest archive, dated in the past.
+		const copy = (id, daysAgo) => {
+			fs.copyFileSync(path.join(overview.directory, `${newest.id}.zip`), path.join(overview.directory, `${id}.zip`));
+			fs.writeFileSync(
+				path.join(overview.directory, `${id}.json`),
+				JSON.stringify({ format: 1, id, kind: "scheduled", createdAt: new Date(Date.now() - daysAgo * 86_400_000).toISOString(), archiveFormat: "zip", archiveLevel: "balanced" }),
+			);
+		};
+		copy("budget_scheduled_older", 3);
+		copy("budget_scheduled_newer", 2);
+
+		// Four archives now, about `size` each. Adding one more needs five, so the limit of four (plus a little slack for the
+		// record files' differences) makes the oldest scheduled backup go, and no more.
+		assert.equal((await api.put(`${base}/backups/settings`, { maxTotalBytes: 4 * size + 1000 })).status, 200);
+		const manualBefore = await manualIds();
+		await backup();
+
+		const left = (await list()).backups.map((b) => b.id);
+		assert.equal(left.includes("budget_scheduled_older"), false, "the oldest scheduled backup was removed");
+		assert.equal(left.includes("budget_scheduled_newer"), true, "the newer scheduled backup was kept");
+		assert.deepEqual((await manualIds()).filter((id) => manualBefore.includes(id)), manualBefore, "every manual backup is still there");
+		assert.equal((await manualIds()).length, manualBefore.length + 1, "and the new manual backup was made");
+		const trimmed = (await api.get("/api/activity?limit=100")).json.find((e) => e.type === "backup.trimmed");
+		assert.equal(trimmed.message, "Removed backup budget_scheduled_older to stay within the size limit.");
+	});
+
+	it("refuses a manual backup that still doesn't fit once the scheduled ones are gone, and keeps every manual backup", async () => {
+		assert.equal((await api.put(`${base}/backups/settings`, { maxTotalBytes: 1_000_000 })).status, 200);
+		const manualBefore = await manualIds();
+		const r = await refusedBackup();
+		assert.equal(r.status, 409, JSON.stringify(r.json));
+		assert.equal(r.json.code, "over_budget");
+		assert.deepEqual(await manualIds(), manualBefore, "no manual backup was removed");
+	});
+
+	it("still makes a safety backup before a restore when the server is over the limit, and logs it", async () => {
+		const first = (await list()).backups.find((b) => b.kind === "manual");
+		const r = await api.post(`${base}/backups/${first.id}/restore`, { confirmName: "Fake Budget" });
+		assert.equal(r.status, 202, JSON.stringify(r.json));
+		await until(idle);
+		assert.equal((await list()).backups.some((b) => b.kind === "pre-restore"), true, "the safety backup was made");
+		const logged = (await api.get("/api/activity?limit=200")).json.find((e) => e.type === "backup.over_budget");
+		assert.ok(logged, "the going over the limit is in the activity log");
 	});
 });
