@@ -15,9 +15,10 @@ import { protectedReason } from "./serverRemoval.js";
 import { broadcastSseEvent } from "./sseHub.js";
 import { canAccessServer } from "../middleware/permissions.js";
 import { createArchive, listArchive, extractArchive, unsafeEntries } from "../util/tarZip.js";
-import { splitArchiveName, ALL_EXTENSIONS, FORMATS } from "../util/archiveFormats.js";
+import { splitArchiveName, formatForFile, ALL_EXTENSIONS, FORMATS } from "../util/archiveFormats.js";
 import { sleep } from "../util/async.js";
 import { flagValue, optionValue, propertyValue } from "../util/launchOptions.js";
+import { formatBytes } from "./storageService.js";
 
 // Re-exported: callers (and tests) have always imported these from here.
 export { flagValue, optionValue, propertyValue };
@@ -281,6 +282,9 @@ export async function listBackups(server) {
 			entries: manifest?.entries?.map((e) => ({ label: e.label, path: e.path })) ?? [],
 			hasRecord: Boolean(manifest),
 			fingerprint: manifest?.fingerprint ?? null,
+			// From the record, so the overview can say how much each backup saves. Null for a backup without a record.
+			bytesBefore: manifest?.bytesBefore ?? null,
+			bytesAfter: manifest?.bytesAfter ?? null,
 		});
 	}
 	return out.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
@@ -306,6 +310,92 @@ export async function deleteBackup(server, id) {
 	// The record is always named from the id, never worked out from the archive's name.
 	await fs.rm(path.join(serverBackupDir(server), `${id}.json`), { force: true });
 	logActivity({ type: "backup.deleted", server: server.name, message: `Deleted backup ${id}.` });
+}
+
+/** True for a string that can name a backup. Routes check this before any work, and backupArchivePath checks it again. */
+export const isBackupId = (id) => typeof id === "string" && SAFE_ID.test(id);
+
+/**
+ * Rewrites a backup in another format or level, in place: the same files in a new archive, and the old archive removed. The new
+ * archive only replaces the old one once it reads back, so a failure at any step leaves the backup as it was. The caller holds
+ * the server's lock, so no restore or delete runs alongside it.
+ * @returns {Promise<{ id: string, before: number, after: number, skipped?: true }>}  the sizes are of the archive files
+ */
+export async function recompressBackup(server, id, { format, level } = {}) {
+	if (typeof format !== "string" || !Object.hasOwn(FORMATS, format)) throw new BackupError('format must be "zip", "zstd" or "xz".', "bad_format");
+	if (typeof level !== "string" || !["fast", "balanced", "max"].includes(level)) throw new BackupError('level must be "fast", "balanced" or "max".', "bad_level");
+	const oldFile = await backupArchivePath(server, id);
+	if (!oldFile) throw new BackupError("That backup doesn't exist.", "not_found", 404);
+
+	const dir = serverBackupDir(server);
+	const recordFile = path.join(dir, `${id}.json`);
+	const record = await fs.readFile(recordFile, "utf8").then(JSON.parse, () => null);
+	const before = (await fs.stat(oldFile)).size;
+	if (formatForFile(oldFile) === format && record?.archiveLevel === level) {
+		return { id, before, after: before, skipped: true };
+	}
+
+	// Room for the unpacked files and the new archive, plus the panel's minimum free space. The size before compression is
+	// the best guide; without a record, three times the archive is a generous stand-in.
+	const minFree = getConfig().backups.minFreeGB * GIB;
+	const needed = 1.1 * (record?.bytesBefore ?? before * 3);
+	const free = await freeBytes(dir);
+	if (free < needed + minFree) {
+		throw new BackupError(
+			`Not enough room to recompress ${id}: about ${(needed / GIB).toFixed(1)} GB is needed, and ${getConfig().backups.minFreeGB} GB must stay free.`,
+			"no_room",
+			507,
+		);
+	}
+
+	const newFile = path.join(dir, `${id}${FORMATS[format].ext}`);
+	const partial = `${newFile}.partial`;
+	const tmp = path.join(dir, `${id}.recompress`);
+	// Anything left over from an earlier attempt that didn't finish is cleared first.
+	await fs.rm(tmp, { recursive: true, force: true });
+	await fs.rm(partial, { force: true });
+
+	try {
+		await fs.mkdir(tmp, { recursive: true });
+		// extractArchive lists the archive first and refuses entries that would land outside the folder.
+		await extractArchive(oldFile, tmp);
+		const manifestFile = path.join(tmp, MANIFEST_NAME);
+		const manifest = JSON.parse(await fs.readFile(manifestFile, "utf8"));
+		manifest.archiveFormat = format;
+		manifest.archiveLevel = level;
+		await fs.writeFile(manifestFile, JSON.stringify(manifest, null, 2));
+
+		const entries = (await fs.readdir(tmp)).map((name) => ({ dir: tmp, name }));
+		await createArchive(partial, entries, { format, level });
+		// The same check a fresh backup gets: the record is in it, and it holds more than the record alone.
+		const names = await listArchive(partial);
+		if (!names.includes(MANIFEST_NAME) || names.length < 2) {
+			throw new BackupError("The recompressed backup couldn't be read back, so the old one was kept.", "verify_failed", 500);
+		}
+		await fs.rename(partial, newFile);
+	} catch (err) {
+		await fs.rm(partial, { force: true }).catch(() => {});
+		throw err;
+	} finally {
+		await fs.rm(tmp, { recursive: true, force: true }).catch(() => {});
+	}
+
+	const after = (await fs.stat(newFile)).size;
+	// The record follows the new archive. If that write fails, the new archive is removed and the old one stays as it was.
+	if (record) {
+		try {
+			await fs.writeFile(recordFile, JSON.stringify({ ...record, archiveFormat: format, archiveLevel: level, sizeBytes: after, bytesAfter: after }, null, 2));
+		} catch (err) {
+			if (newFile !== oldFile) await fs.rm(newFile, { force: true }).catch(() => {});
+			throw err;
+		}
+	}
+	// Only now, with the new archive in place and recorded, does the old one go. Same name with a different ending means it has
+	// to be removed; the same name and ending means the rename already replaced it.
+	if (newFile !== oldFile) await fs.rm(oldFile, { force: true });
+
+	logActivity({ type: "backup.recompressed", server: server.name, message: `Recompressed backup ${id}: ${formatBytes(before)} -> ${formatBytes(after)}.` });
+	return { id, before, after };
 }
 
 // The calendar periods the tiered rules count in. All in UTC, so a backup's period doesn't depend on the PC's clock zone.
@@ -409,6 +499,33 @@ export function resolveMode(server, requested) {
 }
 
 /**
+ * Makes room under a server's size limit (set per server; see serverOptions.js) for a backup about to be made. The new backup is
+ * estimated at the size of the newest backup, or 60% of the files' size when there is none yet. While it wouldn't fit, the oldest
+ * scheduled backup goes. The newest backup of any kind is never removed, and manual and safety backups are never removed here.
+ * Still over with nothing left to remove: a manual or scheduled backup is refused. A safety backup (before a restore or an update)
+ * is always made, and the overrun is only logged, because refusing it would block the restore that needs it.
+ */
+async function makeRoomUnderLimit(server, { kind, sourceBytes, limit }) {
+	const backups = await listBackups(server); // newest first
+	const newest = backups[0];
+	const estimate = newest ? newest.sizeBytes : Math.round(sourceBytes * 0.6);
+	let used = backups.reduce((sum, b) => sum + b.sizeBytes, 0);
+	const candidates = backups.filter((b) => b.kind === "scheduled" && b.id !== newest?.id).reverse(); // oldest scheduled first
+	while (used + estimate > limit && candidates.length > 0) {
+		const doomed = candidates.shift();
+		await deleteBackup(server, doomed.id);
+		used -= doomed.sizeBytes;
+		logActivity({ type: "backup.trimmed", server: server.name, message: `Removed backup ${doomed.id} to stay within the size limit.` });
+	}
+	if (used + estimate <= limit) return;
+	if (SAFETY_KINDS.includes(kind)) {
+		logActivity({ type: "backup.over_budget", server: server.name, level: "warn", message: `${server.name}'s backups are over its size limit; the ${kind} backup is made anyway.` });
+		return;
+	}
+	throw new BackupError(`Backups for ${server.name} would use more than the ${formatBytes(limit)} limit. Delete some, or raise the limit.`, "over_budget", 409);
+}
+
+/**
  * Take a backup. The caller holds the server's lock (see serverOps).
  * @param {object} server
  * @param {object} [options]
@@ -459,6 +576,9 @@ export async function createBackup(server, { kind = "manual", reason = null, mod
 			return { skipped: true, reason: "no changes since last backup" };
 		}
 	}
+
+	// The size limit comes before the room check and before the server is touched, so a refusal never stops the server.
+	if (options.maxTotalBytes != null) await makeRoomUnderLimit(server, { kind, sourceBytes, limit: options.maxTotalBytes });
 
 	// Room first: a backup that fills the drive is worse than none.
 	const minFree = getConfig().backups.minFreeGB * GIB;
@@ -826,6 +946,9 @@ export async function backupOverview(server) {
 		effectiveSkipUnchanged: options.skipUnchanged ?? config.skipUnchanged,
 		canSaveOnCommand: Boolean(getSaveCommand(server) && server.rconPort && server.rconPassword),
 		totalBytes: backups.reduce((sum, b) => sum + b.sizeBytes, 0),
+		// Read from each archive's real size, not its recorded one: a recompressed archive's record can be out of date.
+		savedBytes: backups.reduce((sum, b) => sum + (typeof b.bytesBefore === "number" ? Math.max(0, b.bytesBefore - b.sizeBytes) : 0), 0),
+		maxTotalBytes: options.maxTotalBytes,
 		backups,
 	};
 }

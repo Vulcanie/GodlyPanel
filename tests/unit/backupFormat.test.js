@@ -1,4 +1,4 @@
-import { describe, it, before, after } from "node:test";
+import { describe, it, before, beforeEach, after } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
@@ -15,9 +15,9 @@ ensureDataDirs();
 const { initConfig } = await import("../../src/server/config/configStore.js");
 const { initSecrets } = await import("../../src/server/config/secretsStore.js");
 const { setOptions } = await import("../../src/server/data/serverOptions.js");
-const { createArchive } = await import("../../src/server/util/tarZip.js");
+const { createArchive, extractArchive, listArchive } = await import("../../src/server/util/tarZip.js");
 const { FORMATS } = await import("../../src/server/util/archiveFormats.js");
-const { applyRetention, backupArchivePath, deleteBackup, listBackups, serverBackupDir } = await import("../../src/server/services/backupService.js");
+const { applyRetention, backupArchivePath, deleteBackup, listBackups, recompressBackup, serverBackupDir } = await import("../../src/server/services/backupService.js");
 const { saveDestination, listRemote, trimDestination } = await import("../../src/server/services/backupDestinations.js");
 
 // A small world to put in every test archive. The archives are real: bsdtar writes each format for real.
@@ -141,5 +141,114 @@ describe("backups in more than one format", () => {
 		const left = fs.readdirSync(remote).sort();
 		assert.deepEqual(left, ["fmt_20260103-000000_scheduled.json", "fmt_20260103-000000_scheduled.zip", "fmt_20260104-000000_scheduled.json", "fmt_20260104-000000_scheduled.tar.xz"]);
 		assert.equal((await listRemote(destination.id, server2)).length, 2);
+	});
+
+	describe("recompressing a backup in place", () => {
+		const rec = { name: "Recompress Test" };
+		const recFolder = () => serverBackupDir(rec);
+		const leftovers = () => fs.readdirSync(recFolder()).filter((f) => f.endsWith(".partial") || f.endsWith(".recompress"));
+
+		beforeEach(() => {
+			fs.rmSync(recFolder(), { recursive: true, force: true });
+		});
+
+		/** A backup as createBackup leaves it: an archive holding the manifest and the world, with its record beside it. */
+		async function makeManifestBackup(id, { format, level = "balanced" }) {
+			fs.mkdirSync(recFolder(), { recursive: true });
+			const scratch = fs.mkdtempSync(path.join(dir, "manifest-"));
+			const manifest = {
+				format: 1,
+				id,
+				server: rec.name,
+				kind: "manual",
+				createdAt: new Date(Date.UTC(2026, 1, 1)).toISOString(),
+				sourceBytes: fs.statSync(path.join(source, "world.sav")).size,
+				fingerprint: "f".repeat(40),
+				archiveFormat: format,
+				archiveLevel: level,
+				entries: [{ name: "world.sav", path: path.join(source, "world.sav"), label: "World", type: "file", exclude: [] }],
+			};
+			fs.writeFileSync(path.join(scratch, "gp-backup.json"), JSON.stringify(manifest, null, 2));
+			const archive = path.join(recFolder(), `${id}${FORMATS[format].ext}`);
+			await createArchive(archive, [{ dir: scratch, name: "gp-backup.json" }, { dir: source, name: "world.sav" }], { format, level });
+			fs.rmSync(scratch, { recursive: true, force: true });
+			const sizeBytes = fs.statSync(archive).size;
+			fs.writeFileSync(path.join(recFolder(), `${id}.json`), JSON.stringify({ ...manifest, sizeBytes, bytesBefore: manifest.sourceBytes, bytesAfter: sizeBytes }, null, 2));
+			return archive;
+		}
+
+		it("turns a zip backup into a zstd one, removes the zip, and updates the record", async () => {
+			const id = "rc_20260201-000000_manual";
+			const zip = await makeManifestBackup(id, { format: "zip" });
+			const result = await recompressBackup(rec, id, { format: "zstd", level: "fast" });
+			assert.equal(result.id, id);
+			assert.ok(result.before > 0 && result.after > 0);
+			assert.equal(result.skipped, undefined);
+
+			const zst = path.join(recFolder(), `${id}.tar.zst`);
+			assert.equal(fs.existsSync(zip), false, "the old zip is gone");
+			assert.ok(fs.existsSync(zst), "the new archive is in place");
+			assert.deepEqual(leftovers(), [], "no partial or temp folder is left behind");
+
+			const [listed] = await listBackups(rec);
+			assert.equal(listed.format, "zstd");
+			assert.equal(listed.level, "fast");
+			assert.equal(listed.sizeBytes, result.after);
+
+			const record = JSON.parse(fs.readFileSync(path.join(recFolder(), `${id}.json`), "utf8"));
+			assert.equal(record.archiveFormat, "zstd");
+			assert.equal(record.archiveLevel, "fast");
+			assert.equal(record.sizeBytes, result.after);
+			assert.equal(record.bytesAfter, result.after);
+			assert.equal(record.bytesBefore, fs.statSync(path.join(source, "world.sav")).size, "what the record said before is kept");
+			assert.equal(record.fingerprint, "f".repeat(40), "the rest of the record is kept");
+
+			const scratch = fs.mkdtempSync(path.join(dir, "check-"));
+			await extractArchive(zst, scratch, ["gp-backup.json"]);
+			assert.equal(JSON.parse(fs.readFileSync(path.join(scratch, "gp-backup.json"), "utf8")).archiveFormat, "zstd", "the manifest inside says so too");
+			fs.rmSync(scratch, { recursive: true, force: true });
+		});
+
+		it("does nothing when the backup is already in that format and level", async () => {
+			const id = "rc_20260202-000000_manual";
+			const archive = await makeManifestBackup(id, { format: "zstd", level: "fast" });
+			const before = fs.readFileSync(archive);
+			const stamp = fs.statSync(archive).mtimeMs;
+
+			const result = await recompressBackup(rec, id, { format: "zstd", level: "fast" });
+			assert.equal(result.skipped, true);
+			assert.equal(result.before, result.after);
+			assert.ok(fs.readFileSync(archive).equals(before), "the file is untouched");
+			assert.equal(fs.statSync(archive).mtimeMs, stamp);
+		});
+
+		it("rejects a corrupt archive and leaves the garbage, the record and no leftovers behind", async () => {
+			const id = "rc_20260203-000000_manual";
+			fs.mkdirSync(recFolder(), { recursive: true });
+			const garbage = path.join(recFolder(), `${id}.zip`);
+			fs.writeFileSync(garbage, "this is not an archive at all");
+			fs.writeFileSync(path.join(recFolder(), `${id}.json`), JSON.stringify({ id, kind: "manual", archiveFormat: "zip", archiveLevel: "balanced", createdAt: new Date(0).toISOString() }));
+
+			await assert.rejects(recompressBackup(rec, id, { format: "zstd", level: "fast" }));
+			assert.equal(fs.readFileSync(garbage, "utf8"), "this is not an archive at all", "the old archive is still there");
+			assert.deepEqual(leftovers(), [], "no .partial and no temp folder remain");
+			assert.equal(fs.existsSync(path.join(recFolder(), `${id}.tar.zst`)), false);
+		});
+
+		it("refuses unknown formats and levels, unknown ids and unsafe ids, each with its own code", async () => {
+			const id = "rc_20260204-000000_manual";
+			await makeManifestBackup(id, { format: "zip" });
+			const refused = async (format, level, requested, code, status = 400) => {
+				await assert.rejects(recompressBackup(rec, requested, { format, level }), (err) => err.code === code && err.status === status, `${String(format)} / ${String(level)} / ${requested}`);
+			};
+			await refused("rar", "fast", id, "bad_format");
+			await refused("__proto__", "fast", id, "bad_format");
+			await refused(["zip"], "fast", id, "bad_format");
+			await refused("zstd", "ultra", id, "bad_level");
+			await refused("zstd", undefined, id, "bad_level");
+			await refused("zstd", "fast", "rc_nothing_here", "not_found", 404);
+			await refused("zstd", "fast", "../x", "bad_id");
+			assert.ok(fs.existsSync(path.join(recFolder(), `${id}.zip`)), "nothing was changed");
+		});
 	});
 });

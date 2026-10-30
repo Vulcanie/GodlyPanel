@@ -25,9 +25,13 @@ import {
 	backupOverview,
 	createBackup,
 	deleteBackup,
+	isBackupId,
+	listBackups,
+	recompressBackup,
 	restoreBackup,
 	validateBackupPaths,
 } from "../services/backupService.js";
+import { formatBytes } from "../services/storageService.js";
 import { listDestinations, replicationFor, listRemote, fetchRemote, backfill } from "../services/backupDestinations.js";
 import { FORMATS } from "../util/archiveFormats.js";
 
@@ -81,6 +85,44 @@ router.post("/server/:serverName/backups", requirePermission("server.backup"), a
 		res.status(202).json(started);
 	} catch (err) {
 		fail(res, err, "The backup");
+	}
+});
+
+// Rewrites backups in another format or level, one after another, in the background like a backup. Holds the server's lock
+// for the whole run, so a restore or delete can't interleave with it. With no ids, every backup not already in that format and
+// level is done. A backup that fails is recorded and the rest carry on.
+router.post("/server/:serverName/backups/recompress", requirePermission("server.backup"), async (req, res) => {
+	const { format, level, ids } = req.body ?? {};
+	if (typeof format !== "string" || !Object.hasOwn(FORMATS, format)) return res.status(400).json({ error: 'format must be "zip", "zstd" or "xz".', code: "bad_format" });
+	if (typeof level !== "string" || !["fast", "balanced", "max"].includes(level)) return res.status(400).json({ error: 'level must be "fast", "balanced" or "max".', code: "bad_level" });
+	// Every id is checked before any work starts, so one bad id doesn't leave some backups done and others not.
+	if (ids !== undefined) {
+		if (!Array.isArray(ids) || ids.length > 200) return res.status(400).json({ error: "ids must be a list of up to 200 backup ids.", code: "bad_ids" });
+		if (!ids.every(isBackupId)) return res.status(400).json({ error: "That isn't a valid backup id.", code: "bad_id" });
+	}
+	try {
+		const started = await runDetached(req.server.name, "recompressing", async (report) => {
+			report({ started: true });
+			const targets = ids ?? (await listBackups(req.server)).filter((b) => !(b.format === format && b.level === level)).map((b) => b.id);
+			const results = [];
+			let saved = 0;
+			for (const id of targets) {
+				try {
+					const done = await recompressBackup(req.server, id, { format, level });
+					results.push({ id, skipped: done.skipped === true, before: done.before, after: done.after });
+					if (!done.skipped) saved += Math.max(0, done.before - done.after);
+				} catch (err) {
+					results.push({ id, error: err.message, code: err.code ?? null });
+				}
+			}
+			const failed = results.filter((r) => r.error).length;
+			const recompressed = results.filter((r) => !r.error && !r.skipped).length;
+			logActivity({ type: "backup.recompress_done", server: req.server.name, message: `Recompressed ${recompressed} backups, saved ${formatBytes(saved)} (${failed} failed).` });
+			report({ done: true, results });
+		});
+		res.status(202).json(started);
+	} catch (err) {
+		fail(res, err, "Recompressing the backups");
 	}
 });
 
@@ -143,7 +185,7 @@ router.post("/server/:serverName/backups/:id/restore", requirePermission("backup
 
 // What gets backed up, how, and how many are kept.
 router.put("/server/:serverName/backups/settings", requirePermission("backup.settings"), async (req, res) => {
-	const { paths, mode, keepCount, keepDays, keepDaily, keepWeekly, keepMonthly, keepManual, skipUnchanged, format, level } = req.body ?? {};
+	const { paths, mode, keepCount, keepDays, keepDaily, keepWeekly, keepMonthly, keepManual, skipUnchanged, format, level, maxTotalBytes } = req.body ?? {};
 	const patch = {};
 	try {
 		if (paths !== undefined) patch.paths = paths === null ? null : validateBackupPaths(paths);
@@ -163,8 +205,17 @@ router.put("/server/:serverName/backups/settings", requirePermission("backup.set
 		}
 		// The limits for each whole-number setting. keepDays 0 means "no age limit"; keepCount 0 would delete each scheduled
 		// backup as soon as it was made. The keys are fixed here, so a request can't name any other option.
-		const limits = { keepCount: { min: 1, max: 3650 }, keepDays: { min: 0, max: 3650 }, keepDaily: { min: 0, max: 3650 }, keepWeekly: { min: 0, max: 3650 }, keepMonthly: { min: 0, max: 3650 }, keepManual: { min: 0, max: 500 } };
-		const numbers = { keepCount, keepDays, keepDaily, keepWeekly, keepMonthly, keepManual };
+		// maxTotalBytes is the per-server size limit in bytes: at least 1 MB, and at most 10 TB. Null means no limit.
+		const limits = {
+			keepCount: { min: 1, max: 3650 },
+			keepDays: { min: 0, max: 3650 },
+			keepDaily: { min: 0, max: 3650 },
+			keepWeekly: { min: 0, max: 3650 },
+			keepMonthly: { min: 0, max: 3650 },
+			keepManual: { min: 0, max: 500 },
+			maxTotalBytes: { min: 1_000_000, max: 10_000_000_000_000 },
+		};
+		const numbers = { keepCount, keepDays, keepDaily, keepWeekly, keepMonthly, keepManual, maxTotalBytes };
 		for (const [key, value] of Object.entries(numbers)) {
 			if (value === undefined) continue;
 			const { min, max } = limits[key];

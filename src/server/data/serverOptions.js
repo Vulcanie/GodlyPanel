@@ -39,6 +39,9 @@ export const OPTION_DEFAULTS = Object.freeze({
 		// null = the panel-wide setting.
 		format: null,
 		level: null,
+		// The most this server's backups may take up on disk, in bytes. null = no limit. Per server only: a panel-wide limit
+		// would let one server's backups crowd out another's.
+		maxTotalBytes: null,
 	}),
 });
 
