@@ -75,7 +75,8 @@ const GUIDE_ENTRIES = {
 		["backups.keepMonthly","Backups","Keep one backup per month for this many months","The newest backup of each month (UTC).","Works together with the daily and weekly settings; a backup kept by any of them stays."],
 		["backups.keepManual","Backups","Manual backups to keep","0 never removes a backup you made by hand.","Above 0, the oldest manual backups beyond this many are deleted when a new backup is made."],
 		["backups.skipUnchanged","Backups","Skip a scheduled backup when nothing has changed","Saves space and disk wear when a server sits idle.","Judged by file sizes, times and count. A backup you ask for by hand, or one taken before a restore or update, is always made."],
-		["backups.minFreeGB", "Backups", "Refuse backups below this much free space (GB)", "A backup that would leave the drive with less than this is not started.", "Stops a backup from filling the drive and taking the servers down with it. The default of 2 GB is a sensible floor."],
+		["backups.beforeUpdate","Backups","Back up before updating a game","Keeps the save folders safe if an update goes wrong.","Takes a backup of the server's save folders after it has been stopped and before the game files are updated. If that backup fails the update is not run. A server can choose its own setting; this one applies to servers that don't."],
+		["backups.minFreeGB", "Backups","Refuse backups below this much free space (GB)", "A backup that would leave the drive with less than this is not started.", "Stops a backup from filling the drive and taking the servers down with it. The default of 2 GB is a sensible floor."],
 
 		// Startup
 		["startup.openAtLogin", "Starting with Windows", "Start GodlyPanel when I sign in to Windows", "The panel starts by itself when you sign in.", "Combine with each server's \"Start it when GodlyPanel starts\" (Automation tab) to bring your servers up after the PC restarts."],

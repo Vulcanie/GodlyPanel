@@ -36,6 +36,8 @@ export const OPTION_DEFAULTS = Object.freeze({
 		keepMonthly: null,
 		keepManual: null,
 		skipUnchanged: null,
+		// null = the panel-wide setting. Whether a game update backs up first.
+		beforeUpdate: null,
 		// null = the panel-wide setting.
 		format: null,
 		level: null,

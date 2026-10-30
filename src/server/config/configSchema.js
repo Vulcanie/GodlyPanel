@@ -97,6 +97,8 @@ export const DEFAULTS = {
 		keepManual: 0,
 		// A scheduled backup is skipped when nothing has changed since the newest backup.
 		skipUnchanged: true,
+		// Before a game update, back up the save folders while the server is stopped. A failed backup stops the update.
+		beforeUpdate: true,
 		minFreeGB: 2,
 	},
 
@@ -519,6 +521,13 @@ export const FIELD_SPECS = [
 		restart: false,
 		label: "Skip a scheduled backup when nothing has changed",
 		help: "Saves space and wear when a server sits idle. A backup you ask for by hand is always made.",
+	},
+	{
+		path: "backups.beforeUpdate",
+		type: "bool",
+		restart: false,
+		label: "Back up before updating a game",
+		help: "Takes a backup of the server's save folders after it has been stopped and before the game files are updated. If that backup fails the update is not run.",
 	},
 	{
 		path: "backups.minFreeGB",

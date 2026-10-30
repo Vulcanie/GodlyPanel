@@ -10,6 +10,8 @@ import { sleep } from "../util/async.js";
 import { steamBranchArgs, steamModArgs } from "../util/steamBranch.js";
 import { serverStatus } from "./pollingService.js";
 import { stopServer, startServer } from "./serverControl.js";
+import { snapshotBeforeUpdate } from "./updateSafety.js";
+import { logActivity } from "./activityLog.js";
 
 const WAIT_TIMEOUT_MS = 90000;
 const POLL_INTERVAL_MS = 2000;
@@ -44,7 +46,7 @@ async function waitUntilStopped(names) {
 
 export async function updateServer(
 	server,
-	{ restart = false, serversToRestart = null } = {},
+	{ restart = false, serversToRestart = null, proceedWithoutBackup = false } = {},
 ) {
 	if (!server.updateAppId) {
 		throw new Error(`No update is configured for ${server.name}.`);
@@ -71,6 +73,8 @@ export async function updateServer(
 	// that want different behavior can still pass serversToRestart directly.
 	const restartTargets =
 		serversToRestart ?? group.filter((s) => serverStatus[s.name]?.online);
+	// What was actually running, so a failed backup can put things back as they were. Unlike restartTargets, a caller can't override this.
+	const wereRunning = group.filter((s) => serverStatus[s.name]?.online);
 
 	await Promise.all(
 		group.map((s) => (serverStatus[s.name]?.online ? stopServer(s) : null)),
@@ -81,6 +85,29 @@ export async function updateServer(
 		throw new Error(
 			`Timed out waiting for ${stillOnline.join(", ")} to stop. Update aborted — nothing was run.`,
 		);
+	}
+
+	// Backed up now, while every server in the group is stopped, so the copy can't catch a save mid-write. A failed backup stops
+	// the update unless the caller said to go ahead anyway; the servers that were running are started again first.
+	const snap = await snapshotBeforeUpdate(group);
+	if (snap.failed.length > 0) {
+		const names = snap.failed.map((f) => f.name).join(", ");
+		const firstMessage = snap.failed[0].message;
+		logActivity({ type: "update.backup_failed", server: server.name, level: "error", message: `Backup before the update failed for ${names}: ${firstMessage}` });
+		if (!proceedWithoutBackup) {
+			for (const s of wereRunning) {
+				try {
+					await startServer(s);
+				} catch (e) {
+					console.error(`[update] couldn't start ${s.name} after the backup failed:`, e.message);
+				}
+			}
+			const err = new Error(`Backup before the update failed for ${names} (${firstMessage}), so the update was not run. Servers that were running have been started again.`);
+			err.status = 409;
+			err.code = "backup_failed";
+			throw err;
+		}
+		logActivity({ type: "update.backup_skipped", server: server.name, level: "warn", message: `Updating ${names} without a backup, as asked: ${firstMessage}` });
 	}
 
 	const logDir = paths.updateLogsDir;
@@ -103,6 +130,11 @@ export async function updateServer(
 		"validate",
 		"+quit",
 	];
+
+	// Written into the log, so someone reading it later can see why a server had no backup before the update.
+	for (const s of snap.skipped) {
+		logStream.write(`[backup] ${s.name} not backed up before the update: ${s.reason}\n`);
+	}
 
 	const child = spawn(steamCmd, args, {
 		detached: true,
@@ -169,5 +201,5 @@ Could not run SteamCMD: ${err.message}
 		child.unref();
 	}
 
-	return { groupNames, logPath, restart, finished };
+	return { groupNames, logPath, restart, finished, preUpdateBackupIds: snap.backupIds, backupSkipped: snap.skipped };
 }
