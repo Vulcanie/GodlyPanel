@@ -72,6 +72,7 @@ describe("what a person has chosen to hide", () => {
 		const log = (await api.get("/api/activity?limit=200", { cookie: admin })).json.map((e) => e.message).join("\n");
 		assert.doesNotMatch(log, /preferences/);
 	});
+
 	it("keeps the chosen language, and gives it back from another sign-in", async () => {
 		assert.equal((await put({ language: "es" }, admin)).json.prefs.language, "es");
 		const elsewhere = await panel.api.cookieFor(ADMIN, { "user-agent": "Some other browser" });
