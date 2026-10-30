@@ -26,7 +26,7 @@ export default function LanguagePicker() {
 				select
 				size="small"
 				label="Language"
-				value={prefs?.language ?? ""}
+				value={LANGUAGES.some((l) => l.code === prefs?.language) ? prefs.language : ""}
 				disabled={!loaded}
 				onChange={(e) => applyLanguageChoice(e.target.value, save)}
 				sx={{ minWidth: 220 }}

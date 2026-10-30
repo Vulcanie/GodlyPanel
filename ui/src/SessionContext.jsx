@@ -30,8 +30,8 @@ export function SessionProvider({ children }) {
 		}
 		return () => {
 			current = false;
-			};
-		}, [state.status]);
+		};
+	}, [state.status]);
 
 	const refresh = React.useCallback(async () => {
 		try {
