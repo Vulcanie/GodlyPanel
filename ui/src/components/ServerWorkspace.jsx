@@ -50,7 +50,7 @@ function ServerWorkspace({ serverName, serverStatus, serverStats, servers, appea
 
 	return (
 		<Box>
-			<ServerHeader serverName={serverName} status={serverStatus} stats={serverStats} appearance={appearance?.[(serverStatus?.type || "").toLowerCase()]} onAction={onAction} canControl isAdmin={isAdmin} />
+			<ServerHeader serverName={serverName} status={serverStatus} stats={serverStats} appearance={appearance?.[(serverStatus?.type || "").toLowerCase()]} onAction={onAction} canControl={can("server.control", serverName)} isAdmin={isAdmin} />
 
 			<Box
 				sx={{
