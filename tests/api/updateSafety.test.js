@@ -2,7 +2,7 @@ import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import { startInstance, serverEntry, freePort, until } from "../helpers/instance.js";
+import { startInstance, serverEntry, freePort, until, GUEST } from "../helpers/instance.js";
 import { makeFakeGame, killFakeGames } from "../helpers/fakeGame.js";
 
 // Before a game update the servers are stopped and a backup of their save folders is taken, so SteamCMD never
@@ -194,5 +194,111 @@ describe("a shared ARK install backs up every map the update stops", () => {
 			assert.equal(backups.filter((b) => b.kind === "pre-update").length, 1, `${name} has a pre-update backup`);
 		}
 		await until(async () => !(await api.get("/api/operations")).json.Ragnarok, { timeoutMs: 30_000 });
+	});
+});
+
+// After an update-and-reboot the panel watches each restarted server for a while. A server that comes online in time is "ok" and a
+// server that does not is "failed", with a line in the activity feed so someone knows to look. The health timeout is set through the
+// settings page; its smallest allowed value is one minute, so the failing case takes about a minute to show.
+describe("the health check after an update-and-reboot", () => {
+	let panel;
+	let api;
+	let folder;
+	const name = "Fake Health";
+	const base = `/api/server/${enc(name)}`;
+	const online = async () => (await api.get("/api/status")).json[name]?.online === true;
+	const busy = async () => (await api.get("/api/operations")).json[name];
+	const status = async (opts) => (await api.get(`/api/control/${enc(name)}/update/status`, opts)).json;
+	const activity = async () => (await api.get("/api/activity?limit=200")).json;
+	const healthEvents = async () => (await activity()).filter((e) => e.server === name && /^update\.(failed|verified)$/.test(e.type));
+	const preUpdateBackupId = async () => (await api.get(`${base}/backups`)).json.backups.find((b) => b.kind === "pre-update")?.id;
+
+	before(async () => {
+		const rconPort = await freePort();
+		panel = await startInstance({
+			servers: (dir) => {
+				folder = path.join(dir, "fake-health");
+				return [{ ...makeFakeGame(folder, { name, rconPort, exe: "gp-fake-health.exe" }), ...UPDATABLE }];
+			},
+		});
+		api = panel.api;
+	});
+	after(async () => {
+		killFakeGames(folder);
+		await panel.stop();
+	});
+
+	it("a server that never comes back is marked failed, with its pre-update backup, and the feed says so", async () => {
+		assert.equal((await api.post(`/api/control/${enc(name)}/start`)).status, 200);
+		assert.equal(await until(online), true);
+		assert.equal(await until(async () => !(await busy())), true);
+
+		const script = path.join(folder, "Start_Fake.bat");
+		const original = fs.readFileSync(script, "utf8");
+		// The restart now runs a start script that launches nothing, so the server never reports online.
+		fs.writeFileSync(script, "@echo off\r\nexit /b 0\r\n");
+		try {
+			const put = await api.put("/api/settings", { gameUpdates: { healthTimeoutMin: 1 } });
+			assert.equal(put.status, 200, JSON.stringify(put.json));
+
+			const r = await api.post(`/api/control/${enc(name)}/update-reboot`, {});
+			assert.equal(r.status, 200, JSON.stringify(r.json));
+			assert.equal(await until(async () => !(await busy())), true, "the update itself finishes without waiting for the health check");
+
+			const latest = await until(async () => {
+				const s = await status();
+				return s.latest?.outcome === "failed" ? s : null;
+			}, { timeoutMs: 150_000 });
+			assert.ok(latest, JSON.stringify(await status()));
+			assert.equal(latest.latest.backupId, await preUpdateBackupId(), "the record names the backup taken before the update");
+			assert.equal(latest.healthTimeoutMin, 1);
+			const failed = (await healthEvents()).filter((e) => e.type === "update.failed");
+			assert.equal(failed.length, 1, "exactly one update.failed for the server");
+			assert.match(failed[0].message, /did not come back online within 1 minutes/);
+		} finally {
+			fs.writeFileSync(script, original);
+			await api.put("/api/settings", { gameUpdates: { healthTimeoutMin: 10 } });
+		}
+	});
+
+	it("a server that comes back is marked ok, and the feed says it was verified", async () => {
+		// Stopped by the failed update above, so it is started again and then updated with a reboot.
+		assert.equal((await api.post(`/api/control/${enc(name)}/start`)).status, 200);
+		assert.equal(await until(online), true);
+		assert.equal(await until(async () => !(await busy())), true);
+		const previousAt = (await status()).latest?.at;
+
+		const r = await api.post(`/api/control/${enc(name)}/update-reboot`, {});
+		assert.equal(r.status, 200, JSON.stringify(r.json));
+		const latest = await until(async () => {
+			const s = await status();
+			return s.latest && s.latest.at !== previousAt && s.latest.outcome !== "checking" ? s : null;
+		}, { timeoutMs: 120_000 });
+		assert.equal(latest?.latest?.outcome, "ok", JSON.stringify(latest));
+		assert.equal(await until(online), true, "it really is back");
+		assert.ok((await healthEvents()).some((e) => e.type === "update.verified"), "the feed records the server as verified");
+		await until(async () => !(await busy()), { timeoutMs: 30_000 });
+	});
+
+	it("a plain update (no reboot) is recorded as updated and never health-checked", async () => {
+		const previousAt = (await status()).latest?.at;
+		const seen = (await healthEvents()).length;
+		const r = await api.post(`/api/control/${enc(name)}/update`, {});
+		assert.equal(r.status, 200, JSON.stringify(r.json));
+		assert.equal(await until(async () => !(await busy()), { timeoutMs: 30_000 }), true);
+		const s = await status();
+		assert.notEqual(s.latest?.at, previousAt);
+		assert.equal(s.latest?.outcome, "updated");
+		await new Promise((resolve) => setTimeout(resolve, 2000));
+		assert.equal((await healthEvents()).length, seen, "no update.failed or update.verified was added");
+	});
+
+	it("the status needs the update permission: a guest gets 403, an admin gets the record", async () => {
+		const guest = await api.cookieFor(GUEST);
+		const denied = await api.get(`/api/control/${enc(name)}/update/status`, { cookie: guest });
+		assert.equal(denied.status, 403);
+		const allowed = await status();
+		assert.ok(Array.isArray(allowed.history));
+		assert.ok(allowed.history.length <= 5);
 	});
 });

@@ -10,11 +10,64 @@ import { sleep } from "../util/async.js";
 import { steamBranchArgs, steamModArgs } from "../util/steamBranch.js";
 import { serverStatus } from "./pollingService.js";
 import { stopServer, startServer } from "./serverControl.js";
-import { snapshotBeforeUpdate } from "./updateSafety.js";
+import { snapshotBeforeUpdate, watchHealth } from "./updateSafety.js";
 import { logActivity } from "./activityLog.js";
+import { readInstalledBuild } from "./buildTracker.js";
+import { addRecord, patchRecord } from "./updateHistory.js";
+import { getConfig } from "../config/configStore.js";
 
 const WAIT_TIMEOUT_MS = 90000;
 const POLL_INTERVAL_MS = 2000;
+
+// One history record per server in the group, written once SteamCMD has finished. A server being restarted is "checking" until
+// the health watch settles it. The history is a record of the update, not part of it, so a failure here is logged and passed over.
+async function recordUpdate(group, { at, fromBuilds, byServer, checking }) {
+	for (const s of group) {
+		try {
+			await addRecord(s.name, {
+				at,
+				fromBuild: fromBuilds.get(s.name) ?? null,
+				toBuild: await readInstalledBuild(s),
+				branch: s.updateBranch ?? null,
+				backupId: byServer[s.name] ?? null,
+				outcome: checking.has(s.name) ? "checking" : "updated",
+			});
+		} catch (e) {
+			console.error(`[update] couldn't record the update history for ${s.name}:`, e.message);
+		}
+	}
+}
+
+// Watches the servers restarted after an update, in the background, and says how each one turned out. The update itself has already
+// finished by now, so a server that never comes back does not hold up Stop. A server that could not be started at all is failed at once.
+function watchRestarted(restartTargets, { at, startErrors }) {
+	void (async () => {
+		await Promise.all(
+			restartTargets.map(async (s) => {
+				const minutes = getConfig().gameUpdates.healthTimeoutMin;
+				let outcome;
+				let failure;
+				if (startErrors.has(s.name)) {
+					outcome = "failed";
+					failure = `${s.name} couldn't be started after the update (${startErrors.get(s.name)}). Open its Logs tab, and the Update panel to roll back.`;
+				} else {
+					outcome = await watchHealth(s);
+					failure = `${s.name} did not come back online within ${minutes} minutes after the update. Open its Logs tab, and the Update panel to roll back.`;
+				}
+				try {
+					await patchRecord(s.name, at, { outcome });
+				} catch (e) {
+					console.error(`[update] couldn't record the outcome for ${s.name}:`, e.message);
+				}
+				if (outcome === "failed") {
+					logActivity({ type: "update.failed", server: s.name, level: "error", message: failure });
+				} else {
+					logActivity({ type: "update.verified", server: s.name, message: `${s.name} is back online after the update.` });
+				}
+			}),
+		);
+	})().catch((e) => console.error("[update] the health check failed:", e.message));
+}
 
 // ARK's SA servers all run out of one shared install directory, so updating
 // any one of them requires stopping every sibling first (updating shared
@@ -110,6 +163,12 @@ export async function updateServer(
 		logActivity({ type: "update.backup_skipped", server: server.name, level: "warn", message: `Updating ${names} without a backup, as asked: ${firstMessage}` });
 	}
 
+	// The build each server is on before anything changes, so the history can say what the update moved it from. A shared ARK install
+	// gives the same answer for each map, but reading each one keeps this from depending on that.
+	const fromBuilds = new Map();
+	for (const s of group) fromBuilds.set(s.name, await readInstalledBuild(s));
+	const at = new Date().toISOString();
+
 	const logDir = paths.updateLogsDir;
 	await fs.mkdir(logDir, { recursive: true });
 	const logPath = path.join(
@@ -164,6 +223,8 @@ Could not run SteamCMD: ${err.message}
 		// servers will come back updated but won't auto-start.
 		child.on("exit", async (code) => {
 			logStream.write(`\n[update-and-reboot] steamcmd exited with code ${code}\n`);
+			// Recorded before anything is started, so the health check below always finds a record to settle.
+			await recordUpdate(group, { at, fromBuilds, byServer: snap.byServer, checking: new Set(restartTargets.map((s) => s.name)) });
 
 			// SteamCMD reports a non-zero exit after a self-update relaunch even
 			// when the install itself succeeded (the creation flow documents the
@@ -176,11 +237,13 @@ Could not run SteamCMD: ${err.message}
 				console.warn(`[update-and-reboot] steamcmd exited ${code} for ${server.name}; restarting anyway.`);
 			}
 
+			const startErrors = new Map();
 			for (const s of restartTargets) {
 				try {
 					await startServer(s);
 					logStream.write(`[update-and-reboot] started ${s.name}\n`);
 				} catch (e) {
+					startErrors.set(s.name, e.message);
 					logStream.write(
 						`[update-and-reboot] failed to start ${s.name}: ${e.message}\n`,
 					);
@@ -192,9 +255,12 @@ Could not run SteamCMD: ${err.message}
 			}
 			logStream.end();
 			finish();
+			// After finish(), so the server's lock is already free while the health check runs in the background.
+			watchRestarted(restartTargets, { at, startErrors });
 		});
 	} else {
-		child.on("exit", () => {
+		child.on("exit", async () => {
+			await recordUpdate(group, { at, fromBuilds, byServer: snap.byServer, checking: new Set() });
 			logStream.end();
 			finish();
 		});

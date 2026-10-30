@@ -30,6 +30,8 @@ export const paths = {
 	creationLogsDir: path.join(dataDir, "jobs", "creation"),
 	updateLogsDir: path.join(dataDir, "jobs", "update"),
 	buildVersionsFile: path.join(dataDir, "state", "build-versions.json"),
+	// One list per server of recent game updates: what version it went from and to, and whether it came back. Kept for the Update panel.
+	updateHistoryFile: path.join(dataDir, "state", "updates-history.json"),
 	autoUpdateFile: path.join(dataDir, "state", "auto-update-settings.json"),
 	discordMessageIdFile: path.join(dataDir, "state", "discord-message-id.json"),
 	appearanceFile: path.join(dataDir, "appearance.json"),

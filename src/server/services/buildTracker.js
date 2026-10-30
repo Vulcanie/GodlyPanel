@@ -21,6 +21,21 @@ export async function markBuildIdSeen(appId, buildId) {
 	await fs.writeFile(STORE_PATH, JSON.stringify(known, null, 2));
 }
 
+// The build id of what is actually installed, from the manifest Steam keeps beside the game files. It is not the same as the latest
+// build on Steam, so it says what the server really runs. null when it cannot be read: a missing manifest should not stop an update.
+export async function readInstalledBuild(server) {
+	const appId = server?.updateAppId;
+	// Only plain digits go into the path, so an odd app id can never point the read somewhere else.
+	if (!server?.installDir || appId === undefined || appId === null || !/^\d+$/.test(String(appId))) return null;
+	try {
+		const text = await fs.readFile(path.join(server.installDir, "steamapps", `appmanifest_${appId}.acf`), "utf8");
+		const match = /"buildid"\s+"(\d+)"/.exec(text);
+		return match ? match[1] : null;
+	} catch {
+		return null;
+	}
+}
+
 // app_info_print is a read-only query against Steam's app info cache — it
 // does not touch any installed game files (steamcmd's own brief
 // self-update-on-launch noise in the output is unrelated housekeeping).
