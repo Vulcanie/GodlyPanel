@@ -102,7 +102,7 @@ function DashboardPage({ servers, systemStats, serverStats, loading, apiError, u
 	const [tagFilter, setTagFilter] = React.useState(() => remembered("tagFilter", []));
 	const [groupBy, setGroupBy] = React.useState(() => remembered("groupBy", "game"));
 
-	const { operator } = useSession();
+	const { operator, can } = useSession();
 	const admin = userRole === "admin";
 
 	const allTags = React.useMemo(() => [...new Set(Object.values(servers).flatMap((s) => s.tags ?? []))].sort((a, b) => a.localeCompare(b)), [servers]);
@@ -276,7 +276,7 @@ function DashboardPage({ servers, systemStats, serverStats, loading, apiError, u
 											stats={statsByName[srv.name]}
 											appearance={appearance?.[(srv.type || "").toLowerCase()]}
 											canOpen={canOpenServer(srv.name)}
-											canControl={canOpenServer(srv.name)}
+											canControl={canOpenServer(srv.name) && can("server.control", srv.name)}
 											onOpen={onOpen}
 											onAction={onAction}
 										/>
