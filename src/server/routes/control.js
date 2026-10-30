@@ -134,7 +134,7 @@ router.post("/control/:serverName/:action", (req, res, next) => {
 
 	if (action === "rcon") {
 		const { command } = req.body || {};
-		if (!command || typeof command !== "string") {
+		if (!command || typeof command !== "string" || command.trim() === "") {
 			return res.status(400).json({ error: "A command is required." });
 		}
 		// The one gate for free-form commands: a role may be limited to some commands (see commandScope.js).

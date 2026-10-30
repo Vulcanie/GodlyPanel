@@ -147,11 +147,10 @@ describe("the console's command scope at the route", () => {
 		assert.equal(r.json.code, "forbidden");
 	});
 
-	it("an empty command is still a 400, and a blank one is refused by the scope check", async () => {
+	it("an empty or blank command is a 400", async () => {
 		assert.equal((await rcon(adminCookie, "")).status, 400);
 		const blank = await rcon(listOnlyCookie, "   ");
-		assert.equal(blank.status, 403);
-		assert.equal(blank.json.code, "command_denied");
+		assert.equal(blank.status, 400);
 	});
 
 	it("GET /api/roles lists the command presets", async () => {
