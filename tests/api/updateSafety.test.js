@@ -302,3 +302,166 @@ describe("the health check after an update-and-reboot", () => {
 		assert.ok(allowed.history.length <= 5);
 	});
 });
+
+// Rolling back a failed update puts the save files back as the newest update found them. Only the newest record can be rolled back,
+// and only once. The game files themselves are not rolled back (that is a later change), and the panel says so. These use the same
+// stand-in game as above: it saves on the way down and comes back online when started.
+describe("rolling a failed update back", () => {
+	let panel;
+	let api;
+	let folder;
+	let plainFolder;
+	let freshFolder;
+	const name = "Fake Rollback";
+	const plain = "Fake Rollback Plain";
+	const fresh = "Fake Rollback Fresh";
+	const worldOf = (dir) => path.join(dir, "ConanSandbox", "Saved", "world.sav");
+	const world = () => fs.readFileSync(worldOf(folder), "utf8");
+	const online = async () => (await api.get("/api/status")).json[name]?.online === true;
+	const busy = async (who = name) => (await api.get("/api/operations")).json[who];
+	const status = async (who = name, opts) => (await api.get(`/api/control/${enc(who)}/update/status`, opts)).json;
+	const rollback = (who, body = {}, opts) => api.post(`/api/control/${enc(who)}/update/rollback`, body, opts);
+	const feed = async () => (await api.get("/api/activity?limit=200")).json;
+
+	before(async () => {
+		const [rconPort, plainPort, freshPort] = await Promise.all([freePort(), freePort(), freePort()]);
+		panel = await startInstance({
+			servers: (dir) => {
+				folder = path.join(dir, "fake-rollback");
+				plainFolder = path.join(dir, "fake-rollback-plain");
+				freshFolder = path.join(dir, "fake-rollback-fresh");
+				return [
+					{ ...makeFakeGame(folder, { name, rconPort, exe: "gp-fake-rollback.exe" }), ...UPDATABLE },
+					{ ...makeFakeGame(plainFolder, { name: plain, rconPort: plainPort, exe: "gp-fake-rollback-plain.exe" }), ...UPDATABLE },
+					{ ...makeFakeGame(freshFolder, { name: fresh, rconPort: freshPort, exe: "gp-fake-rollback-fresh.exe" }), ...UPDATABLE },
+				];
+			},
+		});
+		api = panel.api;
+	});
+	after(async () => {
+		killFakeGames(folder);
+		killFakeGames(plainFolder);
+		killFakeGames(freshFolder);
+		await panel.stop();
+	});
+
+	it("puts the save files back to the pre-update backup, leaves the server stopped, and says game files were not rolled back", async () => {
+		assert.equal((await api.post(`/api/control/${enc(name)}/start`)).status, 200);
+		assert.equal(await until(online), true);
+		assert.equal(await until(async () => !(await busy())), true);
+
+		fs.writeFileSync(worldOf(folder), "v1\n");
+		const up = await api.post(`/api/control/${enc(name)}/update`, {});
+		assert.equal(up.status, 200, JSON.stringify(up.json));
+		assert.equal(await until(async () => !(await busy()), { timeoutMs: 30_000 }), true);
+		// The update stops the server before its backup, so the save as it stands now is what the backup holds.
+		const backedUp = world();
+		assert.match(backedUp, /^v1\n/);
+
+		fs.writeFileSync(worldOf(folder), "v2\n");
+		const st = await status();
+		assert.equal(st.rollback.available, true, JSON.stringify(st.rollback));
+		assert.equal(st.rollback.reason, null);
+
+		const r = await rollback(name, {});
+		assert.equal(r.status, 202, JSON.stringify(r.json));
+		assert.equal(await until(async () => !(await busy()), { timeoutMs: 60_000 }), true);
+		assert.equal(world(), backedUp, "the save is byte-identical to the backup");
+		assert.equal(await until(async () => !(await online())), true, "the server is still stopped");
+
+		const events = (await feed()).filter((e) => e.server === name && e.type === "update.rolled_back");
+		assert.equal(events.length, 1, "one update.rolled_back in the feed");
+		assert.match(events[0].message, /Game files were not rolled back/);
+		const latest = (await status()).latest;
+		assert.equal(latest.outcome, "rolled_back");
+		assert.ok(latest.rolledBackAt, "the record says when");
+	});
+
+	it("a record that is already rolled back cannot be rolled back again", async () => {
+		const r = await rollback(name, {});
+		assert.equal(r.status, 409, JSON.stringify(r.json));
+		assert.equal(r.json.code, "already_rolled_back");
+		assert.equal((await status()).rollback.available, false);
+	});
+
+	it("with restart the save is put back and the server is started again", async () => {
+		fs.writeFileSync(worldOf(folder), "v3\n");
+		const up = await api.post(`/api/control/${enc(name)}/update`, {});
+		assert.equal(up.status, 200, JSON.stringify(up.json));
+		assert.equal(await until(async () => !(await busy()), { timeoutMs: 30_000 }), true);
+		const backedUp = world();
+
+		fs.writeFileSync(worldOf(folder), "v4\n");
+		const r = await rollback(name, { restart: true });
+		assert.equal(r.status, 202, JSON.stringify(r.json));
+		assert.equal(await until(async () => !(await busy()), { timeoutMs: 120_000 }), true);
+		assert.equal(world(), backedUp);
+		assert.equal(await until(online, { timeoutMs: 60_000 }), true, "it is online after the rollback");
+	});
+
+	it("is refused while the server runs, and leaves the save files alone", async () => {
+		assert.equal((await api.post(`/api/control/${enc(name)}/stop`)).status, 200);
+		assert.equal(await until(async () => !(await online())), true);
+		assert.equal(await until(async () => !(await busy())), true);
+		fs.writeFileSync(worldOf(folder), "v5\n");
+		const up = await api.post(`/api/control/${enc(name)}/update`, {});
+		assert.equal(up.status, 200, JSON.stringify(up.json));
+		assert.equal(await until(async () => !(await busy()), { timeoutMs: 30_000 }), true);
+
+		assert.equal((await api.post(`/api/control/${enc(name)}/start`)).status, 200);
+		assert.equal(await until(online), true);
+		assert.equal(await until(async () => !(await busy())), true);
+		fs.writeFileSync(worldOf(folder), "v6\n");
+
+		const st = await status();
+		assert.equal(st.rollback.available, false);
+		assert.equal(st.rollback.reason, "Stop the server first. Rolling back replaces files the game is using.");
+		const r = await rollback(name, {});
+		assert.equal(r.status, 409, JSON.stringify(r.json));
+		assert.equal(r.json.code, "server_running");
+		assert.equal(world(), "v6\n", "the save was not touched");
+		assert.equal(await until(async () => !(await busy())), true);
+
+		assert.equal((await api.post(`/api/control/${enc(name)}/stop`)).status, 200);
+		assert.equal(await until(async () => !(await online())), true);
+		assert.equal(await until(async () => !(await busy())), true);
+	});
+
+	it("a server whose update took no backup has nothing to roll back to", async () => {
+		const off = await api.put(`/api/server/${enc(plain)}/backups/settings`, { beforeUpdate: false });
+		assert.equal(off.status, 200, JSON.stringify(off.json));
+		const up = await api.post(`/api/control/${enc(plain)}/update`, {});
+		assert.equal(up.status, 200, JSON.stringify(up.json));
+		assert.equal(await until(async () => !(await busy(plain)), { timeoutMs: 30_000 }), true);
+
+		const r = await rollback(plain, {});
+		assert.equal(r.status, 409, JSON.stringify(r.json));
+		assert.equal(r.json.code, "no_backup");
+		assert.match(r.json.error, /did not back this server up/);
+		assert.equal((await status(plain)).rollback.available, false);
+	});
+
+	it("a server that has never been updated has no update to roll back", async () => {
+		const r = await rollback(fresh, {});
+		assert.equal(r.status, 409, JSON.stringify(r.json));
+		assert.equal(r.json.code, "no_update");
+		const st = await status(fresh);
+		assert.equal(st.latest, null);
+		assert.equal(st.rollback.available, false);
+	});
+
+	it("needs the update permission, and only a literal true restarts the server", async () => {
+		const guest = await api.cookieFor(GUEST);
+		const denied = await rollback(name, {}, { cookie: guest });
+		assert.equal(denied.status, 403, JSON.stringify(denied.json));
+		const deniedStatus = await api.get(`/api/control/${enc(name)}/update/status`, { cookie: guest });
+		assert.equal(deniedStatus.status, 403);
+
+		// The newest record is the one from the refused rollback above, which is still open to rolling back. The server is stopped.
+		const r = await rollback(name, { restart: "yes" });
+		assert.equal(r.status, 202, JSON.stringify(r.json));
+		assert.equal(await until(async () => !(await busy()), { timeoutMs: 60_000 }), true);
+		assert.equal(await until(async () => !(await online())), true, "a string yes did not start it");
+	});
+});

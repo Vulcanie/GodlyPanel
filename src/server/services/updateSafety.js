@@ -1,8 +1,11 @@
 import { getConfig } from "../config/configStore.js";
 import { getOptions } from "../data/serverOptions.js";
-import { createBackup, BackupError } from "./backupService.js";
+import { createBackup, restoreBackup, BackupError } from "./backupService.js";
 import { serverStatus } from "./pollingService.js";
 import { sleep } from "../util/async.js";
+import { listHistory, patchRecord } from "./updateHistory.js";
+import { logActivity } from "./activityLog.js";
+import { isServerRunning } from "./serverState.js";
 
 // Backing up before a game update: a copy of each server's save folders, taken while the server is stopped, so the
 // copy is clean. It lives here, not in updateService.js, so the update code can import it without an import cycle.
@@ -69,4 +72,52 @@ export async function watchHealth(server, { timeoutMs = null, pollMs = 1000 } = 
 		if (Date.now() >= deadline) return "failed";
 		await sleep(pollMs);
 	}
+}
+
+// Why the newest update can't be rolled back, as the error to throw, or null when it can. The rollback and the status the panel
+// shows both use this, so they always agree.
+function rollbackRefusal(record) {
+	const refuse = (message, code, status = 409) => Object.assign(new Error(message), { code, status });
+	if (!record) return refuse("There is no update to roll back for this server.", "no_update");
+	if (record.rolledBackAt) return refuse("That update has already been rolled back.", "already_rolled_back");
+	// Without a backup taken before the update there is no copy of the save to go back to.
+	if (!record.backupId) return refuse("The panel did not back this server up before that update, so there is nothing to roll back to.", "no_backup");
+	// The health watch is still deciding whether the server came back. Restoring files under it now would race that check.
+	if (record.outcome === "checking") return refuse("The panel is still waiting to see if the server comes back after the update. Try again in a moment.", "still_checking");
+	return null;
+}
+
+/**
+ * Puts the server's save files back as the newest update found them. Game files (the binaries) are not rolled back; the result says
+ * so. Caller holds the server's lock.
+ */
+export async function rollbackUpdate(server, { restart = false, onReady = null } = {}) {
+	const history = await listHistory(server.name);
+	const record = history.at(-1) ?? null;
+	const refusal = rollbackRefusal(record);
+	if (refusal) throw refusal;
+
+	// restoreBackup takes its own safety backup and refuses to run on a running server unless told to restart it, so the server's own
+	// rules hold here too.
+	const result = await restoreBackup(server, record.backupId, { safety: true, restart, onReady });
+	// The restore has already happened, so a failure to note it in the history must not hide the result from the caller.
+	try {
+		await patchRecord(server.name, record.at, { outcome: "rolled_back", rolledBackAt: new Date().toISOString() });
+	} catch (err) {
+		console.error(`[update] couldn't record the rollback for ${server.name}:`, err.message);
+	}
+	logActivity({ type: "update.rolled_back", server: server.name, message: `Rolled ${server.name} back to its backup from before the update. Game files were not rolled back.` });
+	return { backupId: record.backupId, ...result, binariesRolledBack: false };
+}
+
+/** Whether the newest update can be rolled back right now, and the plain-English reason when it can't. */
+export async function rollbackState(server) {
+	const history = await listHistory(server.name);
+	const record = history.at(-1) ?? null;
+	const refusal = rollbackRefusal(record);
+	if (refusal) return { available: false, reason: refusal.message, backupId: null };
+	if (await isServerRunning(server)) {
+		return { available: false, reason: "Stop the server first. Rolling back replaces files the game is using.", backupId: null };
+	}
+	return { available: true, reason: null, backupId: record.backupId };
 }
