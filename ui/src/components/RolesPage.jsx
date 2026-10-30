@@ -1,10 +1,10 @@
 import React from "react";
-import { Box, Button, Typography, TextField, Alert, Checkbox, Chip, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, IconButton, Tooltip, CircularProgress } from "@mui/material";
+import { Box, Button, Typography, TextField, Alert, Checkbox, Chip, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, IconButton, Radio, RadioGroup, Tooltip, CircularProgress } from "@mui/material";
 import { ArrowBack as ArrowBackIcon, Add as AddIcon, AdminPanelSettings as RolesIcon, Delete as DeleteIcon, Edit as EditIcon } from "@mui/icons-material";
 import { api } from "../api/client";
 import { useSession } from "../SessionContext";
 import { useToast } from "../ToastContext";
-import { canGrant, groupedPermissions, permissionLabel, togglePermission } from "../roleEditor";
+import { applyPreset, canGrant, groupedPermissions, normalizePatterns, permissionLabel, SCOPE_MODES, scopeChanged, scopeProblem, scopeSummary, togglePermission } from "../roleEditor";
 import PageHeader from "./ui/PageHeader";
 import SectionCard from "./ui/SectionCard";
 import ConfirmDialog from "./ui/ConfirmDialog";
@@ -16,7 +16,7 @@ const NAME_MAX = 40;
 function RolesPage({ onBack }) {
 	const toast = useToast();
 	const { user, isAdmin } = useSession();
-	const [data, setData] = React.useState(null); // { roles, permissions, groups }
+	const [data, setData] = React.useState(null); // { roles, permissions, groups, commandPresets }
 	const [error, setError] = React.useState(null);
 	const [dialog, setDialog] = React.useState(null); // null, or { role: null } for a new role, or { role } to edit one
 	const [deleting, setDeleting] = React.useState(null);
@@ -29,6 +29,7 @@ function RolesPage({ onBack }) {
 				roles: Array.isArray(res?.roles) ? res.roles : [],
 				permissions: Array.isArray(res?.permissions) ? res.permissions : [],
 				groups: res?.groups ?? {},
+				commandPresets: Array.isArray(res?.commandPresets) ? res.commandPresets : [],
 			});
 		} catch (e) {
 			setError(e.message);
@@ -93,6 +94,10 @@ function RolesPage({ onBack }) {
 										variant="outlined"
 										label={isAdminRole ? "Everything" : `${role.permissions?.length ?? 0} ${role.permissions?.length === 1 ? "permission" : "permissions"}`}
 									/>
+									{/* Only a role that can use the console has a console scope worth showing. The admin always shows one, since it can use the console. */}
+									{(isAdminRole || (Array.isArray(role.permissions) && role.permissions.includes("server.console"))) && (
+										<Chip size="small" variant="outlined" label={scopeSummary(role.commandScope)} />
+									)}
 									<Box sx={{ display: "flex", alignItems: "center" }}>
 										{!role.locked && (
 											<Tooltip title="Edit">
@@ -152,6 +157,7 @@ function RolesPage({ onBack }) {
 					role={dialog.role}
 					permissions={data?.permissions ?? []}
 					groups={data?.groups ?? {}}
+					commandPresets={data?.commandPresets ?? []}
 					actorPermissions={user?.permissions}
 					isAdmin={isAdmin}
 					onClose={() => setDialog(null)}
@@ -167,22 +173,41 @@ function RolesPage({ onBack }) {
 }
 
 /** A new role, or the name and permissions of one that exists. Server errors show here, so the person can fix them and try again. */
-function RoleDialog({ role, permissions, groups, actorPermissions, isAdmin, onClose, onSaved }) {
+function RoleDialog({ role, permissions, groups, commandPresets, actorPermissions, isAdmin, onClose, onSaved }) {
 	const editing = Boolean(role);
 	const [name, setName] = React.useState(role?.name ?? "");
 	const [selected, setSelected] = React.useState(() => (Array.isArray(role?.permissions) ? [...role.permissions] : []));
 	const [saving, setSaving] = React.useState(false);
 	const [error, setError] = React.useState(null);
+	// The scope as it was when the dialog opened. A new role starts as Any command. Saving compares against this, so an
+	// untouched scope is never sent back to the server.
+	const [initialScope] = React.useState(() => applyPreset(role?.commandScope));
+	const [scopeMode, setScopeMode] = React.useState(initialScope.mode);
+	const [scopeText, setScopeText] = React.useState(initialScope.patterns.join("\n"));
 
 	const trimmed = name.trim();
-	const canSave = trimmed.length > 0 && trimmed.length <= NAME_MAX && !saving;
 	const sections = groupedPermissions(groups, permissions);
+	const consoleOn = selected.includes("server.console");
+	const currentScope = { mode: scopeMode, patterns: scopeMode === "all" ? [] : normalizePatterns(scopeText) };
+	// The scope only matters while the console is ticked, because that is when its section is shown. Saving is blocked on a bad scope
+	// only then, so a hidden section can never block a save.
+	const scopeError = consoleOn ? scopeProblem(currentScope) : "";
+	const canSave = trimmed.length > 0 && trimmed.length <= NAME_MAX && !saving && scopeError === "";
+
+	const applyPresetToForm = (preset) => {
+		const next = applyPreset(preset);
+		setScopeMode(next.mode);
+		setScopeText(next.patterns.join("\n"));
+	};
 
 	const save = async () => {
 		setSaving(true);
 		setError(null);
 		try {
 			const body = { name: trimmed, permissions: selected };
+			// Only an administrator may change the console scope, so anyone else never sends it. The scope is sent only when this save
+			// changes it; otherwise the server keeps what is stored.
+			if (isAdmin && consoleOn && scopeChanged(initialScope, currentScope)) body.commandScope = currentScope;
 			if (editing) await api.put(`/api/roles/${role.id}`, body);
 			else await api.post("/api/roles", body);
 			await onSaved(editing ? `Saved ${trimmed}.` : `Created ${trimmed}.`);
@@ -242,6 +267,53 @@ function RoleDialog({ role, permissions, groups, actorPermissions, isAdmin, onCl
 						</Box>
 					</Box>
 				))}
+				{consoleOn && (
+					<Box>
+						<Typography variant="subtitle2" sx={{ color: "text.secondary", mb: 0.5 }}>
+							Console commands
+						</Typography>
+						{!isAdmin && (
+							<Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1 }}>
+								Only an administrator can change this.
+							</Typography>
+						)}
+						<RadioGroup value={scopeMode} onChange={(e) => setScopeMode(e.target.value)}>
+							{SCOPE_MODES.map((m) => (
+								<FormControlLabel
+									key={m.id}
+									value={m.id}
+									control={<Radio size="small" disabled={!isAdmin} />}
+									label={<Typography variant="body2">{m.label}</Typography>}
+								/>
+							))}
+						</RadioGroup>
+						{commandPresets.length > 0 && (
+							<Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1 }}>
+								{commandPresets.map((preset) => (
+									<Button key={preset.id} size="small" variant="outlined" disabled={!isAdmin} onClick={() => applyPresetToForm(preset)}>
+										{preset.label}
+									</Button>
+								))}
+							</Box>
+						)}
+						{scopeMode !== "all" && (
+							<TextField
+								label="Commands, one per line"
+								size="small"
+								fullWidth
+								multiline
+								minRows={3}
+								autoComplete="off"
+								disabled={!isAdmin}
+								value={scopeText}
+								onChange={(e) => setScopeText(e.target.value)}
+								error={isAdmin && Boolean(scopeError)}
+								helperText={isAdmin && scopeError ? scopeError : "Use * for any ending, e.g. kick*. Only the first word of what is typed is checked."}
+								sx={{ mt: 1.5 }}
+							/>
+						)}
+					</Box>
+				)}
 			</DialogContent>
 			<DialogActions>
 				<Button onClick={onClose}>Cancel</Button>

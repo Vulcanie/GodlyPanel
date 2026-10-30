@@ -135,3 +135,98 @@ export function serverRolesFromRows(rows) {
 	// Object.fromEntries defines each key as its own property, so a server named __proto__ stays a plain entry.
 	return Object.fromEntries(kept.map((r) => [r.server, r.role]));
 }
+
+// The console scope: which commands a role may run. The server makes the real decision; these helpers only shape what the editor
+// shows and what it is willing to send.
+
+export const SCOPE_MODES = [
+	{ id: "all", label: "Any command" },
+	{ id: "allow", label: "Only these commands" },
+	{ id: "deny", label: "Any command except these" },
+];
+
+// The server caps a scope at this many patterns, and each pattern at this length.
+const PATTERN_MAX = 64;
+const PATTERNS_MAX = 50;
+
+function isPlainObject(value) {
+	return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+// Turns any input into a scope the editor can work with. Anything that is not allow or deny is treated as an all scope, and an
+// all scope has no patterns, since they would do nothing.
+function scopeOf(scope) {
+	const mode = isPlainObject(scope) && (scope.mode === "allow" || scope.mode === "deny") ? scope.mode : "all";
+	return { mode, patterns: mode === "all" ? [] : Array.isArray(scope.patterns) ? scope.patterns : [] };
+}
+
+// Trims, lower-cases, drops blanks and removes repeats, keeping the first order. Non-string entries are dropped.
+function tidyPatterns(list) {
+	const seen = new Set();
+	const out = [];
+	for (const item of list) {
+		if (typeof item !== "string") continue;
+		const clean = item.trim().toLowerCase();
+		if (clean === "" || seen.has(clean)) continue;
+		seen.add(clean);
+		out.push(clean);
+	}
+	return out;
+}
+
+/** A one-line description of a scope for the roles list, such as "Only 2 commands". Anything odd reads as "Any command". */
+export function scopeSummary(scope) {
+	if (!isPlainObject(scope)) return "Any command";
+	const count = Array.isArray(scope.patterns) ? scope.patterns.length : 0;
+	const noun = count === 1 ? "command" : "commands";
+	if (scope.mode === "allow") return `Only ${count} ${noun}`;
+	if (scope.mode === "deny") return `All but ${count} ${noun}`;
+	return "Any command";
+}
+
+/** The commands typed into the box, one per line or separated by commas, cleaned up the way the server will read them. */
+export function normalizePatterns(text) {
+	if (typeof text !== "string") return [];
+	return tidyPatterns(text.split(/[\r\n,]+/));
+}
+
+/** Why one pattern cannot be used, as a short message for the person. An empty string means it is fine. */
+export function patternProblem(pattern) {
+	if (typeof pattern !== "string" || pattern.trim() === "") return "Enter a command.";
+	if (pattern.length > PATTERN_MAX) return "Keep it under 65 characters.";
+	if (/[\u0000-\u001f\u007f]/.test(pattern)) return "No special characters.";
+	if (/\s/.test(pattern)) return "One word only.";
+	return "";
+}
+
+/** The first reason a scope cannot be saved, or an empty string when it can. An all scope always passes. */
+export function scopeProblem(scope) {
+	const { mode, patterns } = scopeOf(scope);
+	if (mode === "all") return "";
+	if (patterns.length > PATTERNS_MAX) return "At most 50 commands.";
+	if (mode === "allow" && patterns.length === 0) return "Add at least one command, or choose Any command.";
+	for (const pattern of patterns) {
+		const problem = patternProblem(pattern);
+		if (problem) return problem;
+	}
+	return "";
+}
+
+/**
+ * Whether the scope differs from another one. The order and letter case of the commands do not count, so only a real change
+ * counts. A scope that is not valid is compared as an all scope.
+ */
+export function scopeChanged(a, b) {
+	const left = scopeOf(a);
+	const right = scopeOf(b);
+	if (left.mode !== right.mode) return true;
+	const leftList = [...new Set(tidyPatterns(left.patterns))].sort();
+	const rightList = [...new Set(tidyPatterns(right.patterns))].sort();
+	return leftList.join("\n") !== rightList.join("\n");
+}
+
+/** A fresh copy of a preset's mode and patterns, so editing the form never changes the preset itself. */
+export function applyPreset(preset) {
+	const { mode, patterns } = scopeOf(preset);
+	return { mode, patterns: patterns.filter((p) => typeof p === "string") };
+}
