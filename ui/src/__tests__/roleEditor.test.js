@@ -12,6 +12,13 @@ import {
 	roleNameOf,
 	serverRoleRows,
 	serverRolesFromRows,
+	SCOPE_MODES,
+	scopeSummary,
+	normalizePatterns,
+	patternProblem,
+	scopeProblem,
+	scopeChanged,
+	applyPreset,
 } from "../roleEditor.js";
 
 // The roles page and the people page only decide what to show. These tests pin the rules the screens rely on; the server checks
@@ -308,5 +315,189 @@ describe("serverRolesFromRows", () => {
 	it("treats odd rows as no role", () => {
 		expect(serverRolesFromRows(null)).toBe(null);
 		expect(serverRolesFromRows([null, { server: "Alpha" }, { server: "Beta", role: null }])).toBe(null);
+	});
+});
+
+describe("SCOPE_MODES", () => {
+	it("lists the three modes in order with plain-English labels", () => {
+		expect(SCOPE_MODES).toEqual([
+			{ id: "all", label: "Any command" },
+			{ id: "allow", label: "Only these commands" },
+			{ id: "deny", label: "Any command except these" },
+		]);
+	});
+});
+
+describe("scopeSummary", () => {
+	it("says Any command for an all scope", () => {
+		expect(scopeSummary({ mode: "all", patterns: [] })).toBe("Any command");
+	});
+
+	it("counts the commands for an allow scope, with singular for one", () => {
+		expect(scopeSummary({ mode: "allow", patterns: ["kick", "ban"] })).toBe("Only 2 commands");
+		expect(scopeSummary({ mode: "allow", patterns: ["kick"] })).toBe("Only 1 command");
+	});
+
+	it("counts the commands left out for a deny scope, with singular for one", () => {
+		expect(scopeSummary({ mode: "deny", patterns: ["stop", "say", "op"] })).toBe("All but 3 commands");
+		expect(scopeSummary({ mode: "deny", patterns: ["stop"] })).toBe("All but 1 command");
+	});
+
+	it("says Any command for anything that is not a valid scope", () => {
+		expect(scopeSummary(null)).toBe("Any command");
+		expect(scopeSummary(undefined)).toBe("Any command");
+		expect(scopeSummary(7)).toBe("Any command");
+		expect(scopeSummary("allow")).toBe("Any command");
+		expect(scopeSummary(["kick"])).toBe("Any command");
+		expect(scopeSummary({ mode: "weird", patterns: ["kick"] })).toBe("Any command");
+	});
+
+	it("counts zero for an allow scope whose patterns are not a list", () => {
+		expect(scopeSummary({ mode: "allow", patterns: "kick" })).toBe("Only 0 commands");
+		expect(scopeSummary({ mode: "allow" })).toBe("Only 0 commands");
+	});
+});
+
+describe("normalizePatterns", () => {
+	it("splits on new lines and commas, trims, lower-cases and drops blanks", () => {
+		expect(normalizePatterns(" Kick* \n\n BAN,  say ,,\r\nop ")).toEqual(["kick*", "ban", "say", "op"]);
+	});
+
+	it("de-duplicates while keeping the first order", () => {
+		expect(normalizePatterns("ban\nkick\nBAN\nkick")).toEqual(["ban", "kick"]);
+	});
+
+	it("keeps a leading slash as typed", () => {
+		expect(normalizePatterns("/kick")).toEqual(["/kick"]);
+	});
+
+	it("returns an empty list for blank text or text that is not a string", () => {
+		expect(normalizePatterns("")).toEqual([]);
+		expect(normalizePatterns("  \n , ")).toEqual([]);
+		expect(normalizePatterns(null)).toEqual([]);
+		expect(normalizePatterns(undefined)).toEqual([]);
+		expect(normalizePatterns(42)).toEqual([]);
+		expect(normalizePatterns(["kick"])).toEqual([]);
+	});
+});
+
+describe("patternProblem", () => {
+	it("returns an empty string for a fine pattern", () => {
+		expect(patternProblem("kick*")).toBe("");
+		expect(patternProblem("/kick")).toBe("");
+	});
+
+	it("asks for a command when the pattern is empty or blank", () => {
+		expect(patternProblem("")).toBe("Enter a command.");
+		expect(patternProblem("   ")).toBe("Enter a command.");
+		expect(patternProblem(null)).toBe("Enter a command.");
+		expect(patternProblem(undefined)).toBe("Enter a command.");
+		expect(patternProblem(5)).toBe("Enter a command.");
+	});
+
+	it("accepts exactly 64 characters and refuses 65", () => {
+		expect(patternProblem("a".repeat(64))).toBe("");
+		expect(patternProblem("a".repeat(65))).toBe("Keep it under 65 characters.");
+	});
+
+	it("refuses control characters", () => {
+		expect(patternProblem("ki\u0001ck")).toBe("No special characters.");
+		expect(patternProblem("kick\u007f")).toBe("No special characters.");
+	});
+
+	it("refuses whitespace inside a pattern", () => {
+		expect(patternProblem("kick me")).toBe("One word only.");
+	});
+
+	it("reports the control-character problem before the whitespace one", () => {
+		expect(patternProblem("kick\tme")).toBe("No special characters.");
+	});
+});
+
+describe("scopeProblem", () => {
+	it("is empty for an all scope, whatever its patterns", () => {
+		expect(scopeProblem({ mode: "all", patterns: [] })).toBe("");
+		expect(scopeProblem({ mode: "all", patterns: Array(60).fill("x") })).toBe("");
+		expect(scopeProblem(null)).toBe("");
+	});
+
+	it("allows exactly 50 patterns and refuses 51", () => {
+		const fifty = Array.from({ length: 50 }, (_, i) => `cmd${i}`);
+		expect(scopeProblem({ mode: "allow", patterns: fifty })).toBe("");
+		expect(scopeProblem({ mode: "deny", patterns: [...fifty, "one-more"] })).toBe("At most 50 commands.");
+	});
+
+	it("asks for at least one command in allow mode", () => {
+		expect(scopeProblem({ mode: "allow", patterns: [] })).toBe("Add at least one command, or choose Any command.");
+		expect(scopeProblem({ mode: "allow", patterns: null })).toBe("Add at least one command, or choose Any command.");
+	});
+
+	it("allows deny mode with no patterns", () => {
+		expect(scopeProblem({ mode: "deny", patterns: [] })).toBe("");
+	});
+
+	it("reports the first bad pattern", () => {
+		expect(scopeProblem({ mode: "allow", patterns: ["kick", "", "kick me"] })).toBe("Enter a command.");
+		expect(scopeProblem({ mode: "deny", patterns: ["kick", "kick me"] })).toBe("One word only.");
+	});
+
+	it("treats a non-list patterns value as no patterns", () => {
+		expect(scopeProblem({ mode: "deny", patterns: "kick" })).toBe("");
+		expect(scopeProblem({ mode: "allow", patterns: "kick" })).toBe("Add at least one command, or choose Any command.");
+	});
+});
+
+describe("scopeChanged", () => {
+	it("is false for the same scope", () => {
+		expect(scopeChanged({ mode: "allow", patterns: ["kick"] }, { mode: "allow", patterns: ["kick"] })).toBe(false);
+	});
+
+	it("is true when the mode differs", () => {
+		expect(scopeChanged({ mode: "allow", patterns: ["kick"] }, { mode: "deny", patterns: ["kick"] })).toBe(true);
+	});
+
+	it("ignores the order and case of the patterns", () => {
+		expect(scopeChanged({ mode: "allow", patterns: ["kick", "ban"] }, { mode: "allow", patterns: ["Ban", "KICK"] })).toBe(false);
+	});
+
+	it("is true when a pattern is added or removed", () => {
+		expect(scopeChanged({ mode: "allow", patterns: ["kick"] }, { mode: "allow", patterns: ["kick", "ban"] })).toBe(true);
+		expect(scopeChanged({ mode: "allow", patterns: ["kick", "ban"] }, { mode: "allow", patterns: ["kick"] })).toBe(true);
+	});
+
+	it("treats null and odd input as an all scope", () => {
+		expect(scopeChanged(null, { mode: "all", patterns: [] })).toBe(false);
+		expect(scopeChanged(undefined, undefined)).toBe(false);
+		expect(scopeChanged("allow", { mode: "all", patterns: [] })).toBe(false);
+		expect(scopeChanged(null, { mode: "allow", patterns: ["kick"] })).toBe(true);
+	});
+
+	it("ignores patterns on an all scope, since they do nothing there", () => {
+		expect(scopeChanged({ mode: "all", patterns: ["kick"] }, { mode: "all", patterns: [] })).toBe(false);
+	});
+});
+
+describe("applyPreset", () => {
+	it("copies the mode and patterns of a preset", () => {
+		expect(applyPreset({ id: "p1", label: "Safe", mode: "deny", patterns: ["stop", "op"] })).toEqual({
+			mode: "deny",
+			patterns: ["stop", "op"],
+		});
+	});
+
+	it("gives a copy, never the same list as the preset", () => {
+		const preset = { mode: "allow", patterns: ["kick"] };
+		const applied = applyPreset(preset);
+		expect(applied.patterns).not.toBe(preset.patterns);
+		applied.patterns.push("ban");
+		expect(preset.patterns).toEqual(["kick"]);
+	});
+
+	it("returns an all scope for odd input", () => {
+		expect(applyPreset(null)).toEqual({ mode: "all", patterns: [] });
+		expect(applyPreset(undefined)).toEqual({ mode: "all", patterns: [] });
+		expect(applyPreset("allow")).toEqual({ mode: "all", patterns: [] });
+		expect(applyPreset({ mode: "allow", patterns: "kick" })).toEqual({ mode: "allow", patterns: [] });
+		expect(applyPreset({ mode: "weird", patterns: ["kick"] })).toEqual({ mode: "all", patterns: [] });
 	});
 });
