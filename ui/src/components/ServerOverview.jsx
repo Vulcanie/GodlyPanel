@@ -2,6 +2,7 @@ import React from "react";
 import { Box, Typography } from "@mui/material";
 import { Info as InfoIcon, ShowChart as ChartIcon } from "@mui/icons-material";
 import ServerControls from "./ServerControls";
+import UpdatePanel from "./UpdatePanel.jsx";
 import RconConsole from "./RconConsole";
 import StatsPanel from "./StatsPanel";
 import SessionEditor from "./SessionEditor";
@@ -32,6 +33,7 @@ function ServerOverview({ serverName, serverStatus, isAdmin }) {
 		<Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "minmax(0, 3fr) minmax(0, 2fr)" }, gap: 2.5, alignItems: "start" }}>
 			<Box sx={{ minWidth: 0 }}>
 				<ServerControls serverName={serverName} serverStatus={serverStatus} isAdmin={isAdmin} />
+				<UpdatePanel serverName={serverName} isAdmin={isAdmin} />
 				{hasRcon && <RconConsole serverName={serverName} />}
 				<SectionCard title="Performance" subtitle="CPU, memory and players over time" icon={<ChartIcon />}>
 					<StatsPanel serverName={serverName} />

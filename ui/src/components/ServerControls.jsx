@@ -4,9 +4,11 @@ import { PlayArrow as StartIcon, Stop as StopIcon, RestartAlt as RestartIcon, Sy
 import { api } from "../api/client";
 import { useOperation, operationLabel } from "../OperationsContext";
 import { useToast } from "../ToastContext";
+import { t, useT } from "../i18n";
 import ConfirmDialog from "./ui/ConfirmDialog";
 import SectionCard from "./ui/SectionCard";
 import InfoTip from "./InfoTip";
+import { needsBackupOverride, updateBody } from "./updatePanel.js";
 
 /**
  * Start, stop, restart and update: what is needed to run a server. Administrators also get the switch that has the server follow
@@ -15,10 +17,13 @@ import InfoTip from "./InfoTip";
 function ServerControls({ serverName, serverStatus, isAdmin = false }) {
 	const base = `/api/server/${encodeURIComponent(serverName)}`;
 	const toast = useToast();
+	// Re-renders this panel when the language changes, so the t() text below switches with it.
+	useT();
 	const [info, setInfo] = React.useState(null);
 	const [autoUpdate, setAutoUpdate] = React.useState(false);
 	const [autoBusy, setAutoBusy] = React.useState(false);
 	const [confirm, setConfirm] = React.useState(null); // "update" | "update-reboot" | "stop" | "restart"
+	const [backupFailed, setBackupFailed] = React.useState(null); // { action, message } when the backup before an update failed
 	const operation = useOperation(serverName);
 	const online = Boolean(serverStatus?.online);
 	const busy = Boolean(operation);
@@ -40,12 +45,17 @@ function ServerControls({ serverName, serverStatus, isAdmin = false }) {
 		};
 	}, [base, isAdmin, toast]);
 
-	const send = async (action) => {
+	const send = async (action, body) => {
 		setConfirm(null);
 		try {
-			const r = await api.post(`/api/control/${encodeURIComponent(serverName)}/${action}`);
+			const r = await api.post(`/api/control/${encodeURIComponent(serverName)}/${action}`, body);
 			toast(r.message ?? "Done.", "success");
 		} catch (e) {
+			// The backup before an update failed. The server refuses the update until the user says to go ahead without one, so ask.
+			if ((action === "update" || action === "update-reboot") && needsBackupOverride(e)) {
+				setBackupFailed({ action, message: e.message });
+				return;
+			}
 			toast(e.message, "error");
 		}
 	};
@@ -118,6 +128,21 @@ function ServerControls({ serverName, serverStatus, isAdmin = false }) {
 
 			<ConfirmDialog open={Boolean(confirm)} title="Are you sure?" confirmLabel="Yes" onClose={() => setConfirm(null)} onConfirm={() => send(confirm)}>
 				{confirm ? text[confirm] : ""}
+			</ConfirmDialog>
+
+			<ConfirmDialog
+				open={Boolean(backupFailed)}
+				title={t("update.backupFailedTitle")}
+				confirmLabel={t("update.withoutBackup")}
+				onClose={() => setBackupFailed(null)}
+				onConfirm={() => {
+					const { action } = backupFailed;
+					setBackupFailed(null);
+					// Only here, after the user has confirmed, is the server told to skip the backup.
+					send(action, updateBody(true));
+				}}
+			>
+				{backupFailed ? t("update.backupFailedBody", { message: backupFailed.message }) : ""}
 			</ConfirmDialog>
 		</SectionCard>
 	);
