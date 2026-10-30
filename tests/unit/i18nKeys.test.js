@@ -1,0 +1,83 @@
+import { describe, it, before, after } from "node:test";
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { checkI18n, pseudoLocalize } from "../../scripts/i18n-check.mjs";
+
+// Every word the panel shows through t() has to exist in English, and every translation has to use the same {placeholders} as its
+// English, or a screen would show a raw key or a missing value to the person using it.
+
+describe("the translation files in ui/src", () => {
+	it("have every literal t() and tn() key in en.json, and locale files that match English", () => {
+		assert.deepEqual(checkI18n(), []);
+	});
+});
+
+describe("checkI18n on a small fixture", () => {
+	let dir;
+	let srcDir;
+	let localesDir;
+
+	before(() => {
+		dir = fs.mkdtempSync(path.join(os.tmpdir(), "i18n-check-"));
+		srcDir = path.join(dir, "src");
+		localesDir = path.join(dir, "locales");
+		fs.mkdirSync(srcDir);
+		fs.mkdirSync(localesDir);
+		fs.writeFileSync(path.join(localesDir, "en.json"), JSON.stringify({ "a.b": "A {name}", "files.one": "{count} file", "files.other": "{count} files" }));
+	});
+
+	after(() => {
+		fs.rmSync(dir, { recursive: true, force: true });
+	});
+
+	const write = (name, text) => fs.writeFileSync(path.join(localesDir, name), JSON.stringify(text));
+
+	it("reports a t() key that en.json does not define", () => {
+		fs.writeFileSync(path.join(srcDir, "Page.jsx"), 'const x = t("missing.key");');
+		const problems = checkI18n({ srcDir, localesDir });
+		assert.equal(problems.length, 1);
+		assert.match(problems[0], /"missing\.key" is not in en\.json/);
+		fs.rmSync(path.join(srcDir, "Page.jsx"));
+	});
+
+	it("accepts tn() when both plural forms exist, and reports it when one is missing", () => {
+		fs.writeFileSync(path.join(srcDir, "Count.js"), 'tn("files", 2); tn("only", 2);');
+		const problems = checkI18n({ srcDir, localesDir });
+		assert.equal(problems.length, 2);
+		assert.ok(problems.some((p) => /"only\.one"/.test(p)));
+		assert.ok(problems.some((p) => /"only\.other"/.test(p)));
+		fs.rmSync(path.join(srcDir, "Count.js"));
+	});
+
+	it("reports a locale key that en.json lacks", () => {
+		write("es.json", { "a.b": "A {name}", "extra": "x" });
+		const problems = checkI18n({ srcDir, localesDir });
+		assert.deepEqual(problems, ['es.json: "extra" is not in en.json']);
+		fs.rmSync(path.join(localesDir, "es.json"));
+	});
+
+	it("reports a translation whose {placeholders} differ from English", () => {
+		write("es.json", { "a.b": "A {nombre}" });
+		const problems = checkI18n({ srcDir, localesDir });
+		assert.equal(problems.length, 1);
+		assert.match(problems[0], /"a\.b" has placeholders \{nombre\}, English has \{name\}/);
+		fs.rmSync(path.join(localesDir, "es.json"));
+	});
+
+	it("accepts a translation that keeps the English placeholders", () => {
+		write("es.json", { "a.b": "Un {name}" });
+		assert.deepEqual(checkI18n({ srcDir, localesDir }), []);
+		fs.rmSync(path.join(localesDir, "es.json"));
+	});
+});
+
+describe("pseudoLocalize", () => {
+	it("wraps the text in brackets and keeps {placeholders} intact", () => {
+		const out = pseudoLocalize("{count} file");
+		assert.ok(out.startsWith("⟦") && out.endsWith("⟧"));
+		assert.ok(out.includes("{count}"));
+		assert.ok(out.length > "{count} file".length + 2);
+	});
+});
