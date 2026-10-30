@@ -24,7 +24,7 @@ export const ROLES = Object.keys(ROLE_PERMISSIONS);
  * The role that applies to this user on this server. A per-server role is used when one is set. An "admin" entry is never
  * used: otherwise anyone who could write one entry could make someone admin of a single server, so the user keeps their own role.
  */
-function roleIdFor(user, serverName) {
+export function roleIdFor(user, serverName) {
 	if (typeof serverName === "string" && user.serverRoles && typeof user.serverRoles === "object") {
 		// Only the object's own property counts, so an inherited name like "constructor" is never mistaken for an override.
 		const override = Object.getOwnPropertyDescriptor(user.serverRoles, serverName)?.value;

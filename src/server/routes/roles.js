@@ -4,6 +4,7 @@ import { PERMISSIONS, PERMISSION_GROUPS } from "../data/permissionCatalog.js";
 import { countWithRole } from "../data/userStore.js";
 import { requirePermission } from "../middleware/permissions.js";
 import { logActivity } from "../services/activityLog.js";
+import { PRESETS } from "../services/commandScope.js";
 
 // Making and changing roles. Every route needs roles.manage, which the admin role has and a custom role may be given.
 // Assigning a role to an account is a different thing and stays admin only (see routes/users.js).
@@ -46,7 +47,7 @@ function sendError(res, e) {
 
 router.get("/", requirePermission("roles.manage"), (req, res) => {
 	const roles = list().map((role) => ({ ...role, users: countWithRole(role.id) }));
-	res.json({ roles, permissions: PERMISSIONS, groups: PERMISSION_GROUPS });
+	res.json({ roles, permissions: PERMISSIONS, groups: PERMISSION_GROUPS, commandPresets: PRESETS });
 });
 
 router.post("/", requirePermission("roles.manage"), async (req, res) => {
