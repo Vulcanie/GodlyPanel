@@ -5,32 +5,37 @@
 //
 // A moderator can also be limited to some servers (see userStore's `servers`).
 
-export const PERMISSIONS = [
-	"server.control", // start, stop, restart
-	"server.console", // send RCON commands
-	"server.update", // run a game update
-	"server.backup", // list and take backups
-	"server.logs",
-	"server.players",
-	"players.kick", // remove someone from a running server
-	"players.ban", // ban, unban and edit whitelists and admin lists
-	"activity.view",
-	"schedules.view",
-	"metrics.view",
-];
+import { PERMISSIONS, MODERATOR_PERMISSIONS, PERMISSION_GROUPS } from "../data/permissionCatalog.js";
+import { permissionsFor } from "../data/roleStore.js";
 
+// The names live in permissionCatalog.js. They are re-exported here so existing imports keep working.
+export { PERMISSIONS, PERMISSION_GROUPS };
+
+// The three built-in roles. Custom roles are kept in roleStore.js, which `can` asks for every check.
 export const ROLE_PERMISSIONS = {
 	admin: null, // null = everything
-	moderator: new Set(PERMISSIONS),
+	moderator: new Set(MODERATOR_PERMISSIONS),
 	guest: new Set(),
 };
 
 export const ROLES = Object.keys(ROLE_PERMISSIONS);
 
-export function can(user, permission) {
+/**
+ * The role that applies to this user on this server. A per-server role is used when one is set. An "admin" entry is never
+ * used: otherwise anyone who could write one entry could make someone admin of a single server, so the user keeps their own role.
+ */
+function roleIdFor(user, serverName) {
+	if (typeof serverName === "string" && user.serverRoles && typeof user.serverRoles === "object") {
+		// Only the object's own property counts, so an inherited name like "constructor" is never mistaken for an override.
+		const override = Object.getOwnPropertyDescriptor(user.serverRoles, serverName)?.value;
+		if (typeof override === "string" && override !== "admin") return override;
+	}
+	return user.role;
+}
+
+export function can(user, permission, serverName = undefined) {
 	if (!user) return false;
-	const granted = ROLE_PERMISSIONS[user.role];
-	if (granted === undefined) return false;
+	const granted = permissionsFor(roleIdFor(user, serverName));
 	return granted === null || granted.has(permission);
 }
 
