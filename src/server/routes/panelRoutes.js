@@ -11,6 +11,7 @@ import controlRoutes from "./control.js";
 import updatesRoutes from "./updates.js";
 import modsRoutes from "./mods.js";
 import operationsRoutes from "./operations.js";
+import roleRoutes from "./roles.js";
 import { requireRole, requireViewer, requireOperator } from "../middleware/auth.js";
 
 /**
@@ -33,6 +34,8 @@ export function createPanelRouter() {
 	// Guests can read how a card should look — the dashboard can't draw one
 	// otherwise; the routes that change it enforce admin individually.
 	router.use("/api/appearance", viewers, appearanceRoutes);
+	// Before the generic /api mounts below, so the role routes are reached first. Each route checks roles.manage itself.
+	router.use("/api/roles", operators, roleRoutes);
 	router.use("/api", viewers, dashboardRoutes);
 	// What a moderator may do as well as an admin. Each route names the permission it
 	// needs, so anything they may not do is refused there.

@@ -10,6 +10,7 @@ import sessionRoutes from "../routes/sessions.js";
 import { revokeUserSessions, revokeSession } from "./sessionStore.js";
 import { attachUser, endSession, issueSession, requireRole, requireViewer, clientAddress } from "../middleware/auth.js";
 import { describeAccess } from "../middleware/permissions.js";
+import { get as getRole } from "../data/roleStore.js";
 import { createLoginLimiter, passwordChangeGuard, recordPasswordChangeFailure, clearPasswordChangeFailures } from "../middleware/loginLimiter.js";
 import { securityHeaders } from "../middleware/securityHeaders.js";
 import { sameOriginOnly } from "../middleware/sameOrigin.js";
@@ -168,7 +169,7 @@ export function createCommunityApp({ hostRule, uiDir, staffSignIn = () => false 
 
 	app.get("/api/auth/me", (req, res) => {
 		if (!req.user) return res.status(401).json({ error: "Not signed in.", code: "unauthenticated", setupRequired: false });
-		res.json({ user: { ...req.user, ...describeAccess(req.user) } });
+		res.json({ user: { ...req.user, ...describeAccess(req.user), roleName: getRole(req.user.role)?.name ?? req.user.role } });
 	});
 
 	app.get("/api/auth/join", (req, res) => res.json({ open: !needsSetup() && joiningIsOpen() }));

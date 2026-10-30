@@ -9,6 +9,7 @@ import {
 } from "../data/userStore.js";
 import { issueSession, endSession, requireViewer } from "../middleware/auth.js";
 import { describeAccess } from "../middleware/permissions.js";
+import { get as getRole } from "../data/roleStore.js";
 import { revokeUserSessions, revokeSession } from "../services/sessionStore.js";
 import sessionRoutes from "./sessions.js";
 import { auditSignedIn, auditSignInFailed, auditSignedOut, auditPasswordChanged } from "../services/auditTrail.js";
@@ -97,7 +98,8 @@ router.get("/me", (req, res) => {
 		});
 	}
 	// The page reads what this account may do from here (user.permissions, user.serverPermissions), not from its role name.
-	res.json({ user: { ...req.user, ...describeAccess(req.user) } });
+	// roleName lets the page show a custom role's name without fetching the whole role list.
+	res.json({ user: { ...req.user, ...describeAccess(req.user), roleName: getRole(req.user.role)?.name ?? req.user.role } });
 });
 
 // Every role may change its own password (a moderator used to be refused here, though the sign-in page's Password button is theirs too).

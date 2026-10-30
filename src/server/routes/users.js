@@ -5,6 +5,7 @@ import {
 	setRole,
 	setDisabled,
 	setServers,
+	setServerRoles,
 	setPassword,
 	removeUser,
 	getById,
@@ -71,6 +72,18 @@ router.put("/:id/role", async (req, res) => {
 router.put("/:id/servers", async (req, res) => {
 	try {
 		const user = await setServers(req.params.id, req.body?.servers ?? null);
+		dropSessionsFor(req.params.id);
+		res.json(user);
+	} catch (e) {
+		res.status(400).json({ error: e.message });
+	}
+});
+
+// Different roles on particular servers. Admin only, like the rest of this file: a roles.manage holder can edit roles but not hand them out.
+router.put("/:id/server-roles", async (req, res) => {
+	try {
+		const user = await setServerRoles(req.params.id, req.body?.serverRoles ?? null);
+		// Sessions are bumped by the change, which ends the old sign-ins; close any live stream they had too.
 		dropSessionsFor(req.params.id);
 		res.json(user);
 	} catch (e) {
