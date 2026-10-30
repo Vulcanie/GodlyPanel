@@ -30,6 +30,8 @@ import {
 import { api } from "../api/client";
 import { onLive } from "../liveEvents";
 import { formatBytes } from "../utils/format";
+import { t, tn, useT, formatBytes as formatBytesText } from "../i18n";
+import { ratioText, formatLabel, formatName, levelName, recompressTargets, settingsBody, limitGBFromBytes, friendlyError } from "./backupSizes";
 import { useOperation, operationLabel } from "../OperationsContext";
 import { useToast } from "../ToastContext";
 import OffsiteCopies, { CopyChips } from "./OffsiteCopies";
@@ -75,6 +77,8 @@ const native = () => (typeof window !== "undefined" ? window.godlyPanel : undefi
 function BackupsPanel({ serverName, serverStatus, canManage }) {
 	const base = `/api/server/${encodeURIComponent(serverName)}`;
 	const toast = useToast();
+	// Re-renders this panel when the language changes, so the t() text below switches with it.
+	useT();
 	const [data, setData] = React.useState(null);
 	const [error, setError] = React.useState(null);
 	const [phase, setPhase] = React.useState(null);
@@ -83,6 +87,7 @@ function BackupsPanel({ serverName, serverStatus, canManage }) {
 	// The backup being asked about stays set after the dialog closes, so its text does not blank out while it fades away.
 	const [deleteTarget, setDeleteTarget] = React.useState(null);
 	const [deleteOpen, setDeleteOpen] = React.useState(false);
+	const [recompressOpen, setRecompressOpen] = React.useState(false);
 	const [showSettings, setShowSettings] = React.useState(false);
 	const operation = useOperation(serverName);
 	// A reply that lands after the person has moved to another server must not be shown on that server's page.
@@ -107,6 +112,7 @@ function BackupsPanel({ serverName, serverStatus, canManage }) {
 		setMode("default");
 		setRestoreTarget(null);
 		setDeleteOpen(false);
+		setRecompressOpen(false);
 		load();
 	}, [load]);
 
@@ -159,12 +165,29 @@ function BackupsPanel({ serverName, serverStatus, canManage }) {
 		}
 	};
 
+	// Rewrites the backups that are not already in this server's format and level. The server does the work and reports progress
+	// through the live events, which reload this list.
+	const recompress = async () => {
+		setRecompressOpen(false);
+		setError(null);
+		try {
+			await api.post(`${base}/backups/recompress`, { format: data.effectiveFormat, level: data.effectiveLevel });
+			toast(t("backups.recompressStarted"));
+		} catch (e) {
+			setError(friendlyError(e));
+		}
+	};
+
 	if (!data) return error ? <Alert severity="error">{error}</Alert> : <CircularProgress size={24} />;
 
 	const running = serverStatus?.online;
 	const specs = data.specs ?? [];
 	const backups = data.backups ?? [];
 	const missing = specs.filter((s) => !s.exists);
+	// Only offered when there is something to rewrite. An older server that does not report its effective format gets no button.
+	const recompressIds = data.effectiveFormat && data.effectiveLevel ? recompressTargets(backups, data.effectiveFormat, data.effectiveLevel) : [];
+	const savedText = data.savedBytes > 0 ? t("backups.saved", { size: formatBytesText(data.savedBytes) }) : null;
+	const budgetText = data.maxTotalBytes ? t("backups.budget", { used: formatBytesText(data.totalBytes ?? 0), limit: formatBytesText(data.maxTotalBytes) }) : null;
 
 	return (
 		<Box>
@@ -241,13 +264,21 @@ function BackupsPanel({ serverName, serverStatus, canManage }) {
 
 			<SectionCard
 				title={`Backups (${backups.length})${data.totalBytes ? ` · ${formatBytes(data.totalBytes)}` : ""}`}
+				subtitle={[savedText, budgetText].filter(Boolean).join(" · ") || undefined}
 				contentSx={{ p: 0 }}
 				actions={
-					native()?.openFolder && (
-						<Button size="small" startIcon={<FolderOpenIcon />} onClick={() => native().openFolder(data.directory)}>
-							Open folder
-						</Button>
-					)
+					<>
+						{canManage && !busy && recompressIds.length > 0 && (
+							<Button size="small" onClick={() => setRecompressOpen(true)}>
+								{t("backups.recompress")}
+							</Button>
+						)}
+						{native()?.openFolder && (
+							<Button size="small" startIcon={<FolderOpenIcon />} onClick={() => native().openFolder(data.directory)}>
+								Open folder
+							</Button>
+						)}
+					</>
 				}
 			>
 				{backups.length === 0 ? (
@@ -259,11 +290,15 @@ function BackupsPanel({ serverName, serverStatus, canManage }) {
 						<Box key={b.id} sx={{ display: "flex", alignItems: "center", gap: 1.5, px: 2.5, py: 1.25, borderTop: i === 0 ? 0 : 1, borderColor: "divider", flexWrap: "wrap" }}>
 							<Box sx={{ flex: 1, minWidth: 200 }}>
 								<Typography variant="body2">{when(b.createdAt)}</Typography>
-								<Typography variant="caption" sx={{ color: "text.secondary" }}>
-									{formatBytes(b.sizeBytes)}
-									{b.reason ? ` · ${b.reason}` : ""}
-									{b.consistent === false ? " · copied while running" : ""}
-								</Typography>
+								<Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+									<Typography variant="caption" sx={{ color: "text.secondary" }}>
+										{formatBytes(b.sizeBytes)}
+										{ratioText(b) ? ` · ${ratioText(b)}` : ""}
+										{b.reason ? ` · ${b.reason}` : ""}
+										{b.consistent === false ? " · copied while running" : ""}
+									</Typography>
+									{formatLabel(b) && <Chip size="small" variant="outlined" label={formatLabel(b)} />}
+								</Box>
 							</Box>
 							<CopyChips copies={data.replication?.[b.id]} />
 							<Chip size="small" label={KIND_LABELS[b.kind] ?? b.kind} color={b.kind === "manual" ? "primary" : "default"} variant={b.kind === "manual" ? "filled" : "outlined"} />
@@ -297,6 +332,17 @@ function BackupsPanel({ serverName, serverStatus, canManage }) {
 				onClose={() => setDeleteOpen(false)}
 			>
 				{deleteTarget && `The backup from ${when(deleteTarget.createdAt)} is deleted. This can't be undone.`}
+			</ConfirmDialog>
+
+			<ConfirmDialog
+				open={recompressOpen}
+				title={t("backups.recompressTitle")}
+				confirmLabel={t("backups.recompressConfirm")}
+				color="warning"
+				onConfirm={recompress}
+				onClose={() => setRecompressOpen(false)}
+			>
+				{tn("backups.recompressBody", recompressIds.length, { format: formatName(data.effectiveFormat) ?? data.effectiveFormat, level: levelName(data.effectiveLevel) ?? data.effectiveLevel })}
 			</ConfirmDialog>
 
 			{restoreTarget && (
@@ -401,12 +447,22 @@ function RestoreDialog({ serverName, base, backup, running, players = 0, sharedF
 }
 
 function BackupSettingsDialog({ base, data, onClose, onSaved }) {
+	useT();
 	const custom = data.source === "custom";
 	const [useDefault, setUseDefault] = React.useState(!custom && data.source !== "none");
 	const [rows, setRows] = React.useState(() => (data.specs ?? []).map((s) => ({ path: s.path, label: s.label ?? "" })));
 	const [mode, setMode] = React.useState(data.mode ?? "auto");
 	const [keepCount, setKeepCount] = React.useState(data.keepCount ?? "");
 	const [keepDays, setKeepDays] = React.useState(data.keepDays ?? "");
+	// The server's overrides for this server. A blank field means "follow the panel setting" and is sent as null.
+	const [format, setFormat] = React.useState(data.format ?? "");
+	const [level, setLevel] = React.useState(data.level ?? "");
+	const [keepDaily, setKeepDaily] = React.useState(data.keepDaily ?? "");
+	const [keepWeekly, setKeepWeekly] = React.useState(data.keepWeekly ?? "");
+	const [keepMonthly, setKeepMonthly] = React.useState(data.keepMonthly ?? "");
+	const [keepManual, setKeepManual] = React.useState(data.keepManual ?? "");
+	const [skipUnchanged, setSkipUnchanged] = React.useState(data.skipUnchanged == null ? "" : data.skipUnchanged ? "yes" : "no");
+	const [limitGB, setLimitGB] = React.useState(limitGBFromBytes(data.maxTotalBytes));
 	const [error, setError] = React.useState(null);
 	const [busy, setBusy] = React.useState(false);
 
@@ -421,16 +477,21 @@ function BackupSettingsDialog({ base, data, onClose, onSaved }) {
 		setBusy(true);
 		setError(null);
 		try {
+			const overrides = settingsBody({ format, level, keepDaily, keepWeekly, keepMonthly, keepManual, skipUnchanged, limitGB });
+			// The limit is shown rounded to two decimals of a GB. If it was not touched, send the exact bytes back, so saving some other
+			// setting does not quietly round it.
+			if (limitGB === limitGBFromBytes(data.maxTotalBytes)) overrides.maxTotalBytes = data.maxTotalBytes ?? null;
 			const body = {
 				paths: useDefault ? null : rows.filter((r) => r.path.trim()).map((r) => ({ path: r.path.trim(), ...(r.label.trim() ? { label: r.label.trim() } : {}) })),
 				mode,
 				keepCount: toNumber(keepCount),
 				keepDays: toNumber(keepDays),
+				...overrides,
 			};
 			onSaved(await api.put(`${base}/backups/settings`, body));
 			onClose();
 		} catch (e) {
-			setError(e.message);
+			setError(friendlyError(e));
 			setBusy(false);
 		}
 	};
@@ -493,6 +554,47 @@ function BackupSettingsDialog({ base, data, onClose, onSaved }) {
 					<TipRow id="server.backup.keepDays" sx={{ flex: "1 1 200px", maxWidth: 260 }}>
 						<TextField fullWidth size="small" type="number" label="Delete older than (days)" value={keepDays} placeholder="panel default" onChange={(e) => setKeepDays(e.target.value)} />
 					</TipRow>
+				</Box>
+				<Box sx={{ mt: 3 }}>
+					<Typography variant="body2" sx={{ fontWeight: 500, mb: 1 }}>{t("backups.compression")}</Typography>
+					<Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+						<TextField select size="small" label={t("backups.format")} value={format} onChange={(e) => setFormat(e.target.value)} sx={{ flex: "1 1 200px", maxWidth: 260 }}>
+							<MenuItem value="">{t("backups.panelSetting")}</MenuItem>
+							{["zip", "zstd", "xz"].map((f) => (
+								<MenuItem key={f} value={f}>
+									{formatName(f)}
+								</MenuItem>
+							))}
+						</TextField>
+						<TextField select size="small" label={t("backups.level")} value={level} onChange={(e) => setLevel(e.target.value)} sx={{ flex: "1 1 200px", maxWidth: 260 }}>
+							<MenuItem value="">{t("backups.panelSetting")}</MenuItem>
+							{["fast", "balanced", "max"].map((l) => (
+								<MenuItem key={l} value={l}>
+									{levelName(l)}
+								</MenuItem>
+							))}
+						</TextField>
+					</Box>
+				</Box>
+
+				<Box sx={{ mt: 3 }}>
+					<Typography variant="body2" sx={{ fontWeight: 500, mb: 1 }}>{t("backups.keepSpread")}</Typography>
+					<Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+						<TextField fullWidth size="small" type="number" label={t("backups.keepDaily")} value={keepDaily} placeholder={t("backups.panelSetting")} onChange={(e) => setKeepDaily(e.target.value)} sx={{ flex: "1 1 160px", maxWidth: 200 }} />
+						<TextField fullWidth size="small" type="number" label={t("backups.keepWeekly")} value={keepWeekly} placeholder={t("backups.panelSetting")} onChange={(e) => setKeepWeekly(e.target.value)} sx={{ flex: "1 1 160px", maxWidth: 200 }} />
+						<TextField fullWidth size="small" type="number" label={t("backups.keepMonthly")} value={keepMonthly} placeholder={t("backups.panelSetting")} onChange={(e) => setKeepMonthly(e.target.value)} sx={{ flex: "1 1 160px", maxWidth: 200 }} />
+					</Box>
+					<Typography variant="caption" sx={{ display: "block", mt: 1, color: "text.secondary" }}>{t("backups.keepSpreadHint")}</Typography>
+				</Box>
+
+				<Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mt: 3 }}>
+					<TextField size="small" type="number" label={t("backups.keepManual")} value={keepManual} placeholder={t("backups.neverRemoved")} onChange={(e) => setKeepManual(e.target.value)} sx={{ flex: "1 1 200px", maxWidth: 260 }} />
+					<TextField select size="small" label={t("backups.skipUnchanged")} value={skipUnchanged} onChange={(e) => setSkipUnchanged(e.target.value)} sx={{ flex: "1 1 260px", maxWidth: 360 }}>
+						<MenuItem value="">{t("backups.panelSetting")}</MenuItem>
+						<MenuItem value="yes">{t("backups.yes")}</MenuItem>
+						<MenuItem value="no">{t("backups.no")}</MenuItem>
+					</TextField>
+					<TextField size="small" type="number" label={t("backups.limit")} helperText={t("backups.limitHint")} value={limitGB} onChange={(e) => setLimitGB(e.target.value)} slotProps={{ htmlInput: { min: 0, step: "any" } }} sx={{ flex: "1 1 200px", maxWidth: 260 }} />
 				</Box>
 			</DialogContent>
 			<DialogActions>
