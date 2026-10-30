@@ -70,6 +70,8 @@ export function addSseClient(req, res, user, { group = null, maxGroup = MAX_CLIE
 		role: user?.role ?? null,
 		// A moderator limited to some servers (null = all of them), so server-specific events can be kept from the rest.
 		servers: user?.servers ?? null,
+		// Per-server roles, so an event about one server can be judged by the role that applies there.
+		serverRoles: user?.serverRoles ?? null,
 		group,
 		address,
 		heartbeat: setInterval(() => {

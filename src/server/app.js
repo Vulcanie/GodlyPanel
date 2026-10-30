@@ -12,6 +12,7 @@ import { createLanOnly } from "./middleware/lanOnly.js";
 import { securityHeaders } from "./middleware/securityHeaders.js";
 import { sameOriginOnly } from "./middleware/sameOrigin.js";
 import { initUserStore, needsSetup } from "./data/userStore.js";
+import { initRoleStore } from "./data/roleStore.js";
 import { initSessions } from "./services/sessionStore.js";
 import { initPollingState } from "./services/pollingService.js";
 import { initPanelUpdate } from "./services/panelUpdate.js";
@@ -44,6 +45,8 @@ export async function loadStores() {
 	ensureDataDirs();
 	const config = await initConfig();
 	await initSecrets();
+	// Roles load before accounts: an account's role is checked against them, so they have to be known first.
+	await initRoleStore();
 	await initUserStore();
 	await initSessions();
 	await initCommunityInvite();

@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 import { getSecrets } from "../config/secretsStore.js";
 import { getById } from "../data/userStore.js";
 import { createSession, findSession, touchSession, revokeSession } from "../services/sessionStore.js";
+import { isKnownRole, permissionsFor } from "../data/roleStore.js";
 
 const COOKIE_NAME = "gp_session";
 const TOKEN_TTL_SECONDS = 7 * 24 * 60 * 60;
@@ -128,7 +129,7 @@ export function attachUser(req, res, next) {
 	}
 
 	req.sid = sid;
-	req.user = { id: user.id, username: user.username, role: user.role, servers: user.servers ?? null };
+	req.user = { id: user.id, username: user.username, role: user.role, servers: user.servers ?? null, serverRoles: user.serverRoles ?? null };
 	next();
 }
 
@@ -144,6 +145,37 @@ export function requireRole(...roles) {
 		}
 		next();
 	};
+}
+
+// Anyone signed in whose role still exists may look: a role that was deleted while its holder still had it is refused, the same as
+// an unknown one, so a removed role can't keep anyone in.
+export function requireViewer(req, res, next) {
+	if (!req.user) return res.status(401).json({ error: "Sign in required.", code: "unauthenticated" });
+	if (!isKnownRole(req.user.role)) return res.status(403).json({ error: "You don't have access to that.", code: "forbidden" });
+	next();
+}
+
+// True when a role grants at least one permission. Admin's null means everything, which counts.
+function grantsSomething(roleId) {
+	const granted = permissionsFor(roleId);
+	return granted === null || granted.size > 0;
+}
+
+// Whether the user may act on at least one server: through their own role, or through a per-server role. The per-server
+// "admin" entry is skipped, as it is everywhere else (see permissions.js), so it can't be used to get past this.
+function operatesSomewhere(user) {
+	if (grantsSomething(user.role)) return true;
+	const serverRoles = user.serverRoles;
+	if (!serverRoles || typeof serverRoles !== "object") return false;
+	return Object.values(serverRoles).some((roleId) => typeof roleId === "string" && roleId !== "admin" && grantsSomething(roleId));
+}
+
+// Lets through anyone who could do something beyond looking. Each route still names the permission it needs, so this is only the
+// first gate. A guest with nothing (and no per-server role) is refused here.
+export function requireOperator(req, res, next) {
+	if (!req.user) return res.status(401).json({ error: "Sign in required.", code: "unauthenticated" });
+	if (!operatesSomewhere(req.user)) return res.status(403).json({ error: "You don't have access to that.", code: "forbidden" });
+	next();
 }
 
 /**

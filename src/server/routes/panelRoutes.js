@@ -11,7 +11,7 @@ import controlRoutes from "./control.js";
 import updatesRoutes from "./updates.js";
 import modsRoutes from "./mods.js";
 import operationsRoutes from "./operations.js";
-import { requireRole } from "../middleware/auth.js";
+import { requireRole, requireViewer, requireOperator } from "../middleware/auth.js";
 
 /**
  * Everything the signed-in panel offers, with each group behind the role it needs. Sign-in, sign-up
@@ -26,8 +26,9 @@ import { requireRole } from "../middleware/auth.js";
  */
 export function createPanelRouter() {
 	const router = express.Router();
-	const viewers = requireRole("admin", "moderator", "guest");
-	const operators = requireRole("admin", "moderator");
+	// Viewers and operators are about what a role grants, so a custom role gets in as far as its permissions reach.
+	const viewers = requireViewer;
+	const operators = requireOperator;
 	router.use("/api/art", viewers, artRoutes);
 	// Guests can read how a card should look — the dashboard can't draw one
 	// otherwise; the routes that change it enforce admin individually.

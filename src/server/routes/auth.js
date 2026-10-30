@@ -7,7 +7,8 @@ import {
 	setPassword,
 	getById,
 } from "../data/userStore.js";
-import { issueSession, endSession, requireRole } from "../middleware/auth.js";
+import { issueSession, endSession, requireViewer } from "../middleware/auth.js";
+import { describeAccess } from "../middleware/permissions.js";
 import { revokeUserSessions, revokeSession } from "../services/sessionStore.js";
 import sessionRoutes from "./sessions.js";
 import { auditSignedIn, auditSignInFailed, auditSignedOut, auditPasswordChanged } from "../services/auditTrail.js";
@@ -73,13 +74,13 @@ router.post("/logout", (req, res) => {
 // stored in localStorage at login, which meant editing one string in devtools
 // unlocked the admin UI. (The server still refused the writes, but the app
 // shouldn't have been presenting them.)
-router.use("/sessions", requireRole("admin", "moderator", "guest"), sessionRoutes);
+router.use("/sessions", requireViewer, sessionRoutes);
 
 // What this person has chosen to hide or dismiss, kept with their account (see userStore.js).
-router.get("/preferences", requireRole("admin", "moderator", "guest"), (req, res) => {
+router.get("/preferences", requireViewer, (req, res) => {
 	res.json({ prefs: getPreferences(req.user.id) });
 });
-router.put("/preferences", requireRole("admin", "moderator", "guest"), async (req, res) => {
+router.put("/preferences", requireViewer, async (req, res) => {
 	try {
 		res.json({ prefs: await setPreferences(req.user.id, req.body) });
 	} catch (e) {
@@ -95,11 +96,12 @@ router.get("/me", (req, res) => {
 			setupRequired: needsSetup(),
 		});
 	}
-	res.json({ user: req.user });
+	// The page reads what this account may do from here (user.permissions, user.serverPermissions), not from its role name.
+	res.json({ user: { ...req.user, ...describeAccess(req.user) } });
 });
 
 // Every role may change its own password (a moderator used to be refused here, though the sign-in page's Password button is theirs too).
-router.post("/change-password", requireRole("admin", "moderator", "guest"), passwordChangeGuard, async (req, res) => {
+router.post("/change-password", requireViewer, passwordChangeGuard, async (req, res) => {
 	const { currentPassword, newPassword } = req.body || {};
 	const user = getById(req.user.id);
 	if (!user) return res.status(401).json({ error: "Not signed in." });

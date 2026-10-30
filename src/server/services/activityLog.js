@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { paths } from "../paths.js";
 import { broadcastSseEvent } from "./sseHub.js";
-import { canAccessServer } from "../middleware/permissions.js";
+import { can, canAccessServer } from "../middleware/permissions.js";
 
 // A running record of what the panel did and what happened to servers: crashes,
 // restarts, backups, updates. It feeds the Activity view and the notifier, and
@@ -38,7 +38,7 @@ export function logActivity({ type, server = null, level = "info", message, data
 	}
 	// Only people who run servers see this feed, not view-only guests, and a moderator limited to some servers sees only theirs
 	// (the same rule as the activity list: what happened to a server they can't reach is not theirs to read).
-	broadcastSseEvent({ type: "activity", event }, (client) => (client.role === "admin" || client.role === "moderator") && (!event.server || canAccessServer(client, event.server)));
+	broadcastSseEvent({ type: "activity", event }, (client) => activityVisibleTo(client, event));
 	for (const listener of listeners) {
 		try {
 			listener(event);
@@ -47,6 +47,15 @@ export function logActivity({ type, server = null, level = "info", message, data
 		}
 	}
 	return event;
+}
+
+/**
+ * Whether a live-update client may be sent this event. Only people who may view activity get it, and one limited to some servers
+ * (or holding a role on one server only) gets only the events about those servers. Fails closed: an unknown role sees nothing.
+ */
+export function activityVisibleTo(client, event) {
+	if (!can(client, "activity.view", event.server)) return false;
+	return !event.server || canAccessServer(client, event.server);
 }
 
 export function onActivity(listener) {
