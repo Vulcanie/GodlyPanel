@@ -373,8 +373,11 @@ export async function createBackup(server, { kind = "manual", reason = null, mod
 
 	// The format and level are fixed here, when the backup starts: a change made while it runs applies to the next one.
 	const options = getOptions(server.name).backup;
-	const format = options.format ?? getConfig().backups.format;
-	const level = options.level ?? getConfig().backups.level;
+	// A name the options file holds by hand-editing that isn't a known one falls back to the safe default instead of failing the backup.
+	const wantedFormat = options.format ?? getConfig().backups.format;
+	const format = Object.hasOwn(FORMATS, wantedFormat) ? wantedFormat : "zip";
+	const wantedLevel = options.level ?? getConfig().backups.level;
+	const level = ["fast", "balanced", "max"].includes(wantedLevel) ? wantedLevel : "balanced";
 
 	const id = `${slug(server.name)}_${stamp()}_${kind}`;
 	const archivePath = path.join(dir, `${id}${FORMATS[format].ext}`);
