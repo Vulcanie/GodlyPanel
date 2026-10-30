@@ -132,6 +132,7 @@ describe("a backup that fails stops the update", () => {
 		const logsBefore = updateLogsOf(panel.dir).length;
 
 		const r = await api.post(`/api/control/${enc(name)}/update`, {});
+		assert.equal(r.json.code, "backup_failed");
 		assert.equal(r.status, 409, JSON.stringify(r.json));
 		assert.match(r.json.error, /Backup before the update failed for Fake Refuse/);
 		assert.match(r.json.error, /so the update was not run/);

@@ -150,7 +150,8 @@ router.post("/control/:serverName/:action", (req, res, next) => {
 		pollServers().catch(() => {});
 	} catch (e) {
 		if (!e.status) console.error(`${action} error for ${server.name}:`, e);
-		res.status(e.status ?? 500).json({ error: e.message });
+		// The code lets the UI tell "the backup failed" (and offer to go ahead without one) from any other failure.
+		res.status(e.status ?? 500).json({ error: e.message, ...(e.code ? { code: e.code } : {}) });
 	}
 });
 
