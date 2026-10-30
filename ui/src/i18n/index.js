@@ -56,7 +56,9 @@ export function tn(key, count, vars) {
 }
 
 export function formatDate(date) {
-	return new Intl.DateTimeFormat(current, { dateStyle: "medium", timeStyle: "short" }).format(new Date(date));
+	const when = new Date(date);
+	if (Number.isNaN(when.getTime())) return t("common.unknown"); // Intl would throw on an invalid date
+	return new Intl.DateTimeFormat(current, { dateStyle: "medium", timeStyle: "short" }).format(when);
 }
 
 export function formatNumber(n) {

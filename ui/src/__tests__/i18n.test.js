@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
-import { t, tn, setLocale, registerLocale, formatBytes, LANGUAGES } from "../i18n/index.js";
+import { t, tn, setLocale, registerLocale, formatBytes, formatDate, LANGUAGES } from "../i18n/index.js";
 
 // The panel's words come from locale files, and a missing or broken word must never blank the screen: the English text is the fallback,
 // and a key nothing defines shows the key itself.
@@ -66,6 +66,15 @@ describe("formatting and languages", () => {
 	it("formats bytes with the active locale's Intl rules", () => {
 		expect(formatBytes(1536)).toMatch(/1\.5/);
 		expect(formatBytes(512)).toMatch(/512/);
+	});
+
+	it("shows 'unknown' for an invalid date instead of throwing", () => {
+		expect(formatDate("not a date")).toBe("unknown");
+	});
+
+	it("falls back to English for a language code the panel does not ship", async () => {
+		expect(await setLocale("../../etc/passwd")).toBe("en");
+		expect(await setLocale("__proto__")).toBe("en");
 	});
 
 	it("lists English and the pseudo-locale", () => {
