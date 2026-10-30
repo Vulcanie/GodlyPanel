@@ -5,7 +5,7 @@ import { spawn } from "node:child_process";
 import path from "node:path";
 import { startInstance, freePort, sleep } from "../helpers/instance.js";
 import { makeFakeGame, killFakeGames, gameLog } from "../helpers/fakeGame.js";
-import { listZip } from "../../src/server/util/tarZip.js";
+import { listZip, listArchive } from "../../src/server/util/tarZip.js";
 import { windowsOnly } from "../helpers/winEmulation.js";
 
 // Backups against a real stand-in game process: the world and settings are copied
@@ -111,6 +111,70 @@ describe("backups", () => {
 		await until(idle);
 		assert.match(read(), /world v2/);
 		fs.writeFileSync(world, "world v1\n");
+	});
+
+	it("writes a backup in zstd when the server is set to it, keeps zip beside it, and refuses formats and levels it doesn't know", async () => {
+		// Stopped for the restore below. The server is left stopped at the end, as the test before it left it.
+		await api.post("/api/control/Fake%20Backup/stop", {});
+		assert.equal(await until(offline), true);
+		await until(idle);
+
+		fs.writeFileSync(world, "world zst - what the zstd backup must hold\n");
+		const bytes = fs.readFileSync(world);
+
+		const set = await api.put(`${base}/backups/settings`, { format: "zstd", level: "fast" });
+		assert.equal(set.status, 200, JSON.stringify(set.json));
+		assert.equal(set.json.format, "zstd");
+		assert.equal(set.json.effectiveFormat, "zstd");
+		assert.equal(set.json.effectiveLevel, "fast");
+
+		const made = await api.post(`${base}/backups`, {});
+		assert.equal(made.status, 202, JSON.stringify(made.json));
+		await until(idle);
+		const overview = await list();
+		const zst = overview.backups[0];
+		assert.equal(zst.format, "zstd");
+		assert.equal(zst.level, "fast");
+		const archive = path.join(overview.directory, `${zst.id}.tar.zst`);
+		assert.ok(fs.existsSync(archive), "the file on disk ends .tar.zst");
+		const names = (await listArchive(archive)).map((n) => n.replaceAll("\\", "/"));
+		assert.ok(names.includes("gp-backup.json"), names.join(", "));
+		assert.ok(names.includes("Saved/world.sav"), names.join(", "));
+		const record = JSON.parse(fs.readFileSync(path.join(overview.directory, `${zst.id}.json`), "utf8"));
+		assert.equal(record.format, 1, "the manifest version is unchanged");
+		assert.equal(record.archiveFormat, "zstd");
+		assert.equal(record.archiveLevel, "fast");
+
+		fs.writeFileSync(world, "changed after the zstd backup\n");
+		const restored = await api.post(`${base}/backups/${zst.id}/restore`, { confirmName: "Fake Backup" });
+		assert.equal(restored.status, 202, JSON.stringify(restored.json));
+		await until(idle);
+		assert.ok(fs.readFileSync(world).equals(bytes), "the world is byte-identical to what was backed up");
+
+		const zipSet = await api.put(`${base}/backups/settings`, { format: "zip" });
+		assert.equal(zipSet.status, 200);
+		const zipped = await api.post(`${base}/backups`, {});
+		assert.equal(zipped.status, 202, JSON.stringify(zipped.json));
+		await until(idle);
+		const after = await list();
+		assert.equal(after.backups[0].format, "zip", "the newest backup is the zip one");
+		assert.ok(fs.existsSync(path.join(after.directory, `${after.backups[0].id}.zip`)));
+		assert.ok(after.backups.some((b) => b.id === zst.id && b.format === "zstd"), "the zstd backup is still there beside it");
+
+		for (const body of [{ format: "rar" }, { format: "__proto__" }, { format: 7 }, { format: ["zip"] }]) {
+			const r = await api.put(`${base}/backups/settings`, body);
+			assert.equal(r.status, 400, JSON.stringify(body));
+			assert.equal(r.json.code, "bad_format", JSON.stringify(body));
+		}
+		const badLevel = await api.put(`${base}/backups/settings`, { level: "ultra" });
+		assert.equal(badLevel.status, 400);
+		assert.equal(badLevel.json.code, "bad_level");
+		assert.equal((await list()).format, "zip", "a refused change leaves the setting as it was");
+
+		assert.equal((await api.put(`${base}/backups/settings`, { format: null, level: null })).status, 200, "null goes back to the panel-wide setting");
+		fs.writeFileSync(world, "world v1\n");
+		// Left stopped, as it was found: the next test starts the server itself.
+		await until(idle);
 	});
 
 	it("stops a running server for the copy, then starts it again", async () => {

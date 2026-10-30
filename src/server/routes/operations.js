@@ -29,6 +29,7 @@ import {
 	validateBackupPaths,
 } from "../services/backupService.js";
 import { listDestinations, replicationFor, listRemote, fetchRemote, backfill } from "../services/backupDestinations.js";
+import { FORMATS } from "../util/archiveFormats.js";
 
 const router = express.Router();
 
@@ -142,13 +143,23 @@ router.post("/server/:serverName/backups/:id/restore", requirePermission("backup
 
 // What gets backed up, how, and how many are kept.
 router.put("/server/:serverName/backups/settings", requirePermission("backup.settings"), async (req, res) => {
-	const { paths, mode, keepCount, keepDays } = req.body ?? {};
+	const { paths, mode, keepCount, keepDays, format, level } = req.body ?? {};
 	const patch = {};
 	try {
 		if (paths !== undefined) patch.paths = paths === null ? null : validateBackupPaths(paths);
 		if (mode !== undefined) {
 			if (!["auto", "stop", "live"].includes(mode)) throw new BackupError('mode must be "auto", "stop" or "live".', "bad_mode");
 			patch.mode = mode;
+		}
+		// Object.hasOwn rather than `in`, so a name like "__proto__" or "toString" from the request is refused. The string check keeps
+		// an array or number that happens to match a key from getting through.
+		if (format !== undefined) {
+			if (format !== null && (typeof format !== "string" || !Object.hasOwn(FORMATS, format))) throw new BackupError('format must be "zip", "zstd", "xz" or null.', "bad_format");
+			patch.format = format;
+		}
+		if (level !== undefined) {
+			if (level !== null && (typeof level !== "string" || !["fast", "balanced", "max"].includes(level))) throw new BackupError('level must be "fast", "balanced", "max" or null.', "bad_level");
+			patch.level = level;
 		}
 		for (const [key, value] of Object.entries({ keepCount, keepDays })) {
 			if (value === undefined) continue;

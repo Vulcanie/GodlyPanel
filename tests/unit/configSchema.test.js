@@ -44,6 +44,15 @@ describe("config coercion", () => {
 		assert.ok(issues.length > 0);
 	});
 
+	it("backups default to zip at the balanced level, and an unknown format falls back to zip", () => {
+		assert.equal(DEFAULTS.backups.format, "zip", "zip stays the default: it opens anywhere");
+		assert.equal(DEFAULTS.backups.level, "balanced");
+		const { config, issues } = coerceConfig({ backups: { format: "rar", level: "ultra" } });
+		assert.equal(config.backups.format, "zip");
+		assert.equal(config.backups.level, "balanced");
+		assert.equal(issues.length, 2);
+	});
+
 	it("every setting the form generates has a label and a valid type", () => {
 		const types = new Set(["int", "bool", "string", "enum", "intArray", "stringArray"]);
 		for (const spec of FIELD_SPECS) {

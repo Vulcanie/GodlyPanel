@@ -6,7 +6,8 @@ import { getConfig } from "../config/configStore.js";
 import { getSecrets, patchSecrets } from "../config/secretsStore.js";
 import { readJson, writeJsonAtomic, createWriteQueue } from "../util/atomicJson.js";
 import { createS3Client } from "./s3Client.js";
-import { serverBackupDir, listBackups, BackupError } from "./backupService.js";
+import { serverBackupDir, listBackups, backupArchivePath, BackupError } from "./backupService.js";
+import { splitArchiveName } from "../util/archiveFormats.js";
 import { logActivity } from "./activityLog.js";
 import { all as allServers } from "../data/serverStore.js";
 
@@ -150,7 +151,7 @@ export async function removeDestination(id) {
 // ---- the two kinds of place ---------------------------------------------------
 
 /**
- * A place that holds backups as `<server folder>/<id>.zip` plus `<id>.json`.
+ * A place that holds backups as `<server folder>/<id>` with the archive's own ending (.zip, .tar.zst or .tar.xz), plus `<id>.json`.
  * put/get move a file; list returns [{ name, size, modified }] for one server folder.
  */
 function adapterFor(d, secretOverride = null) {
@@ -280,7 +281,10 @@ async function copyOne(d, server, backup) {
 	const adapter = adapterFor(d);
 	setStatus(d.id, key, { status: "copying", attempts: (statuses[d.id]?.[key]?.attempts ?? 0) + 1 });
 	try {
-		const bytes = await adapter.put(path.join(local, `${backup.id}.zip`), dir, `${backup.id}.zip`);
+		// The copy keeps the archive's real name, so it is the same file in both places.
+		const archivePath = await backupArchivePath(server, backup.id);
+		if (!archivePath) throw new BackupError("The backup's archive is no longer in the local folder.", "not_found", 404);
+		const bytes = await adapter.put(archivePath, dir, path.basename(archivePath));
 		// The record goes last: a copy with a record is a complete copy.
 		const record = path.join(local, `${backup.id}.json`);
 		if (await fs.stat(record).catch(() => null)) await adapter.put(record, dir, `${backup.id}.json`);
@@ -418,27 +422,32 @@ export async function backfill(destId, server) {
 const kindOf = (id) => /_(manual|scheduled|pre-restore|pre-update)$/.exec(id)?.[1] ?? "unknown";
 
 /** Keep rules at a destination: scheduled backups by count and age, safety backups to the last few, manual ones always. */
-async function trimDestination(d, server) {
+export async function trimDestination(d, server) {
 	const config = getConfig().backups;
 	// At least one, as for local backups (see applyRetention).
 	const keepCount = Math.max(1, d.keepCount ?? config.keepCount);
 	const keepDays = d.keepDays ?? config.keepDays;
 	const adapter = adapterFor(d);
 	const dir = path.basename(serverBackupDir(server));
-	const zips = (await adapter.list(dir)).filter((o) => o.name.endsWith(".zip")).sort((a, b) => (a.modified < b.modified ? 1 : -1));
+	// Every format counts together: a .zip and a .tar.zst are both backups, and the count is across both.
+	const archives = (await adapter.list(dir))
+		.map((o) => ({ name: o.name, modified: o.modified, split: splitArchiveName(o.name) }))
+		.filter((o) => o.split && o.split.stem !== "")
+		.sort((a, b) => (a.modified < b.modified ? 1 : -1));
 	const doomed = new Set();
-	const scheduled = zips.filter((o) => kindOf(o.name.slice(0, -4)) === "scheduled");
-	scheduled.slice(keepCount).forEach((o) => doomed.add(o.name));
-	if (keepDays > 0) scheduled.filter((o) => Date.parse(o.modified) < Date.now() - keepDays * 86_400_000).forEach((o) => doomed.add(o.name));
+	const scheduled = archives.filter((o) => kindOf(o.split.stem) === "scheduled");
+	scheduled.slice(keepCount).forEach((o) => doomed.add(o));
+	if (keepDays > 0) scheduled.filter((o) => Date.parse(o.modified) < Date.now() - keepDays * 86_400_000).forEach((o) => doomed.add(o));
 	for (const kind of ["pre-restore", "pre-update"]) {
-		zips.filter((o) => kindOf(o.name.slice(0, -4)) === kind).slice(3).forEach((o) => doomed.add(o.name));
+		archives.filter((o) => kindOf(o.split.stem) === kind).slice(3).forEach((o) => doomed.add(o));
 	}
-	for (const name of doomed) {
-		await adapter.remove(dir, name);
-		await adapter.remove(dir, name.replace(/\.zip$/, ".json"));
-		if (statuses[d.id]) delete statuses[d.id][`${dir}/${name.slice(0, -4)}`];
+	for (const o of doomed) {
+		const id = o.split.stem;
+		await adapter.remove(dir, o.name);
+		await adapter.remove(dir, `${id}.json`);
+		if (statuses[d.id]) delete statuses[d.id][`${dir}/${id}`];
 	}
-	return [...doomed];
+	return [...doomed].map((o) => o.name);
 }
 
 // ---- looking at and pulling back what's there --------------------------------
@@ -456,13 +465,17 @@ export async function listRemote(destId, server) {
 		throw new BackupError(`Couldn't read ${d.name}: ${err.message}`, "unreachable", 502);
 	}
 	const local = new Set((await listBackups(server)).map((b) => b.id));
-	return objects
-		.filter((o) => o.name.endsWith(".zip"))
-		.map((o) => {
-			const id = o.name.slice(0, -4);
-			return { id, kind: kindOf(id), sizeBytes: o.size, modified: o.modified, hasRecord: objects.some((x) => x.name === `${id}.json`), local: local.has(id) };
-		})
-		.sort((a, b) => (a.modified < b.modified ? 1 : -1));
+	const seen = new Set();
+	const found = [];
+	for (const o of objects) {
+		const split = splitArchiveName(o.name);
+		// Skips anything that isn't a finished archive, and a second archive under the same id (the first one listed wins).
+		if (!split || split.stem === "" || seen.has(split.stem)) continue;
+		seen.add(split.stem);
+		const id = split.stem;
+		found.push({ id, format: split.format, kind: kindOf(id), sizeBytes: o.size, modified: o.modified, hasRecord: objects.some((x) => x.name === `${id}.json`), local: local.has(id) });
+	}
+	return found.sort((a, b) => (a.modified < b.modified ? 1 : -1));
 }
 
 /**
@@ -477,13 +490,22 @@ export async function fetchRemote(destId, server, id) {
 	const dir = path.basename(serverBackupDir(server));
 	const local = serverBackupDir(server);
 	await fs.mkdir(local, { recursive: true });
-	const zip = path.join(local, `${id}.zip`);
-	if (await fs.stat(zip).catch(() => null)) throw new BackupError("That backup is already in the local folder.", "already_local", 409);
+	if (await backupArchivePath(server, id)) throw new BackupError("That backup is already in the local folder.", "already_local", 409);
 	const adapter = adapterFor(d);
-	const partial = `${zip}.partial`;
+	// The copy may be in any format, so find it by its id rather than by a guessed file name.
+	let objects;
 	try {
-		await adapter.get(dir, `${id}.zip`, partial);
-		await fs.rename(partial, zip);
+		objects = await adapter.list(dir);
+	} catch (err) {
+		throw new BackupError(`Couldn't read ${d.name}: ${err.message}`, "unreachable", 502);
+	}
+	const match = objects.find((o) => splitArchiveName(o.name)?.stem === id);
+	if (!match) throw new BackupError(`That backup isn't at ${d.name}.`, "not_found", 404);
+	const archive = path.join(local, match.name);
+	const partial = `${archive}.partial`;
+	try {
+		await adapter.get(dir, match.name, partial);
+		await fs.rename(partial, archive);
 	} catch (err) {
 		await fs.rm(partial, { force: true }).catch(() => {});
 		throw new BackupError(`Couldn't download ${id} from ${d.name}: ${err.message}`, "download_failed", 502);

@@ -22,6 +22,15 @@ export const FORMATS = {
 /** The file endings of every format, for callers that need to recognise backup files. */
 export const ALL_EXTENSIONS = Object.values(FORMATS).map((f) => f.ext);
 
+/** { stem, format } for a file name ending in a known archive extension, otherwise null. "a.tar.zst" -> { stem: "a", format: "zstd" }. */
+export function splitArchiveName(name) {
+	const format = formatForFile(name);
+	if (!format) return null;
+	// The stem keeps its original case. Only the ending is matched case-insensitively.
+	const ext = FORMATS[format].ext;
+	return { stem: name.slice(0, name.length - ext.length), format };
+}
+
 /** The format a file name is written in, by its ending (case-insensitive), or null. */
 export function formatForFile(name) {
 	if (typeof name !== "string") return null;

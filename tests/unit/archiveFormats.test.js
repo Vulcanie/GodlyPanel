@@ -5,7 +5,7 @@ import { execFile } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { ALL_EXTENSIONS, FORMATS, formatForFile } from "../../src/server/util/archiveFormats.js";
+import { ALL_EXTENSIONS, FORMATS, formatForFile, splitArchiveName } from "../../src/server/util/archiveFormats.js";
 import { createArchive, listArchive, extractArchive } from "../../src/server/util/tarZip.js";
 
 // The format registry and the create/list/extract wrappers around the Windows tar (bsdtar). The tar tests are marked; the name
@@ -39,6 +39,21 @@ describe("format names and levels", () => {
 		};
 		for (const [name, want] of Object.entries(table)) assert.equal(formatForFile(name), want, name);
 		assert.equal(formatForFile(undefined), null);
+	});
+
+	it("splits a backup file name into its stem and format", () => {
+		assert.deepEqual(splitArchiveName("a.tar.zst"), { stem: "a", format: "zstd" });
+		assert.deepEqual(splitArchiveName("a.zip"), { stem: "a", format: "zip" });
+		assert.deepEqual(splitArchiveName("a.tar.xz"), { stem: "a", format: "xz" });
+		assert.deepEqual(splitArchiveName("B.ZIP"), { stem: "B", format: "zip" });
+		assert.deepEqual(splitArchiveName("Mixed-Case.TAR.ZST"), { stem: "Mixed-Case", format: "zstd" });
+		assert.equal(splitArchiveName("x.json"), null);
+		assert.equal(splitArchiveName("x.zip.partial"), null);
+		assert.equal(splitArchiveName(undefined), null);
+	});
+
+	it("gives an empty stem for a bare extension, so callers can skip it", () => {
+		assert.deepEqual(splitArchiveName(".zip"), { stem: "", format: "zip" });
 	});
 
 	it("lists the three endings", () => {
