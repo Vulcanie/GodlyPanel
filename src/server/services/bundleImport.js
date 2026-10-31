@@ -52,7 +52,7 @@ const majorMinor = (v) => String(v).replace(/^v/i, "").split(".").slice(0, 2).jo
 /** A value that, once the folder is rebased, still leaves the folder: a path outside it, a network path, a `..` step, or a token. */
 function leavesFolder(text, dest) {
 	if (text.includes("{{")) return true;
-	if (text.startsWith("\\\\") || DOT_SEGMENT.test(text)) return true;
+	if (text.startsWith("\\\\") || text.startsWith("//") || DOT_SEGMENT.test(text)) return true;
 	for (const token of text.match(DRIVE_PATH) ?? []) if (!isInside(token, dest)) return true;
 	return false;
 }
@@ -304,7 +304,9 @@ function cleanOptions(raw, dest, fillText, warnings) {
 		let dropped = false;
 		for (const item of backupIn.paths) {
 			const p = isPlain(item) && typeof item.path === "string" ? fillText(item.path) : null;
-			if (p === null || leavesFolder(p, dest)) {
+			// A backup folder is read in full, so it must be a full path inside the new folder (a path with no drive letter, such as
+			// \Users\x, would pass the check above and still point at another folder on the drive).
+			if (p === null || leavesFolder(p, dest) || !isInside(p, dest)) {
 				dropped = true;
 				continue;
 			}

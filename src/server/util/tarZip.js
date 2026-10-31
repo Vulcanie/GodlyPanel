@@ -86,26 +86,29 @@ export async function listArchive(file) {
 	return new TextDecoder("windows-1252").decode(stdout).split(/\r?\n/).filter(Boolean);
 }
 
-// One line of bsdtar's verbose listing: the mode, the fields in between (links, owner, group, size), the date, then the name. The
-// name is whatever follows the date, so names with spaces are kept whole.
-const VERBOSE_LINE = /^(\S+) +(.+?) +([A-Z][a-z]{2} +\d{1,2} +(?:\d{1,2}:\d{2}|\d{4})) (.*)$/;
+// The date column of bsdtar's verbose listing: month, day, then a time or a year. The widths are bounded so a line made of
+// spaces can't make the search slow.
+const VERBOSE_DATE = / [A-Z][a-z]{2} {1,2}\d{1,2} {1,2}(?:\d{1,2}:\d{2}|\d{4}) /;
 
 /**
  * Every entry in an archive with its kind and size: `type` is "file", "dir", or "other" for anything that is neither (a symbolic or
- * hard link, a device, a pipe). Symlinks and hard links are reported as "other" so a caller can refuse them; their names have the
- * link text taken off. Throws if the archive can't be read or a line of the listing isn't understood.
+ * hard link, a device, a pipe), so a caller can refuse those. The names come from the plain listing, never from the verbose one:
+ * the owner fields in a verbose line are written by whoever made the archive and can imitate a date, so they must not decide where
+ * the name starts. The two listings are matched line for line, and the size is only read for the headroom check. Throws if the
+ * archive can't be read or the two listings don't agree.
  */
 export async function listArchiveDetailed(file) {
+	const names = await listArchive(file);
 	const { stdout } = await run(["-tvf", file]);
 	const lines = new TextDecoder("windows-1252").decode(stdout).split(/\r?\n/).filter(Boolean);
-	return lines.map((line) => {
-		const m = VERBOSE_LINE.exec(line);
-		if (!m) throw new Error(`could not read a line of the archive listing: "${line.slice(0, 80)}"`);
-		const [, mode, middle, , rawName] = m;
-		const kind = mode.startsWith("-") ? "file" : mode.startsWith("d") ? "dir" : "other";
-		const size = kind === "other" ? 0 : Number(middle.split(/\s+/).at(-1));
-		const name = kind === "other" ? rawName.replace(/ (?:->|link to) .*$/, "") : rawName;
-		return { name, type: kind, size: Number.isFinite(size) ? size : 0 };
+	if (lines.length !== names.length) throw new Error("could not read the archive listing: the two listings differ");
+	return lines.map((line, i) => {
+		const at = VERBOSE_DATE.exec(line);
+		if (!at) throw new Error(`could not read a line of the archive listing: "${line.slice(0, 80)}"`);
+		const mode = line.slice(0, line.indexOf(" "));
+		const type = mode.startsWith("-") ? "file" : mode.startsWith("d") ? "dir" : "other";
+		const size = type === "other" ? 0 : Number(line.slice(0, at.index).trimEnd().split(" ").at(-1));
+		return { name: names[i], type, size: Number.isFinite(size) ? size : 0 };
 	});
 }
 
