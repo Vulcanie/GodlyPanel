@@ -175,4 +175,14 @@ export default {
 	// No log file is named for this game by the dossier (-condebug is not in its launch-argument research), so none is listed.
 	logs: [],
 	launchOptions: true,
+	// The game loads add-ons from its addons folder, so a .vpk dropped there is an add-on. Only the plain folder is used:
+	// no Workshop, since Left 4 Dead has none.
+	mods: {
+		adapter: "folder",
+		label: "Add-ons",
+		dir: { base: "working", rel: "left4dead/addons" },
+		accepts: [".vpk"],
+		sources: ["github", "url"],
+		note: "Drop .vpk add-on files here. Restart the server after a change.",
+	},
 };
