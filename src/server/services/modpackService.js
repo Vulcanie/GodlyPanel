@@ -6,11 +6,10 @@ import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import AdmZip from "adm-zip";
 import { paths } from "../paths.js";
-import { getSecrets } from "../config/secretsStore.js";
+import { cfApiBase, cfApiKey } from "./modSources/curseforgeClient.js";
 
 const UPLOADS_DIR = paths.uploadsDir;
-// The environment variable exists so tests can point this at a stand-in; nothing else sets it.
-const CF_API_BASE = process.env.GHP_CURSEFORGE_API || "https://api.curseforge.com/v1";
+// The environment variable exists so tests can point this at a stand-in; nothing else sets it. The address itself is read by cfApiBase.
 const CF_API_OVERRIDDEN = Boolean(process.env.GHP_CURSEFORGE_API);
 // One mod file never needs more than this, and a download that runs on past it is not a mod.
 const MAX_MOD_BYTES = 1024 * 1024 * 1024;
@@ -199,7 +198,7 @@ export async function resolveAndDownloadMods(manifest, destModsDir, { onProgress
 	// Only required once we actually have something to resolve — a pack with
 	// no CF-listed files (everything covered by overrides) shouldn't need a
 	// key it'll never use.
-	const apiKey = getSecrets().curseForgeApiKey;
+	const apiKey = cfApiKey();
 	if (!apiKey) {
 		throw new Error(
 			"No CurseForge API key set. Add one in Settings (free, from console.curseforge.com) to install modpacks.",
@@ -212,7 +211,7 @@ export async function resolveAndDownloadMods(manifest, destModsDir, { onProgress
 	const fileIds = manifest.files.map((f) => f.fileID);
 	for (let i = 0; i < fileIds.length; i += RESOLVE_CHUNK_SIZE) {
 		const chunk = fileIds.slice(i, i + RESOLVE_CHUNK_SIZE);
-		const res = await fetch(`${CF_API_BASE}/mods/files`, {
+		const res = await fetch(`${cfApiBase()}/mods/files`, {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",

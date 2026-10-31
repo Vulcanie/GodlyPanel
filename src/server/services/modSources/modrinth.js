@@ -1,11 +1,9 @@
 import { ModError } from "../modService.js";
+import { readCapped, TIMEOUT_MS } from "./http.js";
 
 // Reads a project and its versions from Modrinth's API, and works out which file to download. It never downloads: the installer
 // does that through the guarded fetch, which checks every address in this answer before it is requested.
 
-const TIMEOUT_MS = 20_000;
-// A project's answer is a few kilobytes. Anything this big is not one, so it is not read on.
-const MAX_ANSWER_BYTES = 5 * 1024 * 1024;
 const SLUG = /^[A-Za-z0-9_-]{1,64}$/;
 const SHA512 = /^[0-9a-f]{128}$/i;
 
@@ -18,24 +16,11 @@ const tooBig = () => new ModError("Modrinth's answer is bigger than the panel re
 // A filter the caller didn't set is left out, rather than sent as an empty value.
 const given = (value) => typeof value === "string" && value !== "";
 
-// Reads the body but stops at the cap, so a server that sends more than it declared still can't fill memory.
-async function readCapped(res) {
-	if (Number(res.headers.get("content-length")) > MAX_ANSWER_BYTES) throw tooBig();
-	const chunks = [];
-	let total = 0;
-	for await (const chunk of res.body ?? []) {
-		total += chunk.length;
-		if (total > MAX_ANSWER_BYTES) throw tooBig();
-		chunks.push(chunk);
-	}
-	return Buffer.concat(chunks).toString("utf8");
-}
-
 async function getJson(url, fetchImpl, notFound) {
 	const res = await fetchImpl(url, { headers: { "User-Agent": "GodlyPanel" }, signal: AbortSignal.timeout(TIMEOUT_MS) });
 	if (res.status === 404) throw new ModError(notFound, "not_found", 404);
 	if (!res.ok) throw new ModError(`Modrinth answered ${res.status}.`, "modrinth_failed", 502);
-	const text = await readCapped(res);
+	const text = await readCapped(res, { tooBig });
 	try {
 		return JSON.parse(text);
 	} catch {
