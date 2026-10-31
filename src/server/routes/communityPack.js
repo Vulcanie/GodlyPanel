@@ -1,4 +1,5 @@
-// The mod pack on the community address: a player opens a link with a secret token and gets the manifest, the zip or the list. No
+// The mod pack on the community address: a player opens a link with a secret token and gets the manifest, the zip, the list or the
+// Modrinth pack. No
 // sign-in. Mounted on the community listener only, never on the panel's own port.
 //
 // Every failure looks the same from outside (a plain 404), so a link can't be probed for which servers exist, which are shared, or
@@ -105,6 +106,8 @@ export function createPackRouter() {
 
 	router.get("/:token/mod-pack.zip", sendPack("zip"));
 	router.get("/:token/mod-list.txt", sendPack("list"));
+	// The Modrinth pack is for a Minecraft modpack only. For any other game it is the same plain 404 as a wrong link.
+	router.get("/:token/mod-pack.mrpack", sendPack("mrpack"));
 
 	// Anything else under the pack address is the same plain 404 as a wrong link.
 	router.use((req, res) => notFound(res));

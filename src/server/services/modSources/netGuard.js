@@ -12,7 +12,7 @@ const REDIRECTS = new Set([301, 302, 303, 307, 308]);
 
 // The one place the loopback test hook is read. Only the test suites set it, like the other GHP_* overrides, and it only
 // lets a stand-in on this machine answer; every other check still applies.
-function loopbackTestMode() {
+export function loopbackTestMode() {
 	return process.env.GHP_MODSOURCE_ALLOW_LOOPBACK === "1";
 }
 
