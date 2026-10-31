@@ -42,8 +42,44 @@ export const modConfigFor = (server) => MOD_TEMPLATES[templateOfServer(server)?.
 export function modSupport(server) {
 	const spec = modConfigFor(server);
 	if (!spec) return { supported: false };
-	const { adapter, label, note, accepts = [] } = spec;
-	return { supported: true, adapter, label, note, accepts, ...(spec.appId ? { appId: spec.appId } : {}), ...(spec.community ? { community: spec.community } : {}) };
+	const { adapter, label, note, accepts = [], sources = [] } = spec;
+	return {
+		supported: true,
+		adapter,
+		label,
+		note,
+		accepts,
+		sources,
+		...(spec.loader ? { loader: spec.loader } : {}),
+		...(spec.appId ? { appId: spec.appId } : {}),
+		...(spec.community ? { community: spec.community } : {}),
+	};
+}
+
+// The value at a dotted path (e.g. "versions.game") in the server record, when it is a non-empty string. Only the record's own
+// properties count, so a path like "constructor" can't reach the object's inherited ones.
+function recordValue(server, dottedPath) {
+	let cur = server;
+	for (const seg of dottedPath.split(".")) {
+		if (cur === null || typeof cur !== "object" || !Object.hasOwn(cur, seg)) return undefined;
+		cur = cur[seg];
+	}
+	return typeof cur === "string" && cur !== "" ? cur : undefined;
+}
+
+/** The loader and game version a spec and a server record give, for the mods that depend on them. */
+export function contextFromSpec(spec, server) {
+	return {
+		loader: typeof spec.loader === "string" ? spec.loader : undefined,
+		gameVersion: spec.gameVersionFrom ? recordValue(server, spec.gameVersionFrom) : undefined,
+	};
+}
+
+/** The loader and game version a server's mods need, or {} when the game has no mod support. Never throws. */
+export function modContextFor(server) {
+	if (!server || typeof server !== "object") return {};
+	const spec = modConfigFor(server);
+	return spec ? contextFromSpec(spec, server) : {};
 }
 
 function modsDirOf(server, spec) {
