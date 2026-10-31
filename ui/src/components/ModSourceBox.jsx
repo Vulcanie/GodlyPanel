@@ -2,12 +2,14 @@ import React from "react";
 import { Alert, Box, Button, Checkbox, CircularProgress, FormControlLabel, Radio, RadioGroup, TextField, Typography } from "@mui/material";
 import { api } from "../api/client";
 import { installErrorAction } from "../utils/modSource";
+import { t, useT } from "../i18n";
 
 /**
  * The paste box: a mod's link or name goes in, and the server installs it with anything it needs. The decisions (what an error means,
  * what to ask for next) live in utils/modSource.js; this box only draws them and keeps the typed text.
  */
 function ModSourceBox({ base, locked, onResult, onError }) {
+	useT();
 	const [input, setInput] = React.useState("");
 	const [busy, setBusy] = React.useState(false);
 	// Set when the server says the address is not a known site. The person has to tick the box before it is sent again.
@@ -60,7 +62,7 @@ function ModSourceBox({ base, locked, onResult, onError }) {
 			<Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, alignItems: "center" }}>
 				<TextField
 					size="small"
-					label="Mod address or name"
+					label={t("mods.addressLabel")}
 					value={input}
 					onChange={(e) => changeText(e.target.value)}
 					onKeyDown={(e) => e.key === "Enter" && !locked && submit()}
@@ -68,18 +70,18 @@ function ModSourceBox({ base, locked, onResult, onError }) {
 					disabled={locked}
 				/>
 				<Button variant="outlined" disabled={blocked} onClick={submit}>
-					{busy ? "Working…" : "Install"}
+					{busy ? t("common.working") : t("mods.install")}
 				</Button>
 				{busy && <CircularProgress size={18} />}
 			</Box>
 			<Typography variant="caption" sx={{ display: "block", mt: 1, color: "text.secondary" }}>
-				Paste a mod's link or name. Anything it needs is installed too.
+				{t("mods.pasteHelp")}
 			</Typography>
 
 			{needsTrust && (
 				<Alert severity="warning" sx={{ mt: 1.5 }}>
-					This address isn't one of the known mod sites. Only install from an address you trust.
-					<FormControlLabel control={<Checkbox checked={trusted} onChange={(e) => setTrusted(e.target.checked)} />} label="I trust this address" sx={{ display: "block" }} />
+					{t("mods.untrusted")}
+					<FormControlLabel control={<Checkbox checked={trusted} onChange={(e) => setTrusted(e.target.checked)} />} label={t("mods.trustAddress")} sx={{ display: "block" }} />
 				</Alert>
 			)}
 

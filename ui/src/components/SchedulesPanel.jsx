@@ -24,24 +24,46 @@ import { Add as AddIcon, Delete as DeleteIcon, Edit as EditIcon, PlayArrow as Ru
 import { api } from "../api/client";
 import { onLive } from "../liveEvents";
 import { useToast } from "../ToastContext";
+import { t, tn, useT, formatDate } from "../i18n";
 import SectionCard from "./ui/SectionCard";
 import ConfirmDialog from "./ui/ConfirmDialog";
 import InfoTip from "./InfoTip";
 import TipRow from "./TipRow";
 
-const KIND_LABELS = { backup: "Back up", restart: "Restart", update: "Update game", command: "Console command", announce: "Announce in game" };
-const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+// The words for each kind of task. A kind not listed here is shown as it is.
+function kindLabel(kind) {
+	switch (kind) {
+		case "backup":
+			return t("schedules.kind.backup");
+		case "restart":
+			return t("schedules.kind.restart");
+		case "update":
+			return t("schedules.kind.update");
+		case "command":
+			return t("schedules.kind.command");
+		case "announce":
+			return t("schedules.kind.announce");
+		default:
+			return kind;
+	}
+}
+
+const KIND_VALUES = ["backup", "restart", "update", "command", "announce"];
+// The short day names, Sunday first, so the index is the day number.
+function dayNames() {
+	return [t("schedules.day.sun"), t("schedules.day.mon"), t("schedules.day.tue"), t("schedules.day.wed"), t("schedules.day.thu"), t("schedules.day.fri"), t("schedules.day.sat")];
+}
 
 export function describeWhen(when) {
 	if (when.type === "daily") {
-		const days = when.days ? when.days.map((d) => DAYS[d] ?? d).join(", ") : "every day";
-		return `${days} at ${when.time}`;
+		const days = when.days ? when.days.map((d) => dayNames()[d] ?? d).join(", ") : t("schedules.everyDay");
+		return t("schedules.dailyAt", { days, time: when.time });
 	}
 	if (when.type === "interval") {
 		const m = when.everyMinutes;
-		return m % 1440 === 0 ? `every ${m / 1440} day${m === 1440 ? "" : "s"}` : m % 60 === 0 ? `every ${m / 60} hour${m === 60 ? "" : "s"}` : `every ${m} minutes`;
+		return m % 1440 === 0 ? tn("schedules.everyDays", m / 1440) : m % 60 === 0 ? tn("schedules.everyHours", m / 60) : t("schedules.everyMinutes", { minutes: m });
 	}
-	return `once, ${new Date(when.at).toLocaleString()}`;
+	return t("schedules.once", { when: formatDate(when.at) });
 }
 
 // A date-time box wants the PC's own clock ("2026-10-13T04:00"), not UTC, so a one-off time doesn't move when it is edited.
@@ -56,6 +78,7 @@ const statusColour = { ok: "success", failed: "error", skipped: "warning" };
 
 /** Scheduled backups, restarts, updates and commands for one server. Moderators can see them; admins change them. */
 function SchedulesPanel({ serverName, serverNames = [], canManage }) {
+	useT();
 	const toast = useToast();
 	const [tasks, setTasks] = React.useState(null);
 	const [error, setError] = React.useState(null);
@@ -111,8 +134,8 @@ function SchedulesPanel({ serverName, serverNames = [], canManage }) {
 			<SectionCard
 				title={
 					<>
-						Schedules
-						<InfoTip id="server.schedule.list" />
+						{t("schedules.title")}
+<InfoTip id="server.schedule.list" />
 					</>
 				}
 				icon={<ScheduleIcon />}
@@ -120,14 +143,14 @@ function SchedulesPanel({ serverName, serverNames = [], canManage }) {
 				actions={
 					canManage && (
 						<Button variant="contained" size="small" startIcon={<AddIcon />} onClick={() => setEditing({})}>
-							Add a schedule
-						</Button>
+							{t("schedules.add")}
+</Button>
 					)
 				}
 			>
 				{tasks.length === 0 ? (
 					<Typography variant="body2" sx={{ p: 2.5, color: "text.secondary" }}>
-						Nothing is scheduled for this server.
+						{t("schedules.none")}
 					</Typography>
 				) : (
 					tasks.map((task, i) => {
@@ -139,48 +162,48 @@ function SchedulesPanel({ serverName, serverNames = [], canManage }) {
 							>
 								<Box sx={{ flex: 1, minWidth: 240 }}>
 									<Typography variant="body1">
-										{task.name || KIND_LABELS[task.kind] || task.kind} <Chip size="small" label={KIND_LABELS[task.kind] ?? task.kind} sx={{ ml: 1 }} />
-										{task.servers.length > 1 && <Chip size="small" variant="outlined" label={`+${task.servers.length - 1} more server${task.servers.length > 2 ? "s" : ""}`} sx={{ ml: 0.5 }} />}
+										{task.name || kindLabel(task.kind)} <Chip size="small" label={kindLabel(task.kind)} sx={{ ml: 1 }} />
+										{task.servers.length > 1 && <Chip size="small" variant="outlined" label={tn("schedules.moreServers", task.servers.length - 1)} sx={{ ml: 0.5 }} />}
 									</Typography>
 									<Typography variant="body2" sx={{ color: "text.secondary", wordBreak: "break-word" }}>
 										{describeWhen(task.when)}
 										{task.kind === "command" ? ` · ${options.command ?? ""}` : ""}
-										{task.kind === "announce" ? ` · ${(options.messages ?? []).length} message${(options.messages ?? []).length === 1 ? "" : "s"}, one each time` : ""}
-										{(task.kind === "restart" || task.kind === "update") && options.warnMinutes?.length ? ` · warns ${options.warnMinutes.join(", ")} min before` : ""}
+										{task.kind === "announce" ? ` · ${tn("schedules.messages", (options.messages ?? []).length)}` : ""}
+										{(task.kind === "restart" || task.kind === "update") && options.warnMinutes?.length ? ` · ${t("schedules.warns", { minutes: options.warnMinutes.join(", ") })}` : ""}
 									</Typography>
 									<Typography variant="caption" sx={{ color: "text.secondary" }}>
-										{task.enabled && task.nextRunAt ? `Next: ${new Date(task.nextRunAt).toLocaleString()}` : task.enabled ? "Finished" : "Turned off"}
-										{task.running ? " · running now" : ""}
+										{task.enabled && task.nextRunAt ? t("schedules.nextRun", { date: formatDate(task.nextRunAt) }) : task.enabled ? t("schedules.finished") : t("schedules.turnedOff")}
+										{task.running ? ` · ${t("schedules.runningNow")}` : ""}
 									</Typography>
 								</Box>
 								{task.lastStatus && (
-									<Tooltip title={`${task.lastRunAt ? new Date(task.lastRunAt).toLocaleString() : ""} ${task.lastMessage ?? ""}`}>
-										<Chip size="small" color={statusColour[task.lastStatus] ?? "default"} label={`Last: ${task.lastStatus}`} />
+									<Tooltip title={`${task.lastRunAt ? formatDate(task.lastRunAt) : ""} ${task.lastMessage ?? ""}`}>
+										<Chip size="small" color={statusColour[task.lastStatus] ?? "default"} label={t("schedules.last", { status: task.lastStatus })} />
 									</Tooltip>
 								)}
 								{canManage && (
 									<>
-										<Tooltip title="Run it now">
+										<Tooltip title={t("schedules.runNow")}>
 											<span>
-												<IconButton size="small" aria-label="Run it now" disabled={task.running} onClick={() => act(() => api.post(`/api/schedules/${task.id}/run`), "Started. The result appears here and in Activity.")}>
+												<IconButton size="small" aria-label={t("schedules.runNow")} disabled={task.running} onClick={() => act(() => api.post(`/api/schedules/${task.id}/run`), t("schedules.started"))}>
 													<RunIcon fontSize="small" />
 												</IconButton>
 											</span>
 										</Tooltip>
-										<Tooltip title={task.enabled ? "Turn this schedule off" : "Turn this schedule on"}>
+										<Tooltip title={task.enabled ? t("schedules.turnOff") : t("schedules.turnOn")}>
 											<Switch
 												size="small"
 												checked={task.enabled}
-												inputProps={{ "aria-label": task.enabled ? "Turn this schedule off" : "Turn this schedule on" }}
+												inputProps={{ "aria-label": task.enabled ? t("schedules.turnOff") : t("schedules.turnOn") }}
 												onChange={(e) => act(() => api.put(`/api/schedules/${task.id}`, { enabled: e.target.checked }))}
 											/>
 										</Tooltip>
-										<IconButton size="small" aria-label="Edit this schedule" onClick={() => setEditing(task)}>
+										<IconButton size="small" aria-label={t("schedules.editAria")} onClick={() => setEditing(task)}>
 											<EditIcon fontSize="small" />
 										</IconButton>
 										<IconButton
 											size="small"
-											aria-label="Delete this schedule"
+											aria-label={t("schedules.deleteAria")}
 											onClick={() => {
 												setDeleting(task);
 												setDeleteOpen(true);
@@ -197,16 +220,16 @@ function SchedulesPanel({ serverName, serverNames = [], canManage }) {
 			</SectionCard>
 			<ConfirmDialog
 				open={deleteOpen && Boolean(deleting)}
-				title="Delete this schedule?"
-				confirmLabel="Delete it"
+				title={t("schedules.deleteTitle")}
+				confirmLabel={t("common.deleteIt")}
 				color="error"
 				onConfirm={() => {
 					setDeleteOpen(false);
-					act(() => api.del(`/api/schedules/${deleting.id}`), "Schedule deleted.");
+					act(() => api.del(`/api/schedules/${deleting.id}`), t("schedules.deleted"));
 				}}
 				onClose={() => setDeleteOpen(false)}
 			>
-				{deleting && `"${deleting.name || KIND_LABELS[deleting.kind] || deleting.kind}" (${describeWhen(deleting.when)}) stops running and is removed.`}
+				{deleting && t("schedules.deleteBody", { name: deleting.name || kindLabel(deleting.kind) || deleting.kind, when: describeWhen(deleting.when) })}
 			</ConfirmDialog>
 			{editing && (
 				<ScheduleDialog
@@ -216,7 +239,7 @@ function SchedulesPanel({ serverName, serverNames = [], canManage }) {
 					onClose={() => setEditing(null)}
 					onSaved={(isNew) => {
 						setEditing(null);
-						toast(isNew ? "Schedule added." : "Schedule saved.");
+						toast(isNew ? t("schedules.added") : t("schedules.saved"));
 						load();
 					}}
 				/>
@@ -226,6 +249,7 @@ function SchedulesPanel({ serverName, serverNames = [], canManage }) {
 }
 
 function ScheduleDialog({ task, serverName, serverNames, onClose, onSaved }) {
+	useT();
 	const isNew = !task.id;
 	const when = task.when ?? { type: "daily", time: "04:00", days: null };
 	const [kind, setKind] = React.useState(task.kind ?? "backup");
@@ -245,7 +269,7 @@ function ScheduleDialog({ task, serverName, serverNames, onClose, onSaved }) {
 
 	const save = async () => {
 		setError(null);
-		if (whenType === "once" && Number.isNaN(new Date(at).getTime())) return setError("Choose the date and time to run it.");
+		if (whenType === "once" && Number.isNaN(new Date(at).getTime())) return setError(t("schedules.needDate"));
 		setBusy(true);
 		try {
 			const whenBody =
@@ -271,36 +295,36 @@ function ScheduleDialog({ task, serverName, serverNames, onClose, onSaved }) {
 
 	return (
 		<Dialog open onClose={busy ? undefined : onClose} fullWidth maxWidth="sm">
-			<DialogTitle>{isNew ? "Add a schedule" : "Edit schedule"}</DialogTitle>
+			<DialogTitle>{isNew ? t("schedules.add") : t("schedules.editTitle")}</DialogTitle>
 			<DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: "16px !important" }}>
 				{error && <Alert severity="error">{error}</Alert>}
 				<Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
 					<TipRow id="server.schedule.kind" sx={{ flex: "1 1 200px" }}>
-						<TextField select fullWidth size="small" label="What to do" value={kind} onChange={(e) => setKind(e.target.value)}>
-							{Object.entries(KIND_LABELS).map(([value, text]) => (
+						<TextField select fullWidth size="small" label={t("schedules.whatToDo")} value={kind} onChange={(e) => setKind(e.target.value)}>
+							{KIND_VALUES.map((value) => (
 								<MenuItem key={value} value={value}>
-									{text}
+									{kindLabel(value)}
 								</MenuItem>
 							))}
 						</TextField>
 					</TipRow>
 					<TipRow id="server.schedule.name" sx={{ flex: "2 1 200px" }}>
-						<TextField fullWidth size="small" label="Name (optional)" value={name} onChange={(e) => setName(e.target.value)} />
+						<TextField fullWidth size="small" label={t("schedules.nameOptional")} value={name} onChange={(e) => setName(e.target.value)} />
 					</TipRow>
 				</Box>
 
 				<TipRow id="server.schedule.when">
-					<TextField select fullWidth size="small" label="When" value={whenType} onChange={(e) => setWhenType(e.target.value)}>
-						<MenuItem value="daily">At a time of day</MenuItem>
-						<MenuItem value="interval">Every so many hours</MenuItem>
-						<MenuItem value="once">Once</MenuItem>
+					<TextField select fullWidth size="small" label={t("schedules.when")} value={whenType} onChange={(e) => setWhenType(e.target.value)}>
+						<MenuItem value="daily">{t("schedules.whenDaily")}</MenuItem>
+						<MenuItem value="interval">{t("schedules.whenInterval")}</MenuItem>
+						<MenuItem value="once">{t("schedules.whenOnce")}</MenuItem>
 					</TextField>
 				</TipRow>
 				{whenType === "daily" && (
 					<>
-						<TextField size="small" type="time" label="Time (this PC's clock)" value={time} onChange={(e) => setTime(e.target.value)} InputLabelProps={{ shrink: true }} sx={{ width: 220, maxWidth: "100%" }} />
+						<TextField size="small" type="time" label={t("schedules.timeLabel")} value={time} onChange={(e) => setTime(e.target.value)} InputLabelProps={{ shrink: true }} sx={{ width: 220, maxWidth: "100%" }} />
 						<ToggleButtonGroup size="small" value={days} onChange={(_, v) => v.length > 0 && setDays(v)} sx={{ flexWrap: "wrap" }}>
-							{DAYS.map((d, i) => (
+							{dayNames().map((d, i) => (
 								<ToggleButton key={d} value={i} sx={{ px: 1.5 }}>
 									{d}
 								</ToggleButton>
@@ -308,30 +332,30 @@ function ScheduleDialog({ task, serverName, serverNames, onClose, onSaved }) {
 						</ToggleButtonGroup>
 					</>
 				)}
-				{whenType === "interval" && <TextField size="small" type="number" label="Every (hours)" value={every} onChange={(e) => setEvery(e.target.value)} inputProps={{ min: 0.1, step: 0.5 }} sx={{ width: 200, maxWidth: "100%" }} />}
-				{whenType === "once" && <TextField size="small" type="datetime-local" label="Date and time" value={at} onChange={(e) => setAt(e.target.value)} InputLabelProps={{ shrink: true }} sx={{ width: 260, maxWidth: "100%" }} />}
+				{whenType === "interval" && <TextField size="small" type="number" label={t("schedules.everyHoursLabel")} value={every} onChange={(e) => setEvery(e.target.value)} inputProps={{ min: 0.1, step: 0.5 }} sx={{ width: 200, maxWidth: "100%" }} />}
+				{whenType === "once" && <TextField size="small" type="datetime-local" label={t("schedules.dateTime")} value={at} onChange={(e) => setAt(e.target.value)} InputLabelProps={{ shrink: true }} sx={{ width: 260, maxWidth: "100%" }} />}
 
 				{(kind === "restart" || kind === "update") && (
 					<TipRow id="server.schedule.warn">
-						<TextField fullWidth size="small" label="Warn players this many minutes before" value={warn} placeholder="10, 5, 1" onChange={(e) => setWarn(e.target.value)} />
+						<TextField fullWidth size="small" label={t("schedules.warnLabel")} value={warn} placeholder="10, 5, 1" onChange={(e) => setWarn(e.target.value)} />
 					</TipRow>
 				)}
 				{kind === "announce" && (
 					<TipRow id="server.schedule.messages">
-						<TextField fullWidth size="small" multiline minRows={3} label="Messages (one per line)" value={messages} onChange={(e) => setMessages(e.target.value)} />
+						<TextField fullWidth size="small" multiline minRows={3} label={t("schedules.messagesLabel")} value={messages} onChange={(e) => setMessages(e.target.value)} />
 					</TipRow>
 				)}
 				{kind === "command" && (
 					<TipRow id="server.schedule.command">
-						<TextField fullWidth size="small" label="Console command" value={command} onChange={(e) => setCommand(e.target.value)} />
+						<TextField fullWidth size="small" label={t("schedules.kind.command")} value={command} onChange={(e) => setCommand(e.target.value)} />
 					</TipRow>
 				)}
 				{kind === "backup" && (
 					<TipRow id="server.backup.mode">
-						<TextField select fullWidth size="small" label="While it's running" value={mode} onChange={(e) => setMode(e.target.value)}>
-							<MenuItem value="">Use the server's backup setting</MenuItem>
-							<MenuItem value="stop">Stop it for the copy</MenuItem>
-							<MenuItem value="live">Keep it running</MenuItem>
+						<TextField select fullWidth size="small" label={t("common.whileRunning")} value={mode} onChange={(e) => setMode(e.target.value)}>
+							<MenuItem value="">{t("schedules.useBackupSetting")}</MenuItem>
+							<MenuItem value="stop">{t("schedules.stopCopy")}</MenuItem>
+							<MenuItem value="live">{t("schedules.keepRunning")}</MenuItem>
 						</TextField>
 					</TipRow>
 				)}
@@ -340,7 +364,7 @@ function ScheduleDialog({ task, serverName, serverNames, onClose, onSaved }) {
 					<Box>
 						<Box sx={{ display: "flex", alignItems: "center" }}>
 							<Typography variant="caption" sx={{ color: "text.secondary" }}>
-								Also run on
+								{t("schedules.alsoRunOn")}
 							</Typography>
 							<InfoTip id="server.schedule.servers" />
 						</Box>
@@ -354,12 +378,12 @@ function ScheduleDialog({ task, serverName, serverNames, onClose, onSaved }) {
 			</DialogContent>
 			<DialogActions>
 				<Button onClick={onClose} disabled={busy}>
-					Cancel
+					{t("common.cancel")}
 				</Button>
 				<Button variant="contained" onClick={save} disabled={busy}>
-					Save
-				</Button>
-			</DialogActions>
+					{t("common.save")}
+</Button>
+</DialogActions>
 		</Dialog>
 	);
 }

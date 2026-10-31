@@ -16,6 +16,7 @@ import { alpha } from "@mui/material/styles";
 import { ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
 import { api } from "../api/client";
 import { getGameInfo } from "../gameCatalog";
+import { t, useT, errorText } from "../i18n";
 import InfoTip from "./InfoTip";
 import TipRow from "./settings/TipRow";
 import SectionCard from "./ui/SectionCard";
@@ -24,11 +25,11 @@ import SectionCard from "./ui/SectionCard";
 // what the dashboard actually draws: every instance of a type shares one card
 // and one banner.
 
-const MODE_LABELS = {
-	auto: "Steam artwork (automatic)",
-	color: "Solid colour",
-	image: "My own image",
-};
+const modeLabels = () => ({
+	auto: t("appearance.modeAuto"),
+	color: t("appearance.modeColor"),
+	image: t("appearance.modeImage"),
+});
 
 function Preview({ type, entry }) {
 	const { title, banner, gradient } = getGameInfo(type, entry);
@@ -70,6 +71,7 @@ function Preview({ type, entry }) {
 }
 
 function TypeRow({ type, entry, recommended, onChanged }) {
+	useT();
 	const [busy, setBusy] = React.useState(false);
 	const [error, setError] = React.useState(null);
 	const [notes, setNotes] = React.useState([]);
@@ -88,7 +90,7 @@ function TypeRow({ type, entry, recommended, onChanged }) {
 			if (updated) onChanged(type, updated);
 			if (updated?.notes) setNotes(updated.notes);
 		} catch (e) {
-			setError(e.message);
+			setError(errorText(e));
 		} finally {
 			setBusy(false);
 		}
@@ -124,13 +126,13 @@ function TypeRow({ type, entry, recommended, onChanged }) {
 					{error && <Alert severity="error">{error}</Alert>}
 					{notes.length > 0 && (
 						<Alert severity="info">
-							Saved — {notes.join(" ")}
+							{t("appearance.saved", { notes: notes.join(" ") })}
 						</Alert>
 					)}
 
 					<TipRow info="appearance.banner" sx={{ maxWidth: 380 }}>
-						<TextField select fullWidth size="small" label="Banner" value={mode} disabled={busy} onChange={(e) => patch({ mode: e.target.value })}>
-							{Object.entries(MODE_LABELS).map(([value, label]) => (
+						<TextField select fullWidth size="small" label={t("appearance.banner")} value={mode} disabled={busy} onChange={(e) => patch({ mode: e.target.value })}>
+							{Object.entries(modeLabels()).map(([value, label]) => (
 								<MenuItem key={value} value={value}>
 									{label}
 								</MenuItem>
@@ -145,8 +147,8 @@ function TypeRow({ type, entry, recommended, onChanged }) {
 									<TextField
 										size="small"
 										fullWidth
-										label="Steam app ID"
-										placeholder="Found automatically"
+										label={t("appearance.steamAppId")}
+										placeholder={t("appearance.foundAutomatically")}
 										value={appId}
 										disabled={busy}
 										onChange={(e) => setAppId(e.target.value)}
@@ -161,17 +163,15 @@ function TypeRow({ type, entry, recommended, onChanged }) {
 									sx={{ height: 40 }}
 									onClick={() => run(() => api.post(`/api/appearance/${type}/refetch`))}
 								>
-									Fetch again
+									{t("appearance.fetchAgain")}
 								</Button>
 								<Button size="small" disabled={busy} sx={{ height: 40 }} onClick={lookUpCandidates}>
-									What did it find?
+									{t("appearance.whatFound")}
 								</Button>
 							</Box>
 							{candidates && (
 								<Typography variant="caption" sx={{ color: "text.secondary" }}>
-									{candidates.length === 0
-										? "No Steam app ID could be worked out for this type — it probably isn't a Steam game."
-										: `Will try, in order: ${candidates.join(", ")}`}
+									{candidates.length === 0 ? t("appearance.noSteamId") : t("appearance.willTry", { list: candidates.join(", ") })}
 								</Typography>
 							)}
 						</Box>
@@ -184,7 +184,7 @@ function TypeRow({ type, entry, recommended, onChanged }) {
 									fullWidth
 									size="small"
 									type="color"
-									label="Colour"
+									label={t("appearance.colour")}
 									value={entry.color ?? "#2f7a3f"}
 									disabled={busy}
 									onChange={(e) => patch({ color: e.target.value })}
@@ -195,7 +195,7 @@ function TypeRow({ type, entry, recommended, onChanged }) {
 									fullWidth
 									size="small"
 									type="color"
-									label="Fades to"
+									label={t("appearance.fadesTo")}
 									value={entry.color2 ?? entry.color ?? "#1f4d2c"}
 									disabled={busy}
 									onChange={(e) => patch({ color2: e.target.value })}
@@ -213,10 +213,10 @@ function TypeRow({ type, entry, recommended, onChanged }) {
 									disabled={busy}
 									onClick={() => fileInput.current?.click()}
 								>
-									{entry.image ? "Replace image" : "Choose image"}
+									{entry.image ? t("appearance.replaceImage") : t("appearance.chooseImage")}
 								</Button>
 								<InfoTip id="appearance.image" sx={{ ml: -0.5 }} />
-								<Chip size="small" variant="outlined" label={`Ideal: ${recommended.width}x${recommended.height}`} />
+								<Chip size="small" variant="outlined" label={t("appearance.ideal", { width: recommended.width, height: recommended.height })} />
 								{entry.image && (
 									<>
 										<Chip
@@ -229,13 +229,13 @@ function TypeRow({ type, entry, recommended, onChanged }) {
 											disabled={busy}
 											onClick={() => run(() => api.del(`/api/appearance/${type}/image`))}
 										>
-											Remove
+											{t("common.remove")}
 										</Button>
 									</>
 								)}
 								{!entry.image && (
 									<Typography variant="caption" sx={{ color: "warning.main" }}>
-										No image chosen yet — the card is showing its colour.
+										{t("appearance.noImage")}
 									</Typography>
 								)}
 							</Box>
@@ -257,11 +257,13 @@ function TypeRow({ type, entry, recommended, onChanged }) {
 }
 
 function AppearanceSettings() {
+	// Re-renders this section when the language changes, so the t() text below switches with it.
+	useT();
 	const [data, setData] = React.useState(null);
 	const [error, setError] = React.useState(null);
 
 	React.useEffect(() => {
-		api.get("/api/appearance").then(setData, (e) => setError(e.message));
+		api.get("/api/appearance").then(setData, (e) => setError(errorText(e)));
 	}, []);
 
 	const onChanged = (type, updated) =>
@@ -276,17 +278,17 @@ function AppearanceSettings() {
 		<SectionCard
 			title={
 				<Box component="span" sx={{ display: "inline-flex", alignItems: "center" }}>
-					Appearance
+					{t("common.appearance")}
 					<InfoTip id="card.appearance" />
 				</Box>
 			}
 			// Unlike the boxes above, nothing here waits for the Save button, so it says so.
-			actions={<Chip size="small" color="success" variant="outlined" label="Applies straight away" />}
+			actions={<Chip size="small" color="success" variant="outlined" label={t("appearance.appliesNow")} />}
 		>
 			<Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
 				{types.length === 0 && (
 					<Typography variant="body2" sx={{ color: "text.secondary" }}>
-						Nothing to style yet — add a server first.
+						{t("appearance.nothingToStyle")}
 					</Typography>
 				)}
 				{types.map((type) => (

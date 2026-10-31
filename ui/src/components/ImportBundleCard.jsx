@@ -15,17 +15,19 @@ import {
 	portProblems,
 } from "../utils/migrate";
 import SectionCard from "./ui/SectionCard";
+import { t, useT } from "../i18n";
 
 // A port's name in plain words: "port" is the game port, "queryPort" is the query port.
 function portLabel(key) {
 	const words = key.replace(/port$/i, "").replace(/([A-Z])/g, " $1").trim().toLowerCase();
-	return `${words ? words.charAt(0).toUpperCase() + words.slice(1) : "Game"} port`;
+	return words ? t("importBundle.namedPort", { name: words.charAt(0).toUpperCase() + words.slice(1) }) : t("importBundle.gamePort");
 }
 
 const isPort = (v) => Number.isInteger(v) && v >= 1 && v <= 65535;
 
 /** Brings a server over from another PC: choose its file, check what is in it, then import it as a new server. Only admins reach this, since the create page is admin-only. */
 function ImportBundleCard({ onOpen }) {
+	useT();
 	const fileRef = React.useRef(null);
 	const [pathText, setPathText] = React.useState("");
 	const [uploading, setUploading] = React.useState(false);
@@ -51,7 +53,7 @@ function ImportBundleCard({ onOpen }) {
 			} catch (e) {
 				// The panel forgets a job it restarted in the middle of; without this the bar would run forever.
 				if (e?.status === 404) {
-					setJob((j) => (j?.id === jobId ? { ...j, status: "failed", code: "import_failed", error: "The panel lost track of this import (it may have restarted). Check the server list before trying again." } : j));
+					setJob((j) => (j?.id === jobId ? { ...j, status: "failed", code: "import_failed", error: t("importBundle.lostTrack") } : j));
 				}
 				// Any other failure: try again next beat.
 			}
@@ -134,9 +136,9 @@ function ImportBundleCard({ onOpen }) {
 	const jobWarnings = Array.isArray(job?.warnings) ? job.warnings.filter((w) => typeof w === "string" && w.trim() !== "") : [];
 
 	return (
-		<SectionCard title="Import a server file" subtitle="Bring a server over from another PC" icon={<ImportIcon />}>
+		<SectionCard title={t("importBundle.title")} subtitle={t("importBundle.subtitle")} icon={<ImportIcon />}>
 			<Typography variant="caption" sx={{ display: "block", color: "warning.main", mb: 2 }}>
-				Only import files you trust. A server file contains a start script that will run on this PC.
+				{t("importBundle.trustWarning")}
 			</Typography>
 
 			{!plan && !job && (
@@ -159,27 +161,27 @@ function ImportBundleCard({ onOpen }) {
 							onClick={() => fileRef.current?.click()}
 							disabled={busy}
 						>
-							{uploading ? "Uploading..." : "Choose file"}
+							{uploading ? t("importBundle.uploading") : t("importBundle.chooseFile")}
 						</Button>
 					</Box>
 
 					<Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", alignItems: "flex-start", mt: 2 }}>
 						<TextField
 							size="small"
-							label="Or the full path of a file on this PC"
+							label={t("importBundle.pathLabel")}
 							value={pathText}
 							onChange={(e) => setPathText(e.target.value)}
 							disabled={busy}
 							sx={{ flex: 1, minWidth: 240 }}
 						/>
 						<Button variant="outlined" onClick={checkPath} disabled={busy || pathText.trim() === ""}>
-							Check file
+							{t("importBundle.checkFile")}
 						</Button>
 					</Box>
 
 					{planning && (
 						<Box sx={{ mt: 2 }}>
-							<Typography variant="body2">Checking the file…</Typography>
+							<Typography variant="body2">{t("importBundle.checking")}</Typography>
 							<LinearProgress sx={{ mt: 1 }} />
 						</Box>
 					)}
@@ -207,12 +209,12 @@ function ImportBundleCard({ onOpen }) {
 						</Box>
 					)}
 
-					<TextField fullWidth label="Server name" value={name} onChange={(e) => setName(e.target.value)} sx={{ mt: 2.5 }} />
+					<TextField fullWidth label={t("importBundle.serverName")} value={name} onChange={(e) => setName(e.target.value)} sx={{ mt: 2.5 }} />
 
 					{Object.keys(ports).length > 0 && (
 						<>
 							<Typography variant="body2" sx={{ mt: 2.5, mb: 1 }}>
-								Network ports. The panel picked free ones. Change them only if you need to.
+								{t("importBundle.portsIntro")}
 							</Typography>
 							<Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(auto-fit, minmax(170px, 1fr))" }, gap: 2 }}>
 								{Object.keys(ports).map((key) => (
@@ -249,10 +251,10 @@ function ImportBundleCard({ onOpen }) {
 							onClick={startImport}
 							disabled={starting || importing || problems.length > 0 || name.trim() === ""}
 						>
-							{starting ? "Starting..." : "Import server"}
+							{starting ? t("importBundle.starting") : t("importBundle.importServer")}
 						</Button>
 						<Button variant="outlined" onClick={reset} disabled={starting}>
-							Cancel
+							{t("common.cancel")}
 						</Button>
 					</Box>
 				</Box>
@@ -272,7 +274,7 @@ function ImportBundleCard({ onOpen }) {
 							action={
 								job.server ? (
 									<Button color="inherit" size="small" onClick={() => onOpen?.(job.server)}>
-										Open {job.server}
+										{t("importBundle.open", { name: job.server })}
 									</Button>
 								) : undefined
 							}
@@ -292,7 +294,7 @@ function ImportBundleCard({ onOpen }) {
 					{job.status === "failed" && <Alert severity="error">{importSummary(job)}</Alert>}
 					{!importing && (
 						<Button variant="outlined" onClick={reset} sx={{ mt: 2 }}>
-							Import another file
+							{t("importBundle.another")}
 						</Button>
 					)}
 				</Box>

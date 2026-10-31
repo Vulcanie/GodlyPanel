@@ -2,6 +2,7 @@ import React from "react";
 import { Alert, Box, Button, TextField } from "@mui/material";
 import { api } from "../api/client";
 import { useToast } from "../ToastContext";
+import { t, useT } from "../i18n";
 
 /**
  * The text a server shows as its "Session" on the dashboard and in Discord. Left blank it is automatic: the public address
@@ -9,6 +10,7 @@ import { useToast } from "../ToastContext";
  * doesn't rename the server inside the game. Administrators only.
  */
 function SessionEditor({ serverName, status }) {
+	useT();
 	const toast = useToast();
 	const automatic = status?.joinAddress ?? "";
 	const fromStatus = status?.sessionLabel ?? "";
@@ -34,7 +36,7 @@ function SessionEditor({ serverName, status }) {
 		try {
 			const r = await api.put(`/api/server/${encodeURIComponent(serverName)}/session`, { sessionLabel: value });
 			setSaved(r.sessionLabel ?? "");
-			toast(r.sessionLabel ? "Session label saved." : "The session label is automatic again.");
+			toast(r.sessionLabel ? t("session.saved") : t("session.automatic"));
 		} catch (e) {
 			setError(e.message);
 		} finally {
@@ -48,17 +50,17 @@ function SessionEditor({ serverName, status }) {
 				size="small"
 				variant="standard"
 				value={draft}
-				placeholder={automatic ? `${automatic} (automatic)` : "automatic: set the public address under Settings → Network"}
+				placeholder={automatic ? t("session.automaticAddr", { address: automatic }) : t("session.placeholder")}
 				onChange={(e) => setDraft(e.target.value)}
 				onBlur={() => save(draft)}
 				onKeyDown={(e) => e.key === "Enter" && save(draft)}
 				disabled={saving}
-				inputProps={{ "aria-label": "Session", maxLength: 100 }}
+				inputProps={{ "aria-label": t("session.label"), maxLength: 100 }}
 				sx={{ minWidth: { xs: 0, sm: 280 }, flex: { xs: "1 1 100%", sm: "0 1 auto" } }}
 			/>
 			{stored && (
 				<Button size="small" onClick={() => save("")} disabled={saving}>
-					Use automatic{automatic ? ` (${automatic})` : ""}
+					{automatic ? t("session.useAutoAddr", { address: automatic }) : t("session.useAuto")}
 				</Button>
 			)}
 			{error && (

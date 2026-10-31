@@ -22,17 +22,20 @@ import {
 	Typography,
 } from "@mui/material";
 import { api } from "../api/client";
+import { t, useT, errorText } from "../i18n";
+import { rich } from "../i18n/rich";
 import CommunityGuide from "./CommunityGuide";
 import InfoTip from "./InfoTip";
 import TipRow from "./settings/TipRow";
 import SectionCard from "./ui/SectionCard";
 
-const CHIP = {
-	off: { color: "default", label: "Off" },
-	starting: { color: "info", label: "Starting…" },
-	connected: { color: "success", label: "On" },
-	error: { color: "error", label: "Needs attention" },
-};
+const chipFor = (state) =>
+	({
+		off: { color: "default", label: t("common.off") },
+		starting: { color: "info", label: t("community.starting") },
+		connected: { color: "success", label: t("common.on") },
+		error: { color: "error", label: t("common.needsAttention") },
+	})[state];
 
 function stateOf(status) {
 	if (!status.enabled) return "off";
@@ -46,6 +49,8 @@ function stateOf(status) {
  * agreed to, and everything is changed here rather than in files.
  */
 function CommunityViewCard() {
+	// Re-renders this card when the language changes, so the t() text below switches with it.
+	useT();
 	const [status, setStatus] = React.useState(null);
 	const [error, setError] = React.useState(null);
 	const [wizard, setWizard] = React.useState(false);
@@ -54,7 +59,7 @@ function CommunityViewCard() {
 	const [guide, setGuide] = React.useState(false);
 	const [confirmStaff, setConfirmStaff] = React.useState(false);
 
-	const load = React.useCallback(() => api.get("/api/community").then(setStatus).catch((e) => setError(e.message)), []);
+	const load = React.useCallback(() => api.get("/api/community").then(setStatus).catch((e) => setError(errorText(e))), []);
 	React.useEffect(() => {
 		load();
 		const timer = setInterval(load, 3000);
@@ -69,7 +74,7 @@ function CommunityViewCard() {
 		try {
 			setStatus(await api.post(`/api/community/${on ? "enable" : "disable"}`));
 		} catch (e) {
-			setError(e.message);
+			setError(errorText(e));
 		}
 	};
 	const setStaff = async (on) => {
@@ -78,7 +83,7 @@ function CommunityViewCard() {
 		try {
 			setStatus(await api.put("/api/community", { staffSignIn: on }));
 		} catch (e) {
-			setError(e.message);
+			setError(errorText(e));
 		}
 	};
 	const copy = () =>
@@ -86,29 +91,29 @@ function CommunityViewCard() {
 			if (result === "Copied!") {
 				setCopied(true);
 				setTimeout(() => setCopied(false), 2000);
-			} else setError("Couldn't copy to the clipboard. Select the address and copy it yourself.");
+			} else setError(t("community.copyAddressFailed"));
 		});
 
 	return (
 		<SectionCard
 			title={
 				<Box component="span" sx={{ display: "inline-flex", alignItems: "center" }}>
-					Community view (a public address)
+					{t("community.view.title")}
 					<InfoTip id="card.communityView" />
 				</Box>
 			}
-			actions={<Chip size="small" color={CHIP[state].color} label={CHIP[state].label} data-testid="community-view-state" />}
+			actions={<Chip size="small" color={chipFor(state).color} label={chipFor(state).label} data-testid="community-view-state" />}
 		>
 			<TipRow info="community.staffSignIn" center sx={{ mb: 1.5 }}>
 				<FormControlLabel
 					sx={{ ml: 0, mr: 0 }}
 					control={<Switch checked={status.staffSignIn} onChange={(e) => (e.target.checked ? setConfirmStaff(true) : setStaff(false))} inputProps={{ "data-testid": "community-staff-switch" }} />}
-					label="Let administrators and moderators sign in here too (for staff who aren't on your network)"
+					label={t("community.staffSwitch")}
 				/>
 			</TipRow>
 			{status.staffSignIn && (
 				<Alert severity="warning" sx={{ mb: 1.5 }}>
-					Staff can use the whole panel through this address, with the same powers as at home. Anyone on the internet can reach its sign-in page, so give staff long, unique passwords. After five wrong guesses the page locks for ten minutes (your own sign-in at home is not affected), and every staff sign-in from outside is recorded in Activity.
+					{t("community.staffWarning")}
 				</Alert>
 			)}
 
@@ -130,12 +135,12 @@ function CommunityViewCard() {
 
 			{state === "off" && (
 				<Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-				<Button variant="contained" size="small" onClick={() => setWizard(true)}>
-					{status.tokenSaved || status.hostname || status.existing ? "Change settings" : "Set up"}
-				</Button>
-				<Button size="small" onClick={() => setGuide(true)}>
-					Read the guide
-				</Button>
+					<Button variant="contained" size="small" onClick={() => setWizard(true)}>
+						{status.tokenSaved || status.hostname || status.existing ? t("community.changeSettings") : t("community.setUp")}
+					</Button>
+					<Button size="small" onClick={() => setGuide(true)}>
+						{t("community.readGuide")}
+					</Button>
 				</Box>
 			)}
 
@@ -147,34 +152,34 @@ function CommunityViewCard() {
 								{status.publicUrl}
 							</Typography>
 							<Button size="small" onClick={copy}>
-								{copied ? "Copied" : "Copy"}
+								{copied ? t("common.copied") : t("common.copy")}
 							</Button>
 						</Box>
 					) : (
 						<Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
 							<CircularProgress size={16} />
-							<Typography variant="body2">Waiting for Cloudflare to give out the address…</Typography>
+							<Typography variant="body2">{t("community.waitingAddress")}</Typography>
 						</Box>
 					)}
 					{status.mode === "quick" && (
 						<Typography variant="caption" sx={{ display: "block", color: "text.secondary", mb: 1 }}>
-							This is a temporary address: it changes every time the view starts (and when the panel restarts), and the page refreshes every few seconds instead of live. For a permanent address with live updates, set up your own tunnel.
+							{t("community.tempAddress")}
 						</Typography>
 					)}
 					<Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
 						<Button size="small" color="warning" variant="outlined" onClick={() => toggle(false)}>
-							Turn off
+							{t("community.turnOff")}
 						</Button>
 						<Button size="small" onClick={() => setGuide(true)}>
-							Guide
+							{t("community.guideBtn")}
 						</Button>
 						<Button size="small" onClick={() => setShowLog((v) => !v)}>
-							{showLog ? "Hide details" : "Details"}
+							{showLog ? t("community.hideDetails") : t("community.details")}
 						</Button>
 					</Box>
 					{showLog && (
 						<Box sx={{ mt: 1.5, p: 1.25, borderRadius: 2, bgcolor: (t) => t.custom.hover, fontFamily: (t) => t.custom.mono, fontSize: 12, maxHeight: 200, overflow: "auto", whiteSpace: "pre-wrap", wordBreak: "break-all" }}>
-							{`Small server: 127.0.0.1:${status.listener.port ?? status.port}\nTunnel: ${status.tunnel.status}${status.tunnel.restarts ? `, restarted ${status.tunnel.restarts}×` : ""}\n\n`}
+							{`${t("community.smallServer", { address: `127.0.0.1:${status.listener.port ?? status.port}` })}\n${t("community.tunnelStatus", { status: status.tunnel.status })}${status.tunnel.restarts ? t("community.restarts", { count: status.tunnel.restarts }) : ""}\n\n`}
 							{status.tunnel.lines.join("\n")}
 						</Box>
 					)}
@@ -183,19 +188,17 @@ function CommunityViewCard() {
 
 			<SetupDialog open={wizard} onClose={() => setWizard(false)} status={status} reload={load} onDone={() => setWizard(false)} onGuide={() => setGuide(true)} />
 			<Dialog open={confirmStaff} onClose={() => setConfirmStaff(false)} maxWidth="xs" fullWidth>
-				<DialogTitle>Let staff sign in from the internet?</DialogTitle>
+				<DialogTitle>{t("community.staffConfirmTitle")}</DialogTitle>
 				<DialogContent>
 					<Typography variant="body2" sx={{ mb: 1 }}>
-						Administrators and moderators will be able to sign in at the public address and use the whole panel from anywhere: start and stop servers, and, for administrators, change settings, manage users and run batch files.
+						{t("community.staffConfirmBody1")}
 					</Typography>
-					<Typography variant="body2">
-						Anyone who learns an administrator's password could then control this PC from the internet. Use long, unique passwords, and switch this off again if you don't need it.
-					</Typography>
+					<Typography variant="body2">{t("community.staffConfirmBody2")}</Typography>
 				</DialogContent>
 				<DialogActions>
-					<Button onClick={() => setConfirmStaff(false)}>Cancel</Button>
+					<Button onClick={() => setConfirmStaff(false)}>{t("common.cancel")}</Button>
 					<Button color="warning" variant="contained" onClick={() => setStaff(true)}>
-						Allow staff sign-in
+						{t("community.allowStaff")}
 					</Button>
 				</DialogActions>
 			</Dialog>
@@ -206,9 +209,8 @@ function CommunityViewCard() {
 
 // ---- the set-up dialog ----------------------------------------------------------------------------------
 
-const STEPS = ["Get cloudflared", "Choose an address", "Turn it on"];
-
 function SetupDialog({ open, onClose, status, reload, onDone, onGuide }) {
+	useT();
 	const [step, setStep] = React.useState(0);
 	const [mode, setMode] = React.useState("quick");
 	const [hostname, setHostname] = React.useState("");
@@ -218,6 +220,7 @@ function SetupDialog({ open, onClose, status, reload, onDone, onGuide }) {
 
 	const found = status.cloudflared.found;
 	const detected = status.detectedTunnel?.credentialsFound ? status.detectedTunnel : null;
+	const steps = [t("community.step.cloudflared"), t("community.step.address"), t("community.step.on")];
 
 	React.useEffect(() => {
 		if (!open) return;
@@ -237,7 +240,7 @@ function SetupDialog({ open, onClose, status, reload, onDone, onGuide }) {
 			await reload();
 			setStep(1);
 		} catch (e) {
-			setError(e.message);
+			setError(errorText(e));
 		} finally {
 			setBusy(false);
 		}
@@ -258,7 +261,7 @@ function SetupDialog({ open, onClose, status, reload, onDone, onGuide }) {
 			await reload();
 			onDone();
 		} catch (e) {
-			setError(e.message);
+			setError(errorText(e));
 		} finally {
 			setBusy(false);
 		}
@@ -266,10 +269,10 @@ function SetupDialog({ open, onClose, status, reload, onDone, onGuide }) {
 
 	return (
 		<Dialog open={open} onClose={busy ? undefined : onClose} maxWidth="sm" fullWidth>
-			<DialogTitle>Set up the community view</DialogTitle>
+			<DialogTitle>{t("community.setup.title")}</DialogTitle>
 			<DialogContent>
 				<Stepper activeStep={step} sx={{ mb: 2.5, mt: 0.5 }}>
-					{STEPS.map((s) => (
+					{steps.map((s) => (
 						<Step key={s}>
 							<StepLabel>{s}</StepLabel>
 						</Step>
@@ -284,10 +287,10 @@ function SetupDialog({ open, onClose, status, reload, onDone, onGuide }) {
 				{step === 0 && (
 					<>
 						<Typography variant="body2" sx={{ mb: 1.5 }}>
-							This uses <b>cloudflared</b>, Cloudflare's own tunnel program. It isn't included with GodlyPanel.
+							{rich(t("community.setup.usesCloudflared"))}
 						</Typography>
 						<Typography variant="body2" sx={{ color: "text.secondary" }}>
-							It will be downloaded once from Cloudflare's official release on GitHub, checked against the checksum GitHub publishes for it, and saved inside GodlyPanel's own data folder. It only runs while the community view is on, and nothing is installed on Windows.
+							{t("community.setup.downloadNote")}
 						</Typography>
 					</>
 				)}
@@ -295,11 +298,11 @@ function SetupDialog({ open, onClose, status, reload, onDone, onGuide }) {
 				{step === 1 && (
 					<>
 						<Typography variant="body2" sx={{ mb: 1 }}>
-							{found ? `cloudflared is ready (${status.cloudflared.source === "panel" ? "downloaded by GodlyPanel" : "found on this PC"}).` : ""} How should people find the page?
+							{found ? (status.cloudflared.source === "panel" ? t("community.setup.readyPanel") : t("community.setup.readyPc")) : ""} {t("community.setup.howFind")}
 						</Typography>
 						<Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
 							<Typography variant="body2" sx={{ fontWeight: 600 }}>
-								Address type
+								{t("community.setup.addressType")}
 							</Typography>
 							<InfoTip id="community.mode" />
 						</Box>
@@ -309,7 +312,7 @@ function SetupDialog({ open, onClose, status, reload, onDone, onGuide }) {
 								control={<Radio />}
 								label={
 									<span>
-										<b>A temporary link</b>, no Cloudflare account needed. A random address that changes each time it starts. Good for trying it out.
+										{rich(t("community.setup.quick"), { strong: <b>{t("community.setup.tempLink")}</b> })}
 									</span>
 								}
 							/>
@@ -319,8 +322,8 @@ function SetupDialog({ open, onClose, status, reload, onDone, onGuide }) {
 								control={<Radio />}
 								label={
 									<span>
-										<b>My own address, using the tunnel already on this PC</b>
-										{detected ? ` ("${detected.tunnel}")` : ": none found on this PC"}
+										<b>{t("community.setup.ownTunnel")}</b>
+										{detected ? t("community.setup.tunnelNamed", { tunnel: detected.tunnel }) : t("community.setup.noTunnel")}
 									</span>
 								}
 							/>
@@ -329,7 +332,8 @@ function SetupDialog({ open, onClose, status, reload, onDone, onGuide }) {
 								control={<Radio />}
 								label={
 									<span>
-										<b>My own address, with a tunnel from the Cloudflare dashboard</b> (a token you paste in)
+										<b>{t("community.setup.ownToken")}</b>
+										{t("community.setup.tokenPaste")}
 									</span>
 								}
 							/>
@@ -338,23 +342,23 @@ function SetupDialog({ open, onClose, status, reload, onDone, onGuide }) {
 						{mode === "existing" && detected && (
 							<Box sx={{ mt: 1.5 }}>
 								<Typography variant="body2" sx={{ color: "text.secondary", mb: 1 }}>
-									The panel runs this tunnel with its own settings file pointing at the community view, and doesn't change yours. {detected.hostnames.length > 0 ? "Its address already points at Cloudflare, so you only choose which one to use." : ""} If another program on this PC is already running the same tunnel, stop it first, or visitors will be split between the two.
+									{t("community.setup.existingInfo", { addressNote: detected.hostnames.length > 0 ? t("community.setup.addressAlready") : "" })}
 								</Typography>
 								<TipRow info="community.tunnelHostname">
 									<TextField
 										size="small"
 										fullWidth
-										label="Public address"
+										label={t("community.setup.publicAddress")}
 										placeholder={detected.hostnames[0] ?? "panel.example.com"}
 										value={hostname}
 										onChange={(e) => setHostname(e.target.value)}
 										// Which names this tunnel already has is information about this PC, not an explanation of the box.
-										helperText={detected.hostnames.length ? `Addresses on this tunnel: ${detected.hostnames.join(", ")}` : undefined}
+										helperText={detected.hostnames.length ? t("community.setup.tunnelAddresses", { list: detected.hostnames.join(", ") }) : undefined}
 									/>
 								</TipRow>
 								{detected.hostnames[0] && !hostname && (
 									<Button size="small" sx={{ mt: 0.5 }} onClick={() => setHostname(detected.hostnames[0])}>
-										Use {detected.hostnames[0]}
+										{t("community.setup.useAddress", { address: detected.hostnames[0] })}
 									</Button>
 								)}
 							</Box>
@@ -363,13 +367,16 @@ function SetupDialog({ open, onClose, status, reload, onDone, onGuide }) {
 						{mode === "token" && (
 							<Box sx={{ mt: 1.5 }}>
 								<Typography variant="body2" sx={{ color: "text.secondary", mb: 1 }}>
-									In the Cloudflare dashboard open <i>Zero Trust → Networks → Tunnels</i>, create a tunnel (type <i>Cloudflared</i>), and copy its token. Under <i>Public Hostname</i> add your address with the service <code>HTTP</code> and URL <code>localhost:{status.port}</code>. Then paste the token and the address here.{" "}
-									<Link href="https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/get-started/create-remote-tunnel/" target="_blank" rel="noreferrer">
-										Cloudflare's guide
-									</Link>
+									{rich(t("community.setup.tokenIntro", { port: status.port }), {
+										guide: (
+											<Link href="https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/get-started/create-remote-tunnel/" target="_blank" rel="noreferrer">
+												{t("community.setup.cfGuideLink")}
+											</Link>
+										),
+									})}
 								</Typography>
 								<TipRow info="community.tunnelHostname" sx={{ mb: 1.5 }}>
-									<TextField size="small" fullWidth label="Public address" placeholder="panel.example.com" value={hostname} onChange={(e) => setHostname(e.target.value)} />
+									<TextField size="small" fullWidth label={t("community.setup.publicAddress")} placeholder="panel.example.com" value={hostname} onChange={(e) => setHostname(e.target.value)} />
 								</TipRow>
 								<TipRow info="community.tunnelToken">
 									<TextField
@@ -377,7 +384,7 @@ function SetupDialog({ open, onClose, status, reload, onDone, onGuide }) {
 										fullWidth
 										type="password"
 										autoComplete="off"
-										label={status.tokenSaved ? "Tunnel token (saved; paste to replace)" : "Tunnel token"}
+										label={status.tokenSaved ? t("community.setup.tokenSaved") : t("community.setup.tokenLabel")}
 										value={token}
 										onChange={(e) => setToken(e.target.value)}
 									/>
@@ -389,40 +396,37 @@ function SetupDialog({ open, onClose, status, reload, onDone, onGuide }) {
 
 				{step === 2 && (
 					<Typography variant="body2">
-						{mode === "quick"
-							? "The community view will start now and Cloudflare will give out a temporary address."
-							: `The community view will start now and answer at ${hostname.replace(/^https?:\/\//, "")}.`}{" "}
-						People who open it can sign in as guests (or join with the community code) and look at the dashboard. You can turn it off at any time.
+						{mode === "quick" ? t("community.setup.startQuick") : t("community.setup.startAt", { address: hostname.replace(/^https?:\/\//, "") })} {t("community.setup.startWho")}
 					</Typography>
 				)}
 			</DialogContent>
 			<DialogActions>
 				<Button onClick={onGuide} sx={{ mr: "auto" }}>
-					Read the guide
+					{t("community.readGuide")}
 				</Button>
 				<Button onClick={onClose} disabled={busy}>
-					Cancel
+					{t("common.cancel")}
 				</Button>
 				{step === 0 && (
 					<Button variant="contained" onClick={download} disabled={busy}>
-						{busy ? "Downloading…" : "Download cloudflared"}
+						{busy ? t("community.setup.downloading") : t("community.setup.download")}
 					</Button>
 				)}
 				{step === 1 && (
 					<>
-						{!found && <Button onClick={() => setStep(0)}>Back</Button>}
+						{!found && <Button onClick={() => setStep(0)}>{t("community.back")}</Button>}
 						<Button variant="contained" onClick={() => setStep(2)} disabled={!ready}>
-							Next
+							{t("community.next")}
 						</Button>
 					</>
 				)}
 				{step === 2 && (
 					<>
 						<Button onClick={() => setStep(1)} disabled={busy}>
-							Back
+							{t("community.back")}
 						</Button>
 						<Button variant="contained" onClick={turnOn} disabled={busy}>
-							{busy ? "Starting…" : "Turn it on"}
+							{busy ? t("community.setup.starting") : t("community.turnOn")}
 						</Button>
 					</>
 				)}

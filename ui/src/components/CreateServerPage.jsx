@@ -48,15 +48,18 @@ import { getGameInfo } from "../gameCatalog";
 import { flatWhenDisabled } from "./cardStyles";
 import { useNav } from "../NavContext";
 import { api } from "../api/client";
+import { t, tn, useT, errorText } from "../i18n";
 
-const FIELD_LABELS = {
-	sessionName: "Server / Session Name",
-	serverPassword: "Server Password",
-	adminPassword: "Admin Password (in-game admin rights; must differ from the server password)",
-	rconPassword: "RCON Password",
-	clusterId: "Cluster ID",
-	mods: "Mod IDs (comma-separated, optional)",
-};
+// What each field is called. A label the server sends for a field wins over these.
+function fieldLabel(f) {
+	if (f === "sessionName") return t("create.field.sessionName");
+	if (f === "serverPassword") return t("create.field.serverPassword");
+	if (f === "adminPassword") return t("create.field.adminPassword");
+	if (f === "rconPassword") return t("create.field.rconPassword");
+	if (f === "clusterId") return t("create.field.clusterId");
+	if (f === "mods") return t("create.field.mods");
+	return undefined;
+}
 
 // Which card each field lives in. Anything not listed here goes in "Game settings".
 const BASIC_FIELDS = ["sessionName", "mapCode"];
@@ -71,15 +74,26 @@ const MEMORY_CHOICES = ["2", "3", "4", "6", "8", "10", "12", "16", "24", "32"];
 const POLL_MS = 4000;
 
 // What each stage of a creation job is called to a person, and a line on what is going on.
-const JOB_STAGES = {
-	queued: { label: "Waiting to start" },
-	downloading: { label: "Downloading the server", hint: "Downloading it from GitHub and checking it against the checksum GitHub publishes…" },
-	installing: { label: "Downloading the game", hint: "Installing the server. This can take a while for a large game…" },
-	configuring: { label: "Writing scripts and config", hint: "Writing scripts and config…" },
-	"first-boot": { label: "Starting it once to create its settings", hint: "Booting once to generate default config…" },
-	"resolving-mods": { label: "Finding the mod files", hint: "Resolving mod files via CurseForge…" },
-	"downloading-mods": { label: "Downloading the mods", hint: "Downloading mods. This can take a while for a large pack…" },
-};
+function stageLabel(s) {
+	if (s === "queued") return t("create.stage.queued");
+	if (s === "downloading") return t("create.stage.downloading");
+	if (s === "installing") return t("create.stage.installing");
+	if (s === "configuring") return t("create.stage.configuring");
+	if (s === "first-boot") return t("create.stage.firstBoot");
+	if (s === "resolving-mods") return t("create.stage.resolvingMods");
+	if (s === "downloading-mods") return t("create.stage.downloadingMods");
+	return s;
+}
+
+function stageHint(s) {
+	if (s === "downloading") return t("create.stage.downloadingHint");
+	if (s === "installing") return t("create.stage.installingHint");
+	if (s === "configuring") return t("create.stage.configuringHint");
+	if (s === "first-boot") return t("create.stage.firstBootHint");
+	if (s === "resolving-mods") return t("create.stage.resolvingModsHint");
+	if (s === "downloading-mods") return t("create.stage.downloadingModsHint");
+	return undefined;
+}
 
 // A fresh join password for each new server. This used to default to one fixed
 // value, which would have meant every server anyone created started out with the
@@ -108,8 +122,9 @@ function Art({ type, height, children, sx }) {
 
 /** One game in the picker. The whole card is the button, and the game's name is its heading. */
 function GameCard({ template, onPick }) {
+	useT();
 	// A hint about what choosing it involves, only where it is not the usual one-step setup.
-	const note = template.fields?.includes("uploadId") ? "Needs a modpack zip" : template.sharedInstall ? "Shared install" : template.zipInstall ? "Downloaded from GitHub" : template.webInstall ? "Downloaded from the maker's site" : null;
+	const note = template.fields?.includes("uploadId") ? t("create.needsZip") : template.sharedInstall ? t("create.sharedInstall") : template.zipInstall ? t("create.fromGithub") : template.webInstall ? t("create.fromMaker") : null;
 	return (
 		<ButtonBase
 			onClick={() => onPick(template)}
@@ -143,6 +158,7 @@ function GameCard({ template, onPick }) {
 const gridSx = { display: "grid", gridTemplateColumns: { xs: "repeat(auto-fill, minmax(150px, 1fr))", sm: "repeat(auto-fill, minmax(230px, 1fr))" }, gap: 2 };
 
 function GamePicker({ templates, loadError, onRetry, onPick }) {
+	useT();
 	const [query, setQuery] = React.useState("");
 	const list = Array.isArray(templates) ? templates : null;
 	const shown = React.useMemo(() => {
@@ -155,13 +171,13 @@ function GamePicker({ templates, loadError, onRetry, onPick }) {
 		<>
 			<TextField
 				fullWidth
-				placeholder="Search games"
+				placeholder={t("create.searchGames")}
 				value={query}
 				onChange={(e) => setQuery(e.target.value)}
 				onKeyDown={(e) => e.key === "Enter" && shown.length === 1 && onPick(shown[0])}
 				sx={{ mb: 2.5, maxWidth: 520 }}
 				slotProps={{
-					htmlInput: { "aria-label": "Search games" },
+					htmlInput: { "aria-label": t("create.searchGames") },
 					input: {
 						startAdornment: (
 							<InputAdornment position="start">
@@ -170,7 +186,7 @@ function GamePicker({ templates, loadError, onRetry, onPick }) {
 						),
 						endAdornment: query ? (
 							<InputAdornment position="end">
-								<IconButton size="small" edge="end" aria-label="Clear the game search" onClick={() => setQuery("")}>
+								<IconButton size="small" edge="end" aria-label={t("create.clearGameSearch")} onClick={() => setQuery("")}>
 									<ClearIcon fontSize="small" />
 								</IconButton>
 							</InputAdornment>
@@ -179,7 +195,7 @@ function GamePicker({ templates, loadError, onRetry, onPick }) {
 				}}
 			/>
 			{loadError ? (
-				<Alert severity="error" action={<Button color="inherit" size="small" onClick={onRetry}>Try again</Button>}>
+				<Alert severity="error" action={<Button color="inherit" size="small" onClick={onRetry}>{t("common.tryAgain")}</Button>}>
 					{loadError}
 				</Alert>
 			) : !list ? (
@@ -189,8 +205,8 @@ function GamePicker({ templates, loadError, onRetry, onPick }) {
 					))}
 				</Box>
 			) : shown.length === 0 ? (
-				<EmptyState icon={<GameIcon />} title="No game matches that" action={<Button onClick={() => setQuery("")}>Show all games</Button>}>
-					Try a shorter name. The panel can set up {list.length} games in one go.
+				<EmptyState icon={<GameIcon />} title={t("create.noGame")} action={<Button onClick={() => setQuery("")}>{t("create.showAllGames")}</Button>}>
+					{t("create.noGameBody", { count: list.length })}
 				</EmptyState>
 			) : (
 				<Box sx={gridSx}>
@@ -218,6 +234,7 @@ function Hero({ template, children }) {
 }
 
 function CreateServerPage({ onBack, userRole }) {
+	useT();
 	const { go } = useNav();
 	const [templates, setTemplates] = React.useState(null);
 	const [loadError, setLoadError] = React.useState(null);
@@ -288,7 +305,7 @@ function CreateServerPage({ onBack, userRole }) {
 			};
 			setForm(initial);
 		} catch (e) {
-			if (ticket === pickTicket.current) setSubmitError(`Failed to load defaults: ${e.message}`);
+			if (ticket === pickTicket.current) setSubmitError(t("create.loadDefaultsFailed", { message: errorText(e) }));
 		}
 	};
 
@@ -352,7 +369,7 @@ function CreateServerPage({ onBack, userRole }) {
 				setAskWeb({ ...(selected.webInstall ?? {}), ...(e.details ?? {}) });
 				return;
 			}
-			setSubmitError(e.message);
+			setSubmitError(errorText(e));
 		}
 	};
 
@@ -389,8 +406,8 @@ function CreateServerPage({ onBack, userRole }) {
 			const raw = form[p.key];
 			const n = Number(raw);
 			if (raw === undefined) continue;
-			if (!Number.isInteger(n) || n < 1 || n > 65535) problems[p.key] = "Use a whole number from 1 to 65535.";
-			else if (seen.has(n)) problems[p.key] = `Already used by ${seen.get(n)}.`;
+			if (!Number.isInteger(n) || n < 1 || n > 65535) problems[p.key] = t("create.portRange");
+			else if (seen.has(n)) problems[p.key] = t("create.portUsedBy", { label: seen.get(n) });
 			else seen.set(n, p.label);
 		}
 		return problems;
@@ -400,10 +417,10 @@ function CreateServerPage({ onBack, userRole }) {
 		return (
 			<Box>
 				<Button size="small" startIcon={<ArrowBackIcon />} onClick={onBack}>
-					Back to Dashboard
+					{t("common.backToDashboard")}
 				</Button>
-				<EmptyState icon={<AccessIcon />} title="Only admins can create servers">
-					Ask the person who runs this panel to set a server up for you, or to make you an admin.
+				<EmptyState icon={<AccessIcon />} title={t("create.adminOnly")}>
+					{t("create.adminOnlyBody")}
 				</EmptyState>
 			</Box>
 		);
@@ -411,12 +428,12 @@ function CreateServerPage({ onBack, userRole }) {
 
 	const renderField = (f) => {
 		const meta = selected.fieldMeta?.[f];
-		const label = meta?.label || FIELD_LABELS[f] || f;
+		const label = meta?.label || fieldLabel(f) || f;
 
 		if (f === "mapCode") {
 			if (!selected.mapChoices) return null;
 			return (
-				<TextField key={f} fullWidth select label="Map" value={form.mapCode ?? ""} onChange={(e) => setField("mapCode", e.target.value)}>
+				<TextField key={f} fullWidth select label={t("create.map")} value={form.mapCode ?? ""} onChange={(e) => setField("mapCode", e.target.value)}>
 					{selected.mapChoices.map((m) => (
 						<MenuItem key={m.code} value={m.code}>
 							{m.label}
@@ -458,10 +475,10 @@ function CreateServerPage({ onBack, userRole }) {
 			const current = String(form.maxMemoryGB ?? "");
 			const options = current && !MEMORY_CHOICES.includes(current) ? [...MEMORY_CHOICES, current] : MEMORY_CHOICES;
 			return (
-				<TextField key={f} fullWidth select label={label} value={current} onChange={(e) => setField(f, e.target.value)} helperText="How much of this PC's memory the game may use. Leave some for Windows.">
+				<TextField key={f} fullWidth select label={label} value={current} onChange={(e) => setField(f, e.target.value)} helperText={t("create.memoryHelp")}>
 					{options.map((gb) => (
 						<MenuItem key={gb} value={gb}>
-							{gb} GB
+							{t("create.gb", { gb })}
 						</MenuItem>
 					))}
 				</TextField>
@@ -476,15 +493,15 @@ function CreateServerPage({ onBack, userRole }) {
 				label={label}
 				value={form[f] ?? ""}
 				onChange={(e) => setField(f, e.target.value)}
-				helperText={f === "sessionName" && selected.sessionIsAddress ? (suggested?.publicAddress ? (form.sessionAuto ? "Filled in from the public address (Settings → Network) and the game port; it follows the port until you type here." : "") : "Set the public address under Settings → Network and this fills in by itself.") : undefined}
+				helperText={f === "sessionName" && selected.sessionIsAddress ? (suggested?.publicAddress ? (form.sessionAuto ? t("create.sessionFilled") : "") : t("create.sessionSetAddress")) : undefined}
 				slotProps={
 					reroll
 						? {
 								input: {
 									endAdornment: (
 										<InputAdornment position="end">
-											<Tooltip title="Make a new random one">
-												<IconButton size="small" edge="end" aria-label="New random value" onClick={() => setField(f, randomJoinPassword(reroll))}>
+											<Tooltip title={t("create.newRandom")}>
+												<IconButton size="small" edge="end" aria-label={t("create.newRandomAria")} onClick={() => setField(f, randomJoinPassword(reroll))}>
 													<DiceIcon fontSize="small" />
 												</IconButton>
 											</Tooltip>
@@ -507,15 +524,15 @@ function CreateServerPage({ onBack, userRole }) {
 	const hasPortProblem = Object.keys(portProblems).length > 0;
 	const canCreate = !submitting && !hasPortProblem && !findPortClash(selected?.implicitPorts, form) && Boolean(form.name?.trim()) && !(selected?.requiresEula && !form.eulaAccepted);
 
-	const subtitle = !selected ? "Pick a game. The panel downloads it and sets it up for you." : job ? "Hang tight while it is set up." : "Fill in the details. The defaults are fine for most.";
+	const subtitle = !selected ? t("create.subtitlePick") : job ? t("create.subtitleJob") : t("create.subtitleForm");
 
 	return (
 		<Box>
 			<Button size="small" startIcon={<ArrowBackIcon />} onClick={onBack} sx={{ mb: 1 }}>
-				Back to Dashboard
+				{t("common.backToDashboard")}
 			</Button>
 
-			<PageHeader icon={<CreateIcon />} title="Create a New Server" subtitle={subtitle} />
+			<PageHeader icon={<CreateIcon />} title={t("create.title")} subtitle={subtitle} />
 
 			{!selected ? (
 				<>
@@ -546,7 +563,7 @@ function CreateServerPage({ onBack, userRole }) {
 								{submitError}
 							</Alert>
 							<Button variant="outlined" onClick={chooseAnother}>
-								Choose a different game
+								{t("create.chooseDifferent")}
 							</Button>
 						</>
 					) : (
@@ -558,40 +575,40 @@ function CreateServerPage({ onBack, userRole }) {
 			) : (
 				<Box sx={{ maxWidth: 760 }}>
 					<Hero template={selected}>
-						{selected.sharedInstall && suggested.sharedInstallDir && <Chip size="small" label="Adding to your existing cluster" color="info" />}
+						{selected.sharedInstall && suggested.sharedInstallDir && <Chip size="small" label={t("create.addingCluster")} color="info" />}
 					</Hero>
 
-					<SectionCard title="The basics" subtitle="What it is called, and where it shows up" icon={<ServerIcon />}>
+					<SectionCard title={t("create.sectionBasics")} subtitle={t("create.sectionBasicsSub")} icon={<ServerIcon />}>
 						<Box sx={fieldStack}>
-							<TextField fullWidth label="Server Name (shown on the dashboard)" value={form.name ?? ""} onChange={(e) => setField("name", e.target.value)} />
+							<TextField fullWidth label={t("create.nameLabel")} value={form.name ?? ""} onChange={(e) => setField("name", e.target.value)} />
 							{basics.map(renderField)}
 							{!selected.sessionIsAddress && (
 								<TextField
 									fullWidth
-									label="Session shown on the dashboard and in Discord"
+									label={t("create.sessionLabel")}
 									value={form.sessionLabel ?? ""}
 									onChange={(e) => setField("sessionLabel", e.target.value)}
-									placeholder={suggested?.publicAddress ? "" : "Automatic once the public address is set (Settings → Network)"}
-									helperText={suggested?.publicAddress ? (form.labelAuto ? "Automatic: the public address and the game port, following the port. A label only; the name players see in the game is the one above. Type here to use your own text." : "Your own text. Clear it to go back to automatic.") : "A label only; it doesn't rename the server in the game."}
+									placeholder={suggested?.publicAddress ? "" : t("create.sessionLabelPlaceholder")}
+									helperText={suggested?.publicAddress ? (form.labelAuto ? t("create.sessionLabelAuto") : t("create.sessionLabelOwn")) : t("create.sessionLabelOnly")}
 								/>
 							)}
 						</Box>
 					</SectionCard>
 
-					<SectionCard title="Players and access" subtitle="Who can join, and how many" icon={<AccessIcon />}>
+					<SectionCard title={t("create.sectionAccess")} subtitle={t("create.sectionAccessSub")} icon={<AccessIcon />}>
 						<Box sx={fieldStack}>
 							{access.map(renderField)}
-							<TextField fullWidth label="Max Players (optional)" type="number" value={form.maxPlayers ?? ""} onChange={(e) => setField("maxPlayers", e.target.value)} slotProps={{ htmlInput: { min: 1 } }} />
+							<TextField fullWidth label={t("create.maxPlayers")} type="number" value={form.maxPlayers ?? ""} onChange={(e) => setField("maxPlayers", e.target.value)} slotProps={{ htmlInput: { min: 1 } }} />
 						</Box>
 					</SectionCard>
 
 					{extras.length > 0 && (
-						<SectionCard title="Game settings" icon={<TuneIcon />}>
+						<SectionCard title={t("create.sectionSettings")} icon={<TuneIcon />}>
 							<Box sx={fieldStack}>{extras.map(renderField)}</Box>
 						</SectionCard>
 					)}
 
-					<SectionCard title="Network ports" subtitle="The panel picked free ones. Change them only if you need to." icon={<NetworkIcon />}>
+					<SectionCard title={t("create.sectionPorts")} subtitle={t("create.sectionPortsSub")} icon={<NetworkIcon />}>
 						<Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(auto-fit, minmax(170px, 1fr))" }, gap: 2 }}>
 							{ports.map((p) => (
 								<TextField
@@ -610,20 +627,20 @@ function CreateServerPage({ onBack, userRole }) {
 						<PortsToOpen game={form.port} query={form.queryPort} rcon={form.rconPort} implicit={selected.implicitPorts} gameName={selected.displayName} />
 					</SectionCard>
 
-					<SectionCard title="Where it is installed" icon={<FolderIcon />}>
+					<SectionCard title={t("create.sectionInstall")} icon={<FolderIcon />}>
 						{suggested?.sharedInstallDir ? (
 							<Typography variant="body2" sx={{ color: "text.secondary" }}>
-								Adding to your existing install at {suggested.sharedInstallDir} — no new download.
+								{t("create.sharedDir", { dir: suggested.sharedInstallDir })}
 							</Typography>
 						) : (
 							<FolderField
-								label="Install to"
+								label={t("create.installTo")}
 								value={form.installParent ?? ""}
 								onChange={(v) => setField("installParent", v)}
 								checkUrl="/api/settings/check-folder"
 								checkBody={{ blankUsesConfigured: true }}
-								blankMeans={suggested?.defaultInstallParent ?? "your default server folder"}
-								helperText={`Blank uses ${suggested?.defaultInstallParent ?? "your default server folder"}. The server gets its own subfolder.`}
+								blankMeans={suggested?.defaultInstallParent ?? t("create.defaultServerFolder")}
+								helperText={t("create.installHelp", { folder: suggested?.defaultInstallParent ?? t("create.defaultServerFolder") })}
 							/>
 						)}
 					</SectionCard>
@@ -653,111 +670,111 @@ function CreateServerPage({ onBack, userRole }) {
 						}}
 					>
 						<Button variant="outlined" onClick={chooseAnother} disabled={submitting}>
-							Choose a different game
+							{t("create.chooseDifferent")}
 						</Button>
 						<Button variant="contained" size="large" onClick={() => submit()} disabled={!canCreate} sx={flatWhenDisabled}>
-							{submitting ? "Creating..." : "Create Server"}
+							{submitting ? t("create.creating") : t("create.createServer")}
 						</Button>
 					</Box>
 				</Box>
 			)}
 
 			<Dialog open={askSteamCmd} onClose={() => setAskSteamCmd(false)}>
-				<DialogTitle>Download SteamCMD?</DialogTitle>
+				<DialogTitle>{t("create.askSteamTitle")}</DialogTitle>
 				<DialogContent>
 					<DialogContentText>
-						Games are installed with SteamCMD, Valve's official tool. It isn't included with GodlyPanel, so it will be downloaded once from Valve and kept with your data. Already have a copy? Cancel and point Settings at it instead.
+						{t("create.askSteamBody")}
 					</DialogContentText>
 				</DialogContent>
 				<DialogActions>
-					<Button onClick={() => setAskSteamCmd(false)}>Cancel</Button>
+					<Button onClick={() => setAskSteamCmd(false)}>{t("common.cancel")}</Button>
 					<Button variant="contained" onClick={() => submit({ steamCmd: true })}>
-						Download and continue
+						{t("create.downloadContinue")}
 					</Button>
 				</DialogActions>
 			</Dialog>
 
 			<Dialog open={Boolean(askZip)} onClose={() => setAskZip(null)}>
-				<DialogTitle>Download {selected?.displayName ?? "the server"} from GitHub?</DialogTitle>
+				<DialogTitle>{t("create.askZipTitle", { game: selected?.displayName ?? t("create.theServer") })}</DialogTitle>
 				<DialogContent>
 					<DialogContentText component="div">
 						<Typography variant="body2" sx={{ mb: 1.5 }}>
-							This game is not installed through SteamCMD. The panel will download it from the project's releases on GitHub:
+							{t("create.askZipBody1")}
 						</Typography>
 						<Box component="ul" sx={{ m: 0, mb: 1.5, pl: 2.5 }}>
 							<li>
-								<b>What:</b> {askZip?.asset}
-								{askZip?.tag ? ` (release ${askZip.tag})` : ""}
+								<b>{t("create.what")}</b> {askZip?.asset}
+								{askZip?.tag ? t("create.release", { tag: askZip.tag }) : ""}
 							</li>
 							<li>
-								<b>From:</b> github.com/{askZip?.repo}
+								<b>{t("create.from")}</b> github.com/{askZip?.repo}
 							</li>
 							<li>
-								<b>Size:</b> {askZip?.sizeText ?? "not known yet (GitHub could not be reached just now)"}
+								<b>{t("create.sizeLabel")}</b> {askZip?.sizeText ?? t("create.sizeUnknownGithub")}
 							</li>
 						</Box>
 						<Typography variant="body2">
-							It is fetched over https from GitHub only, checked against the SHA-256 checksum GitHub publishes for it (a download without a matching checksum is thrown away), and unpacked only into this server's own folder. Nothing is downloaded until you press the button.
+							{t("create.askZipBody2")}
 						</Typography>
 					</DialogContentText>
 				</DialogContent>
 				<DialogActions>
-					<Button onClick={() => setAskZip(null)}>Cancel</Button>
+					<Button onClick={() => setAskZip(null)}>{t("common.cancel")}</Button>
 					<Button variant="contained" onClick={() => submit({ zip: true })}>
-						Download and continue
+						{t("create.downloadContinue")}
 					</Button>
 				</DialogActions>
 			</Dialog>
 
 			<Dialog open={Boolean(askWeb)} onClose={() => setAskWeb(null)}>
-				<DialogTitle>Download {selected?.displayName ?? "the server"} from its maker's website?</DialogTitle>
+				<DialogTitle>{t("create.askWebTitle", { game: selected?.displayName ?? t("create.theServer") })}</DialogTitle>
 				<DialogContent>
 					<DialogContentText component="div">
 						<Typography variant="body2" sx={{ mb: 1.5 }}>
-							This game is not installed through SteamCMD. The panel will download the server from the people who make it:
+							{t("create.askWebBody1")}
 						</Typography>
 						<Box component="ul" sx={{ m: 0, mb: 1.5, pl: 2.5 }}>
 							<li>
-								<b>What:</b> {askWeb?.label}
-								{askWeb?.version ? ` (version ${askWeb.version})` : ""}
+								<b>{t("create.what")}</b> {askWeb?.label}
+								{askWeb?.version ? t("create.webVersion", { version: askWeb.version }) : ""}
 							</li>
 							<li>
-								<b>From:</b> {askWeb?.host ?? askWeb?.hosts?.[0]}
+								<b>{t("create.from")}</b> {askWeb?.host ?? askWeb?.hosts?.[0]}
 							</li>
 							<li>
-								<b>Size:</b> {askWeb?.sizeText ?? "not known yet (the site could not be reached just now)"}
+								<b>{t("create.sizeLabel")}</b> {askWeb?.sizeText ?? t("create.sizeUnknownWeb")}
 							</li>
 						</Box>
 						<Typography variant="body2">
 							{askWeb?.checksum
-								? `It is fetched over https from that site only and checked against the ${askWeb.checksum} checksum the maker publishes (a download that doesn't match is thrown away).`
-								: "It is fetched over https from that site only. The maker publishes no checksum for it, so the panel can't check it; it shows the SHA-256 it computed in the install log so you can compare it."}{" "}
-							Nothing is downloaded until you press the button.
+								? t("create.webChecksum", { checksum: askWeb.checksum })
+								: t("create.webNoChecksum")}{" "}
+							{t("create.nothingDownloaded")}
 						</Typography>
 						{askWeb?.extras?.length > 0 && (
 							<>
 								<Typography variant="body2" sx={{ mt: 1.5, mb: 1 }}>
-									It also needs {askWeb.extras.length === 1 ? "one more file" : "more files"} that the download does not include, so the panel fetches {askWeb.extras.length === 1 ? "it" : "them"} for you:
+									{tn("create.extraIntro", askWeb.extras.length)}
 								</Typography>
 								<Box component="ul" sx={{ m: 0, mb: 1.5, pl: 2.5 }}>
 									{askWeb.extras.map((x) => (
 										<li key={x.label}>
-											<b>{x.label}</b> ({x.sizeText}) from {x.host}
-											{x.why ? `: ${x.why}` : ""}
+											<b>{x.label}</b> {t("create.extraFrom", { size: x.sizeText, host: x.host })}
+											{x.why ? t("create.extraWhy", { why: x.why }) : ""}
 										</li>
 									))}
 								</Box>
 								<Typography variant="body2">
-									Each is checked against a checksum built into the panel and must carry a valid {[...new Set(askWeb.extras.map((x) => x.signer))].join(" / ")} signature, or it is thrown away. Nothing is installed on this PC: the panel only takes the needed files out and puts them in the server's own folder. By continuing you accept the licence that comes with {askWeb.extras.length === 1 ? "that file" : "those files"}.
+									{t("create.extraSigned", { signers: [...new Set(askWeb.extras.map((x) => x.signer))].join(" / "), files: tn("create.licenceFiles", askWeb.extras.length) })}
 								</Typography>
 							</>
 						)}
 					</DialogContentText>
 				</DialogContent>
 				<DialogActions>
-					<Button onClick={() => setAskWeb(null)}>Cancel</Button>
+					<Button onClick={() => setAskWeb(null)}>{t("common.cancel")}</Button>
 					<Button variant="contained" onClick={() => submit({ web: true })}>
-						Download and continue
+						{t("create.downloadContinue")}
 					</Button>
 				</DialogActions>
 			</Dialog>
@@ -768,11 +785,11 @@ function CreateServerPage({ onBack, userRole }) {
 /** What is happening while the server is made, and what to do when it is finished or fails. */
 function JobProgress({ job, stages, onBack, onOpen, onTryAgain }) {
 	const running = job.status !== "done" && job.status !== "error";
-	const stageLabel = (s) => JOB_STAGES[s]?.label ?? s;
+	useT();
 	const warnings = Array.isArray(job.warnings) ? job.warnings : [];
 	const finished = stages.filter((s) => s !== job.status);
 	return (
-		<SectionCard title={running ? "Setting up your server" : job.status === "done" ? "All done" : "That didn't work"} icon={job.status === "done" ? <DoneIcon /> : <ServerIcon />} danger={job.status === "error"}>
+		<SectionCard title={running ? t("create.setupTitle") : job.status === "done" ? t("create.doneTitle") : t("create.failedTitle")} icon={job.status === "done" ? <DoneIcon /> : <ServerIcon />} danger={job.status === "error"}>
 			{running && (
 				<Box role="status" aria-live="polite">
 					<LinearProgress sx={{ height: 8, mb: 2 }} />
@@ -780,7 +797,7 @@ function JobProgress({ job, stages, onBack, onOpen, onTryAgain }) {
 						{stageLabel(job.status)}
 					</Typography>
 					<Typography variant="body2" sx={{ color: "text.secondary" }}>
-						{JOB_STAGES[job.status]?.hint ?? `Status: ${job.status}`}
+						{stageHint(job.status) ?? t("create.stage.status", { status: job.status })}
 					</Typography>
 					{finished.length > 0 && (
 						<Box sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 0.5 }}>
@@ -793,37 +810,37 @@ function JobProgress({ job, stages, onBack, onOpen, onTryAgain }) {
 						</Box>
 					)}
 					<Typography variant="caption" sx={{ display: "block", mt: 2, color: "text.secondary" }}>
-						You can leave this page; it carries on in the background and the server appears on the dashboard when it is ready.
+						{t("create.leaveNote")}
 					</Typography>
 				</Box>
 			)}
 			{job.status === "done" && (
 				<>
 					<Alert severity="success">
-						"{job.serverName}" is ready and live on the dashboard now.
+						{t("create.ready", { name: job.serverName })}
 					</Alert>
 					{warnings.length > 0 && (
 						<Alert severity="warning" sx={{ mt: 1 }}>
-							{warnings.length} mod(s) couldn't be downloaded automatically (the author disabled third-party distribution) — add these manually: {warnings.map((w) => w?.projectID ?? words(w)).join(", ")}
+							{t("create.modsWarning", { count: warnings.length, list: warnings.map((w) => w?.projectID ?? words(w)).join(", ") })}
 						</Alert>
 					)}
 				</>
 			)}
-			{job.status === "error" && <Alert severity="error">Creation failed: {words(job.error) || "unknown error"}</Alert>}
+			{job.status === "error" && <Alert severity="error">{t("create.failed", { error: words(job.error) || t("create.unknownError") })}</Alert>}
 			{!running && (
 				<Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", mt: 2.5 }}>
 					{job.status === "done" && onOpen && (
 						<Button variant="contained" endIcon={<OpenIcon />} onClick={onOpen}>
-							Open {job.serverName}
+							{t("create.openServer", { name: job.serverName })}
 						</Button>
 					)}
 					{job.status === "error" && (
 						<Button variant="contained" onClick={onTryAgain}>
-							Go back to the form
+							{t("create.backToForm")}
 						</Button>
 					)}
 					<Button variant={job.status === "error" || (job.status === "done" && onOpen) ? "outlined" : "contained"} onClick={onBack}>
-						Back to Dashboard
+						{t("common.backToDashboard")}
 					</Button>
 				</Box>
 			)}

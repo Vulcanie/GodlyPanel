@@ -1,5 +1,6 @@
 import React from "react";
 import { Alert } from "@mui/material";
+import { t, useT } from "../i18n";
 
 /**
  * The port the game keeps for itself that the query or RCON port was set to, if
@@ -25,6 +26,7 @@ export function findPortClash(implicit = [], { port, queryPort, rconPort } = {})
  */
 // `hideClash`: the editor already lists clashes from its own live check.
 function PortsToOpen({ game, query, rcon, implicit = [], gameName, hideClash = false }) {
+	useT();
 	const gamePort = Number(game);
 	if (implicit.length === 0 || !Number.isInteger(gamePort) || gamePort <= 0) return null;
 
@@ -34,17 +36,9 @@ function PortsToOpen({ game, query, rcon, implicit = [], gameName, hideClash = f
 	if (clash) {
 		return (
 			<Alert severity="error" sx={{ my: 1 }}>
-				{clash.precaution ? (
-					<>
-						Port {gamePort + clash.offset} is right after the game port. {gameName} may use it for itself, so it's
-						kept free. Pick a different query or RCON port.
-					</>
-				) : (
-					<>
-						Port {gamePort + clash.offset} is used by {gameName} itself ({clash.label}), so it can't be used for
-						anything else. Pick a different query or RCON port.
-					</>
-				)}
+				{clash.precaution
+					? t("ports.clashPrecaution", { port: gamePort + clash.offset, game: gameName })
+					: t("ports.clashUsed", { port: gamePort + clash.offset, game: gameName, label: clash.label })}
 			</Alert>
 		);
 	}
@@ -56,15 +50,15 @@ function PortsToOpen({ game, query, rcon, implicit = [], gameName, hideClash = f
 
 	return (
 		<Alert severity="info" sx={{ my: 1 }}>
-			<strong>Open these UDP ports</strong> on your router and Windows Firewall so people can join:{" "}
+			<strong>{t("ports.openUdp")}</strong> {t("ports.openUdpRest")}{" "}
 			<strong>{[...udp].sort((x, y) => x - y).join(", ")}</strong>.
 			{known.map((i) => (
 				<span key={i.offset}>
 					{" "}
-					Port {gamePort + i.offset} is {gameName}'s own ({i.label}); it is chosen for you.
+					{t("ports.ownPort", { port: gamePort + i.offset, game: gameName, label: i.label })}
 				</span>
 			))}
-			{rcon ? " The RCON port only needs to work on this PC." : ""}
+			{rcon ? ` ${t("ports.rconLocal")}` : ""}
 		</Alert>
 	);
 }

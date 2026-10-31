@@ -1,14 +1,25 @@
 import React from "react";
 import { Alert, Box, Chip, Link, Typography } from "@mui/material";
 import { api } from "../api/client";
+import { t, useT } from "../i18n";
+import { rich } from "../i18n/rich";
 import InfoTip from "./InfoTip";
 import SectionCard from "./ui/SectionCard";
 
 const COLORS = { online: "success", connecting: "info", reconnecting: "warning", error: "error", off: "default" };
-const LABELS = { online: "Online", connecting: "Connecting…", reconnecting: "Reconnecting…", error: "Needs attention", off: "Off" };
+
+const statusLabel = (status) =>
+	({
+		online: t("common.online"),
+		connecting: t("discord.connecting"),
+		reconnecting: t("discord.reconnecting"),
+		error: t("common.needsAttention"),
+		off: t("common.off"),
+	})[status] ?? status;
 
 /** Is the Discord bot connected, and the link to invite it. The settings themselves are in the Discord section above. */
 function DiscordBotCard({ applicationId, refreshKey }) {
+	useT();
 	const [state, setState] = React.useState(null);
 
 	React.useEffect(() => {
@@ -29,30 +40,23 @@ function DiscordBotCard({ applicationId, refreshKey }) {
 		<SectionCard
 			title={
 				<Box component="span" sx={{ display: "inline-flex", alignItems: "center" }}>
-					Discord bot
+					{t("discord.botTitle")}
 					<InfoTip id="card.discordBot" />
 				</Box>
 			}
-			actions={<Chip size="small" color={COLORS[state.status] ?? "default"} label={LABELS[state.status] ?? state.status} />}
+			actions={<Chip size="small" color={COLORS[state.status] ?? "default"} label={statusLabel(state.status)} />}
 		>
 			<Box sx={{ display: "flex", alignItems: "baseline", gap: 1, flexWrap: "wrap" }}>
-				{state.user && <Typography variant="body2" sx={{ fontWeight: 600 }}>as {state.user}</Typography>}
+				{state.user && <Typography variant="body2" sx={{ fontWeight: 600 }}>{t("discord.as", { name: state.user })}</Typography>}
 				<Typography variant="body2" sx={{ color: "text.secondary" }}>
 					{state.detail}
 				</Typography>
 			</Box>
 			{state.status === "off" || state.status === "error" ? (
 				<Alert severity="info" sx={{ mt: 1.5 }}>
-					Fill in the bot token, application ID and server ID in the Discord section above, then invite the bot
-					{invite ? (
-						<>
-							{" "}
-							with <Link href={invite} target="_blank" rel="noreferrer">this link</Link>
-						</>
-					) : (
-						" (a link appears here once the application ID is filled in)"
-					)}
-					. Choose an admin role so only those people can start, stop and back up servers; with no role chosen, the bot only shows status.
+					{invite
+						? rich(t("discord.inviteLink"), { link: <Link href={invite} target="_blank" rel="noreferrer">{t("discord.thisLink")}</Link> })
+						: t("discord.inviteNoLink")}
 				</Alert>
 			) : null}
 		</SectionCard>

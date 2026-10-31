@@ -3,6 +3,7 @@ import { Box, Button, TextField, Typography, Chip } from "@mui/material";
 import { api } from "../api/client";
 import InfoTip from "./InfoTip";
 import { formatBytes } from "../utils/format";
+import { t, useT } from "../i18n";
 
 /**
  * A folder path box that says, as you type, whether game servers can actually
@@ -18,13 +19,16 @@ function FolderField({
 	value,
 	onChange,
 	checkUrl,
-	label = "Folder",
-	blankMeans = "the default folder inside the app",
+	label,
+	blankMeans,
 	helperText,
 	info,
 	onCheck,
 	checkBody,
 }) {
+	useT();
+	const labelText = label ?? t("folder.label");
+	const what = blankMeans ?? t("folder.defaultPlace");
 	const [result, setResult] = React.useState(null);
 	const latest = React.useRef(0);
 
@@ -45,11 +49,11 @@ function FolderField({
 	}, [value, checkUrl]);
 
 	const blocked = result && !result.ok;
-	const hint = info ? undefined : (helperText ?? `Blank uses ${blankMeans}.`);
+	const hint = info ? undefined : (helperText ?? t("folder.blankUses", { what }));
 
 	const pick = window.godlyPanel?.pickFolder;
 	const browse = async () => {
-		const chosen = await pick({ title: `Choose: ${label}`, defaultPath: value || undefined });
+		const chosen = await pick({ title: t("folder.chooseTitle", { label: labelText }), defaultPath: value || undefined });
 		if (chosen) onChange(chosen);
 	};
 
@@ -59,8 +63,8 @@ function FolderField({
 				<TextField
 					fullWidth
 					size="small"
-					label={label}
-					placeholder="Leave blank for the default"
+					label={labelText}
+					placeholder={t("folder.placeholder")}
 					value={value}
 					onChange={(e) => onChange(e.target.value)}
 					error={Boolean(blocked)}
@@ -69,7 +73,7 @@ function FolderField({
 				/>
 				{pick && (
 					<Button size="small" variant="outlined" onClick={browse} sx={{ whiteSpace: "nowrap", flexShrink: 0, height: 40 }}>
-						Browse…
+						{t("folder.browse")}
 					</Button>
 				)}
 				{info && <InfoTip id={info} sx={{ mt: 0.75 }} />}
@@ -80,12 +84,12 @@ function FolderField({
 						<Typography variant="caption" sx={{ color: "text.secondary", wordBreak: "break-all", fontFamily: (t) => t.custom.mono }}>
 							{result.resolved}
 						</Typography>
-						{result.insideAppFolder && <Chip size="small" label="Inside the app folder" />}
-						{!result.exists && result.ok && <Chip size="small" label="Will be created" />}
+						{result.insideAppFolder && <Chip size="small" label={t("folder.insideApp")} />}
+						{!result.exists && result.ok && <Chip size="small" label={t("folder.willCreate")} />}
 					</Box>
 					{result.freeBytes != null && (
 						<Typography variant="caption" sx={{ color: "text.secondary" }}>
-							{formatBytes(result.freeBytes)} free on this drive
+							{t("folder.freeOnDrive", { size: formatBytes(result.freeBytes) })}
 						</Typography>
 					)}
 					{result.warnings.map((w) => (

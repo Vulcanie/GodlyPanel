@@ -2,6 +2,7 @@ import React from "react";
 import { Alert, Box, Button, Chip, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Tooltip, Typography } from "@mui/material";
 import { api } from "../api/client";
 import InfoTip from "./InfoTip";
+import { t, useT, errorText } from "../i18n";
 
 /**
  * Every server and the ports it is using, for picking a free one or finding what is in the way. A port that another server also
@@ -9,6 +10,7 @@ import InfoTip from "./InfoTip";
  * anything but they are taken. Administrators only.
  */
 function PortListDialog({ open, onClose, highlight = null }) {
+	useT();
 	const [data, setData] = React.useState(null);
 	const [error, setError] = React.useState(null);
 
@@ -16,7 +18,7 @@ function PortListDialog({ open, onClose, highlight = null }) {
 		if (!open) return;
 		setData(null);
 		setError(null);
-		api.get("/api/ports").then(setData).catch((e) => setError(e.message));
+		api.get("/api/ports").then(setData).catch((e) => setError(errorText(e)));
 	}, [open]);
 
 	const clashes = (data?.servers ?? []).flatMap((s) => s.ports.filter((p) => p.sharedWith).map((p) => ({ server: s.name, ...p })));
@@ -24,7 +26,7 @@ function PortListDialog({ open, onClose, highlight = null }) {
 	return (
 		<Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
 			<DialogTitle sx={{ display: "flex", alignItems: "center" }}>
-				Ports in use
+				{t("ports.inUse")}
 				<InfoTip id="card.portList" />
 			</DialogTitle>
 			<DialogContent>
@@ -36,11 +38,11 @@ function PortListDialog({ open, onClose, highlight = null }) {
 							<Alert severity="warning">
 								{[...new Set(clashes.map((c) => c.port))].sort((a, b) => a - b).map((port) => {
 									const who = [...new Set(clashes.filter((c) => c.port === port).flatMap((c) => [c.server, ...c.sharedWith]))];
-									return <div key={port}>Port {port} is claimed by {who.join(" and ")}.</div>;
+									return <div key={port}>{t("ports.claimed", { port, who: who.join(" and ") })}</div>;
 								})}
 							</Alert>
 						)}
-						{data.servers.length === 0 && <Typography variant="body2">No servers yet.</Typography>}
+						{data.servers.length === 0 && <Typography variant="body2">{t("ports.noServers")}</Typography>}
 						{data.servers.map((s) => (
 							<Box
 								key={s.name}
@@ -56,17 +58,17 @@ function PortListDialog({ open, onClose, highlight = null }) {
 									<Typography variant="caption" sx={{ color: "text.secondary" }}>
 										{s.game}
 									</Typography>
-									<Chip size="small" label={s.online ? "Running" : "Stopped"} color={s.online ? "success" : "default"} variant="outlined" />
-									{s.name === highlight && <Chip size="small" label="This server" color="primary" />}
+									<Chip size="small" label={s.online ? t("ports.runningChip") : t("ports.stopped")} color={s.online ? "success" : "default"} variant="outlined" />
+									{s.name === highlight && <Chip size="small" label={t("ports.thisServer")} color="primary" />}
 								</Box>
 								<Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
 									{s.ports.length === 0 && (
 										<Typography variant="caption" sx={{ color: "text.secondary" }}>
-											No ports recorded (it is found by its program, not a port).
+											{t("ports.noneRecorded")}
 										</Typography>
 									)}
 									{s.ports.map((p) => (
-										<Tooltip key={`${p.label}-${p.port}`} title={p.sharedWith ? `Also claimed by ${p.sharedWith.join(", ")}` : p.kind === "own" ? "" : "The game takes this one for itself; it isn't set anywhere"}>
+										<Tooltip key={`${p.label}-${p.port}`} title={p.sharedWith ? t("ports.alsoClaimed", { list: p.sharedWith.join(", ") }) : p.kind === "own" ? "" : t("ports.takenByGame")}>
 											<Chip
 												size="small"
 												variant={p.kind === "own" ? "filled" : "outlined"}
@@ -80,15 +82,14 @@ function PortListDialog({ open, onClose, highlight = null }) {
 							</Box>
 						))}
 						<Typography variant="caption" sx={{ color: "text.secondary" }}>
-							GodlyPanel itself uses {data.panelPort}.
-							{data.reserved.length > 0 ? ` Reserved in Settings, never suggested: ${data.reserved.join(", ")}.` : ""} Only ports GodlyPanel knows about are
-							listed; something else on this PC can still be using one.
+							{t("ports.panelUses", { port: data.panelPort })}
+							{data.reserved.length > 0 ? ` ${t("ports.reserved", { list: data.reserved.join(", ") })}` : ""} {t("ports.onlyKnown")}
 						</Typography>
 					</Box>
 				)}
 			</DialogContent>
 			<DialogActions>
-				<Button onClick={onClose}>Close</Button>
+				<Button onClick={onClose}>{t("common.close")}</Button>
 			</DialogActions>
 		</Dialog>
 	);

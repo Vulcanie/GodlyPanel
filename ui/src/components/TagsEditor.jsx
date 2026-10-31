@@ -1,9 +1,12 @@
 import React from "react";
 import { Alert, Box, Chip, TextField } from "@mui/material";
 import { api } from "../api/client";
+import { t, useT, errorText } from "../i18n";
 
 /** A server's tags: labels used to search and group the dashboard. Administrators only. */
 function TagsEditor({ serverName, tags = [] }) {
+	// Re-renders this editor when the language changes, so the t() text below switches with it.
+	useT();
 	const [draft, setDraft] = React.useState("");
 	const [error, setError] = React.useState(null);
 	const [saved, setSaved] = React.useState(null);
@@ -26,7 +29,7 @@ function TagsEditor({ serverName, tags = [] }) {
 			const r = await api.put(`/api/server/${encodeURIComponent(serverName)}/tags`, { tags: next });
 			setSaved(r.tags);
 		} catch (e) {
-			setError(e.message);
+			setError(errorText(e));
 		}
 	};
 
@@ -45,12 +48,12 @@ function TagsEditor({ serverName, tags = [] }) {
 			<TextField
 				size="small"
 				variant="standard"
-				placeholder={current.length ? "add another" : "add a tag, e.g. friends"}
+				placeholder={current.length ? t("tags.addAnother") : t("tags.addExample")}
 				value={draft}
 				onChange={(e) => setDraft(e.target.value)}
 				onKeyDown={(e) => e.key === "Enter" && add()}
 				onBlur={add}
-				inputProps={{ "aria-label": "Add a tag", maxLength: 24 }}
+				inputProps={{ "aria-label": t("tags.add"), maxLength: 24 }}
 				sx={{ minWidth: 140 }}
 			/>
 			{error && (

@@ -5,6 +5,7 @@ import { api } from "../api/client";
 import { formatBytes } from "../utils/format";
 import { copyToClipboard } from "../utils/clipboard";
 import InfoTip from "./InfoTip";
+import { t, tn, useT, errorText } from "../i18n";
 
 // Where servers' files are now. The "Server install folder" setting only says where servers made from now on will go;
 // servers made earlier, or added by hand, can be anywhere, and this is the place that says where.
@@ -16,7 +17,7 @@ function useLocations() {
 		api
 			.get("/api/settings/server-locations")
 			.then((data) => live && setState({ data, error: null }))
-			.catch((e) => live && setState({ data: null, error: e.message }));
+			.catch((e) => live && setState({ data: null, error: errorText(e) }));
 		return () => {
 			live = false;
 		};
@@ -25,6 +26,7 @@ function useLocations() {
 }
 
 function CopyPath({ path }) {
+	useT();
 	const [copied, setCopied] = React.useState(false);
 	const copy = () => {
 		// Not navigator.clipboard: the panel is usually opened over plain http, where the browser switches that off.
@@ -34,8 +36,8 @@ function CopyPath({ path }) {
 		});
 	};
 	return (
-		<Tooltip title={copied ? "Copied" : "Copy the folder's path"}>
-			<IconButton size="small" aria-label={`Copy ${path}`} onClick={copy}>
+		<Tooltip title={copied ? t("locations.copied") : t("locations.copyTip")}>
+			<IconButton size="small" aria-label={t("locations.copyAria", { path })} onClick={copy}>
 				<CopyIcon fontSize="inherit" />
 			</IconButton>
 		</Tooltip>
@@ -43,19 +45,20 @@ function CopyPath({ path }) {
 }
 
 function sizeText(s) {
-	if (s.bytes == null || !s.bytesScope) return "not measured yet";
+	if (s.bytes == null || !s.bytesScope) return t("locations.notMeasured");
 	if (s.bytesScope === "folder") return formatBytes(s.bytes);
-	if (s.bytesScope === "shared") return `${formatBytes(s.bytes)} (shared)`;
-	return `part of a ${formatBytes(s.bytes)} folder`;
+	if (s.bytesScope === "shared") return t("locations.sharedSize", { size: formatBytes(s.bytes) });
+	return t("locations.partOfFolder", { size: formatBytes(s.bytes) });
 }
 
 function Flags({ server }) {
+	useT();
 	return (
 		<>
-			{!server.exists && <Chip size="small" color="error" label="Folder missing" sx={{ mr: 0.5 }} />}
+			{!server.exists && <Chip size="small" color="error" label={t("locations.folderMissing")} sx={{ mr: 0.5 }} />}
 			{server.sharedWith.length > 0 && (
-				<Tooltip title={`Shares this folder with ${server.sharedWith.join(", ")}`}>
-					<Chip size="small" variant="outlined" label={`Shared with ${server.sharedWith.length}`} sx={{ mr: 0.5 }} />
+				<Tooltip title={t("locations.sharesWith", { names: server.sharedWith.join(", ") })}>
+					<Chip size="small" variant="outlined" label={t("locations.sharedCount", { count: server.sharedWith.length })} sx={{ mr: 0.5 }} />
 				</Tooltip>
 			)}
 		</>
@@ -66,9 +69,10 @@ function Flags({ server }) {
  * With `only`, one line for that server ("Installed in …"). Without it, every server, and a sentence about where new ones will go.
  */
 function ServerLocations({ only = null }) {
+	useT();
 	const { data, error } = useLocations();
 
-	if (error) return only ? null : <Alert severity="warning">Couldn't read where the servers are: {error}</Alert>;
+	if (error) return only ? null : <Alert severity="warning">{t("locations.couldntRead", { error })}</Alert>;
 	if (!data) return null;
 
 	if (only) {
@@ -77,14 +81,14 @@ function ServerLocations({ only = null }) {
 		return (
 			<Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 0.5, mt: 0.5, minWidth: 0 }}>
 				<Typography variant="caption" sx={{ color: "text.secondary" }}>
-					Installed in
+					{t("locations.installedIn")}
 				</Typography>
 				<Typography variant="caption" sx={{ fontFamily: (t) => t.custom.mono, wordBreak: "break-all" }} data-testid="server-folder">
 					{server.folder}
 				</Typography>
 				<CopyPath path={server.folder} />
 				<Typography variant="caption" sx={{ color: "text.secondary" }}>
-					· {sizeText(server)}
+					{t("locations.dotSize", { size: sizeText(server) })}
 				</Typography>
 				<Flags server={server} />
 			</Box>
@@ -98,25 +102,25 @@ function ServerLocations({ only = null }) {
 	return (
 		<Box sx={{ mt: 3, pt: 2.5, borderTop: 1, borderColor: "divider" }} data-testid="server-locations">
 			<Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
-				<Typography variant="subtitle2">Where your servers are now</Typography>
+				<Typography variant="subtitle2">{t("locations.title")}</Typography>
 				<InfoTip id="card.serverLocations" />
 			</Box>
 			<Typography variant="body2" sx={{ color: "text.secondary", mb: 1.5 }}>
-				New servers are created in <Box component="span" sx={{ fontFamily: (t) => t.custom.mono, fontSize: 13, color: "text.primary", wordBreak: "break-all" }}>
+				{t("locations.newIn")} <Box component="span" sx={{ fontFamily: (t) => t.custom.mono, fontSize: 13, color: "text.primary", wordBreak: "break-all" }}>
 					{data.newServersFolder}
 				</Box>.{" "}
 				{data.servers.length === 0
-					? "You have no servers yet."
-					: `${data.servers.length} server${data.servers.length === 1 ? "" : "s"} on ${drives} drive${drives === 1 ? "" : "s"}: ${here} in that folder, ${away} elsewhere.`}
+					? t("locations.noServers")
+					: t("locations.summary", { servers: tn("locations.servers", data.servers.length), drives: tn("locations.drives", drives), here, away })}
 			</Typography>
 			{data.servers.length > 0 && (
 				<Box sx={{ overflowX: "auto" }}>
 					<Table size="small">
 						<TableHead>
 							<TableRow>
-								<TableCell>Server</TableCell>
-								<TableCell>Folder</TableCell>
-								<TableCell>Size</TableCell>
+								<TableCell>{t("locations.colServer")}</TableCell>
+								<TableCell>{t("locations.colFolder")}</TableCell>
+								<TableCell>{t("common.size")}</TableCell>
 								<TableCell />
 							</TableRow>
 						</TableHead>
@@ -125,13 +129,13 @@ function ServerLocations({ only = null }) {
 								<TableRow key={s.name} hover>
 									<TableCell sx={{ whiteSpace: "nowrap" }}>{s.name}</TableCell>
 									<TableCell sx={{ fontFamily: (t) => t.custom.mono, fontSize: 12, wordBreak: "break-all" }}>
-										{s.folder ?? "(none recorded)"}
+										{s.folder ?? t("locations.noneRecorded")}
 										{s.folder && <CopyPath path={s.folder} />}
 									</TableCell>
 									<TableCell sx={{ whiteSpace: "nowrap" }}>{sizeText(s)}</TableCell>
 									<TableCell sx={{ whiteSpace: "nowrap" }}>
 										<Flags server={s} />
-										{!s.inNewServersFolder && s.folder && <Chip size="small" variant="outlined" label="Elsewhere" />}
+										{!s.inNewServersFolder && s.folder && <Chip size="small" variant="outlined" label={t("locations.elsewhere")} />}
 									</TableCell>
 								</TableRow>
 							))}

@@ -1,10 +1,12 @@
 import React from "react";
 import { Alert, Box, Button, Checkbox, FormControlLabel, Typography } from "@mui/material";
 import { api } from "../api/client";
+import { t, useT } from "../i18n";
 import InfoTip from "./InfoTip";
 
 /** Which events send a notification, and a button that sends a real test through every channel that is set up. */
 function NotificationEvents({ labels, value, onChange }) {
+	useT();
 	const [result, setResult] = React.useState(null);
 	const [busy, setBusy] = React.useState(false);
 	const selected = new Set(value ?? []);
@@ -29,16 +31,16 @@ function NotificationEvents({ labels, value, onChange }) {
 
 	const line = (name, r) => {
 		if (!r) return null;
-		if (r.skipped) return `${name}: not set up`;
-		if (r.ok) return `${name}: sent`;
-		return `${name}: failed (${r.error})`;
+		if (r.skipped) return t("notify.notSetUp", { name });
+		if (r.ok) return t("notify.sent", { name });
+		return t("notify.failed", { name, error: r.error });
 	};
 
 	return (
 		<Box>
 			<Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
 				<Typography variant="body2" sx={{ fontWeight: 600 }}>
-					Events to tell you about
+					{t("notify.events")}
 				</Typography>
 				<InfoTip id="notifications.events" />
 			</Box>
@@ -49,7 +51,7 @@ function NotificationEvents({ labels, value, onChange }) {
 			</Box>
 			<Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
 				<Button size="small" variant="outlined" disabled={busy} onClick={test}>
-					{busy ? "Sending…" : "Send a test"}
+					{busy ? t("notify.sending") : t("notify.sendTest")}
 				</Button>
 				<InfoTip id="notifications.test" />
 			</Box>
@@ -59,7 +61,7 @@ function NotificationEvents({ labels, value, onChange }) {
 						result.error
 					) : (
 						<>
-							{[line("Windows notification", result.desktop), line("Webhook", result.webhook), line("Email", result.email)].filter(Boolean).map((l) => (
+							{[line(t("notify.desktop"), result.desktop), line(t("notify.webhook"), result.webhook), line(t("notify.email"), result.email)].filter(Boolean).map((l) => (
 								<div key={l}>{l}</div>
 							))}
 						</>

@@ -29,11 +29,11 @@ import { copyToClipboard } from "../utils/clipboard";
 import { prettifyKey } from "../utils/prettifyKey";
 import { detectSettingType, toBoolString } from "../utils/settingType";
 import { cardAccordionSx } from "./cardStyles";
-
-const DEFAULT_LABEL = "Not set (the game's default)";
+import { t, tn, useT } from "../i18n";
 
 /** The dropdown for a setting that has only a few values. Never loses a value the file already holds. */
 function ChoiceControl({ entry, value, onChange }) {
+	useT();
 	const options = entry.options;
 	const known = options.some((o) => o.value === value);
 	const labelOf = (v) => options.find((o) => o.value === v)?.label ?? v;
@@ -60,10 +60,10 @@ function ChoiceControl({ entry, value, onChange }) {
 		<TextField select size="small" fullWidth value={value} onChange={(e) => onChange(e.target.value)} slotProps={{ select: { displayEmpty: true } }}>
 			{showDefault && !options.some((o) => o.value === "") && (
 				<MenuItem value="">
-					<em>{DEFAULT_LABEL}</em>
+					<em>{t("config.notSet")}</em>
 				</MenuItem>
 			)}
-			{!known && value !== "" && <MenuItem value={value}>Custom: {value}</MenuItem>}
+			{!known && value !== "" && <MenuItem value={value}>{t("config.custom", { value })}</MenuItem>}
 			{options.map((o) => (
 				<MenuItem key={o.value} value={o.value}>
 					{o.label}
@@ -74,15 +74,17 @@ function ChoiceControl({ entry, value, onChange }) {
 }
 
 function SettingControl({ settingKey, value, onChange, entry }) {
+	useT();
 	const isPassword = /password|passwd|token|secret/i.test(settingKey);
 	const type = entry?.type ?? detectSettingType(value);
-	const [copyTooltip, setCopyTooltip] = React.useState("Copy");
+	// Null until something is copied: the words are then the current language's, not a value fixed when the control was drawn.
+	const [copyTooltip, setCopyTooltip] = React.useState(null);
 	const [shown, setShown] = React.useState(false);
 
 	const handleCopy = (e) => {
 		e.stopPropagation();
 		copyToClipboard(String(value), setCopyTooltip);
-		setTimeout(() => setCopyTooltip("Copy"), 1500);
+		setTimeout(() => setCopyTooltip(null), 1500);
 	};
 
 	if (entry?.options) return <ChoiceControl entry={entry} value={String(value)} onChange={onChange} />;
@@ -107,13 +109,13 @@ function SettingControl({ settingKey, value, onChange, entry }) {
 					? {
 							endAdornment: (
 								<InputAdornment position="end">
-									<Tooltip title={shown ? "Hide" : "Show"}>
-										<IconButton size="small" aria-label={shown ? "Hide the value" : "Show the value"} onClick={() => setShown((v) => !v)}>
+									<Tooltip title={shown ? t("common.hide") : t("common.show")}>
+										<IconButton size="small" aria-label={shown ? t("config.hideValue") : t("config.showValue")} onClick={() => setShown((v) => !v)}>
 											{shown ? <VisibilityOffIcon sx={{ fontSize: 16 }} /> : <VisibilityIcon sx={{ fontSize: 16 }} />}
 										</IconButton>
 									</Tooltip>
-									<Tooltip title={copyTooltip}>
-										<IconButton size="small" aria-label="Copy the value" onClick={handleCopy}>
+									<Tooltip title={copyTooltip ?? t("common.copy")}>
+										<IconButton size="small" aria-label={t("config.copyValue")} onClick={handleCopy}>
 											<ContentCopyIcon sx={{ fontSize: 16 }} />
 										</IconButton>
 									</Tooltip>
@@ -127,6 +129,7 @@ function SettingControl({ settingKey, value, onChange, entry }) {
 }
 
 function StructuredListEditor({ entry, onChange }) {
+	useT();
 	const items = Array.isArray(entry.value) ? entry.value : [];
 
 	const updateItem = (index, key, rawNewValue) => {
@@ -145,7 +148,7 @@ function StructuredListEditor({ entry, onChange }) {
 			{items.map((item, index) => (
 				<Box key={index} sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, p: 2 }}>
 					<Typography variant="subtitle2" sx={{ mb: 1 }}>
-						{item.name || `Entry ${index + 1}`}
+						{item.name || t("config.entry", { n: index + 1 })}
 					</Typography>
 					<Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))" }}>
 						{Object.entries(item).map(([key, value]) => (
@@ -177,6 +180,7 @@ const matches = (entry, words) => {
  *           changedIds?: Set<string>, onRevert?: (entry) => void }} props
  */
 function ConfigForm({ groups, onChange, undocumented = 0, changedIds = null, onRevert = null }) {
+	useT();
 	const [expanded, setExpanded] = React.useState(() => new Set(groups[0] ? [groups[0].name] : []));
 	const [query, setQuery] = React.useState("");
 
@@ -202,20 +206,20 @@ function ConfigForm({ groups, onChange, undocumented = 0, changedIds = null, onR
 		<Box>
 			{undocumented > 0 && (
 				<Alert severity="info" variant="outlined" sx={{ mb: 2 }}>
-					{undocumented === 1 ? "1 setting here has" : `${undocumented} settings here have`} no explanation. These come from mods or plugins, or from a game update newer than this panel knows about.{" "}
-					<strong>Mods will not have explanations</strong>; they still work, and you can edit them like the others.
+					{tn("config.undocumented", undocumented)}{" "}
+					<strong>{t("config.noExplanationsBold")}</strong>{t("config.noExplanationsTail")}
 				</Alert>
 			)}
 
 			<Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap", mb: 2 }}>
 				<TextField
 					size="small"
-					placeholder={`Search ${total} settings`}
+					placeholder={t("config.search", { total })}
 					value={query}
 					onChange={(e) => setQuery(e.target.value)}
 					sx={{ flex: "1 1 260px", maxWidth: 460 }}
 					slotProps={{
-						htmlInput: { "aria-label": "Search settings" },
+						htmlInput: { "aria-label": t("config.searchAria") },
 						input: {
 							startAdornment: (
 								<InputAdornment position="start">
@@ -223,7 +227,7 @@ function ConfigForm({ groups, onChange, undocumented = 0, changedIds = null, onR
 								</InputAdornment>
 							),
 							endAdornment: query ? (
-								<IconButton size="small" aria-label="Clear search" onClick={() => setQuery("")}>
+								<IconButton size="small" aria-label={t("config.clearSearch")} onClick={() => setQuery("")}>
 									<ClearIcon fontSize="small" />
 								</IconButton>
 							) : null,
@@ -232,15 +236,15 @@ function ConfigForm({ groups, onChange, undocumented = 0, changedIds = null, onR
 				/>
 				{searching ? (
 					<Typography variant="caption" sx={{ color: "text.secondary" }}>
-						{found === 0 ? "Nothing matches." : `${found} of ${total} match`}
+						{found === 0 ? t("config.noMatch") : t("config.matchCount", { found, total })}
 					</Typography>
 				) : (
 					<>
 						<Button size="small" onClick={() => setExpanded(new Set(groups.map((g) => g.name)))}>
-							Open all
+							{t("config.openAll")}
 						</Button>
 						<Button size="small" onClick={() => setExpanded(new Set())}>
-							Close all
+							{t("config.closeAll")}
 						</Button>
 					</>
 				)}
@@ -252,7 +256,7 @@ function ConfigForm({ groups, onChange, undocumented = 0, changedIds = null, onR
 						<Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
 							<Typography variant="subtitle1">{group.name}</Typography>
 							<Chip size="small" variant="outlined" label={group.settings.length} />
-							{changedIds && group.settings.some((e) => changedIds.has(e.id)) && <Chip size="small" color="warning" label="changed" />}
+							{changedIds && group.settings.some((e) => changedIds.has(e.id)) && <Chip size="small" color="warning" label={t("config.changed")} />}
 						</Box>
 					</AccordionSummary>
 					<AccordionDetails>
@@ -272,10 +276,10 @@ function ConfigForm({ groups, onChange, undocumented = 0, changedIds = null, onR
 												<Typography variant="body2" sx={{ fontWeight: 600 }}>
 													{entry.label}
 												</Typography>
-												{changedIds?.has(entry.id) && <Chip size="small" color="warning" label="changed" sx={{ height: 18, fontSize: 11 }} />}
+												{changedIds?.has(entry.id) && <Chip size="small" color="warning" label={t("config.changed")} sx={{ height: 18, fontSize: 11 }} />}
 												{!entry.documented && (
-													<Tooltip title="No explanation: this is probably from a mod or a newer game version.">
-														<Chip size="small" variant="outlined" label="no explanation" sx={{ height: 18, fontSize: 11 }} />
+													<Tooltip title={t("config.noExplanationTip")}>
+														<Chip size="small" variant="outlined" label={t("config.noExplanation")} sx={{ height: 18, fontSize: 11 }} />
 													</Tooltip>
 												)}
 											</Box>
@@ -293,8 +297,8 @@ function ConfigForm({ groups, onChange, undocumented = 0, changedIds = null, onR
 												<SettingControl settingKey={entry.key} value={entry.value} onChange={(newVal) => onChange(entry, newVal)} entry={entry} />
 											</Box>
 											{onRevert && changedIds?.has(entry.id) && (
-												<Tooltip title="Undo this change">
-													<IconButton size="small" aria-label={`Undo the change to ${entry.label}`} onClick={() => onRevert(entry)}>
+												<Tooltip title={t("config.undoTip")}>
+													<IconButton size="small" aria-label={t("config.undoAria", { label: entry.label })} onClick={() => onRevert(entry)}>
 														<UndoIcon fontSize="small" />
 													</IconButton>
 												</Tooltip>

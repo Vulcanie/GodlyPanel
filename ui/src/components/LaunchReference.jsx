@@ -4,6 +4,7 @@ import { ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
 import { launchDefFor } from "../catalog/launchArgs";
 import { guideUrl } from "../help/guides";
 import { cardAccordionSx } from "./cardStyles";
+import { t, useT } from "../i18n";
 
 /** An argument as it would be written on the line. */
 function exampleLine(arg, def) {
@@ -19,6 +20,7 @@ function exampleLine(arg, def) {
  * launch line (Valheim, Rust) this is the manual for the line; for the others it explains the arguments in the start script.
  */
 function LaunchReference({ gameType, onEditStartScript, defaultOpen = false }) {
+	useT();
 	const def = launchDefFor(gameType);
 	const [open, setOpen] = React.useState(defaultOpen);
 	if (!def) return null;
@@ -34,18 +36,18 @@ function LaunchReference({ gameType, onEditStartScript, defaultOpen = false }) {
 		<Accordion expanded={open} onChange={(_, v) => setOpen(v)} disableGutters sx={cardAccordionSx} data-testid="launch-reference">
 			<AccordionSummary expandIcon={<ExpandMoreIcon />}>
 				<Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
-					<Typography variant="subtitle1">All launch arguments for {def.title}</Typography>
+					<Typography variant="subtitle1">{t("launch.allArgs", { title: def.title })}</Typography>
 					<Chip size="small" variant="outlined" label={def.args.length} />
 				</Box>
 			</AccordionSummary>
 			<AccordionDetails>
 				<Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
-					{def.intro} They are on {def.where}.
+					{def.intro} {t("launch.where", { where: def.where })}
 					{!def.editable && onEditStartScript && (
 						<>
 							{" "}
 							<Button size="small" onClick={onEditStartScript}>
-								Edit the start script
+								{t("server.editStartScript")}
 							</Button>
 						</>
 					)}
@@ -63,8 +65,8 @@ function LaunchReference({ gameType, onEditStartScript, defaultOpen = false }) {
 										{arg.kind === "attached" ? "<value>" : ""}
 									</Typography>
 									<Box sx={{ mt: 0.5, display: "flex", gap: 0.5, flexWrap: "wrap" }}>
-										{arg.managed && <Chip size="small" label="set by the panel" sx={{ height: 18, fontSize: 11 }} />}
-										{arg.edit === false && !arg.managed && <Chip size="small" variant="outlined" label="not in the form" sx={{ height: 18, fontSize: 11 }} />}
+										{arg.managed && <Chip size="small" label={t("launch.setByPanel")} sx={{ height: 18, fontSize: 11 }} />}
+										{arg.edit === false && !arg.managed && <Chip size="small" variant="outlined" label={t("launch.notInForm")} sx={{ height: 18, fontSize: 11 }} />}
 									</Box>
 								</Box>
 								<Box sx={{ flex: "1 1 280px", minWidth: 0 }}>
@@ -73,12 +75,12 @@ function LaunchReference({ gameType, onEditStartScript, defaultOpen = false }) {
 									</Typography>
 									{arg.options && (
 										<Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 0.25 }}>
-											Values: {arg.options.map((o) => (Array.isArray(o) ? o[0] : o)).join(", ")}
+											{t("launch.values", { values: arg.options.map((o) => (Array.isArray(o) ? o[0] : o)).join(", ") })}
 										</Typography>
 									)}
 									{arg.example && (
 										<Typography variant="caption" sx={{ color: "text.secondary", display: "block", fontFamily: (t) => t.custom.mono }}>
-											Example: {exampleLine(arg, def)}
+											{t("launch.example", { example: exampleLine(arg, def) })}
 										</Typography>
 									)}
 								</Box>
@@ -87,7 +89,7 @@ function LaunchReference({ gameType, onEditStartScript, defaultOpen = false }) {
 					</Box>
 				))}
 				<Button size="small" href={guideUrl("launch", def.title)} target="_blank" rel="noopener noreferrer">
-					Read this as a guide on GitHub
+					{t("launch.guide")}
 				</Button>
 			</AccordionDetails>
 		</Accordion>
