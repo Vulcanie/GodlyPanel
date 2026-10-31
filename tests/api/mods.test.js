@@ -454,6 +454,23 @@ describe("mods", () => {
 			assert.equal(fs.existsSync(path.join(dirs.mc, "mods", "lock-mod.jar")), false);
 			assert.deepEqual((await lockOf("Minecraft")).entries, []);
 		});
+
+		it("takes the files back out when the record can't be written", async () => {
+			// A folder where the lock file should be makes every write to it fail.
+			const key = crypto.createHash("sha256").update("Minecraft").digest("hex").slice(0, 24);
+			const blocker = path.join(panel.dir, "modlocks", `${key}.json`);
+			fs.rmSync(blocker, { force: true, recursive: true });
+			fs.mkdirSync(blocker, { recursive: true });
+			try {
+				const r = await install("Minecraft", "https://github.com/acme/lockmod");
+				assert.equal(r.status, 500, JSON.stringify(r.json));
+				assert.equal(r.json.code, "install_failed");
+				noPanelPaths(r.json);
+				assert.equal(fs.existsSync(path.join(dirs.mc, "mods", "lock-mod.jar")), false);
+			} finally {
+				fs.rmSync(blocker, { force: true, recursive: true });
+			}
+		});
 	});
 
 	it("is for admins only", async () => {
