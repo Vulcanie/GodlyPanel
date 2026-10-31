@@ -16,14 +16,19 @@ import HeapBar from "./HeapBar";
 import { useOperation, operationLabel } from "../OperationsContext";
 import { copyToClipboard } from "../utils/clipboard";
 import { getGameInfo } from "../gameCatalog";
+import { t, useT } from "../i18n";
 
 /** A small labelled value that copies itself when clicked: an address, a password. */
 function CopyChip({ icon, label, value, testId }) {
-	const [tip, setTip] = React.useState("Click to copy");
+	// Re-renders this chip when the language changes, so the t() text below switches with it.
+	useT();
+	// null until a copy has happened; then the copy's result shows for a moment, and the hint comes back.
+	const [result, setResult] = React.useState(null);
+	const tip = result ?? t("server.copyTip");
 	const copy = (e) => {
 		e.stopPropagation();
-		copyToClipboard(value, setTip);
-		setTimeout(() => setTip("Click to copy"), 1800);
+		copyToClipboard(value, setResult);
+		setTimeout(() => setResult(null), 1800);
 	};
 	return (
 		<Tooltip title={tip}>
@@ -61,6 +66,8 @@ function Stat({ icon, children }) {
  * and (for people who run it) the buttons to start, stop and restart it. Clicking the card opens the server.
  */
 function ServerCard({ name, status, stats, appearance, canOpen, canControl, onOpen, onAction }) {
+	// Re-renders this card when the language changes, so the t() text below switches with it.
+	useT();
 	const operation = useOperation(name);
 	const online = Boolean(status?.online);
 	const info = React.useMemo(() => getGameInfo(status?.type, appearance), [status?.type, appearance]);
@@ -107,7 +114,7 @@ function ServerCard({ name, status, stats, appearance, canOpen, canControl, onOp
 					{operation ? (
 						<Chip size="small" color="warning" label={operationLabel(operation)} sx={{ height: 22 }} />
 					) : (
-						<Chip size="small" color={online ? "success" : "default"} label={online ? "Online" : "Offline"} sx={{ height: 22, bgcolor: online ? undefined : "rgba(255,255,255,.16)", color: online ? undefined : "#fff" }} />
+						<Chip size="small" color={online ? "success" : "default"} label={online ? t("common.online") : t("common.offline")} sx={{ height: 22, bgcolor: online ? undefined : "rgba(255,255,255,.16)", color: online ? undefined : "#fff" }} />
 					)}
 				</Box>
 			</Box>
@@ -116,25 +123,24 @@ function ServerCard({ name, status, stats, appearance, canOpen, canControl, onOp
 				<Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1.75 }}>
 					<Stat icon={<PlayersIcon sx={{ fontSize: 16 }} />}>
 						<strong>{status?.playerCount ?? 0}</strong>
-						{status?.maxplayers ? ` / ${status.maxplayers}` : ""} players
+						{status?.maxplayers ? ` / ${status.maxplayers}` : ""} {t("common.players")}
 					</Stat>
-					{online && status?.ping != null && <Stat icon={<PingIcon sx={{ fontSize: 16 }} />}>{status.ping} ms</Stat>}
-					{stats?.running && <Stat icon={<MemoryIcon sx={{ fontSize: 16 }} />}>{stats.cpuPercent}% · {(stats.ramMB / 1024).toFixed(1)} GB</Stat>}
+					{online && status?.ping != null && <Stat icon={<PingIcon sx={{ fontSize: 16 }} />}>{t("server.pingMs", { ms: status.ping })}</Stat>}
+					{stats?.running && <Stat icon={<MemoryIcon sx={{ fontSize: 16 }} />}>{t("server.cardCpuRam", { cpu: stats.cpuPercent, ram: (stats.ramMB / 1024).toFixed(1) })}</Stat>}
 				</Box>
 
 				{players.length > 0 && (
 					<Typography variant="caption" noWrap title={players.join(", ")} sx={{ color: "text.secondary" }}>
-						On now: {players.slice(0, 6).join(", ")}
-						{players.length > 6 ? ` +${players.length - 6} more` : ""}
+						{players.length > 6 ? t("server.onNowMore", { players: players.slice(0, 6).join(", "), more: players.length - 6 }) : t("server.onNow", { players: players.join(", ") })}
 					</Typography>
 				)}
 
 				{status?.type === "minecraft" && stats?.running && stats.heapMaxMB != null && <HeapBar usedMB={stats.heapUsedMB} maxMB={stats.heapMaxMB} percent={stats.heapPercent} />}
 
 				<Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }} onClick={(e) => e.stopPropagation()}>
-					{(status?.session || status?.joinAddress) && <CopyChip icon={<AddressIcon />} label="Join" value={status.session || status.joinAddress} testId="chip-session" />}
-					{status?.sessionName && status.sessionName !== status.session && status.sessionName !== status.joinAddress && <CopyChip icon={<AddressIcon />} label="Name" value={status.sessionName} testId="chip-name" />}
-					{status?.serverPassword && <CopyChip icon={<LockIcon />} label="Password" value={status.serverPassword} testId="chip-password" />}
+					{(status?.session || status?.joinAddress) && <CopyChip icon={<AddressIcon />} label={t("server.join")} value={status.session || status.joinAddress} testId="chip-session" />}
+					{status?.sessionName && status.sessionName !== status.session && status.sessionName !== status.joinAddress && <CopyChip icon={<AddressIcon />} label={t("common.name")} value={status.sessionName} testId="chip-name" />}
+					{status?.serverPassword && <CopyChip icon={<LockIcon />} label={t("common.password")} value={status.serverPassword} testId="chip-password" />}
 					{(status?.tags ?? []).map((tag) => (
 						<Chip key={tag} size="small" label={tag} sx={{ bgcolor: (t) => t.custom.hover }} />
 					))}
@@ -145,23 +151,23 @@ function ServerCard({ name, status, stats, appearance, canOpen, canControl, onOp
 				<Box sx={{ display: "flex", alignItems: "center", gap: 0.5, px: 1.5, py: 1, borderTop: 1, borderColor: "divider" }} onClick={(e) => e.stopPropagation()}>
 					{canControl && (
 						<>
-							<Tooltip title={online ? "Already running" : "Start"}>
+							<Tooltip title={online ? t("server.alreadyRunning") : t("common.start")}>
 								<span>
-									<IconButton size="small" color="success" disabled={online || busy} onClick={() => onAction(name, "start")} aria-label={`Start ${name}`}>
+									<IconButton size="small" color="success" disabled={online || busy} onClick={() => onAction(name, "start")} aria-label={t("server.startNamed", { server: name })}>
 										<StartIcon />
 									</IconButton>
 								</span>
 							</Tooltip>
-							<Tooltip title="Restart">
+							<Tooltip title={t("common.restart")}>
 								<span>
-									<IconButton size="small" color="warning" disabled={!online || busy} onClick={() => onAction(name, "restart")} aria-label={`Restart ${name}`}>
+									<IconButton size="small" color="warning" disabled={!online || busy} onClick={() => onAction(name, "restart")} aria-label={t("server.restartNamed", { server: name })}>
 										<RestartIcon />
 									</IconButton>
 								</span>
 							</Tooltip>
-							<Tooltip title="Stop">
+							<Tooltip title={t("common.stop")}>
 								<span>
-									<IconButton size="small" color="error" disabled={(!online && operation !== "starting") || (busy && operation !== "starting")} onClick={() => onAction(name, "stop")} aria-label={`Stop ${name}`}>
+									<IconButton size="small" color="error" disabled={(!online && operation !== "starting") || (busy && operation !== "starting")} onClick={() => onAction(name, "stop")} aria-label={t("server.stopNamed", { server: name })}>
 										<StopIcon />
 									</IconButton>
 								</span>
@@ -171,7 +177,7 @@ function ServerCard({ name, status, stats, appearance, canOpen, canControl, onOp
 					<Box sx={{ flex: 1 }} />
 					{canOpen && (
 						<Typography variant="caption" sx={{ color: "primary.main", display: "inline-flex", alignItems: "center", gap: 0.5, fontWeight: 600 }}>
-							Open <OpenIcon sx={{ fontSize: 14 }} />
+							{t("common.open")} <OpenIcon sx={{ fontSize: 14 }} />
 						</Typography>
 					)}
 				</Box>

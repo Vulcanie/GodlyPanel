@@ -11,11 +11,14 @@ import ServerLocations from "./ServerLocations";
 import SectionCard from "./ui/SectionCard";
 import InfoTip from "./InfoTip";
 import { api } from "../api/client";
+import { t, useT } from "../i18n";
 
 /**
  * A server at a glance: the buttons to run it, its console if the game has one, its labels, and how busy it has been.
  */
 function ServerOverview({ serverName, serverStatus, isAdmin }) {
+	// Re-renders this page when the language changes, so the t() text below switches with it.
+	useT();
 	const [hasRcon, setHasRcon] = React.useState(false);
 
 	React.useEffect(() => {
@@ -35,31 +38,31 @@ function ServerOverview({ serverName, serverStatus, isAdmin }) {
 				<ServerControls serverName={serverName} serverStatus={serverStatus} isAdmin={isAdmin} />
 				<UpdatePanel serverName={serverName} isAdmin={isAdmin} />
 				{hasRcon && <RconConsole serverName={serverName} />}
-				<SectionCard title="Performance" subtitle="CPU, memory and players over time" icon={<ChartIcon />}>
+				<SectionCard title={t("server.performance")} subtitle={t("server.performanceSub")} icon={<ChartIcon />}>
 					<StatsPanel serverName={serverName} />
 				</SectionCard>
 			</Box>
 
 			<Box sx={{ minWidth: 0 }}>
 				{isAdmin && (
-					<SectionCard title="Labels" icon={<InfoIcon />}>
+					<SectionCard title={t("server.labels")} icon={<InfoIcon />}>
 						<Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
 							<Typography variant="body2" sx={{ fontWeight: 600 }}>
-								Session label
+								{t("server.sessionLabel")}
 							</Typography>
 							<InfoTip id="server.session" />
 						</Box>
 						<SessionEditor serverName={serverName} status={serverStatus} />
 						<Box sx={{ display: "flex", alignItems: "center", mb: 0.5, mt: 1 }}>
 							<Typography variant="body2" sx={{ fontWeight: 600 }}>
-								Tags
+								{t("server.tags")}
 							</Typography>
 							<InfoTip id="server.tags" />
 						</Box>
 						<TagsEditor serverName={serverName} tags={serverStatus?.tags ?? []} />
 					</SectionCard>
 				)}
-				<SectionCard title="Where it lives" subtitle="This server's folder on the PC">
+				<SectionCard title={t("server.whereItLives")} subtitle={t("server.whereItLivesSub")}>
 					<ServerLocations only={serverName} />
 				</SectionCard>
 			</Box>

@@ -38,6 +38,7 @@ import ThemeToggle from "../ThemeToggle";
 import { useOperations, operationLabel } from "../../OperationsContext";
 import { canAnywhere, roleLabel } from "../../permissions";
 import { useSession } from "../../SessionContext";
+import { t, tn, useT } from "../../i18n";
 
 export const SIDEBAR_WIDTH = 268;
 const SERVER_LIST_SHORT = 8;
@@ -69,6 +70,7 @@ function NavItem({ icon, label, active, onClick, testId, secondary }) {
 
 /** One server in the list: its light, its name, and how many are on (or what it is busy with). */
 const ServerLink = React.memo(function ServerLink({ name, status, active, onOpen }) {
+	useT();
 	const operation = useOperations()[name];
 	const state = operation ? "busy" : status?.online ? "online" : "offline";
 	return (
@@ -119,6 +121,7 @@ function Meter({ label, percent }) {
  * The panel's left rail: where to go, every server a click away, the PC's load, and the signed-in person's menu.
  */
 function Sidebar({ nav, go, servers, allowedServers, systemStats, connection, user, role, onChangePassword, onSessions, onSignOut, onNavigate }) {
+	useT();
 	const [filter, setFilter] = React.useState("");
 	const [showAll, setShowAll] = React.useState(false);
 	const [anchor, setAnchor] = React.useState(null);
@@ -154,19 +157,19 @@ function Sidebar({ nav, go, servers, allowedServers, systemStats, connection, us
 						GodlyPanel
 					</Typography>
 					<Typography variant="caption" sx={{ color: "text.secondary" }}>
-						{online} of {names.length} server{names.length === 1 ? "" : "s"} online
+						{tn("shell.serversOnline", names.length, { online })}
 					</Typography>
 				</Box>
 			</Box>
 
 			<Box sx={{ flex: 1, overflowY: "auto", overflowX: "hidden", pr: 0.5, mr: -0.5 }}>
 				<List dense disablePadding>
-					<NavItem icon={<DashboardIcon fontSize="small" />} label="Dashboard" active={nav.page === "dashboard"} onClick={() => move("dashboard", null)} testId="nav-dashboard" />
-					{admin && <NavItem icon={<CreateIcon fontSize="small" />} label="Create server" active={nav.page === "createServer"} onClick={() => move("createServer")} testId="nav-create" />}
-					{activityVisible && <NavItem icon={<ActivityIcon fontSize="small" />} label="Activity" active={nav.page === "activity"} onClick={() => move("activity")} testId="nav-activity" />}
-					{admin && <NavItem icon={<PeopleIcon fontSize="small" />} label="People" active={nav.page === "users"} onClick={() => move("users")} testId="nav-people" />}
-					{can("roles.manage") && <NavItem icon={<RolesIcon fontSize="small" />} label="Roles" active={nav.page === "roles"} onClick={() => move("roles")} testId="nav-roles" />}
-					{admin && <NavItem icon={<SettingsIcon fontSize="small" />} label="Settings" active={nav.page === "settings"} onClick={() => move("settings")} testId="nav-settings" />}
+					<NavItem icon={<DashboardIcon fontSize="small" />} label={t("common.dashboard")} active={nav.page === "dashboard"} onClick={() => move("dashboard", null)} testId="nav-dashboard" />
+					{admin && <NavItem icon={<CreateIcon fontSize="small" />} label={t("nav.createServer")} active={nav.page === "createServer"} onClick={() => move("createServer")} testId="nav-create" />}
+					{activityVisible && <NavItem icon={<ActivityIcon fontSize="small" />} label={t("common.activity")} active={nav.page === "activity"} onClick={() => move("activity")} testId="nav-activity" />}
+					{admin && <NavItem icon={<PeopleIcon fontSize="small" />} label={t("common.people")} active={nav.page === "users"} onClick={() => move("users")} testId="nav-people" />}
+					{can("roles.manage") && <NavItem icon={<RolesIcon fontSize="small" />} label={t("common.roles")} active={nav.page === "roles"} onClick={() => move("roles")} testId="nav-roles" />}
+					{admin && <NavItem icon={<SettingsIcon fontSize="small" />} label={t("common.settings")} active={nav.page === "settings"} onClick={() => move("settings")} testId="nav-settings" />}
 				</List>
 
 				{operator && names.length > 0 && (
@@ -175,7 +178,7 @@ function Sidebar({ nav, go, servers, allowedServers, systemStats, connection, us
 						disablePadding
 						subheader={
 							<ListSubheader disableSticky sx={{ background: "transparent", lineHeight: "32px", mt: 1.5, px: 1.5, fontSize: 11, letterSpacing: 1.2, textTransform: "uppercase", color: "text.secondary" }}>
-								Servers
+								{t("common.servers")}
 							</ListSubheader>
 						}
 					>
@@ -183,12 +186,12 @@ function Sidebar({ nav, go, servers, allowedServers, systemStats, connection, us
 							<TextField
 								size="small"
 								fullWidth
-								placeholder="Find a server"
+								placeholder={t("shell.findServer")}
 								value={filter}
 								onChange={(e) => setFilter(e.target.value)}
 								sx={{ mb: 1, "& .MuiOutlinedInput-root": { fontSize: 13 } }}
 								slotProps={{
-									htmlInput: { "aria-label": "Find a server" },
+									htmlInput: { "aria-label": t("shell.findServer") },
 									input: { startAdornment: <InputAdornment position="start"><SearchIcon sx={{ fontSize: 16 }} /></InputAdornment> },
 								}}
 							/>
@@ -198,13 +201,13 @@ function Sidebar({ nav, go, servers, allowedServers, systemStats, connection, us
 						))}
 						{!q && matching.length > SERVER_LIST_SHORT && (
 							<ListItemButton onClick={() => setShowAll((v) => !v)} sx={{ borderRadius: 2.5, py: 0.4 }}>
-								<ListItemText primary={showAll ? "Show fewer" : `Show all ${matching.length}`} primaryTypographyProps={{ variant: "caption", color: "text.secondary" }} />
+								<ListItemText primary={showAll ? t("shell.showFewer") : t("shell.showAll", { count: matching.length })} primaryTypographyProps={{ variant: "caption", color: "text.secondary" }} />
 								{showAll ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />}
 							</ListItemButton>
 						)}
 						{q && matching.length === 0 && (
 							<Typography variant="caption" sx={{ px: 1.5, color: "text.secondary" }}>
-								No server matches.
+								{t("shell.noServerMatches")}
 							</Typography>
 						)}
 					</List>
@@ -215,8 +218,8 @@ function Sidebar({ nav, go, servers, allowedServers, systemStats, connection, us
 
 			{systemStats?.totalMemMB != null && (
 				<Box sx={{ display: "grid", gap: 1, px: 1, mb: 1.5 }}>
-					<Meter label="CPU" percent={systemStats.cpuPercent} />
-					<Meter label="Memory" percent={systemStats.usedMemPercent} />
+					<Meter label={t("shell.cpu")} percent={systemStats.cpuPercent} />
+					<Meter label={t("shell.memory")} percent={systemStats.usedMemPercent} />
 				</Box>
 			)}
 
@@ -254,11 +257,11 @@ function Sidebar({ nav, go, servers, allowedServers, systemStats, connection, us
 						</Typography>
 					</Box>
 				</Box>
-				<Tooltip title={connection === "live" ? "Live: updates arrive as they happen" : connection === "polling" ? "Checking every few seconds" : "The panel isn't answering"}>
+				<Tooltip title={connection === "live" ? t("shell.connection.liveTip") : connection === "polling" ? t("shell.connection.pollingTip") : t("shell.connection.offlineTip")}>
 					<Chip
 						size="small"
 						variant="outlined"
-						label={connection === "live" ? "Live" : connection === "polling" ? "Polling" : "Offline"}
+						label={connection === "live" ? t("shell.connection.live") : connection === "polling" ? t("shell.connection.polling") : t("shell.connection.offline")}
 						icon={<LiveDot state={connection === "live" ? "online" : connection === "polling" ? "busy" : "offline"} size={7} pulse={connection === "live"} sx={{ ml: "8px !important" }} />}
 						sx={{ height: 24, fontSize: 11 }}
 					/>
@@ -268,27 +271,27 @@ function Sidebar({ nav, go, servers, allowedServers, systemStats, connection, us
 			<Menu anchorEl={anchor} open={Boolean(anchor)} onClose={() => setAnchor(null)} anchorOrigin={{ vertical: "top", horizontal: "left" }} transformOrigin={{ vertical: "bottom", horizontal: "left" }}>
 				<Box sx={{ px: 2, py: 1, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 3 }}>
 					<Typography variant="body2" sx={{ color: "text.secondary" }}>
-						Appearance
+						{t("common.appearance")}
 					</Typography>
 					<ThemeToggle />
 				</Box>
 				<Divider />
 				<MenuItem onClick={() => { setAnchor(null); onChangePassword(); }}>
 					<MenuIcon><PasswordIcon fontSize="small" /></MenuIcon>
-					<MenuText>Change password</MenuText>
+					<MenuText>{t("common.changePassword")}</MenuText>
 				</MenuItem>
 				<MenuItem onClick={() => { setAnchor(null); onSessions(); }}>
 					<MenuIcon><DevicesIcon fontSize="small" /></MenuIcon>
-					<MenuText>Where I'm signed in</MenuText>
+					<MenuText>{t("shell.signedInWhere")}</MenuText>
 				</MenuItem>
 				<MenuItem component="a" href={GUIDE} target="_blank" rel="noopener noreferrer" onClick={() => setAnchor(null)}>
 					<MenuIcon><HelpIcon fontSize="small" /></MenuIcon>
-					<MenuText>Help and guides</MenuText>
+					<MenuText>{t("shell.helpGuides")}</MenuText>
 				</MenuItem>
 				<Divider />
 				<MenuItem onClick={() => { setAnchor(null); onSignOut(); }} data-testid="sign-out">
 					<MenuIcon><LogoutIcon fontSize="small" /></MenuIcon>
-					<MenuText>Sign out</MenuText>
+					<MenuText>{t("shell.signOut")}</MenuText>
 				</MenuItem>
 			</Menu>
 		</Box>

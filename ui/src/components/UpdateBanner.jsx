@@ -5,6 +5,7 @@ import { Close as CloseIcon, RocketLaunch as UpdateIcon } from "@mui/icons-mater
 import { api } from "../api/client";
 import { onLive } from "../liveEvents";
 import { usePreferences } from "../utils/preferences";
+import { t, useT } from "../i18n";
 
 // Shown to administrators on the dashboard: how the last update went (it is the first thing seen after the page reloads
 // when the panel comes back as the new version), and when a newer GodlyPanel exists. A dismissed version stays dismissed;
@@ -18,10 +19,11 @@ const EXPECT_FOR_MS = 40_000;
 
 // An Alert with an action of its own has no close button of its own (MUI shows one or the other), so it is added here.
 function Actions({ onClose, children }) {
+	useT();
 	return (
 		<>
 			{children}
-			<IconButton aria-label="Close" color="inherit" size="small" onClick={onClose}>
+			<IconButton aria-label={t("common.close")} color="inherit" size="small" onClick={onClose}>
 				<CloseIcon fontSize="small" />
 			</IconButton>
 		</>
@@ -48,6 +50,7 @@ const stopExpecting = () => {
 };
 
 function UpdateBanner({ onOpenSettings }) {
+	useT();
 	const [status, setStatus] = React.useState(null);
 	const [prefs, savePref] = usePreferences(LEGACY);
 	const dismissed = prefs?.updateBannerDismissed ?? null;
@@ -100,13 +103,13 @@ function UpdateBanner({ onOpenSettings }) {
 						<Actions onClose={dismissResult}>
 							{!last.ok && (
 								<Button color="inherit" size="small" onClick={onOpenSettings}>
-									Details
+									{t("updateBanner.details")}
 								</Button>
 							)}
 						</Actions>
 					}
 				>
-					{last.ok ? last.message : `The update to ${last.version} didn't work and was undone: ${last.message}`}
+					{last.ok ? last.message : t("updateBanner.failed", { version: last.version, message: last.message })}
 				</Alert>
 			)}
 			{available && (
@@ -118,12 +121,12 @@ function UpdateBanner({ onOpenSettings }) {
 					action={
 						<Actions onClose={dismissVersion}>
 							<Button color="inherit" size="small" onClick={onOpenSettings}>
-								{status.selfUpdate?.support?.ok && status.selfUpdate.plan ? "Update now…" : "See what's new"}
+								{status.selfUpdate?.support?.ok && status.selfUpdate.plan ? t("updateBanner.updateNow") : t("updateBanner.seeWhatsNew")}
 							</Button>
 						</Actions>
 					}
 				>
-					<strong>GodlyPanel {latestVersion} is available</strong> (you have {status.current}).
+					<strong>{t("updateBanner.available", { version: latestVersion })}</strong> {t("updateBanner.youHave", { current: status.current })}
 				</Alert>
 			)}
 		</>

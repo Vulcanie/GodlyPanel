@@ -5,14 +5,15 @@ import { api } from "../api/client";
 import { LineChart, HourGrid, BarChart } from "./charts";
 import CompactEmpty from "./CompactEmpty";
 import { formatBytes } from "../utils/format";
+import { t, tn, useT, errorText, formatDate } from "../i18n";
 
 const RANGES = [
-	{ value: "1h", label: "Last hour", days: 1 },
-	{ value: "6h", label: "Last 6 hours", days: 1 },
-	{ value: "24h", label: "Last 24 hours", days: 1 },
-	{ value: "7d", label: "Last 7 days", days: 7 },
-	{ value: "30d", label: "Last 30 days", days: 30 },
-	{ value: "90d", label: "Last 90 days", days: 90 },
+	{ value: "1h", days: 1 },
+	{ value: "6h", days: 1 },
+	{ value: "24h", days: 1 },
+	{ value: "7d", days: 7 },
+	{ value: "30d", days: 30 },
+	{ value: "90d", days: 90 },
 ];
 
 // A number with a small label, and an accent bar down its left edge. Wraps with its neighbours on a phone.
@@ -45,11 +46,12 @@ const Frame = ({ title, children, sx }) => (
 	</Box>
 );
 
-const duration = (minutes) => (minutes >= 120 ? `${(minutes / 60).toFixed(1)} h` : `${minutes} min`);
+const duration = (minutes) => (minutes >= 120 ? t("stats.durationHours", { hours: (minutes / 60).toFixed(1) }) : t("stats.durationMinutes", { minutes }));
 
 function Loading() {
+	useT();
 	return (
-		<Box aria-busy="true" aria-label="Loading performance">
+		<Box aria-busy="true" aria-label={t("stats.loading")}>
 			<Skeleton variant="rounded" height={40} width={200} sx={{ mb: 2 }} />
 			<Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", mb: 2 }}>
 				{[0, 1, 2, 3].map((i) => (
@@ -64,6 +66,8 @@ function Loading() {
 /** How busy the server has been (CPU, memory, players) and when people play. */
 function StatsPanel({ serverName }) {
 	const base = `/api/server/${encodeURIComponent(serverName)}`;
+	// Re-renders this panel when the language changes, so the t() text below switches with it.
+	useT();
 	const [range, setRange] = React.useState("24h");
 	const [metrics, setMetrics] = React.useState(null);
 	const [stats, setStats] = React.useState(null);
@@ -73,6 +77,14 @@ function StatsPanel({ serverName }) {
 	const [loaded, setLoaded] = React.useState(false);
 	const [reloads, setReloads] = React.useState(0);
 	const days = RANGES.find((r) => r.value === range)?.days ?? 1;
+	const rangeLabel = {
+		"1h": t("stats.lastHour"),
+		"6h": t("stats.last6Hours"),
+		"24h": t("stats.last24Hours"),
+		"7d": t("stats.last7Days"),
+		"30d": t("stats.last30Days"),
+		"90d": t("stats.last90Days"),
+	};
 
 	React.useEffect(() => {
 		let alive = true;
@@ -82,9 +94,9 @@ function StatsPanel({ serverName }) {
 		Promise.allSettled([api.get(`${base}/metrics?range=${range}`), api.get(`${base}/player-stats?days=${Math.max(days, 1)}`)]).then(([m, s]) => {
 			if (!alive) return;
 			setMetrics(m.status === "fulfilled" ? m.value : null);
-			setMetricsError(m.status === "rejected" ? m.reason?.message || "Could not load the readings." : null);
+			setMetricsError(m.status === "rejected" ? errorText(m.reason, t("stats.readingsError")) : null);
 			setStats(s.status === "fulfilled" ? s.value : null);
-			setStatsError(s.status === "rejected" ? s.reason?.message || "Could not load the player statistics." : null);
+			setStatsError(s.status === "rejected" ? errorText(s.reason, t("stats.statsError")) : null);
 			setLoaded(true);
 		});
 		const timer = setInterval(() => {
@@ -99,7 +111,7 @@ function StatsPanel({ serverName }) {
 	if (!loaded) return <Loading />;
 	if (!metrics && !stats) {
 		return (
-			<Alert severity="error" action={<Button color="inherit" size="small" onClick={() => setReloads((n) => n + 1)}>Try again</Button>}>
+			<Alert severity="error" action={<Button color="inherit" size="small" onClick={() => setReloads((n) => n + 1)}>{t("common.tryAgain")}</Button>}>
 				{metricsError || statsError}
 			</Alert>
 		);
@@ -112,10 +124,10 @@ function StatsPanel({ serverName }) {
 
 	return (
 		<Box>
-			<TextField select size="small" label="Range" value={range} onChange={(e) => setRange(e.target.value)} sx={{ minWidth: 200, mb: 2 }}>
+			<TextField select size="small" label={t("stats.range")} value={range} onChange={(e) => setRange(e.target.value)} sx={{ minWidth: 200, mb: 2 }}>
 				{RANGES.map((r) => (
 					<MenuItem key={r.value} value={r.value}>
-						{r.label}
+						{rangeLabel[r.value]}
 					</MenuItem>
 				))}
 			</TextField>
@@ -127,10 +139,10 @@ function StatsPanel({ serverName }) {
 			)}
 			{stats && (
 				<Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", mb: 2 }}>
-					<Stat label="Most players at once" value={stats.peak?.players ?? 0} sub={stats.peak?.at ? new Date(stats.peak.at).toLocaleString() : "none recorded"} />
-					<Stat label="Average crowd while up" value={stats.averageWhileUp ?? 0} sub="players" />
-					<Stat label="Time online" value={stats.uptimePercent == null ? "—" : `${stats.uptimePercent}%`} sub={`of the last ${days} day${days === 1 ? "" : "s"}`} />
-					<Stat label="Player hours" value={stats.playerHours ?? 0} sub="total time played by everyone" />
+					<Stat label={t("stats.mostAtOnce")} value={stats.peak?.players ?? 0} sub={stats.peak?.at ? formatDate(stats.peak.at) : t("stats.noneRecorded")} />
+					<Stat label={t("stats.averageCrowd")} value={stats.averageWhileUp ?? 0} sub={t("common.players")} />
+					<Stat label={t("stats.timeOnline")} value={stats.uptimePercent == null ? "—" : `${stats.uptimePercent}%`} sub={tn("stats.ofLastDays", days)} />
+					<Stat label={t("stats.playerHours")} value={stats.playerHours ?? 0} sub={t("stats.playerHoursSub")} />
 				</Box>
 			)}
 
@@ -141,29 +153,29 @@ function StatsPanel({ serverName }) {
 			)}
 			{metrics && pts.length === 0 && (
 				<Frame sx={{ mb: 2 }}>
-					<CompactEmpty icon={<ChartIcon />} title="No readings in this range yet">
-						The panel records CPU, memory and players once a minute while the server runs. Charts appear here after it has been up for a little while.
+					<CompactEmpty icon={<ChartIcon />} title={t("stats.noReadings")}>
+						{t("stats.noReadingsBody")}
 					</CompactEmpty>
 				</Frame>
 			)}
 			{metrics && pts.length > 0 && (
 				<>
 					<Frame sx={{ mb: 2 }}>
-						<LineChart title="Players" series={[{ label: "Peak", color: "warning.main", points: line("playersMax") }, { label: "Average", color: "secondary.main", points: line("players") }]} format={(v) => String(Math.round(v))} />
+						<LineChart title={t("stats.playersChart")} series={[{ label: t("stats.peak"), color: "warning.main", points: line("playersMax") }, { label: t("stats.average"), color: "secondary.main", points: line("players") }]} format={(v) => String(Math.round(v))} />
 					</Frame>
 					<Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 2 }}>
 						<Frame sx={{ flex: "1 1 320px" }}>
-							<LineChart title="CPU (% of the whole PC)" unit="%" series={[{ label: "CPU", color: "success.main", points: line("cpu") }]} max={100} />
+							<LineChart title={t("stats.cpuChart")} unit="%" series={[{ label: t("common.cpu"), color: "success.main", points: line("cpu") }]} max={100} />
 						</Frame>
 						<Frame sx={{ flex: "1 1 320px" }}>
-							<LineChart title="Memory" series={[{ label: "RAM", color: "primary.main", points: line("ramMB", 1) }]} format={(v) => formatBytes(v * 1024 * 1024)} />
+							<LineChart title={t("common.memory")} series={[{ label: t("stats.ram"), color: "primary.main", points: line("ramMB", 1) }]} format={(v) => formatBytes(v * 1024 * 1024)} />
 						</Frame>
 					</Box>
 				</>
 			)}
 
 			{stats?.hours && (
-				<Frame title="When people play (average players, by weekday and hour, this PC's time)" sx={{ mb: 2 }}>
+				<Frame title={t("stats.whenPlay")} sx={{ mb: 2 }}>
 					<HourGrid grid={stats.hours} />
 				</Frame>
 			)}
@@ -171,14 +183,14 @@ function StatsPanel({ serverName }) {
 			{stats && (
 				<Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
 					{daily.length > 1 && (
-						<Frame title="Busiest moment each day" sx={{ flex: "2 1 320px" }}>
-							<BarChart bars={daily.map((d) => ({ label: d.date, value: d.peak }))} unit=" players" />
+						<Frame title={t("stats.busiestDay")} sx={{ flex: "2 1 320px" }}>
+							<BarChart bars={daily.map((d) => ({ label: d.date, value: d.peak }))} unit={` ${t("common.players")}`} />
 						</Frame>
 					)}
-					<Frame title="Who plays most" sx={{ flex: "1 1 240px" }}>
+					<Frame title={t("stats.whoPlays")} sx={{ flex: "1 1 240px" }}>
 						{topPlayers.length === 0 ? (
 							<Typography variant="body2" sx={{ color: "text.secondary" }}>
-								Nobody yet.
+								{t("stats.nobodyYet")}
 							</Typography>
 						) : (
 							topPlayers.map((p, i) => (
@@ -190,7 +202,7 @@ function StatsPanel({ serverName }) {
 										{p.name}
 									</Typography>
 									<Typography variant="caption" sx={{ color: "text.secondary", whiteSpace: "nowrap" }}>
-										{duration(p.minutes)} · {p.sessions} visit{p.sessions === 1 ? "" : "s"}
+										{t("stats.playerLine", { time: duration(p.minutes), visits: tn("stats.visits", p.sessions) })}
 									</Typography>
 								</Box>
 							))

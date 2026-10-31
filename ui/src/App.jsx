@@ -19,6 +19,7 @@ import SetupChecklist from "./components/SetupChecklist";
 import UpdateBanner from "./components/UpdateBanner";
 import ChangePasswordDialog from "./components/ChangePasswordDialog";
 import SessionsDialog from "./components/SessionsDialog";
+import { t, useT, errorText } from "./i18n";
 
 // Everything that isn't the dashboard is loaded when it is first opened, so the first screen arrives sooner.
 const ServerWorkspace = React.lazy(() => import("./components/ServerWorkspace"));
@@ -32,11 +33,18 @@ const ActivityPage = React.lazy(() => import("./components/ActivityPage"));
 const Loading = () => <CircularProgress sx={{ display: "block", mx: "auto", mt: 10 }} />;
 
 const CONFIRM = {
-	stop: (name) => ({ title: `Stop ${name}?`, text: "Players will be disconnected. It is saved first where the game allows.", label: "Stop it", color: "error" }),
-	restart: (name) => ({ title: `Restart ${name}?`, text: "Players are disconnected while it restarts.", label: "Restart it", color: "warning" }),
+	stop: (name) => ({ title: t("shell.confirm.stopTitle", { name }), text: t("shell.confirm.stopText"), label: t("shell.confirm.stopLabel"), color: "error" }),
+	restart: (name) => ({ title: t("shell.confirm.restartTitle", { name }), text: t("shell.confirm.restartText"), label: t("shell.confirm.restartLabel"), color: "warning" }),
 };
 
+function sentText(name, action) {
+	if (action === "start") return t("shell.sentStart", { name });
+	if (action === "stop") return t("shell.sentStop", { name });
+	return t("shell.sentRestart", { name });
+}
+
 function Panel() {
+	useT();
 	const { status, user, role, isAdmin, operator, can, logout } = useSession();
 	const signedIn = status === "signedIn";
 	const toast = useToast();
@@ -81,9 +89,9 @@ function Panel() {
 		async (name, action) => {
 			try {
 				const r = await api.post(`/api/control/${encodeURIComponent(name)}/${action}`);
-				toast(r?.message ?? `${name}: ${action} sent.`, "success");
+				toast(r?.message ?? sentText(name, action), "success");
 			} catch (e) {
-				toast(e.message, "error");
+				toast(errorText(e), "error");
 			}
 		},
 		[toast],
@@ -126,12 +134,12 @@ function Panel() {
 		<NavContext.Provider value={navValue}>
 			<Box sx={{ display: "flex", minHeight: "100vh", backgroundImage: (t) => t.custom.backdrop, backgroundRepeat: "no-repeat", backgroundAttachment: "fixed" }}>
 				{wide ? (
-					<Box component="nav" aria-label="Main" sx={{ width: SIDEBAR_WIDTH, flexShrink: 0, borderRight: 1, borderColor: "divider", position: "sticky", top: 0, height: "100vh", backgroundColor: (t) => t.custom.glass, backdropFilter: "blur(14px)" }}>
+					<Box component="nav" aria-label={t("shell.mainNav")} sx={{ width: SIDEBAR_WIDTH, flexShrink: 0, borderRight: 1, borderColor: "divider", position: "sticky", top: 0, height: "100vh", backgroundColor: (t) => t.custom.glass, backdropFilter: "blur(14px)" }}>
 						{sidebar}
 					</Box>
 				) : (
 					<Drawer open={menuOpen} onClose={() => setMenuOpen(false)} slotProps={{ paper: { sx: { backgroundImage: "none" } } }}>
-						<Box component="nav" aria-label="Main" sx={{ height: "100%" }}>
+						<Box component="nav" aria-label={t("shell.mainNav")} sx={{ height: "100%" }}>
 							{sidebar}
 						</Box>
 					</Drawer>

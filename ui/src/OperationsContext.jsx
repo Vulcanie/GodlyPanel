@@ -1,6 +1,7 @@
 import React from "react";
 import { api } from "./api/client";
 import { onLive } from "./liveEvents";
+import { t } from "./i18n";
 
 // What each server is in the middle of right now (starting, stopping, backing
 // up...), so the dashboard and the server page can say so and hold back buttons
@@ -9,16 +10,16 @@ import { onLive } from "./liveEvents";
 const OperationsContext = React.createContext({});
 
 const LABELS = {
-	starting: "Starting…",
-	stopping: "Stopping…",
-	restarting: "Restarting…",
-	updating: "Updating…",
-	"backing up": "Backing up…",
-	restoring: "Restoring…",
-	"changing mods": "Changing mods…",
+	starting: () => t("shell.operation.starting"),
+	stopping: () => t("shell.operation.stopping"),
+	restarting: () => t("shell.operation.restarting"),
+	updating: () => t("shell.operation.updating"),
+	"backing up": () => t("shell.operation.backingUp"),
+	restoring: () => t("shell.operation.restoring"),
+	"changing mods": () => t("shell.operation.changingMods"),
 };
 
-export const operationLabel = (op) => LABELS[op] ?? `${op}…`;
+export const operationLabel = (op) => (Object.hasOwn(LABELS, op) ? LABELS[op]() : t("shell.operation.other", { op }));
 
 export function OperationsProvider({ children }) {
 	const [operations, setOperations] = React.useState({});

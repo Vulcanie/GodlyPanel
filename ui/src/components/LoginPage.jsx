@@ -5,8 +5,10 @@ import { useSession } from "../SessionContext";
 import { api } from "../api/client";
 import { flatWhenDisabled } from "./cardStyles";
 import AuthShell, { Brand } from "./AuthShell";
+import { t, useT, errorText } from "../i18n";
 
 function LoginPage() {
+	useT();
 	const { login, join } = useSession();
 	const [username, setUsername] = React.useState("");
 	const [password, setPassword] = React.useState("");
@@ -34,7 +36,7 @@ function LoginPage() {
 			if (joining) await join(code, username, password);
 			else await login(username, password);
 		} catch (e) {
-			setError({ message: e?.message || "Something went wrong. Please try again.", notice: e?.code === "staff_not_allowed_here" });
+			setError({ message: errorText(e, t("common.somethingWrong")), notice: e?.code === "staff_not_allowed_here" });
 			setBusy(false);
 		}
 	};
@@ -52,19 +54,19 @@ function LoginPage() {
 		<AuthShell
 			footer={
 				<Typography variant="caption">
-					Trouble signing in?{" "}
+					{t("login.trouble")}{" "}
 					<Link href="https://github.com/Vulcanie/GodlyPanel/blob/main/docs/WHAT_THE_MESSAGES_MEAN.md#signing-in" target="_blank" rel="noopener noreferrer">
-						What the messages mean
+						{t("login.messages")}
 					</Link>
 				</Typography>
 			}
 		>
 			<Brand />
 			<Typography variant="h6" component="h1" align="center" sx={{ mb: 0.5 }}>
-				{joining ? "Join the community" : "Welcome back"}
+				{joining ? t("login.joinTitle") : t("login.welcomeBack")}
 			</Typography>
 			<Typography variant="body2" align="center" sx={{ color: "text.secondary", mb: 3 }}>
-				{joining ? "Make your own account with the community code you were given." : "Sign in to see your servers."}
+				{joining ? t("login.joinBody") : t("login.signInBody")}
 			</Typography>
 
 			{error && (
@@ -78,10 +80,10 @@ function LoginPage() {
 				{joining && (
 					<TextField
 						fullWidth
-						label="Community code"
+						label={t("login.communityCode")}
 						autoFocus
 						autoComplete="off"
-						placeholder="ABCD-EFGH"
+						placeholder={t("login.codePlaceholder")}
 						sx={{ mb: 2 }}
 						value={code}
 						onChange={(e) => setCode(e.target.value)}
@@ -91,31 +93,31 @@ function LoginPage() {
 				)}
 				<TextField
 					fullWidth
-					label={joining ? "Choose a username" : "Username"}
+					label={joining ? t("login.chooseUsername") : t("common.username")}
 					autoFocus={!joining}
 					autoComplete="username"
 					sx={{ mb: 2 }}
 					value={username}
 					onChange={(e) => setUsername(e.target.value)}
 					onKeyDown={onEnter}
-					helperText={joining ? "3-32 letters, numbers, dots, dashes or underscores." : undefined}
+					helperText={joining ? t("login.usernameHelp") : undefined}
 				/>
 				<TextField
 					fullWidth
 					type={reveal ? "text" : "password"}
-					label={joining ? "Choose a password" : "Password"}
+					label={joining ? t("login.choosePassword") : t("common.password")}
 					autoComplete={joining ? "new-password" : "current-password"}
 					sx={{ mb: 3 }}
 					value={password}
 					onChange={(e) => setPassword(e.target.value)}
 					onKeyDown={onEnter}
-					helperText={joining ? "At least 8 characters." : undefined}
+					helperText={joining ? t("common.atLeast8") : undefined}
 					slotProps={{
 						input: {
 							endAdornment: (
 								<InputAdornment position="end">
 									{/* Named so that it never matches a "password" label lookup. */}
-									<IconButton size="small" edge="end" aria-label={reveal ? "Hide what I typed" : "Show what I typed"} onClick={() => setReveal((v) => !v)} onMouseDown={(e) => e.preventDefault()}>
+									<IconButton size="small" edge="end" aria-label={reveal ? t("common.hideTyped") : t("common.showTyped")} onClick={() => setReveal((v) => !v)} onMouseDown={(e) => e.preventDefault()}>
 										{reveal ? <HideIcon fontSize="small" /> : <ShowIcon fontSize="small" />}
 									</IconButton>
 								</InputAdornment>
@@ -125,7 +127,7 @@ function LoginPage() {
 				/>
 
 				<Button fullWidth size="large" variant="contained" onClick={submit} disabled={busy || !ready} sx={{ py: 1.2, ...flatWhenDisabled }}>
-					{busy ? <CircularProgress size={22} color="inherit" /> : joining ? "Create my account" : "Sign in"}
+					{busy ? <CircularProgress size={22} color="inherit" /> : joining ? t("login.createAccount") : t("login.signIn")}
 				</Button>
 			</Box>
 
@@ -133,11 +135,11 @@ function LoginPage() {
 				<Typography variant="body2" align="center" sx={{ mt: 2.5 }}>
 					{joining ? (
 						<Link component="button" type="button" onClick={() => switchTo(false)}>
-							I already have an account
+							{t("login.haveAccount")}
 						</Link>
 					) : (
 						<Link component="button" type="button" onClick={() => switchTo(true)}>
-							I have a community code
+							{t("login.haveCode")}
 						</Link>
 					)}
 				</Typography>

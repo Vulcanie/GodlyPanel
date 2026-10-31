@@ -33,6 +33,7 @@ import { parseConvarCfg, serializeConvarCfg, convarEntries } from "../configPars
 import { parseLaunchArgs, serializeLaunchArgs, launchArgsEntries } from "../configParsers/launchArgs";
 import { annotateEntries, getCatalogKeys, getFileParser, getLaunchDef, getMissingFileNote, getPrimaryFileName, getStructuredPaths } from "../configCatalog";
 import { detectSettingType } from "../utils/settingType";
+import { t, tn, useT, errorText } from "../i18n";
 
 // Each parser: read the file's text into something with entries, list the settings, and write edits back into the text without
 // disturbing anything else in it. `ctx` carries what a parser needs to know about the game.
@@ -47,7 +48,7 @@ const PARSERS = {
 	launchArgs: { parse: (text, ctx) => parseLaunchArgs(text, ctx.launchDef), serialize: serializeLaunchArgs, getEntries: launchArgsEntries },
 };
 
-const fileTitle = (gameType, name) => (name === "config" ? (getPrimaryFileName(gameType) ?? "Settings") : name);
+const fileTitle = (gameType, name) => (name === "config" ? (getPrimaryFileName(gameType) ?? t("common.settings")) : name);
 
 /** The settings of a text by id, so two versions of a file can be compared setting by setting. */
 function valuesOf(parserDef, text, ctx) {
@@ -67,6 +68,8 @@ function valuesOf(parserDef, text, ctx) {
  * games that are set up on their command line, and the raw text of each when you want it. Saves one file at a time.
  */
 function ServerSettingsTab({ serverName, serverStatus, onEditBatchFiles, onAction }) {
+	// Re-renders this tab when the language changes, so the t() text below switches with it.
+	useT();
 	const toast = useToast();
 	const gameType = serverStatus?.type;
 	const online = Boolean(serverStatus?.online);
@@ -105,9 +108,9 @@ function ServerSettingsTab({ serverName, serverStatus, onEditBatchFiles, onActio
 			setSaved(Object.fromEntries(results.map(([n, r]) => [n, r.text])));
 			setMissing(Object.fromEntries(results.filter(([, r]) => r.missing).map(([n]) => [n, true])));
 			const failed = results.find(([, r]) => r.failed);
-			if (failed) setError(`Couldn't read ${failed[0]}: ${failed[1].failed}`);
+			if (failed) setError(t("server.couldntRead", { file: failed[0], error: failed[1].failed }));
 		} catch (e) {
-			setError(e.message || "Couldn't reach the panel to read this server's settings.");
+			setError(errorText(e, t("server.cantReadSettings")));
 		} finally {
 			setLoading(false);
 		}
@@ -191,9 +194,9 @@ function ServerSettingsTab({ serverName, serverStatus, onEditBatchFiles, onActio
 			setSaved((prev) => ({ ...prev, [name]: text }));
 			setMissing((prev) => ({ ...prev, [name]: false }));
 			setJustSaved(true);
-			toast(r.message || `${fileTitle(gameType, name)} saved.`, "success");
+			toast(r.message || t("server.fileSaved", { file: fileTitle(gameType, name) }), "success");
 		} catch (e) {
-			toast(e.message || "The file could not be saved.", "error");
+			toast(errorText(e, t("server.fileNotSaved")), "error");
 		} finally {
 			setSaving(false);
 		}
@@ -226,7 +229,7 @@ function ServerSettingsTab({ serverName, serverStatus, onEditBatchFiles, onActio
 	if (loading) return <CircularProgress sx={{ display: "block", mx: "auto", mt: 6 }} />;
 	if (error && !names) {
 		return (
-			<Alert severity="error" action={<Button onClick={load}>Try again</Button>}>
+			<Alert severity="error" action={<Button onClick={load}>{t("common.tryAgain")}</Button>}>
 				{error}
 			</Alert>
 		);
@@ -248,8 +251,8 @@ function ServerSettingsTab({ serverName, serverStatus, onEditBatchFiles, onActio
 
 			{!hasFiles ? (
 				<>
-					<EmptyState icon={<ScriptIcon fontSize="large" />} title="This server has no settings file the panel can edit" action={onEditBatchFiles && <Button variant="outlined" onClick={onEditBatchFiles}>Edit the start script</Button>}>
-						Its settings, if it has any, are on the command that starts it. You can change that in the start script.
+					<EmptyState icon={<ScriptIcon fontSize="large" />} title={t("server.noSettingsFile")} action={onEditBatchFiles && <Button variant="outlined" onClick={onEditBatchFiles}>{t("server.editStartScript")}</Button>}>
+						{t("server.noSettingsBody")}
 					</EmptyState>
 					<LaunchReference gameType={gameType} onEditStartScript={onEditBatchFiles} />
 				</>
@@ -269,32 +272,32 @@ function ServerSettingsTab({ serverName, serverStatus, onEditBatchFiles, onActio
 						)}
 						{onEditBatchFiles && (
 							<Button size="small" startIcon={<ScriptIcon />} onClick={onEditBatchFiles}>
-								Edit start script
+								{t("server.editStartScriptShort")}
 							</Button>
 						)}
 						{parserDef && !parseFailed && (
-							<FormControlLabel sx={{ mr: 0 }} control={<Switch checked={showRaw} onChange={(e) => setRaw(e.target.checked)} />} label="Edit as text" />
+							<FormControlLabel sx={{ mr: 0 }} control={<Switch checked={showRaw} onChange={(e) => setRaw(e.target.checked)} />} label={t("server.editAsText")} />
 						)}
 					</Box>
 
 					{missingNote && (
 						<Alert severity="info" sx={{ mb: 2 }}>
-							This file doesn't exist yet. {missingNote}
+							{t("server.missingFile", { note: missingNote })}
 						</Alert>
 					)}
 					{parseFailed && (
 						<Alert severity="warning" sx={{ mb: 2 }}>
-							This file couldn't be read as settings (it may have invalid syntax), so it's shown as text.
+							{t("server.parseFailed")}
 						</Alert>
 					)}
 					{parserType === "launchArgs" || parserType === "valheimLaunch" ? (
 						parsed && parsed.at === -1 ? (
 							<Alert severity="warning" sx={{ mb: 2 }}>
-								Couldn't find the line that starts the game in this start script, so there is nothing to show as a form. Use "Edit as text" to change the script, or "Edit start script".
+								{t("server.noLaunchLine")}
 							</Alert>
 						) : (
 							<Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
-								These are the arguments on the line of the start script that launches the game. Changing one rewrites only that line; the rest of the script stays as it is. Changes apply the next time the server starts.
+								{t("server.launchArgsHelp")}
 							</Typography>
 						)
 					) : null}
@@ -308,12 +311,12 @@ function ServerSettingsTab({ serverName, serverStatus, onEditBatchFiles, onActio
 							}}
 							minRows={22}
 							spellCheck={false}
-							aria-label={`${fileTitle(gameType, name)} as text`}
+							aria-label={t("server.asText", { file: fileTitle(gameType, name) })}
 							style={{ width: "100%", boxSizing: "border-box", resize: "vertical", background: "transparent", color: "inherit", fontFamily: "Cascadia Code, Consolas, monospace", fontSize: 13, lineHeight: 1.55, border: "1px solid rgba(148,163,200,.3)", borderRadius: 12, padding: 14, tabSize: 4 }}
 						/>
 					) : annotated.groups.length === 0 && !(parserType === "launchArgs" || parserType === "valheimLaunch") ? (
 						<Typography variant="body2" sx={{ color: "text.secondary", mt: 2 }}>
-							No editable settings found in this file.
+							{t("server.noSettings")}
 						</Typography>
 					) : (
 						<ConfigForm key={`${name}`} groups={annotated.groups} onChange={applyEdit} undocumented={annotated.undocumented} changedIds={changedIds} onRevert={revert} />
@@ -343,16 +346,16 @@ function ServerSettingsTab({ serverName, serverStatus, onEditBatchFiles, onActio
 					>
 						<Typography variant="body2" sx={{ flex: 1, color: dirty ? "warning.main" : "text.secondary" }}>
 							{dirty
-								? `You have unsaved changes${changedIds.size ? ` (${changedIds.size})` : ""} in ${fileTitle(gameType, name)}.${dirtyNames.length > 1 ? ` ${dirtyNames.length} files have changes.` : ""}`
+								? `${changedIds.size ? t("server.unsavedCount", { changed: changedIds.size, file: fileTitle(gameType, name) }) : t("server.unsaved", { file: fileTitle(gameType, name) })}${dirtyNames.length > 1 ? ` ${tn("server.filesHaveChanges", dirtyNames.length)}` : ""}`
 								: justSaved
-									? "Saved."
-									: "No changes."}
+									? t("common.saved")
+									: t("server.noChanges")}
 						</Typography>
 						<Button startIcon={<UndoIcon />} disabled={!dirty || saving} onClick={discard}>
-							Discard
+							{t("common.discard")}
 						</Button>
 						<Button variant="contained" startIcon={<SaveIcon />} disabled={!dirty || saving} onClick={save} data-testid="save-config">
-							{saving ? "Saving…" : `Save ${fileTitle(gameType, name)}`}
+							{saving ? t("common.saving") : t("server.saveFile", { file: fileTitle(gameType, name) })}
 						</Button>
 					</Paper>
 
@@ -363,12 +366,12 @@ function ServerSettingsTab({ serverName, serverStatus, onEditBatchFiles, onActio
 							action={
 								onAction && (
 									<Button color="inherit" size="small" startIcon={<RestartIcon />} onClick={() => onAction(serverName, "restart")}>
-										Restart now
+										{t("server.restartNow")}
 									</Button>
 								)
 							}
 						>
-							{serverName} is running. Most games read their settings only when they start, so restart it for this to take effect. (A few write their settings back when they stop, which would undo this: save with the server stopped for those.)
+							{t("server.runningRestart", { server: serverName })}
 						</Alert>
 					)}
 
@@ -381,9 +384,9 @@ function ServerSettingsTab({ serverName, serverStatus, onEditBatchFiles, onActio
 					<Box sx={{ mt: launchGame ? 0 : 3 }}>
 						<Accordion disableGutters sx={cardAccordionSx}>
 							<AccordionSummary expandIcon={<ExpandMoreIcon />}>
-								<Typography variant="subtitle1">Version history</Typography>
+								<Typography variant="subtitle1">{t("server.versionHistory")}</Typography>
 								<Typography variant="body2" sx={{ color: "text.secondary", ml: 2 }}>
-									Every save is kept, and any version can be put back
+									{t("server.versionHistorySub")}
 								</Typography>
 							</AccordionSummary>
 							<AccordionDetails>

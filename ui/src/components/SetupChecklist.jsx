@@ -3,19 +3,21 @@ import { Alert, Box, Button, Collapse, LinearProgress, Typography } from "@mui/m
 import { CheckCircle as DoneIcon, ErrorOutline as TodoIcon, ChecklistRtl as ChecklistIcon, LightbulbOutlined as TipIcon } from "@mui/icons-material";
 import { api } from "../api/client";
 import { usePreferences } from "../utils/preferences";
+import { t, useT } from "../i18n";
 
 // Older versions remembered this in the browser; it is carried onto the account the first time.
 const LEGACY = [{ storageKey: "gp.checklistDismissed", pref: "checklistDismissed", read: (v) => (v === "1" ? true : undefined) }];
 
 // How each kind of item looks: its icon, colour and the words on its small label.
 const KINDS = {
-	ok: { icon: <DoneIcon fontSize="small" />, color: "success.main", label: "Done" },
-	todo: { icon: <TodoIcon fontSize="small" />, color: "error.main", label: "Needs doing" },
-	other: { icon: <TipIcon fontSize="small" />, color: "warning.main", label: "Worth doing" },
+	ok: { icon: <DoneIcon fontSize="small" />, color: "success.main", label: () => t("checklist.done") },
+	todo: { icon: <TodoIcon fontSize="small" />, color: "error.main", label: () => t("checklist.needsDoing") },
+	other: { icon: <TipIcon fontSize="small" />, color: "warning.main", label: () => t("checklist.worthDoing") },
 };
 
 /** A short list of what is worth doing for the panel as a whole, on the dashboard. Administrators only. */
 function SetupChecklist({ onOpenSettings, onCreateServer }) {
+	useT();
 	const [data, setData] = React.useState(null);
 	// Kept with the account, so "Don't show again" holds in every browser and at every address.
 	const [prefs, savePref] = usePreferences(LEGACY);
@@ -45,15 +47,15 @@ function SetupChecklist({ onOpenSettings, onCreateServer }) {
 				<Box sx={{ display: "flex", alignItems: "center", gap: 1, color: "primary.main" }}>
 					<ChecklistIcon fontSize="small" />
 					<Typography variant="subtitle2" sx={{ color: "text.primary" }}>
-						Setup: {data.done} of {data.total} done
+						{t("checklist.progress", { done: data.done, total: data.total })}
 					</Typography>
 				</Box>
 				<LinearProgress variant="determinate" value={Math.min(100, (data.done / data.total) * 100)} sx={{ flex: 1, minWidth: 120, height: 6, borderRadius: "3px", "& .MuiLinearProgress-bar": { backgroundImage: (t) => t.custom.gradient, borderRadius: "3px" } }} />
 				<Button size="small" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
-					{open ? "Hide" : "Show"}
+					{open ? t("common.hide") : t("common.show")}
 				</Button>
 				<Button size="small" color="inherit" sx={{ color: "text.secondary" }} onClick={dismiss}>
-					Don't show again
+					{t("checklist.dontShow")}
 				</Button>
 			</Box>
 			<Collapse in={open}>
@@ -65,7 +67,7 @@ function SetupChecklist({ onOpenSettings, onCreateServer }) {
 								<Box sx={{ display: "flex", alignItems: "center", gap: 0.5, minWidth: 112, color: kind.color }}>
 									{kind.icon}
 									<Typography variant="caption" sx={{ fontWeight: 700, color: "inherit" }}>
-										{kind.label}
+										{kind.label()}
 									</Typography>
 								</Box>
 								<Box sx={{ flex: 1, minWidth: 200 }}>
@@ -78,7 +80,7 @@ function SetupChecklist({ onOpenSettings, onCreateServer }) {
 								</Box>
 								{i.status !== "ok" && i.fix && (
 									<Button size="small" variant="outlined" onClick={() => go(i.fix)}>
-										{i.fix.to === "create" ? "Create a server" : "Open settings"}
+										{i.fix.to === "create" ? t("common.createAServer") : t("checklist.openSettings")}
 									</Button>
 								)}
 							</Box>
@@ -88,7 +90,7 @@ function SetupChecklist({ onOpenSettings, onCreateServer }) {
 			</Collapse>
 			{data.worst === "todo" && !open && (
 				<Alert severity="warning" sx={{ mt: 1.5 }}>
-					Something needs doing. Open the list to see what.
+					{t("checklist.somethingNeeds")}
 				</Alert>
 			)}
 		</Box>

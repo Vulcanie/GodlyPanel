@@ -4,7 +4,7 @@ import { PlayArrow as StartIcon, Stop as StopIcon, RestartAlt as RestartIcon, Sy
 import { api } from "../api/client";
 import { useOperation, operationLabel } from "../OperationsContext";
 import { useToast } from "../ToastContext";
-import { t, useT } from "../i18n";
+import { t, useT, errorText } from "../i18n";
 import ConfirmDialog from "./ui/ConfirmDialog";
 import SectionCard from "./ui/SectionCard";
 import InfoTip from "./InfoTip";
@@ -33,7 +33,7 @@ function ServerControls({ serverName, serverStatus, isAdmin = false }) {
 		api
 			.get(`${base}/overview`)
 			.then((r) => alive && setInfo(r))
-			.catch((e) => alive && toast(e.message, "error"));
+			.catch((e) => alive && toast(errorText(e), "error"));
 		if (isAdmin) {
 			api
 				.get(base)
@@ -49,14 +49,14 @@ function ServerControls({ serverName, serverStatus, isAdmin = false }) {
 		setConfirm(null);
 		try {
 			const r = await api.post(`/api/control/${encodeURIComponent(serverName)}/${action}`, body);
-			toast(r.message ?? "Done.", "success");
+			toast(r.message ?? t("common.done"), "success");
 		} catch (e) {
 			// The backup before an update failed. The server refuses the update until the user says to go ahead without one, so ask.
 			if ((action === "update" || action === "update-reboot") && needsBackupOverride(e)) {
 				setBackupFailed({ action, message: e.message });
 				return;
 			}
-			toast(e.message, "error");
+			toast(errorText(e), "error");
 		}
 	};
 
@@ -65,48 +65,48 @@ function ServerControls({ serverName, serverStatus, isAdmin = false }) {
 		try {
 			const r = await api.post(`${base}/auto-update`, { enabled: !autoUpdate });
 			setAutoUpdate(r.autoUpdateEnabled);
-			toast(`Auto-update turned ${r.autoUpdateEnabled ? "on" : "off"} for ${serverName}.`, "success");
+			toast(r.autoUpdateEnabled ? t("server.autoUpdateOn", { server: serverName }) : t("server.autoUpdateOff", { server: serverName }), "success");
 		} catch (e) {
-			toast(e.message, "error");
+			toast(errorText(e), "error");
 		} finally {
 			setAutoBusy(false);
 		}
 	};
 
 	const text = {
-		stop: `Stop ${serverName}? Players will be disconnected. It is saved first where the game allows.`,
-		restart: `Restart ${serverName}? Players are disconnected while it restarts.`,
-		update: `Update ${serverName}? This stops it, runs the SteamCMD update, and leaves it stopped.`,
-		"update-reboot": `Update and restart ${serverName}? This stops it, runs the SteamCMD update, then starts it again.`,
+		stop: t("server.confirmStop", { server: serverName }),
+		restart: t("server.confirmRestart", { server: serverName }),
+		update: t("server.confirmUpdate", { server: serverName }),
+		"update-reboot": t("server.confirmUpdateRestart", { server: serverName }),
 	};
 
 	return (
 		<SectionCard
-			title="Controls"
+			title={t("server.controls")}
 			actions={
 				<>
 					{busy && <Chip size="small" color="warning" label={operationLabel(operation)} />}
-					<Chip size="small" color={online ? "success" : "default"} label={online ? "Online" : "Offline"} />
+					<Chip size="small" color={online ? "success" : "default"} label={online ? t("common.online") : t("common.offline")} />
 				</>
 			}
 		>
 			<Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5 }}>
 				<Button variant="contained" color="success" size="large" startIcon={<StartIcon />} disabled={busy || online} onClick={() => send("start")} data-testid="ctl-start">
-					Start
+					{t("common.start")}
 				</Button>
 				<Button variant="contained" color="error" size="large" startIcon={<StopIcon />} disabled={operation === "starting" ? false : busy || !online} onClick={() => setConfirm("stop")} data-testid="ctl-stop">
-					Stop
+					{t("common.stop")}
 				</Button>
 				<Button variant="contained" color="warning" size="large" startIcon={<RestartIcon />} disabled={busy || !online} onClick={() => setConfirm("restart")} data-testid="ctl-restart">
-					Restart
+					{t("common.restart")}
 				</Button>
 				{info?.hasUpdate && (
 					<>
 						<Button variant="outlined" color="warning" size="large" startIcon={<UpdateIcon />} disabled={busy} onClick={() => setConfirm("update")}>
-							Update
+							{t("server.update")}
 						</Button>
 						<Button variant="outlined" color="warning" size="large" startIcon={<UpdateIcon />} disabled={busy} onClick={() => setConfirm("update-reboot")}>
-							Update and restart
+							{t("server.updateAndRestart")}
 						</Button>
 					</>
 				)}
@@ -118,7 +118,7 @@ function ServerControls({ serverName, serverStatus, isAdmin = false }) {
 						control={<Switch checked={autoUpdate} disabled={autoBusy} onChange={toggleAutoUpdate} />}
 						label={
 							<Typography variant="body2" component="span">
-								Update this server automatically when Steam has a new version
+								{t("server.autoUpdate")}
 							</Typography>
 						}
 					/>
@@ -126,7 +126,7 @@ function ServerControls({ serverName, serverStatus, isAdmin = false }) {
 				</Box>
 			)}
 
-			<ConfirmDialog open={Boolean(confirm)} title="Are you sure?" confirmLabel="Yes" onClose={() => setConfirm(null)} onConfirm={() => send(confirm)}>
+			<ConfirmDialog open={Boolean(confirm)} title={t("common.areYouSure")} confirmLabel={t("common.yes")} onClose={() => setConfirm(null)} onConfirm={() => send(confirm)}>
 				{confirm ? text[confirm] : ""}
 			</ConfirmDialog>
 

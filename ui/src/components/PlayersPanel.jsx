@@ -7,28 +7,31 @@ import SectionCard from "./ui/SectionCard";
 import CompactEmpty from "./CompactEmpty";
 import LiveDot from "./ui/LiveDot";
 import { api } from "../api/client";
+import { t, tn, useT, formatDate, formatNumber, errorText, getLocale } from "../i18n";
 
 const ago = (iso) => {
 	const then = Date.parse(iso);
-	if (!Number.isFinite(then)) return "a while ago";
+	if (!Number.isFinite(then)) return t("players.unknownAgo");
 	const seconds = Math.max(0, (Date.now() - then) / 1000);
-	if (seconds < 90) return "just now";
-	if (seconds < 5400) return `${Math.round(seconds / 60)} min ago`;
-	if (seconds < 172800) return `${Math.round(seconds / 3600)} h ago`;
-	return `${Math.round(seconds / 86400)} days ago`;
+	if (seconds < 90) return t("common.justNow");
+	if (seconds < 5400) return t("players.minAgo", { count: Math.round(seconds / 60) });
+	if (seconds < 172800) return t("players.hoursAgo", { count: Math.round(seconds / 3600) });
+	return tn("players.daysAgo", Math.round(seconds / 86400));
 };
 
 const clock = (iso) => {
 	const d = new Date(iso);
-	return Number.isNaN(d.getTime()) ? "" : d.toLocaleTimeString();
+	return Number.isNaN(d.getTime()) ? "" : d.toLocaleTimeString(getLocale());
 };
 
-const minutes = (m) => (m >= 120 ? `${(m / 60).toFixed(1)} h` : `${m} min`);
+const minutes = (m) => (m >= 120 ? t("players.hours", { count: formatNumber(Number((m / 60).toFixed(1))) }) : t("players.minutes", { count: m }));
 
 const list = (value) => (Array.isArray(value) ? value : []);
 
 /** Who is on the server, who has come and gone, and everyone the panel has seen. */
 function PlayersPanel({ serverName }) {
+	// Re-renders this panel when the language changes, so the t() text below switches with it.
+	useT();
 	const [data, setData] = React.useState(null);
 	const [error, setError] = React.useState(null);
 	const [reloads, setReloads] = React.useState(0);
@@ -42,7 +45,7 @@ function PlayersPanel({ serverName }) {
 			api
 				.get(`/api/server/${encodeURIComponent(serverName)}/players`)
 				.then((d) => alive && (setData(d), setError(null)))
-				.catch((e) => alive && setError(e?.message || "The player list could not be loaded."));
+				.catch((e) => alive && setError(errorText(e, t("players.loadFailed"))));
 		load();
 		const timer = setInterval(load, 8000);
 		return () => {
@@ -53,11 +56,11 @@ function PlayersPanel({ serverName }) {
 
 	if (!data) {
 		return error ? (
-			<Alert severity="error" action={<Button color="inherit" size="small" onClick={() => setReloads((n) => n + 1)}>Try again</Button>}>
+			<Alert severity="error" action={<Button color="inherit" size="small" onClick={() => setReloads((n) => n + 1)}>{t("common.tryAgain")}</Button>}>
 				{error}
 			</Alert>
 		) : (
-			<Box aria-busy="true" aria-label="Loading players">
+			<Box aria-busy="true" aria-label={t("players.loading")}>
 				<Skeleton variant="rounded" height={96} sx={{ mb: 2, borderRadius: "16px" }} />
 				<Skeleton variant="rounded" height={220} sx={{ borderRadius: "16px" }} />
 			</Box>
@@ -73,19 +76,17 @@ function PlayersPanel({ serverName }) {
 		<Box>
 			{error && (
 				<Alert severity="warning" sx={{ mb: 2 }}>
-					{error} Showing what was loaded last.
+					{t("players.staleNote", { error })}
 				</Alert>
 			)}
 			<SectionCard
-				title={`On now (${online.length})`}
+				title={t("players.onNow", { count: online.length })}
 				icon={<LiveDot state={online.length > 0 ? "online" : "offline"} size={10} />}
 				contentSx={{ py: 2 }}
 			>
 				{online.length === 0 ? (
 					<Typography variant="body2" sx={{ color: "text.secondary" }}>
-						{unnamed > 0
-							? `${unnamed} player${unnamed === 1 ? " is" : "s are"} on, but this game doesn't say who. (Valheim only gives names through its log file: the Launch options on the Settings tab can switch -logFile on.)`
-							: "Nobody right now. (Only games that report their players can be tracked.)"}
+						{unnamed > 0 ? tn("players.unnamed", unnamed) : t("players.nobody")}
 					</Typography>
 				) : (
 					<Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
@@ -95,7 +96,7 @@ function PlayersPanel({ serverName }) {
 								color="success"
 								variant="outlined"
 								avatar={<Avatar sx={{ bgcolor: (t) => alpha(t.palette.success.main, 0.2), color: "success.main", fontWeight: 700 }}>{String(p.name ?? "?").charAt(0).toUpperCase()}</Avatar>}
-								label={`${p.name} · on since ${clock(p.since)}`}
+								label={t("players.onSince", { name: p.name, time: clock(p.since) })}
 							/>
 						))}
 					</Box>
@@ -105,10 +106,10 @@ function PlayersPanel({ serverName }) {
 			<PlayerAdminCard serverName={serverName} online={online} />
 
 			<Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", alignItems: "flex-start" }}>
-				<SectionCard title="Coming and going" sx={{ flex: "1 1 320px", mb: 0 }} contentSx={{ py: 1.5 }}>
+				<SectionCard title={t("players.comingAndGoing")} sx={{ flex: "1 1 320px", mb: 0 }} contentSx={{ py: 1.5 }}>
 					{recent.length === 0 ? (
-						<CompactEmpty icon={<PlayersIcon />} title="Nothing yet">
-							Joins and leaves are recorded from the moment the panel starts watching.
+						<CompactEmpty icon={<PlayersIcon />} title={t("players.nothingYet")}>
+							{t("players.joinedHint")}
 						</CompactEmpty>
 					) : (
 						recent.slice(0, 40).map((e, i) => {
@@ -118,10 +119,10 @@ function PlayersPanel({ serverName }) {
 								<Box key={`${e.t}-${i}`} sx={{ display: "flex", alignItems: "center", gap: 1.25, py: 0.6 }}>
 									<Icon sx={{ fontSize: 16, color: joined ? "success.main" : "text.disabled", flexShrink: 0 }} />
 									<Typography variant="body2" noWrap sx={{ flex: 1, minWidth: 0, color: joined ? "text.primary" : "text.secondary" }}>
-										<strong>{e.name}</strong> {joined ? "joined" : "left"}
+										<strong>{e.name}</strong> {joined ? t("players.joined") : t("players.left")}
 										{e.reason ? ` (${typeof e.reason === "string" ? e.reason : JSON.stringify(e.reason)})` : ""}
 									</Typography>
-									<Typography variant="caption" sx={{ color: "text.secondary", whiteSpace: "nowrap" }} title={Number.isFinite(Date.parse(e.t)) ? new Date(e.t).toLocaleString() : undefined}>
+									<Typography variant="caption" sx={{ color: "text.secondary", whiteSpace: "nowrap" }} title={Number.isFinite(Date.parse(e.t)) ? formatDate(e.t) : undefined}>
 										{ago(e.t)}
 									</Typography>
 								</Box>
@@ -130,31 +131,31 @@ function PlayersPanel({ serverName }) {
 					)}
 				</SectionCard>
 
-				<SectionCard title="Everyone the panel has seen" sx={{ flex: "2 1 420px", mb: 0 }} contentSx={{ p: 0 }}>
+				<SectionCard title={t("players.seen")} sx={{ flex: "2 1 420px", mb: 0 }} contentSx={{ p: 0 }}>
 					{people.length === 0 ? (
-						<CompactEmpty icon={<PlayersIcon />} title="No one yet">
-							Players show up here the first time the panel sees them on this server.
+						<CompactEmpty icon={<PlayersIcon />} title={t("players.noOne")}>
+							{t("players.noOneBody")}
 						</CompactEmpty>
 					) : (
 						<Box sx={{ overflowX: "auto" }}>
 							<Table size="small" sx={{ "& td, & th": { px: 2.5 } }}>
 								<TableHead>
 									<TableRow>
-										<TableCell>Player</TableCell>
-										<TableCell align="right">Visits</TableCell>
-										<TableCell align="right">Time on</TableCell>
-										<TableCell align="right">Last seen</TableCell>
+										<TableCell>{t("players.colPlayer")}</TableCell>
+										<TableCell align="right">{t("players.colVisits")}</TableCell>
+										<TableCell align="right">{t("players.colTimeOn")}</TableCell>
+										<TableCell align="right">{t("players.colLastSeen")}</TableCell>
 									</TableRow>
 								</TableHead>
 								<TableBody>
 									{people.map((p) => (
 										<TableRow key={p.name} hover>
 											<TableCell>
-												{p.name} {p.online && <Chip size="small" color="success" label="online" sx={{ ml: 0.5 }} />}
+												{p.name} {p.online && <Chip size="small" color="success" label={t("players.online")} sx={{ ml: 0.5 }} />}
 											</TableCell>
 											<TableCell align="right">{p.sessions}</TableCell>
 											<TableCell align="right">{minutes(p.totalMinutes ?? 0)}</TableCell>
-											<TableCell align="right">{p.online ? "now" : ago(p.lastSeen)}</TableCell>
+											<TableCell align="right">{p.online ? t("players.now") : ago(p.lastSeen)}</TableCell>
 										</TableRow>
 									))}
 								</TableBody>
@@ -162,7 +163,7 @@ function PlayersPanel({ serverName }) {
 						</Box>
 					)}
 					<Typography variant="caption" sx={{ display: "block", p: 2, pt: 1.5, color: "text.secondary" }}>
-						Names as the game reports them, kept on this PC. Time on counts from when the panel first saw a player.
+						{t("players.namesNote")}
 					</Typography>
 				</SectionCard>
 			</Box>

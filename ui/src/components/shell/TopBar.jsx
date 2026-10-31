@@ -1,20 +1,23 @@
 import React from "react";
 import { Box, Breadcrumbs, ButtonBase, IconButton, Typography } from "@mui/material";
 import { Menu as MenuIcon, Search as SearchIcon } from "@mui/icons-material";
+import { t, useT } from "../../i18n";
 
-const PAGE_TITLES = {
-	dashboard: "Dashboard",
-	createServer: "Create a server",
-	settings: "Settings",
-	users: "People",
-	roles: "Roles",
-	activity: "Activity",
-};
+function pageTitle(page) {
+	if (page === "dashboard") return t("common.dashboard");
+	if (page === "createServer") return t("common.createAServer");
+	if (page === "settings") return t("common.settings");
+	if (page === "users") return t("common.people");
+	if (page === "roles") return t("common.roles");
+	if (page === "activity") return t("common.activity");
+	return "";
+}
 
 const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform);
 
 /** The strip across the top of the page: where you are, and the way into the command palette. */
 function TopBar({ nav, go, onMenu, onPalette, showPalette }) {
+	useT();
 	const onServer = nav.page === "config" || nav.page === "batchEditor";
 	return (
 		<Box
@@ -33,7 +36,7 @@ function TopBar({ nav, go, onMenu, onPalette, showPalette }) {
 				borderColor: "divider",
 			}}
 		>
-			<IconButton onClick={onMenu} aria-label="Open the menu" sx={{ display: { md: "none" } }}>
+			<IconButton onClick={onMenu} aria-label={t("shell.openMenu")} sx={{ display: { md: "none" } }}>
 				<MenuIcon />
 			</IconButton>
 
@@ -41,20 +44,20 @@ function TopBar({ nav, go, onMenu, onPalette, showPalette }) {
 				{onServer ? (
 					[
 						<ButtonBase key="d" onClick={() => go("dashboard", null)} sx={{ color: "text.secondary", fontSize: 14, borderRadius: 1 }}>
-							Dashboard
+							{t("common.dashboard")}
 						</ButtonBase>,
 						<ButtonBase key="s" onClick={() => go("config", nav.server)} sx={{ color: nav.page === "batchEditor" ? "text.secondary" : "text.primary", fontWeight: 600, fontSize: 14, borderRadius: 1 }}>
 							{nav.server}
 						</ButtonBase>,
 						nav.page === "batchEditor" && (
 							<Typography key="b" variant="body2" sx={{ fontWeight: 600 }}>
-								Launch script
+								{t("shell.launchScript")}
 							</Typography>
 						),
 					].filter(Boolean)
 				) : (
 					<Typography variant="body2" sx={{ fontWeight: 600 }}>
-						{PAGE_TITLES[nav.page] ?? ""}
+						{pageTitle(nav.page)}
 					</Typography>
 				)}
 			</Breadcrumbs>
@@ -62,7 +65,7 @@ function TopBar({ nav, go, onMenu, onPalette, showPalette }) {
 			{showPalette && (
 				<ButtonBase
 					onClick={onPalette}
-					aria-label="Search or jump to"
+					aria-label={t("shell.searchOrJump")}
 					data-testid="open-palette"
 					sx={{
 						display: "flex",
@@ -82,7 +85,7 @@ function TopBar({ nav, go, onMenu, onPalette, showPalette }) {
 				>
 					<SearchIcon sx={{ fontSize: 18 }} />
 					<Typography variant="body2" sx={{ flex: 1, textAlign: "left", display: { xs: "none", sm: "block" } }}>
-						Search or jump to…
+						{t("shell.searchOrJumpText")}
 					</Typography>
 					<Box component="kbd" sx={{ display: { xs: "none", sm: "inline" }, fontFamily: "inherit", fontSize: 11, px: 0.75, py: 0.1, borderRadius: 1, border: 1, borderColor: "divider" }}>
 						{isMac ? "⌘" : "Ctrl"} K

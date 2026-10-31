@@ -3,15 +3,24 @@ import { Alert, Box, Button, Checkbox, Dialog, DialogActions, DialogContent, Dia
 import { Lock as PasswordIcon } from "@mui/icons-material";
 import { flatWhenDisabled } from "./cardStyles";
 import { api } from "../api/client";
+import { t, useT, errorText } from "../i18n";
 
 // A rough guide for the person typing, not a rule: the server has the final say (and turns away very common passwords).
 function strength(password) {
-	if (!password) return { value: 0, label: "", color: "inherit" };
-	if (password.length < 8) return { value: 25, label: "Too short", color: "error" };
+	if (!password) return { value: 0, level: "", color: "inherit" };
+	if (password.length < 8) return { value: 25, level: "short", color: "error" };
 	const kinds = [/[a-z]/, /[A-Z]/, /\d/, /[^A-Za-z0-9]/].filter((re) => re.test(password)).length;
-	if (password.length >= 14 || (password.length >= 10 && kinds >= 3)) return { value: 100, label: "Strong", color: "success" };
-	if (password.length >= 10 || kinds >= 3) return { value: 70, label: "Good", color: "success" };
-	return { value: 45, label: "Okay", color: "warning" };
+	if (password.length >= 14 || (password.length >= 10 && kinds >= 3)) return { value: 100, level: "strong", color: "success" };
+	if (password.length >= 10 || kinds >= 3) return { value: 70, level: "good", color: "success" };
+	return { value: 45, level: "okay", color: "warning" };
+}
+
+function strengthLabel(level) {
+	if (level === "short") return t("password.tooShort");
+	if (level === "strong") return t("password.strong");
+	if (level === "good") return t("password.good");
+	if (level === "okay") return t("password.okay");
+	return "";
 }
 
 /**
@@ -21,6 +30,7 @@ function strength(password) {
  * signed in here and is signed out elsewhere.
  */
 function ChangePasswordDialog({ open, onClose }) {
+	useT();
 	const [current, setCurrent] = React.useState("");
 	const [next, setNext] = React.useState("");
 	const [again, setAgain] = React.useState("");
@@ -52,7 +62,7 @@ function ChangePasswordDialog({ open, onClose }) {
 			await api.post("/api/auth/change-password", { currentPassword: current, newPassword: next });
 			setDone(true);
 		} catch (e) {
-			setError(e?.message || "The password could not be changed. Please try again.");
+			setError(errorText(e, t("password.failed")));
 		} finally {
 			setBusy(false);
 		}
@@ -64,31 +74,31 @@ function ChangePasswordDialog({ open, onClose }) {
 				<Box sx={{ width: 36, height: 36, borderRadius: "10px", display: "grid", placeItems: "center", color: "primary.main", background: (t) => t.custom.gradientSoft, flexShrink: 0 }}>
 					<PasswordIcon fontSize="small" />
 				</Box>
-				Change your password
+				{t("password.title")}
 			</DialogTitle>
 			<DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: "16px !important" }}>
 				{done ? (
-					<Alert severity="success">Your password is changed. You stay signed in here; anywhere else you were signed in, you'll need the new one.</Alert>
+					<Alert severity="success">{t("password.changed")}</Alert>
 				) : (
 					<>
 						{error && <Alert severity="error">{error}</Alert>}
-						<TextField size="small" type={type} label="Current password" autoComplete="current-password" autoFocus value={current} onChange={(e) => setCurrent(e.target.value)} />
+						<TextField size="small" type={type} label={t("password.current")} autoComplete="current-password" autoFocus value={current} onChange={(e) => setCurrent(e.target.value)} />
 						<Box>
 							<TextField
 								fullWidth
 								size="small"
 								type={type}
-								label="New password"
+								label={t("password.new")}
 								autoComplete="new-password"
 								value={next}
 								onChange={(e) => setNext(e.target.value)}
-								helperText="At least 8 characters. A few random words work well."
+								helperText={t("password.newHelp")}
 							/>
 							{next && (
 								<Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.5 }}>
 									<LinearProgress variant="determinate" value={meter.value} color={meter.color} sx={{ flex: 1, height: 4 }} />
 									<Typography variant="caption" sx={{ color: "text.secondary", minWidth: 56 }}>
-										{meter.label}
+										{strengthLabel(meter.level)}
 									</Typography>
 								</Box>
 							)}
@@ -96,18 +106,18 @@ function ChangePasswordDialog({ open, onClose }) {
 						<TextField
 							size="small"
 							type={type}
-							label="New password again"
+							label={t("password.newAgain")}
 							autoComplete="new-password"
 							value={again}
 							onChange={(e) => setAgain(e.target.value)}
 							error={mismatch}
-							helperText={mismatch ? "These two don't match." : " "}
+							helperText={mismatch ? t("password.noMatch") : " "}
 							onKeyDown={(e) => e.key === "Enter" && ready && save()}
 							sx={{ mt: -1 }}
 						/>
-						<FormControlLabel sx={{ mt: -1.5 }} control={<Checkbox size="small" checked={reveal} onChange={(e) => setReveal(e.target.checked)} />} label={<Typography variant="body2">Show what I typed</Typography>} />
+						<FormControlLabel sx={{ mt: -1.5 }} control={<Checkbox size="small" checked={reveal} onChange={(e) => setReveal(e.target.checked)} />} label={<Typography variant="body2">{t("common.showTyped")}</Typography>} />
 						<Typography variant="caption" sx={{ color: "text.secondary" }}>
-							Forgotten your current one? An administrator can set a new password for you under People.
+							{t("password.forgotten")}
 						</Typography>
 					</>
 				)}
@@ -115,15 +125,15 @@ function ChangePasswordDialog({ open, onClose }) {
 			<DialogActions sx={{ px: 3, pb: 2 }}>
 				{done ? (
 					<Button variant="contained" onClick={onClose}>
-						Done
+						{t("password.done")}
 					</Button>
 				) : (
 					<>
 						<Button onClick={onClose} disabled={busy}>
-							Cancel
+							{t("common.cancel")}
 						</Button>
 						<Button variant="contained" onClick={save} disabled={!ready} sx={flatWhenDisabled}>
-							{busy ? "Changing…" : "Change password"}
+							{busy ? t("password.changing") : t("common.changePassword")}
 						</Button>
 					</>
 				)}

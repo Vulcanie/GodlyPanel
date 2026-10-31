@@ -7,6 +7,7 @@ import SectionCard from "./ui/SectionCard";
 import ConfirmDialog from "./ui/ConfirmDialog";
 import InfoTip from "./InfoTip";
 import TipRow from "./TipRow";
+import { t, useT, errorText } from "../i18n";
 
 /**
  * Kick and ban, and the game's whitelist, admin and ban lists. Only what the game can
@@ -14,6 +15,8 @@ import TipRow from "./TipRow";
  * manage gets nothing.
  */
 function PlayerAdminCard({ serverName, online = [] }) {
+	// Re-renders this card when the language changes, so the t() text below switches with it.
+	useT();
 	const base = `/api/server/${encodeURIComponent(serverName)}`;
 	const toast = useToast();
 	const [info, setInfo] = React.useState(null);
@@ -35,7 +38,7 @@ function PlayerAdminCard({ serverName, online = [] }) {
 			const next = await api.get(`${base}/player-admin`);
 			if (current.current === base) setInfo(next);
 		} catch (e) {
-			if (current.current === base) setError(e.message);
+			if (current.current === base) setError(errorText(e));
 		}
 	}, [base]);
 	React.useEffect(() => {
@@ -58,41 +61,41 @@ function PlayerAdminCard({ serverName, online = [] }) {
 		let ok = false;
 		try {
 			const r = await promise;
-			if (r.ok === false) setError(r.response || "The game said nothing changed.");
+			if (r.ok === false) setError(r.response || t("players.nothingChanged"));
 			else {
 				toast(done(r));
 				ok = true;
 			}
 			await load();
 		} catch (e) {
-			setError(e.message);
+			setError(errorText(e));
 		} finally {
 			setBusy(false);
 		}
 		return ok;
 	};
 
-	const kick = (name) => act(api.post(`${base}/players/kick`, { player: name, reason: reason || undefined }), () => `Kicked ${name}.`);
-	const ban = (name) => act(api.post(`${base}/players/ban`, { player: name, reason: reason || undefined }), () => `Banned ${name}.`);
-	const unban = (name) => act(api.post(`${base}/players/unban`, { player: name }), () => `Unbanned ${name}.`);
+	const kick = (name) => act(api.post(`${base}/players/kick`, { player: name, reason: reason || undefined }), () => t("players.kicked", { name }));
+	const ban = (name) => act(api.post(`${base}/players/ban`, { player: name, reason: reason || undefined }), () => t("players.banned", { name }));
+	const unban = (name) => act(api.post(`${base}/players/unban`, { player: name }), () => t("players.unbanned", { name }));
 	const add = async (list) => {
 		const name = (addTo[list] ?? "").trim();
 		if (!name) return;
 		const ok = await act(
 			api.post(`${base}/player-lists/${list}`, { player: name, ...(list === "admins" && addLevel !== "" ? { level: Number(addLevel) } : {}) }),
-			(r) => r.message || `Added ${name}.`,
+			(r) => r.message || t("players.added", { name }),
 		);
 		if (ok) setAddTo((a) => ({ ...a, [list]: "" }));
 	};
-	const setLevel = (name, level) => act(api.put(`${base}/player-lists/admins/${encodeURIComponent(name)}/level`, { level }), (r) => r.message || `Set ${name} to level ${level}.`);
-	const remove = (list, name) => act(api.del(`${base}/player-lists/${list}/${encodeURIComponent(name)}`), (r) => r.message || `Removed ${name}.`);
+	const setLevel = (name, level) => act(api.put(`${base}/player-lists/admins/${encodeURIComponent(name)}/level`, { level }), (r) => r.message || t("players.setLevel", { name, level }));
+	const remove = (list, name) => act(api.del(`${base}/player-lists/${list}/${encodeURIComponent(name)}`), (r) => r.message || t("players.removed", { name }));
 
 	if (!info) return error ? <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert> : <CircularProgress size={20} />;
 	if (!info.supported) {
 		return (
-			<SectionCard title="Manage players" icon={<AdminIcon />}>
+			<SectionCard title={t("players.manage")} icon={<AdminIcon />}>
 				<Typography variant="body2" sx={{ color: "text.secondary" }}>
-					The panel can't kick or ban on this game yet. Use the game's own admin tools.
+					{t("players.cantManage")}
 				</Typography>
 			</SectionCard>
 		);
@@ -105,7 +108,7 @@ function PlayerAdminCard({ serverName, online = [] }) {
 		`${(list.levels ?? []).map((l) => `${l.level} ${l.name}: ${l.description}`).join(" ")} New operators get level ${list.defaultLevel} unless you choose another.`;
 
 	return (
-		<SectionCard title="Manage players" icon={<AdminIcon />}>
+		<SectionCard title={t("players.manage")} icon={<AdminIcon />}>
 			{error && (
 				<Alert severity="warning" onClose={() => setError(null)} sx={{ mb: 1 }}>
 					{error}
@@ -126,14 +129,14 @@ function PlayerAdminCard({ serverName, online = [] }) {
 				<Box sx={{ mb: 2 }}>
 					<Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", alignItems: "center" }}>
 						<TipRow id="server.players.who" sx={{ flex: "1 1 200px", maxWidth: 320 }}>
-							<TextField fullWidth size="small" label={`Player (${info.who?.label ?? "name"})`} value={who} onChange={(e) => setWho(e.target.value)} />
+							<TextField fullWidth size="small" label={t("players.whoLabel", { kind: info.who?.label ?? t("players.nameWord") })} value={who} onChange={(e) => setWho(e.target.value)} />
 						</TipRow>
 						<TipRow id="server.players.reason" sx={{ flex: "1 1 200px", maxWidth: 320 }}>
-							<TextField fullWidth size="small" label="Reason (optional)" value={reason} onChange={(e) => setReason(e.target.value)} />
+							<TextField fullWidth size="small" label={t("players.reasonOptional")} value={reason} onChange={(e) => setReason(e.target.value)} />
 						</TipRow>
 						{info.kick && info.canKick && (
 							<Button size="small" variant="outlined" disabled={busy || !who.trim()} onClick={() => kick(who.trim())}>
-								Kick
+								{t("players.kick")}
 							</Button>
 						)}
 						{info.ban && info.canBan && (
@@ -147,14 +150,14 @@ function PlayerAdminCard({ serverName, online = [] }) {
 									setBanOpen(true);
 								}}
 							>
-								Ban
+								{t("players.ban")}
 							</Button>
 						)}
 					</Box>
 					{online.length > 0 && (
 						<Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap", mt: 1, alignItems: "center" }}>
 							<Typography variant="caption" sx={{ color: "text.secondary" }}>
-								On now, click to fill in:
+								{t("players.onNowFill")}
 							</Typography>
 							{online.map((p) => (
 								<Chip key={String(p.name)} size="small" label={String(p.name)} onClick={() => setWho(String(p.name))} />
@@ -168,20 +171,20 @@ function PlayerAdminCard({ serverName, online = [] }) {
 				<Box key={list.id} sx={{ mb: 1.5 }}>
 					<Box sx={{ display: "flex", alignItems: "center" }}>
 						<Typography variant="body2" sx={{ fontWeight: 500 }}>
-							{list.label} ({(list.entries ?? []).length})
+							{t("players.listCount", { label: list.label, count: (list.entries ?? []).length })}
 						</Typography>
 						<InfoTip id="server.players.lists" />
 						{list.levels && <InfoTip id="server.players.level" text={levelText(list)} />}
 					</Box>
 					{list.levels && info.running && (
 						<Typography variant="caption" sx={{ color: "warning.main", display: "block" }}>
-							The server is running, so levels can't be changed until it is stopped.
+							{t("players.running")}
 						</Typography>
 					)}
 					<Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap", my: 0.75 }}>
 						{(list.entries ?? []).length === 0 && (
 							<Typography variant="caption" sx={{ color: "text.secondary" }}>
-								Empty.
+								{t("players.empty")}
 							</Typography>
 						)}
 						{(list.entries ?? []).map((e) => (
@@ -189,11 +192,11 @@ function PlayerAdminCard({ serverName, online = [] }) {
 								key={e.id}
 								size="small"
 								variant="outlined"
-								label={`${e.name && e.name !== e.id ? `${e.name}${e.reason ? ` · ${e.reason}` : ""}` : e.id}${list.levels && e.level ? ` · Level ${e.level}` : ""}`}
+								label={`${e.name && e.name !== e.id ? `${e.name}${e.reason ? ` · ${e.reason}` : ""}` : e.id}${list.levels && e.level ? ` · ${t("players.levelShort", { level: e.level })}` : ""}`}
 								onClick={list.levels && info.canBan ? (ev) => setLevelMenu({ anchor: ev.currentTarget, name: e.name ?? e.id, level: e.level }) : undefined}
 								onDelete={info.canBan ? () => (list.readOnly && list.id === "bans" ? unban(e.id) : remove(list.id, e.id)) : undefined}
 								deleteIcon={
-									<Tooltip title={list.id === "bans" ? "Unban" : "Remove"}>
+									<Tooltip title={list.id === "bans" ? t("players.unban") : t("common.remove")}>
 										<CloseIcon />
 									</Tooltip>
 								}
@@ -205,13 +208,13 @@ function PlayerAdminCard({ serverName, online = [] }) {
 							<TextField
 								size="small"
 								placeholder={info.who?.hint}
-								inputProps={{ "aria-label": `Add to ${list.label}` }}
+								inputProps={{ "aria-label": t("players.addTo", { label: list.label }) }}
 								value={addTo[list.id] ?? ""}
 								onChange={(e) => setAddTo((a) => ({ ...a, [list.id]: e.target.value }))}
 								onKeyDown={(e) => e.key === "Enter" && add(list.id)}
 							/>
 							{list.levels && (
-								<Tooltip title={info.running ? "A running server can only add at its default level. Stop it to choose." : ""}>
+								<Tooltip title={info.running ? t("players.runningLevel") : ""}>
 									<span>
 										<Select
 											size="small"
@@ -219,13 +222,13 @@ function PlayerAdminCard({ serverName, online = [] }) {
 											disabled={info.running}
 											value={info.running ? "" : addLevel}
 											onChange={(e) => setAddLevel(e.target.value)}
-											inputProps={{ "aria-label": "Operator level for the new name" }}
+											inputProps={{ "aria-label": t("players.operatorLevelAria") }}
 											sx={{ minWidth: 190 }}
 										>
-											<MenuItem value="">Server default (level {list.defaultLevel})</MenuItem>
+											<MenuItem value="">{t("players.serverDefault", { level: list.defaultLevel })}</MenuItem>
 											{list.levels.map((l) => (
 												<MenuItem key={l.level} value={l.level}>
-													Level {l.level} · {l.name}
+													{t("players.levelOption", { level: l.level, name: l.name })}
 												</MenuItem>
 											))}
 										</Select>
@@ -233,7 +236,7 @@ function PlayerAdminCard({ serverName, online = [] }) {
 								</Tooltip>
 							)}
 							<Button size="small" disabled={busy || !(addTo[list.id] ?? "").trim()} onClick={() => add(list.id)}>
-								Add
+								{t("common.add")}
 							</Button>
 						</Box>
 					)}
@@ -251,16 +254,16 @@ function PlayerAdminCard({ serverName, online = [] }) {
 							setLevel(name, l.level);
 						}}
 					>
-						Level {l.level} · {l.name}
+						{t("players.levelOption", { level: l.level, name: l.name })}
 					</MenuItem>
 				))}
-				{info.running && <MenuItem disabled>Stop the server to change levels</MenuItem>}
+				{info.running && <MenuItem disabled>{t("players.stopToChange")}</MenuItem>}
 			</Menu>
 
 			<ConfirmDialog
 				open={banOpen && Boolean(banning)}
-				title={`Ban ${banning} from ${serverName}?`}
-				confirmLabel="Ban"
+				title={t("players.banTitle", { name: banning, server: serverName })}
+				confirmLabel={t("players.ban")}
 				color="error"
 				onConfirm={() => {
 					setBanOpen(false);
@@ -268,7 +271,7 @@ function PlayerAdminCard({ serverName, online = [] }) {
 				}}
 				onClose={() => setBanOpen(false)}
 			>
-				They will not be able to join until they are unbanned.
+				{t("players.banBody")}
 			</ConfirmDialog>
 		</SectionCard>
 	);
