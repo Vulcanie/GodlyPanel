@@ -245,7 +245,9 @@ async function listFolder(dir) {
 	return mods.sort((a, b) => a.name.localeCompare(b.name));
 }
 
-async function installIntoFolder(dir, originalName, file, accepts) {
+// keepExisting: a plain file already in the folder is left alone and reported as already installed, instead of being overwritten.
+// Used for a mod another mod depends on, so a failed install can't take back a file it only replaced.
+async function installIntoFolder(dir, originalName, file, accepts, { keepExisting = false } = {}) {
 	const name = cleanName(originalName);
 	const ext = path.extname(name).toLowerCase();
 	const isArchive = ext === ".zip";
@@ -256,7 +258,10 @@ async function installIntoFolder(dir, originalName, file, accepts) {
 
 	if (!isArchive) {
 		const target = path.join(dir, name);
-		if (await exists(target)) await fsp.rm(target, { force: true });
+		if (await exists(target)) {
+			if (keepExisting) throw new ModError(`${name} is already installed. Remove it first to replace it.`, "already_installed", 409);
+			await fsp.rm(target, { force: true });
+		}
 		await fsp.copyFile(file, target);
 		return name;
 	}
@@ -568,11 +573,11 @@ export async function listMods(server) {
 }
 
 /** Add a mod from an uploaded file (already on disk at `file`). */
-export async function installUpload(server, originalName, file) {
+export async function installUpload(server, originalName, file, options = {}) {
 	const spec = modConfigFor(server);
 	if (!spec || spec.adapter === "script-ids") throw new ModError("This game's mods aren't files you can upload.", "unsupported");
 	const dir = modsDirOf(server, spec);
-	const name = await installIntoFolder(dir, originalName, file, spec.accepts);
+	const name = await installIntoFolder(dir, originalName, file, spec.accepts, { keepExisting: options.keepExisting === true });
 	if (spec.adapter === "workshop" && /\.pak$/i.test(name)) await addToModlist(dir, name);
 	logActivity({ type: "mods.installed", server: server.name, message: `Installed ${name} on ${server.name}.` });
 	return { installed: [name] };

@@ -16,7 +16,8 @@ const MAX_MODS = 25;
 const MAX_FILES = 8;
 const MAX_DOWNLOAD_BYTES = 512 * 1024 * 1024;
 
-async function installFile(server, provider, hosts, file, index, ctx, state) {
+// keepExisting is set for a dependency when the caller asked to skip what is already there, so a file it needs is never overwritten.
+async function installFile(server, provider, hosts, file, index, ctx, state, keepExisting = false) {
 	const dir = await fsp.mkdtemp(path.join(os.tmpdir(), "gp-modsrc-"));
 	try {
 		const dest = path.join(dir, `${index}.bin`);
@@ -37,7 +38,7 @@ async function installFile(server, provider, hosts, file, index, ctx, state) {
 		// A file with no checksum can't be checked, so the caller is told it is unverified.
 		if (!sha512 && !sha256 && !sha1) state.unverified.push(file.name);
 		// The name is only ever used here, where installUpload checks it. The URL was used only by the guarded download.
-		const { installed } = await installUpload(server, file.name, dest);
+		const { installed } = await installUpload(server, file.name, dest, { keepExisting });
 		state.installed.push(...installed);
 	} finally {
 		await fsp.rm(dir, { recursive: true, force: true }).catch(() => {});
@@ -83,7 +84,7 @@ async function installOne(server, source, ref, ctx, state, depth, parentKey = nu
 	const unverifiedAt = state.unverified.length;
 	try {
 		for (const [index, file] of files.entries()) {
-			await installFile(server, provider, hosts, file, index, ctx, state);
+			await installFile(server, provider, hosts, file, index, ctx, state, depth > 0 && ctx.skipInstalled === true);
 		}
 	} catch (err) {
 		// An update (or any install that asked for it) can meet a dependency that is already in the folder. That is not a failure: the
