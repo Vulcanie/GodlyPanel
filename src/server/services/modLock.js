@@ -38,6 +38,9 @@ function safeName(name) {
 	return typeof name === "string" && name.length >= 1 && name.length <= 260 && !name.startsWith(".") && !/[\\/\0]/.test(name);
 }
 
+/** True when a name is one plain name in the mods folder. Anything that could be joined onto the folder to reach outside it is false. */
+export { safeName as isSafeName };
+
 // A path inside the mods folder, written with forward slashes. Every part has to be a safe name.
 function safePath(rel) {
 	return typeof rel === "string" && rel !== "" && rel.split("/").every(safeName);
@@ -141,6 +144,14 @@ export async function remove(serverName, id) {
 		const next = mods.filter((m) => m.id !== id);
 		return next.length === mods.length ? null : next;
 	});
+}
+
+/**
+ * Puts the record back exactly as an earlier read gave it, order included. Used when an update fails after the record has changed.
+ * The entries are written as they were read, not checked again, so a damaged entry comes back damaged rather than vanishing.
+ */
+export async function restore(serverName, mods) {
+	await mutate(serverName, () => mods.map((m) => ({ ...m })));
 }
 
 async function hashFile(file) {

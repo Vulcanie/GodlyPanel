@@ -80,8 +80,20 @@ async function installOne(server, source, ref, ctx, state, depth, parentKey = nu
 	const hosts = provider.hostsFor ? provider.hostsFor(ref) : provider.hosts;
 	// Dependencies are installed before this mod's own files, so the names from here on are this mod's alone.
 	const startAt = state.installed.length;
-	for (const [index, file] of files.entries()) {
-		await installFile(server, provider, hosts, file, index, ctx, state);
+	const unverifiedAt = state.unverified.length;
+	try {
+		for (const [index, file] of files.entries()) {
+			await installFile(server, provider, hosts, file, index, ctx, state);
+		}
+	} catch (err) {
+		// An update (or any install that asked for it) can meet a dependency that is already in the folder. That is not a failure: the
+		// mod that needs it still works with what is there. Only this one code is passed over, and only for a dependency.
+		if (depth === 0 || ctx.skipInstalled !== true || !(err instanceof ModError) || err.code !== "already_installed") throw err;
+		// Take back what this mod had put in before the file that clashed, so a skipped mod leaves nothing half-done.
+		for (const name of state.installed.splice(startAt).reverse()) await removeMod(server, name).catch(() => {});
+		state.unverified.length = unverifiedAt;
+		state.skipped.push({ source, ref, reason: "already_installed", dependencyOf: parentKey });
+		return;
 	}
 	state.mods.push({
 		source,

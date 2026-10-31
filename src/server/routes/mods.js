@@ -24,6 +24,8 @@ import {
 } from "../services/modService.js";
 import { installFromSource } from "../services/modSources/installer.js";
 import { detectSource, getProvider } from "../services/modSources/index.js";
+import { recordInstalled } from "../services/modRecord.js";
+import { checkUpdates, applyUpdate } from "../services/modUpdates.js";
 import * as modLock from "../services/modLock.js";
 
 const router = express.Router();
@@ -93,42 +95,6 @@ const INPUT_MAX = 2000;
 
 const labelOf = (id) => getProvider(id)?.label ?? id;
 
-// Records each mod the install put in the folder, in the lock. A mod whose record can't be written takes back everything this install
-// put there, and the records already written: a mod the panel can't account for is worse than none.
-async function recordInstalled(server, dir, result) {
-	const earlier = new Map((await modLock.read(server.name)).mods.map((m) => [m.id, m]));
-	const touched = new Map(); // id -> the entry it replaced, or null when it was new
-	try {
-		for (const mod of result.mods) {
-			// A mod whose names are not in the folder (a Thunderstore package is installed under its own name, not this one) has nothing to keep.
-			const names = await modLock.presentNames(dir, mod.installed);
-			if (names.length === 0) continue;
-			const id = modLock.idOf(mod.source, mod.ref);
-			if (!touched.has(id)) touched.set(id, earlier.get(id) ?? null);
-			// A mod asked for directly is no one's dependency. A dependency keeps every parent it has been installed for.
-			const parents = new Set(mod.dependencyOf ? [...(earlier.get(id)?.dependencyOf ?? []), modLock.idOfKey(mod.dependencyOf)] : []);
-			await modLock.add(server.name, {
-				id,
-				source: mod.source,
-				ref: mod.ref,
-				version: mod.version ?? "",
-				side: mod.side,
-				names,
-				files: await modLock.hashEntry(dir, names),
-				dependencyOf: [...parents],
-				installedAt: new Date().toISOString(),
-			});
-		}
-	} catch (err) {
-		for (const [id, was] of touched) {
-			if (was) await modLock.add(server.name, was).catch(() => {});
-			else await modLock.remove(server.name, id).catch(() => {});
-		}
-		for (const name of [...result.installed].reverse()) await removeMod(server, name).catch(() => {});
-		throw err;
-	}
-}
-
 async function installFromAddress(server, found, body) {
 	const dir = modsFolderOf(server);
 	if (!dir) throw new ModError("This game's mods can't be added from an address.", "unsupported");
@@ -136,6 +102,8 @@ async function installFromAddress(server, found, body) {
 		...(await modInstallContext(server)),
 		trusted: body.trusted === true,
 		assetName: typeof body.assetName === "string" ? body.assetName : undefined,
+		// A dependency already in the folder is passed over and reported, rather than failing the whole install.
+		skipInstalled: true,
 	};
 	const result = await installFromSource(server, found.source, found.ref, ctx);
 	await recordInstalled(server, dir, result);
@@ -177,6 +145,34 @@ router.get("/server/:serverName/mods/lock", async (req, res) => {
 	} catch (err) {
 		fail(res, err, "Reading the mod lock");
 	}
+});
+
+// What each mod in the lock could be updated to. Only asks the sources; nothing is downloaded or changed, so it works while the game runs.
+router.get("/server/:serverName/mods/updates", async (req, res) => {
+	try {
+		res.json({ updates: await checkUpdates(req.server) });
+	} catch (err) {
+		fail(res, err, "Checking for updates");
+	}
+});
+
+// Updates one mod from the lock, by its id. Needs the server stopped, like any change to the mods folder.
+const UPDATE_ID_MAX = 600;
+router.post("/server/:serverName/mods/update", (req, res) => {
+	const id = req.body?.id;
+	if (typeof id !== "string" || id === "" || id.length > UPDATE_ID_MAX) {
+		return res.status(400).json({ error: `id is required, up to ${UPDATE_ID_MAX} characters.`, code: "bad_input" });
+	}
+	return change(req, res, "Updating the mod", async () => {
+		try {
+			return await applyUpdate(req.server, id);
+		} catch (err) {
+			if (err instanceof ModError) throw err;
+			// Anything else may carry a path from the panel's own folders, which the response must not show.
+			console.error("Updating a mod failed:", err);
+			throw new ModError("The mod couldn't be updated. The panel's log has the details.", "update_failed", 500);
+		}
+	});
 });
 
 router.post("/server/:serverName/mods/workshop", (req, res) =>

@@ -28,6 +28,7 @@ const { initSecrets } = await import("../../src/server/config/secretsStore.js");
 const { ModError } = await import("../../src/server/services/modService.js");
 const { registerProvider, getProvider } = await import("../../src/server/services/modSources/index.js");
 const { installFromSource } = await import("../../src/server/services/modSources/installer.js");
+const { createZip } = await import("../../src/server/util/tarZip.js");
 
 const REFUSAL = { message: "That address isn't one the panel will download from." };
 // The fields an install is judged by. The result also lists the mods and skipped files, which these checks don't look at.
@@ -65,6 +66,8 @@ describe("installing from a source", () => {
 	let savedModrinth;
 	let fixtures;
 	let serverListening;
+	// A zip with one folder in it, the way a 7 Days to Die mod comes. Installing it twice is the case that is already_installed.
+	let packZip;
 
 	const modrinthProject = (slug, title, extra = {}) => ({ title, client_side: "required", server_side: "required", slug, ...extra });
 
@@ -72,6 +75,11 @@ describe("installing from a source", () => {
 		await initConfig();
 		await initSecrets();
 		requests = [];
+		const packStage = path.join(root, "pack-stage");
+		fs.mkdirSync(path.join(packStage, "SharedLib"), { recursive: true });
+		fs.writeFileSync(path.join(packStage, "SharedLib", "lib.txt"), "a library two mods share");
+		await createZip(path.join(root, "pack.zip"), [{ dir: packStage, name: "SharedLib" }]);
+		packZip = fs.readFileSync(path.join(root, "pack.zip"));
 		serverListening = http.createServer((req, res) => {
 			requests.push(req.url);
 			const send = (status, body, headers = {}) => {
@@ -92,6 +100,8 @@ describe("installing from a source", () => {
 					return send(302, "", { Location: "https://elsewhere.example.test/x.jar" });
 				case "/files/relative.jar":
 					return send(302, "", { Location: "/files/good.jar" });
+				case "/files/pack.zip":
+					return send(200, packZip);
 				case "/v2/project/fine":
 					return send(200, JSON.stringify(modrinthProject("fine", "Fine")), { "Content-Type": "application/json" });
 				case "/v2/project/fine/version":
@@ -151,6 +161,8 @@ describe("installing from a source", () => {
 			["client-top", { side: "client", files: [file("ClientTop.jar")] }],
 			["client-dep", { side: "client", files: [file("ClientDep.jar")] }],
 			["parent-client-dep", { deps: [{ source: "fixture", ref: "client-dep" }], files: [file("ParentOk.jar")] }],
+			["shared-lib", { files: [{ url: `${base}/files/pack.zip`, name: "SharedLib.zip", sha512: sha512(packZip) }] }],
+			["uses-lib", { deps: [{ source: "fixture", ref: "shared-lib" }], files: [] }],
 		]);
 		for (let i = 0; i < 26; i += 1) fixtures.set(`fan-dep-${i}`, { files: [file(`Fan${i}.jar`)] });
 		fixtures.set("fan-24", { deps: Array.from({ length: 24 }, (_, i) => ({ source: "fixture", ref: `fan-dep-${i}` })), files: [file("FanRoot24.jar")] });
@@ -349,6 +361,47 @@ describe("installing from a source", () => {
 			await assert.rejects(() => installFromSource(s, "url", "https://files.example.test/files/big.jar", { ...trusted, fetchImpl: recordingFetch(mapTo).fetchImpl, maxBytes: 1000 }), {
 				message: "The download is larger than it should be, so it was stopped.",
 			});
+			assert.deepEqual(listing(mods), []);
+			assert.deepEqual(leftovers(), []);
+		});
+	});
+
+	describe("a dependency already in the mods folder", () => {
+		// A 7 Days to Die server takes .zip archives, so the shared library can be a folder that is already there.
+		function archiveServer() {
+			folders += 1;
+			const folder = path.join(root, "data", "servers", `sd-${folders}`);
+			fs.mkdirSync(folder, { recursive: true });
+			return { server: { name: `Seven ${folders}`, type: "7days", installDir: folder, workingDir: folder }, mods: path.join(folder, "Mods") };
+		}
+
+		it("with skipInstalled, skips it, lists it with the mod that needed it, and installs the rest", async () => {
+			const { server: s, mods } = archiveServer();
+			await installFromSource(s, "fixture", "shared-lib", {});
+			const result = await installFromSource(s, "fixture", "uses-lib", { skipInstalled: true });
+			assert.deepEqual(result.skipped, [{ source: "fixture", ref: "shared-lib", reason: "already_installed", dependencyOf: "fixture:uses-lib" }]);
+			assert.deepEqual(result.installed, []);
+			assert.deepEqual(listing(mods), ["SharedLib"]);
+		});
+
+		it("without the flag, it still fails as before, and leaves what was there alone", async () => {
+			const { server: s, mods } = archiveServer();
+			await installFromSource(s, "fixture", "shared-lib", {});
+			await assert.rejects(() => installFromSource(s, "fixture", "uses-lib", {}), { code: "already_installed" });
+			assert.deepEqual(listing(mods), ["SharedLib"]);
+			assert.deepEqual(leftovers(), []);
+		});
+
+		it("still refuses when it is the mod asked for, since only a dependency is skipped", async () => {
+			const { server: s, mods } = archiveServer();
+			await installFromSource(s, "fixture", "shared-lib", {});
+			await assert.rejects(() => installFromSource(s, "fixture", "shared-lib", { skipInstalled: true }), { code: "already_installed" });
+			assert.deepEqual(listing(mods), ["SharedLib"]);
+		});
+
+		it("other errors still roll back when the flag is on", async () => {
+			const { server: s, mods } = freshServer();
+			await assert.rejects(() => installFromSource(s, "fixture", "roll-root", { skipInstalled: true }), /doesn't match the checksum/);
 			assert.deepEqual(listing(mods), []);
 			assert.deepEqual(leftovers(), []);
 		});
