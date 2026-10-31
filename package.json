@@ -1,7 +1,7 @@
 {
 	"name": "godlypanel",
 	"productName": "GodlyPanel",
-	"version": "0.1.0-alpha.21",
+	"version": "0.1.0-alpha.22",
 	"description": "All-in-one game server control panel for Windows",
 	"author": "Vulcanie",
 	"license": "MIT",
@@ -39,8 +39,8 @@
 		"express": "^4.18.2",
 		"gamedig": "^5.3.3",
 		"jsonwebtoken": "^9.0.3",
-		"multer": "^2.4.0",
-		"nodemailer": "^10.0.13",
+		"multer": "^2.5.0",
+		"nodemailer": "^10.3.1",
 		"rcon-client": "^4.2.5"
 	},
 	"build": {
