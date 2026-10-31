@@ -6,10 +6,10 @@ import { serverEntry } from "../helpers/instance.js";
 import { startInProcess } from "../helpers/inprocess.js";
 import { windowsOnly } from "../helpers/winEmulation.js";
 
-// A panel from before maps had settings of their own has every ARK Ascended server pointing at the one shared settings folder.
+// A panel from before servers had settings of their own has every ARK Ascended server pointing at the one shared settings folder.
 // Starting the panel gives each its own copy, so the settings page shows that map's file.
 
-describe("ARK Ascended maps keep their own settings", windowsOnly("the settings paths are Windows paths"), () => {
+describe("ARK Ascended servers keep their own settings, also on the same map", windowsOnly("the settings paths are Windows paths"), () => {
 	let panel;
 	let api;
 	let install;
@@ -29,7 +29,7 @@ describe("ARK Ascended maps keep their own settings", windowsOnly("the settings 
 					const shared = Object.fromEntries(["GameUserSettings.ini", "Game.ini"].map((f) => [f, path.join(live, f)]));
 					return serverEntry(install, { name, type: "ark", updateAppId: "2430930", processName: `nope-${name}.exe`, startScriptPath: script, workingDir: install, configPaths: shared });
 				};
-				return [entry("Ragnarok"), entry("Island")];
+				return [entry("Ragnarok"), entry("Ragnarok2")];
 			},
 		});
 		api = panel.api;
@@ -39,8 +39,8 @@ describe("ARK Ascended maps keep their own settings", windowsOnly("the settings 
 
 	const config = (name, file = "GameUserSettings.ini") => api.get(`/api/config/${encodeURIComponent(name)}?file=${encodeURIComponent(file)}`);
 
-	it("gives each map a folder of its own, seeded from what the shared folder held", async () => {
-		for (const name of ["Ragnarok", "Island"]) {
+	it("gives each server a folder of its own, seeded from what the shared folder held", async () => {
+		for (const name of ["Ragnarok", "Ragnarok2"]) {
 			const res = await config(name);
 			assert.equal(res.status, 200);
 			assert.match(res.json.content, /FromLive=1/);
@@ -48,11 +48,11 @@ describe("ARK Ascended maps keep their own settings", windowsOnly("the settings 
 		}
 	});
 
-	it("saves one map's settings without touching another's or the shared file", async () => {
+	it("saves one server's settings without touching another's or the shared file", async () => {
 		const saved = await api.post("/api/config/Ragnarok", { fileName: "GameUserSettings.ini", content: "[ServerSettings]\r\nOnlyRagnarok=1\r\n" });
 		assert.equal(saved.status, 200);
 		assert.match((await config("Ragnarok")).json.content, /OnlyRagnarok=1/);
-		assert.match((await config("Island")).json.content, /FromLive=1/);
+		assert.match((await config("Ragnarok2")).json.content, /FromLive=1/);
 		assert.match(fs.readFileSync(path.join(live, "GameUserSettings.ini"), "utf8"), /FromLive=1/);
 	});
 

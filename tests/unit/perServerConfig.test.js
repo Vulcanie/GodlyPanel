@@ -7,7 +7,7 @@ import { asaConfigSync, CONFIG_FOLDER } from "../../src/server/data/configSync.j
 import { windowsOnly } from "../helpers/winEmulation.js";
 import { applyServerConfig, adoptMissingConfig, __setSettleMsForTests } from "../../src/server/services/perServerConfig.js";
 
-// ARK Ascended maps share one install and so one settings folder. Each server keeps its own copy and the panel puts it in the
+// ARK Ascended servers share one install and so one settings folder (also when they run the same map). Each server keeps its own copy and the panel puts it in the
 // shared folder just before that server starts.
 
 describe("asaConfigSync", () => {
@@ -18,7 +18,7 @@ describe("asaConfigSync", () => {
 		assert.equal(configSync.live["Game.ini"], "D:\\Games\\ark-asa\\ShooterGame\\Saved\\Config\\WindowsServer\\Game.ini");
 	});
 
-	it("gives two maps different config paths", () => {
+	it("gives two servers different config paths, whatever map each runs", () => {
 		const a = asaConfigSync("D:\\ark", "Ragnarok").configPaths;
 		const b = asaConfigSync("D:\\ark", "Island").configPaths;
 		assert.notEqual(a["GameUserSettings.ini"], b["GameUserSettings.ini"]);
@@ -59,7 +59,7 @@ describe("per-server settings for maps sharing an install", windowsOnly("the set
 		assert.equal(read(s.configSync.dir + "\\GameUserSettings.ini"), "from-live");
 	});
 
-	it("puts the server's own settings where the game reads them, so each map starts with its own", async () => {
+	it("puts the server's own settings where the game reads them, so each server starts with its own", async () => {
 		const a = server("Ragnarok");
 		const b = server("Island");
 		fs.mkdirSync(a.configSync.dir, { recursive: true });
@@ -71,7 +71,7 @@ describe("per-server settings for maps sharing an install", windowsOnly("the set
 		assert.equal(read(path.join(live, "GameUserSettings.ini")), "ragnarok");
 		(await applyServerConfig(b))();
 		assert.equal(read(path.join(live, "GameUserSettings.ini")), "island");
-		assert.equal(read(a.configSync.dir + "\\GameUserSettings.ini"), "ragnarok", "starting another map leaves this map's copy alone");
+		assert.equal(read(a.configSync.dir + "\\GameUserSettings.ini"), "ragnarok", "starting another server leaves this server's copy alone");
 	});
 
 	it("keeps a second start waiting until the first has been launched and settled", async () => {
@@ -89,7 +89,7 @@ describe("per-server settings for maps sharing an install", windowsOnly("the set
 		});
 		await new Promise((r) => setTimeout(r, 50));
 		assert.equal(second, false);
-		assert.equal(read(path.join(live, "GameUserSettings.ini")), "ragnarok", "the first map's settings stay until it has launched");
+		assert.equal(read(path.join(live, "GameUserSettings.ini")), "ragnarok", "the first server's settings stay until it has launched");
 		releaseA();
 		(await pending)();
 		assert.equal(read(path.join(live, "GameUserSettings.ini")), "island");
