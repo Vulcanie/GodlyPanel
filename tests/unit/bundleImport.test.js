@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { windowsOnly } from "../helpers/winEmulation.js";
 
 // Importing a .gpserver bundle: a preview that reads only the manifest, and an import that rebuilds the server in a new folder.
 // The bundles are real ones made by exportServer, and hand-built tar files for the hostile cases. A refused or failed import leaves
@@ -131,7 +132,7 @@ let savesFile;
 let secretsFile;
 let source;
 
-describe("importing a server bundle", () => {
+describe("importing a server bundle", windowsOnly("bundles are made and read by Windows' real tar"), () => {
 	before(async () => {
 		write("saves/world.sav", "world v1\n");
 		write("config/ServerSettings.ini", `[ServerSettings]\nAdminPassword=${SECRET}\nServerName=${NAME}\n`);
