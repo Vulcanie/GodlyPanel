@@ -30,6 +30,8 @@ const { getProvider } = await import("../../src/server/services/modSources/index
 const { installFromSource } = await import("../../src/server/services/modSources/installer.js");
 
 const REFUSAL = { message: "That address isn't one the panel will download from." };
+// The fields an install is judged by. The result also lists the mods and skipped files, which these checks don't look at.
+const pick = ({ installed, unverified }) => ({ installed, unverified });
 const sha1 = (bytes) => crypto.createHash("sha1").update(bytes).digest("hex");
 const good = Buffer.from("a good jar with class files in it ".repeat(40));
 const ZEROS40 = "0".repeat(40);
@@ -302,7 +304,7 @@ describe("curseforge provider", () => {
 	it("installs the newest file, checked against its sha1", async () => {
 		const { server, mods } = freshServer();
 		const result = await installFromSource(server, "curseforge", "jei", withKey({ loader: "fabric", gameVersion: "1.21.1" }));
-		assert.deepEqual(result, { installed: ["jei-new.jar"], unverified: [] });
+		assert.deepEqual(pick(result), { installed: ["jei-new.jar"], unverified: [] });
 		assert.deepEqual(fs.readFileSync(path.join(mods, "jei-new.jar")), good);
 		assert.deepEqual(leftovers(), []);
 	});
@@ -326,7 +328,7 @@ describe("curseforge provider", () => {
 	it("reports a file with no checksum as unverified, by name", async () => {
 		const { server } = freshServer();
 		const result = await installFromSource(server, "curseforge", "330", withKey());
-		assert.deepEqual(result, { installed: ["no-sum.jar"], unverified: ["no-sum.jar"] });
+		assert.deepEqual(pick(result), { installed: ["no-sum.jar"], unverified: ["no-sum.jar"] });
 	});
 
 	it("refuses a download that redirects to another host, and installs nothing", async () => {

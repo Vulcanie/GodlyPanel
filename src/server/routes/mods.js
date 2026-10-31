@@ -18,7 +18,13 @@ import {
 	addScriptId,
 	setModEnabled,
 	removeMod,
+	modConfigFor,
+	modInstallContext,
+	modsFolderOf,
 } from "../services/modService.js";
+import { installFromSource } from "../services/modSources/installer.js";
+import { detectSource, getProvider } from "../services/modSources/index.js";
+import * as modLock from "../services/modLock.js";
 
 const router = express.Router();
 
@@ -82,6 +88,97 @@ router.post("/server/:serverName/mods/upload", singleFile(upload, "mod", "500 MB
 	}
 });
 
+// The one-box install: a pasted address or a name. detectSource only reads the text; the source it names must be one this game takes.
+const INPUT_MAX = 2000;
+
+const labelOf = (id) => getProvider(id)?.label ?? id;
+
+// Records each mod the install put in the folder, in the lock. A mod whose record can't be written takes back everything this install
+// put there, and the records already written: a mod the panel can't account for is worse than none.
+async function recordInstalled(server, dir, result) {
+	const earlier = new Map((await modLock.read(server.name)).mods.map((m) => [m.id, m]));
+	const touched = new Map(); // id -> the entry it replaced, or null when it was new
+	try {
+		for (const mod of result.mods) {
+			// A mod whose names are not in the folder (a Thunderstore package is installed under its own name, not this one) has nothing to keep.
+			const names = await modLock.presentNames(dir, mod.installed);
+			if (names.length === 0) continue;
+			const id = modLock.idOf(mod.source, mod.ref);
+			if (!touched.has(id)) touched.set(id, earlier.get(id) ?? null);
+			// A mod asked for directly is no one's dependency. A dependency keeps every parent it has been installed for.
+			const parents = new Set(mod.dependencyOf ? [...(earlier.get(id)?.dependencyOf ?? []), modLock.idOfKey(mod.dependencyOf)] : []);
+			await modLock.add(server.name, {
+				id,
+				source: mod.source,
+				ref: mod.ref,
+				version: mod.version ?? "",
+				side: mod.side,
+				names,
+				files: await modLock.hashEntry(dir, names),
+				dependencyOf: [...parents],
+				installedAt: new Date().toISOString(),
+			});
+		}
+	} catch (err) {
+		for (const [id, was] of touched) {
+			if (was) await modLock.add(server.name, was).catch(() => {});
+			else await modLock.remove(server.name, id).catch(() => {});
+		}
+		for (const name of [...result.installed].reverse()) await removeMod(server, name).catch(() => {});
+		throw err;
+	}
+}
+
+async function installFromAddress(server, found, body) {
+	const dir = modsFolderOf(server);
+	if (!dir) throw new ModError("This game's mods can't be added from an address.", "unsupported");
+	const ctx = {
+		...(await modInstallContext(server)),
+		trusted: body.trusted === true,
+		assetName: typeof body.assetName === "string" ? body.assetName : undefined,
+	};
+	const result = await installFromSource(server, found.source, found.ref, ctx);
+	await recordInstalled(server, dir, result);
+	return { installed: result.installed, unverified: result.unverified, skipped: result.skipped };
+}
+
+router.post("/server/:serverName/mods/install", (req, res) => {
+	const body = req.body ?? {};
+	const input = typeof body.input === "string" ? body.input.trim() : "";
+	if (input === "" || input.length > INPUT_MAX) {
+		return res.status(400).json({ error: `Paste a mod's address or name, up to ${INPUT_MAX} characters.`, code: "bad_input" });
+	}
+	const spec = modConfigFor(req.server);
+	const accepted = (Array.isArray(spec?.sources) ? spec.sources : []).map(labelOf);
+	const found = detectSource(input);
+	if (!found) return res.status(400).json({ error: "I don't recognise that link.", code: "unrecognised", accepted });
+	if (!Array.isArray(spec?.sources) || !spec.sources.includes(found.source)) {
+		return res.status(400).json({ error: `This game doesn't take mods from ${labelOf(found.source)}.`, code: "source_not_supported", accepted });
+	}
+	return change(req, res, "Installing the mod", async () => {
+		try {
+			return await installFromAddress(req.server, found, body);
+		} catch (err) {
+			if (err instanceof ModError) throw err;
+			// Anything else may carry a path from the panel's own folders, which the response must not show.
+			console.error("Installing a mod from an address failed:", err);
+			throw new ModError("The mod couldn't be installed. The panel's log has the details.", "install_failed", 500);
+		}
+	});
+});
+
+router.get("/server/:serverName/mods/lock", async (req, res) => {
+	try {
+		const name = req.server.name;
+		const dir = modsFolderOf(req.server);
+		const { mods } = await modLock.read(name);
+		const drift = dir ? await modLock.diffAgainstDisk(name, dir) : { changed: [], missing: [], untracked: [] };
+		res.json({ entries: mods, drift, orphans: await modLock.orphans(name) });
+	} catch (err) {
+		fail(res, err, "Reading the mod lock");
+	}
+});
+
 router.post("/server/:serverName/mods/workshop", (req, res) =>
 	change(req, res, "Adding the Workshop item", () => installWorkshopItem(req.server, req.body?.id)),
 );
@@ -108,6 +205,8 @@ router.post("/server/:serverName/mods/remove", (req, res) => {
 	if (typeof req.body?.id !== "string") return res.status(400).json({ error: "id is required." });
 	return change(req, res, "Removing the mod", async () => {
 		await removeMod(req.server, req.body.id);
+		// The mod is gone either way. A record that can't be updated is logged, not reported as a failed removal: the drift check shows it.
+		await modLock.forgetName(req.server.name, req.body.id).catch((err) => console.error("Updating the mod lock failed:", err));
 		return {};
 	});
 });
