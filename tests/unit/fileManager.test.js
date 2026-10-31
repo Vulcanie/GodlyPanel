@@ -121,6 +121,19 @@ describe("path rules", () => {
 		}
 	});
 
+	it("refuses a server folder that is a junction into the data folder", async (t) => {
+		const link = path.join(root, "games", "junction-to-data");
+		try {
+			fs.symlinkSync(paths.dataDir, link, "junction");
+		} catch {
+			t.skip("this account cannot create a junction");
+			return;
+		}
+		const name = "FM junction data";
+		await serverStore.add({ name, type: "minecraft", installDir: link, workingDir: link });
+		await refused(fm.list(serverStore.get(name), ""), "outside");
+	});
+
 	it("reports a server with no folder, or one whose folder is missing", async () => {
 		await serverStore.add({ name: "FM nofolder", type: "minecraft" });
 		await refused(fm.list(serverStore.get("FM nofolder"), ""), "no_folder");

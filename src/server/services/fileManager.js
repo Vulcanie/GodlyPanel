@@ -86,9 +86,19 @@ export function rootFor(server) {
 
 	// The panel's own settings, accounts and backups live in its data folder. A server folder that is that folder, sits inside it, or
 	// holds it would bring those files into reach.
+	// Compared both as written and with links resolved, so a junction an admin chose cannot lead into the data folder either.
 	const data = path.resolve(paths.dataDir);
-	if (isWithinFolder(folder, data) || isWithinFolder(data, folder)) {
-		throw fail("outside", "This server's folder holds the panel's own data, so it can't be browsed here.");
+	const realOf = (p) => {
+		try {
+			return fs.realpathSync(p);
+		} catch {
+			return path.resolve(p);
+		}
+	};
+	for (const [a, b] of [[folder, data], [realOf(folder), realOf(data)]]) {
+		if (isWithinFolder(a, b) || isWithinFolder(b, a)) {
+			throw fail("outside", "This server's folder holds the panel's own data, so it can't be browsed here.");
+		}
 	}
 	return folder;
 }
