@@ -1,5 +1,6 @@
 import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
+import AdmZip from "adm-zip";
 import crypto from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
@@ -473,5 +474,383 @@ describe("purgeTrash", () => {
 		assert.equal(await fm.purgeTrash(server), 0);
 		assert.equal(fs.existsSync(recent), true);
 		assert.equal(fs.existsSync(path.join(trash, "notes")), true);
+	});
+});
+
+// The source file a route would have received, kept outside the server folder the way a real upload is.
+function uploadSource(name, content) {
+	const dir = path.join(root, "uploads");
+	fs.mkdirSync(dir, { recursive: true });
+	const file = path.join(dir, name);
+	fs.writeFileSync(file, content);
+	return file;
+}
+
+// Everything under a folder, as relative paths, so a test can see that nothing was added or removed.
+const treeOf = (dir) => fs.readdirSync(dir, { recursive: true }).sort();
+
+describe("saveUpload", () => {
+	it("saves into the root and into a subfolder, with the same bytes", async () => {
+		const { server, folder } = await freshServer();
+		const bytes = crypto.randomBytes(3000);
+		const src = uploadSource("in.bin", bytes);
+		fs.mkdirSync(path.join(folder, "sub"));
+		const top = await fm.saveUpload(server, "", "top.bin", src);
+		const nested = await fm.saveUpload(server, "sub", "nested.bin", src);
+		assert.deepEqual(top, { path: "top.bin", size: 3000 });
+		assert.deepEqual(nested, { path: "sub/nested.bin", size: 3000 });
+		assert.deepEqual(fs.readFileSync(path.join(folder, "top.bin")), bytes);
+		assert.deepEqual(fs.readFileSync(path.join(folder, "sub", "nested.bin")), bytes);
+	});
+
+	it("never deletes the file it was given, on success or on refusal", async () => {
+		const { server, folder } = await freshServer();
+		const src = uploadSource("keep.txt", "source");
+		await fm.saveUpload(server, "", "copy.txt", src);
+		await refused(fm.saveUpload(server, "", "copy.txt", src), "exists");
+		assert.equal(fs.readFileSync(src, "utf8"), "source");
+		assert.equal(fs.readFileSync(path.join(folder, "copy.txt"), "utf8"), "source");
+	});
+
+	it("refuses an existing name and leaves it as it was", async () => {
+		const { server, folder } = await freshServer();
+		fs.writeFileSync(path.join(folder, "taken.txt"), "old");
+		await refused(fm.saveUpload(server, "", "taken.txt", uploadSource("new.txt", "new")), "exists");
+		assert.equal(fs.readFileSync(path.join(folder, "taken.txt"), "utf8"), "old");
+		assert.deepEqual(treeOf(folder), ["taken.txt"]);
+	});
+
+	it("refuses hostile names and creates nothing", async () => {
+		const { server, folder } = await freshServer();
+		const src = uploadSource("hostile.txt", "x");
+		const before = treeOf(folder);
+		const cases = [
+			["../x", "outside"],
+			["a/b", "outside"],
+			["a\\b", "outside"],
+			["c:x", "outside"],
+			["CON", "outside"],
+			["x.", "outside"],
+			[".", "outside"],
+			["..", "outside"],
+			["", "empty_name"],
+		];
+		for (const [name, code] of cases) {
+			await refused(fm.saveUpload(server, "", name, src), code);
+		}
+		assert.deepEqual(treeOf(folder), before);
+	});
+
+	it("reports a missing folder, and a file given as the folder", async () => {
+		const { server, folder } = await freshServer();
+		const src = uploadSource("dir-case.txt", "x");
+		fs.writeFileSync(path.join(folder, "plain.txt"), "p");
+		await refused(fm.saveUpload(server, "nowhere", "a.txt", src), "not_found");
+		await refused(fm.saveUpload(server, "plain.txt", "a.txt", src), "not_a_dir");
+	});
+
+	it("refuses a protected name, and leaves nothing behind", async () => {
+		const { server, folder } = await freshServer();
+		const src = uploadSource("bak-case.txt", "x");
+		await refused(fm.saveUpload(server, "", "x.bak", src), "protected");
+		await refused(fm.saveUpload(server, "", ".godlypanel-server.json", src), "protected");
+		assert.deepEqual(treeOf(folder), []);
+	});
+
+	it("refuses a file over the size limit, with no target and no partial copy", async () => {
+		const { server, folder } = await freshServer();
+		const src = uploadSource("over.txt", "0123456789");
+		await assert.rejects(
+			fm.saveUpload(server, "", "over.txt", src, { maxBytes: 4 }),
+			(err) => err.code === "too_big" && /MB/.test(err.message),
+		);
+		assert.deepEqual(treeOf(folder), []);
+	});
+
+	it("refuses a folder or a link given as the file to save", async (t) => {
+		const { server, folder } = await freshServer();
+		const dir = path.join(root, "uploads", "a-folder");
+		fs.mkdirSync(dir, { recursive: true });
+		await refused(fm.saveUpload(server, "", "f.txt", dir), "not_a_file");
+		const target = uploadSource("link-target.txt", "x");
+		try {
+			fs.symlinkSync(target, path.join(root, "uploads", "link.txt"));
+		} catch {
+			return t.skip("this Windows account can't make symlinks");
+		}
+		await refused(fm.saveUpload(server, "", "f.txt", path.join(root, "uploads", "link.txt")), "not_a_file");
+		assert.deepEqual(treeOf(folder), []);
+	});
+
+	it("refuses to save into a folder reached through a junction", async (t) => {
+		const { server, folder } = await freshServer();
+		const outside = fs.mkdtempSync(path.join(root, "upload-outside-"));
+		try {
+			fs.symlinkSync(outside, path.join(folder, "jn"), "junction");
+		} catch {
+			return t.skip("this account cannot create a junction");
+		}
+		await refused(fm.saveUpload(server, "jn", "x.txt", uploadSource("j.txt", "x")), "outside");
+		assert.deepEqual(fs.readdirSync(outside), []);
+	});
+});
+
+// A zip built with adm-zip. Each entry is [name, text]; a name ending in "/" is a folder.
+function buildZip(file, list) {
+	const zip = new AdmZip();
+	for (const [name, text] of list) {
+		zip.addFile(name, name.endsWith("/") ? Buffer.alloc(0) : Buffer.from(text, "utf8"));
+	}
+	zip.writeZip(file);
+	return file;
+}
+
+// adm-zip tidies a name when it writes it ("../x" comes out as "x"), so a hostile name cannot be added directly. Instead a
+// placeholder of the same length is written, and its bytes are swapped for the raw name. The lengths match, so no offset moves.
+function zipWithRawName(file, rawName) {
+	const zip = new AdmZip();
+	zip.addFile("ok/first.txt", Buffer.from("1"));
+	zip.addFile("second.txt", Buffer.from("2"));
+	zip.addFile("Q".repeat(rawName.length), Buffer.from("bad"));
+	const bytes = zip.toBuffer().toString("latin1").split("Q".repeat(rawName.length)).join(rawName);
+	fs.writeFileSync(file, Buffer.from(bytes, "latin1"));
+	return file;
+}
+
+describe("extractZipHere", () => {
+	it("extracts a normal zip with its folders, byte for byte, and leaves the zip in place", async () => {
+		const { server, folder } = await freshServer();
+		const big = crypto.randomBytes(4000);
+		const zipFile = path.join(folder, "pack.zip");
+		const zip = new AdmZip();
+		zip.addFile("readme.txt", Buffer.from("hello"));
+		zip.addFile("mods/", Buffer.alloc(0));
+		zip.addFile("mods/a.bin", big);
+		zip.addFile("mods/deep/b.txt", Buffer.from("deep"));
+		zip.writeZip(zipFile);
+		const got = await fm.extractZipHere(server, "pack.zip");
+		assert.deepEqual(got, { files: 3, folders: 2 });
+		assert.equal(fs.readFileSync(path.join(folder, "readme.txt"), "utf8"), "hello");
+		assert.deepEqual(fs.readFileSync(path.join(folder, "mods", "a.bin")), big);
+		assert.equal(fs.readFileSync(path.join(folder, "mods", "deep", "b.txt"), "utf8"), "deep");
+		assert.equal(fs.existsSync(zipFile), true);
+	});
+
+	it("extracts into the folder the zip sits in, not the root", async () => {
+		const { server, folder } = await freshServer();
+		fs.mkdirSync(path.join(folder, "sub"));
+		buildZip(path.join(folder, "sub", "p.zip"), [["inner.txt", "in"]]);
+		await fm.extractZipHere(server, "sub/p.zip");
+		assert.equal(fs.readFileSync(path.join(folder, "sub", "inner.txt"), "utf8"), "in");
+		assert.equal(fs.existsSync(path.join(folder, "inner.txt")), false);
+	});
+
+	it("refuses a hostile entry name, and writes nothing, not even the entries before it", async () => {
+		const names = [
+			"../evil.txt",
+			"a/../../evil.txt",
+			"/abs.txt",
+			"C:\\x.txt",
+			"con.txt",
+			"x:y",
+			"trailing.",
+			"a//b.txt",
+			"./dot.txt",
+		];
+		for (const [i, name] of names.entries()) {
+			const { server, folder } = await freshServer();
+			const zipFile = zipWithRawName(path.join(folder, `bad-${i}.zip`), name);
+			const before = treeOf(folder);
+			await refused(fm.extractZipHere(server, `bad-${i}.zip`), "unsafe_archive");
+			assert.deepEqual(treeOf(folder), before, `nothing written for ${name}`);
+			assert.equal(fs.existsSync(zipFile), true);
+			assert.equal(fs.existsSync(path.join(folder, "..", "evil.txt")), false);
+		}
+	});
+
+	it("refuses a zip entry that is a symlink, and writes nothing", async () => {
+		const { server, folder } = await freshServer();
+		const zipFile = path.join(folder, "links.zip");
+		const zip = new AdmZip();
+		zip.addFile("ok.txt", Buffer.from("1"));
+		zip.addFile("link.txt", Buffer.from("target"));
+		zip.getEntries().find((e) => e.entryName === "link.txt").attr = (0o120777 << 16) >>> 0;
+		zip.writeZip(zipFile);
+		const before = treeOf(folder);
+		await refused(fm.extractZipHere(server, "links.zip"), "unsafe_archive");
+		assert.deepEqual(treeOf(folder), before);
+	});
+
+	it("refuses an existing file in the way, and writes nothing", async () => {
+		const { server, folder } = await freshServer();
+		fs.writeFileSync(path.join(folder, "dup.txt"), "keep");
+		buildZip(path.join(folder, "p.zip"), [
+			["new.txt", "n"],
+			["dup.txt", "y"],
+		]);
+		await refused(fm.extractZipHere(server, "p.zip"), "exists");
+		assert.equal(fs.readFileSync(path.join(folder, "dup.txt"), "utf8"), "keep");
+		assert.equal(fs.existsSync(path.join(folder, "new.txt")), false);
+	});
+
+	it("refuses an entry that lands on a protected name, and writes nothing", async () => {
+		const { server, folder } = await freshServer();
+		for (const [i, name] of ["world.bak", ".godlypanel-server.json", ".godlypanel-trash/x.txt"].entries()) {
+			buildZip(path.join(folder, `prot-${i}.zip`), [
+				["fine.txt", "1"],
+				[name, "2"],
+			]);
+			const before = treeOf(folder);
+			await refused(fm.extractZipHere(server, `prot-${i}.zip`), "unsafe_archive");
+			assert.deepEqual(treeOf(folder), before);
+		}
+	});
+
+	it("refuses a zip with more entries than allowed", async () => {
+		const { server, folder } = await freshServer();
+		buildZip(path.join(folder, "many.zip"), [
+			["1.txt", "1"],
+			["2.txt", "2"],
+			["3.txt", "3"],
+		]);
+		await refused(fm.extractZipHere(server, "many.zip", { maxEntries: 2 }), "too_many");
+		assert.deepEqual(treeOf(folder), ["many.zip"]);
+	});
+
+	it("refuses a zip whose declared total is over the limit, and writes nothing", async () => {
+		const { server, folder } = await freshServer();
+		buildZip(path.join(folder, "big.zip"), [["one.txt", "x".repeat(100)]]);
+		await refused(fm.extractZipHere(server, "big.zip", { maxTotalBytes: 10 }), "too_big");
+		assert.deepEqual(treeOf(folder), ["big.zip"]);
+	});
+
+	it("rolls back what it made when a later entry fails", async () => {
+		const { server, folder } = await freshServer();
+		// "a" is a file, then "a/b.txt" needs "a" as a folder. The second write fails after the first has landed.
+		buildZip(path.join(folder, "half.zip"), [
+			["new/", ""],
+			["new/x.txt", "1"],
+			["a", "file"],
+			["a/b.txt", "2"],
+		]);
+		await refused(fm.extractZipHere(server, "half.zip"), "exists");
+		assert.deepEqual(treeOf(folder), ["half.zip"]);
+	});
+
+	it("refuses a file that is not a zip, whatever its name", async () => {
+		const { server, folder } = await freshServer();
+		fs.writeFileSync(path.join(folder, "x.zip"), "this is plain text, not a zip");
+		const real = buildZip(path.join(root, "uploads", "real.zip"), [["a.txt", "a"]]);
+		fs.copyFileSync(real, path.join(folder, "y.txt"));
+		await refused(fm.extractZipHere(server, "x.zip"), "not_a_zip");
+		await refused(fm.extractZipHere(server, "y.txt"), "not_a_zip");
+		assert.equal(fs.existsSync(path.join(folder, "a.txt")), false);
+	});
+
+	it("reports a folder or a missing file as not a file, or not found", async () => {
+		const { server, folder } = await freshServer();
+		fs.mkdirSync(path.join(folder, "dir.zip"));
+		await refused(fm.extractZipHere(server, "dir.zip"), "not_a_file");
+		await refused(fm.extractZipHere(server, "gone.zip"), "not_found");
+	});
+
+	it("refuses to extract through a junction", async (t) => {
+		const { server, folder } = await freshServer();
+		const outside = fs.mkdtempSync(path.join(root, "zip-outside-"));
+		try {
+			fs.symlinkSync(outside, path.join(folder, "jz"), "junction");
+		} catch {
+			return t.skip("this account cannot create a junction");
+		}
+		buildZip(path.join(outside, "p.zip"), [["x.txt", "x"]]);
+		await refused(fm.extractZipHere(server, "jz/p.zip"), "outside");
+		assert.deepEqual(fs.readdirSync(outside), ["p.zip"]);
+	});
+});
+
+const downloadDirs = () => fs.readdirSync(os.tmpdir()).filter((n) => n.startsWith("ghp-dl-")).length;
+
+describe("prepareDownload", () => {
+	it("returns a file's own path and a cleanup that does nothing", async () => {
+		const { server, folder } = await freshServer();
+		fs.writeFileSync(path.join(folder, "f.txt"), "hello");
+		const got = await fm.prepareDownload(server, "f.txt");
+		assert.equal(got.file, path.join(folder, "f.txt"));
+		assert.equal(got.name, "f.txt");
+		assert.equal(got.size, 5);
+		await got.cleanup();
+		assert.equal(fs.readFileSync(path.join(folder, "f.txt"), "utf8"), "hello");
+	});
+
+	it("zips a folder with relative names, and leaves out trash and anything a link points to", async (t) => {
+		const { server, folder } = await freshServer();
+		const pack = path.join(folder, "pack");
+		fs.mkdirSync(path.join(pack, "sub", "deep"), { recursive: true });
+		fs.writeFileSync(path.join(pack, "a.txt"), "A");
+		fs.writeFileSync(path.join(pack, "sub", "b.txt"), "B");
+		fs.writeFileSync(path.join(pack, "sub", "deep", "c.txt"), "C");
+		fs.mkdirSync(path.join(pack, ".godlypanel-trash"));
+		fs.writeFileSync(path.join(pack, ".godlypanel-trash", "t.txt"), "trashed");
+		const outside = fs.mkdtempSync(path.join(root, "dl-secret-"));
+		fs.writeFileSync(path.join(outside, "secret.txt"), "SECRET-CONTENT");
+		try {
+			fs.symlinkSync(outside, path.join(pack, "link"), "junction");
+		} catch {
+			return t.skip("this account cannot create a junction");
+		}
+
+		const got = await fm.prepareDownload(server, "pack");
+		assert.equal(got.name, "pack.zip");
+		const zip = new AdmZip(got.file);
+		const names = zip.getEntries().map((e) => e.entryName).sort();
+		assert.deepEqual(names, ["a.txt", "sub/", "sub/b.txt", "sub/deep/", "sub/deep/c.txt"]);
+		for (const name of names) {
+			assert.equal(path.isAbsolute(name), false);
+			assert.equal(name.includes(folder), false);
+		}
+		const everything = zip.getEntries().map((e) => e.getData().toString("utf8")).join("|");
+		assert.equal(everything.includes("SECRET-CONTENT"), false);
+		assert.equal(everything.includes("trashed"), false);
+		assert.equal(zip.getEntry("a.txt").getData().toString("utf8"), "A");
+		assert.equal(zip.getEntry("sub/deep/c.txt").getData().toString("utf8"), "C");
+		await got.cleanup();
+	});
+
+	it("removes its temp folder on cleanup, and a second cleanup does not throw", async () => {
+		const { server, folder } = await freshServer();
+		fs.mkdirSync(path.join(folder, "d"));
+		fs.writeFileSync(path.join(folder, "d", "x.txt"), "x");
+		const got = await fm.prepareDownload(server, "d");
+		const dir = path.dirname(got.file);
+		assert.equal(fs.existsSync(dir), true);
+		await got.cleanup();
+		assert.equal(fs.existsSync(dir), false);
+		await got.cleanup();
+	});
+
+	it("refuses a folder over the size limit before making anything", async () => {
+		const { server, folder } = await freshServer();
+		fs.mkdirSync(path.join(folder, "heavy"));
+		fs.writeFileSync(path.join(folder, "heavy", "x.bin"), Buffer.alloc(2000, 1));
+		const before = downloadDirs();
+		await refused(fm.prepareDownload(server, "heavy", { maxZipBytes: 100 }), "too_big");
+		assert.equal(downloadDirs(), before);
+	});
+
+	it("reports a missing path as not found", async () => {
+		const { server } = await freshServer();
+		await refused(fm.prepareDownload(server, "nothing-here"), "not_found");
+	});
+
+	it("zips the whole server folder when the path is the root", async () => {
+		const { server, folder } = await freshServer();
+		fs.writeFileSync(path.join(folder, "top.txt"), "t");
+		const got = await fm.prepareDownload(server, "");
+		assert.equal(got.name, `${path.basename(folder)}.zip`);
+		assert.deepEqual(
+			new AdmZip(got.file).getEntries().map((e) => e.entryName),
+			["top.txt"],
+		);
+		await got.cleanup();
 	});
 });
