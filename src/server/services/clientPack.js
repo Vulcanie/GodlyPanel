@@ -161,6 +161,13 @@ export function supportsMrpack(server) {
 	return templateOfServer(server)?.id === "minecraft-modpack";
 }
 
+/** Whether the pack can be made right now: a Minecraft modpack whose game version is known, which is what the builder asks for. */
+export async function canMakeMrpack(server) {
+	if (!supportsMrpack(server)) return false;
+	const context = await modInstallContext(server);
+	return typeof context.gameVersion === "string" && context.gameVersion !== "";
+}
+
 /**
  * The download address a located file can be listed under, or null when it can't be. Modrinth's answer must name exactly one file, with
  * the same name, size and sha512 as the verified bytes, and its address must be Modrinth's own CDN over https. A launcher downloads the

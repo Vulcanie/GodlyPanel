@@ -285,6 +285,8 @@ describe("the mod pack on the community address", () => {
 		const noVersion = await raw("GET", `/api/pack/${on.json.token}/mod-pack.mrpack`);
 		assert.equal(noVersion.status, 404);
 		assert.equal(noVersion.text, NOT_FOUND);
+		// The admin's panel is told the same, so it doesn't offer a download that would fail.
+		assert.equal((await api.get(`/api/server/${enc("Gone Soon")}/mods/share`)).json.mrpack, false);
 	});
 
 	it("removing the server removes its share, so the old link stops working", async () => {

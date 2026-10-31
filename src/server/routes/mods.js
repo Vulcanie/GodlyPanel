@@ -26,7 +26,7 @@ import { installFromSource } from "../services/modSources/installer.js";
 import { detectSource, getProvider } from "../services/modSources/index.js";
 import { recordInstalled } from "../services/modRecord.js";
 import { checkUpdates, applyUpdate } from "../services/modUpdates.js";
-import { buildManifest, buildClientPack, defaultFormat, supportsMrpack } from "../services/clientPack.js";
+import { buildManifest, buildClientPack, defaultFormat, canMakeMrpack } from "../services/clientPack.js";
 import { shareStatus, enableShare, rotateShare, disableShare } from "../services/packShare.js";
 import { logActivity } from "../services/activityLog.js";
 import * as modLock from "../services/modLock.js";
@@ -194,7 +194,7 @@ const shareBody = (s) => ({ enabled: s.enabled, token: s.token, createdAt: s.cre
 // The admin's panel reads whether this game can make the Modrinth pack, so it can show that row and button only where it works.
 router.get("/server/:serverName/mods/share", async (req, res) => {
 	try {
-		res.json({ ...shareBody(await shareStatus(req.server.name)), mrpack: supportsMrpack(req.server) });
+		res.json({ ...shareBody(await shareStatus(req.server.name)), mrpack: await canMakeMrpack(req.server) });
 	} catch (err) {
 		fail(res, err, "Reading the pack link");
 	}
