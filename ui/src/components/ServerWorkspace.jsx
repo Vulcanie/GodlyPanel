@@ -85,7 +85,7 @@ function ServerWorkspace({ serverName, serverStatus, serverStats, servers, appea
 			{active === "files" && <FilesPanel serverName={serverName} isAdmin={isAdmin} can={can} />}
 			{active === "activity" && <ActivityPanel serverName={serverName} />}
 			{active === "automation" && <AutomationPanel serverName={serverName} serverStatus={serverStatus} onCloned={onOpenServer} />}
-			{active === "advanced" && <ServerAdvancedTab serverName={serverName} onEditBatchFiles={onEditBatchFiles} onDeleted={onBack} />}
+			{active === "advanced" && <ServerAdvancedTab serverName={serverName} serverStatus={serverStatus} onEditBatchFiles={onEditBatchFiles} onDeleted={onBack} />}
 		</Box>
 	);
 }
