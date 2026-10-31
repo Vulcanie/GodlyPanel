@@ -21,6 +21,9 @@ import { MotdError, readMotd, writeMotd } from "../services/motdService.js";
 import { CloneError, startClone, getCloneJob } from "../services/cloneService.js";
 import { BundleError } from "../services/serverBundle.js";
 import { startExportJob, getExportJob, takeExportFile, isExportJobId } from "../services/exportJobs.js";
+import { planImport } from "../services/bundleImport.js";
+import { startImportJob, getImportJob, isImportJobId } from "../services/importJobs.js";
+import { stageUpload, stagedFile, discardUpload, sweepStaleUploads } from "../services/bundleUploads.js";
 import { BusyError } from "../services/serverOps.js";
 import { RotationError, describeRotation, rotateRconPassword } from "../services/rconRotation.js";
 import { PresetError, listPresets, savePreset, deletePreset, applyPreset } from "../services/presetService.js";
@@ -343,6 +346,90 @@ router.get("/export-jobs/:id/download", async (req, res) => {
 		// The error text may carry the temp path, so the person only hears that sending failed.
 		if (err && !res.headersSent) res.status(500).json({ error: "Sending the export failed." });
 	});
+});
+
+// --- Importing a server bundle ---
+
+// The bundle is only put aside on disk here (its contents are read when it is planned), so the upload is a plain copy, up to 20 GB.
+const bundleUploadDir = path.join(paths.uploadsDir, "incoming-bundles");
+const bundleUpload = multer({
+	storage: multer.diskStorage({
+		destination: (req, file, cb) => {
+			fs.mkdirSync(bundleUploadDir, { recursive: true });
+			cb(null, bundleUploadDir);
+		},
+		filename: (req, file, cb) => cb(null, `${Date.now()}-${Math.random().toString(36).slice(2)}.part`),
+	}),
+	limits: { fileSize: 20 * 1024 * 1024 * 1024 },
+});
+
+// A bundle error keeps its own reason and status. Anything else may carry a folder name, so the person only hears that it failed.
+function sendBundleError(res, err, what) {
+	if (err instanceof BundleError) return res.status(err.status).json({ error: err.message, code: err.code });
+	console.error(`${what} failed:`, err);
+	res.status(500).json({ error: "The request failed. The panel's log has the details." });
+}
+
+const isPlainObject = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
+
+// The bundle a plan or an import reads: exactly one of a staged upload's id or a full path on this PC. Anything else is refused.
+async function bundleSource(body) {
+	const hasId = body?.uploadId !== undefined;
+	const hasPath = body?.path !== undefined;
+	if (hasId === hasPath) throw new BundleError("Give either an uploadId or a path, not both or neither.", "bad_input");
+	if (hasId) {
+		if (typeof body.uploadId !== "string") throw new BundleError("uploadId must be text.", "bad_input");
+		const file = await stagedFile(body.uploadId);
+		if (!file) throw new BundleError("That upload is gone. Upload the bundle again.", "no_such_upload", 404);
+		return { file, source: { uploadId: body.uploadId }, uploadId: body.uploadId };
+	}
+	if (typeof body.path !== "string" || !path.isAbsolute(body.path)) throw new BundleError("Give the full path of a .gpserver file.", "bad_file");
+	return { file: body.path, source: { path: body.path }, uploadId: null };
+}
+
+router.post("/uploads/bundle", singleFile(bundleUpload, "bundleFile", "20 GB"), async (req, res) => {
+	if (!req.file) return res.status(400).json({ error: "A bundleFile is required.", code: "bad_input" });
+	try {
+		res.json(await stageUpload(req.file.path));
+	} catch (err) {
+		sendBundleError(res, err, "Saving a bundle upload");
+	}
+});
+
+// Says what the import would do (the name, ports and any notes) by reading only the bundle's manifest.
+router.post("/import/plan", async (req, res) => {
+	try {
+		await sweepStaleUploads();
+		const { file, source } = await bundleSource(req.body);
+		res.json({ ...(await planImport(file)), source });
+	} catch (err) {
+		sendBundleError(res, err, "Planning an import");
+	}
+});
+
+// Starts the import in the background and answers with the job. The new server always goes in the panel's own servers folder:
+// no folder is taken from the request. A staged upload is removed when the job ends, a path the person gave is never touched.
+router.post("/import", async (req, res) => {
+	const body = req.body ?? {};
+	try {
+		if (typeof body.name !== "string") throw new BundleError("Give the new server a name.", "bad_input");
+		if (body.ports !== undefined && !isPlainObject(body.ports)) throw new BundleError("ports must be an object of port numbers.", "bad_input");
+		const { file, uploadId } = await bundleSource(body);
+		const job = startImportJob({
+			file,
+			name: body.name,
+			ports: body.ports,
+			cleanup: uploadId ? () => discardUpload(uploadId) : null,
+		});
+		res.status(202).json(job);
+	} catch (err) {
+		sendBundleError(res, err, "Starting an import");
+	}
+});
+
+router.get("/import-jobs/:id", (req, res) => {
+	const job = isImportJobId(req.params.id) ? getImportJob(req.params.id) : null;
+	job ? res.json(job) : res.status(404).json({ error: "No such job." });
 });
 
 router.get("/presets", (req, res) => {
