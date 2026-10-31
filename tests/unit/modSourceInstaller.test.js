@@ -30,6 +30,8 @@ const { registerProvider, getProvider } = await import("../../src/server/service
 const { installFromSource } = await import("../../src/server/services/modSources/installer.js");
 
 const REFUSAL = { message: "That address isn't one the panel will download from." };
+// The fields an install is judged by. The result also lists the mods and skipped files, which these checks don't look at.
+const pick = ({ installed, unverified }) => ({ installed, unverified });
 const sha512 = (bytes) => crypto.createHash("sha512").update(bytes).digest("hex");
 const good = Buffer.from("a good jar with class files in it ".repeat(40));
 const ZEROS = "0".repeat(128);
@@ -145,6 +147,10 @@ describe("installing from a source", () => {
 			["roll-ok", { files: [file("RollOk.jar")] }],
 			["roll-bad", { files: [file("RollBad.jar", { sha512: ZEROS })] }],
 			["roll-root", { deps: [{ source: "fixture", ref: "roll-ok" }, { source: "fixture", ref: "roll-bad" }], files: [file("RollRoot.jar")] }],
+			// A mod for players only (a client mod), as a top-level mod and as a dependency.
+			["client-top", { side: "client", files: [file("ClientTop.jar")] }],
+			["client-dep", { side: "client", files: [file("ClientDep.jar")] }],
+			["parent-client-dep", { deps: [{ source: "fixture", ref: "client-dep" }], files: [file("ParentOk.jar")] }],
 		]);
 		for (let i = 0; i < 26; i += 1) fixtures.set(`fan-dep-${i}`, { files: [file(`Fan${i}.jar`)] });
 		fixtures.set("fan-24", { deps: Array.from({ length: 24 }, (_, i) => ({ source: "fixture", ref: `fan-dep-${i}` })), files: [file("FanRoot24.jar")] });
@@ -160,7 +166,7 @@ describe("installing from a source", () => {
 			async resolve(ref) {
 				const found = fixtures.get(ref);
 				if (!found) throw new ModError("No such fixture.", "not_found", 404);
-				return { source: "fixture", ref, name: ref, version: "1.0.0", side: "both", files: found.files, dependencies: found.deps ?? [] };
+				return { source: "fixture", ref, name: ref, version: "1.0.0", side: found.side ?? "both", files: found.files, dependencies: found.deps ?? [] };
 			},
 		});
 	});
@@ -183,7 +189,7 @@ describe("installing from a source", () => {
 	it("installs a good file, and leaves nothing in the temp folder", async () => {
 		const { server: s, mods } = freshServer();
 		const result = await installFromSource(s, "fixture", "good", {});
-		assert.deepEqual(result, { installed: ["Good.jar"], unverified: [] });
+		assert.deepEqual(pick(result), { installed: ["Good.jar"], unverified: [] });
 		assert.deepEqual(fs.readFileSync(path.join(mods, "Good.jar")), good);
 		assert.deepEqual(leftovers(), []);
 	});
@@ -200,6 +206,37 @@ describe("installing from a source", () => {
 		const result = await installFromSource(s, "fixture", "chain-a", {});
 		assert.deepEqual(result.installed, ["DepOne.jar", "ChainA.jar"]);
 		assert.deepEqual(listing(mods).sort(), ["ChainA.jar", "DepOne.jar"]);
+	});
+
+	it("reports each mod it installed, dependencies first, and nothing skipped", async () => {
+		const { server: s } = freshServer();
+		const result = await installFromSource(s, "fixture", "chain-a", {});
+		assert.deepEqual(result.mods, [
+			{ source: "fixture", ref: "chain-dep", name: "chain-dep", version: "1.0.0", side: "both", installed: ["DepOne.jar"], dependencyOf: "fixture:chain-a" },
+			{ source: "fixture", ref: "chain-a", name: "chain-a", version: "1.0.0", side: "both", installed: ["ChainA.jar"], dependencyOf: null },
+		]);
+		assert.deepEqual(result.skipped, []);
+	});
+
+	it("refuses a mod for players only when it is the one asked for, and installs nothing", async () => {
+		const { server: s, mods } = freshServer();
+		const err = await installFromSource(s, "fixture", "client-top", {}).then(
+			() => assert.fail("expected a refusal"),
+			(e) => e,
+		);
+		assert.equal(err.code, "client_only");
+		assert.equal(err.status, 409);
+		assert.equal(err.message, "This mod is for players only, so it isn't installed on the server.");
+		assert.deepEqual(listing(mods), []);
+		assert.deepEqual(leftovers(), []);
+	});
+
+	it("skips a player-only dependency, says so, and installs the rest", async () => {
+		const { server: s, mods } = freshServer();
+		const result = await installFromSource(s, "fixture", "parent-client-dep", {});
+		assert.deepEqual(result.installed, ["ParentOk.jar"]);
+		assert.deepEqual(result.skipped, [{ source: "fixture", ref: "client-dep", reason: "client_only" }]);
+		assert.deepEqual(listing(mods), ["ParentOk.jar"]);
 	});
 
 	it("ends a cycle, and installs each mod once", async () => {
@@ -238,7 +275,7 @@ describe("installing from a source", () => {
 	it("reports a file with no checksum as unverified, by name", async () => {
 		const { server: s } = freshServer();
 		const result = await installFromSource(s, "fixture", "nosum", {});
-		assert.deepEqual(result, { installed: ["NoSum.jar"], unverified: ["NoSum.jar"] });
+		assert.deepEqual(pick(result), { installed: ["NoSum.jar"], unverified: ["NoSum.jar"] });
 	});
 
 	it("refuses a download that redirects to another host, and never asks that host for anything", async () => {
@@ -294,7 +331,7 @@ describe("installing from a source", () => {
 			const { server: s, mods } = freshServer();
 			const fetchRec = recordingFetch(mapTo);
 			const result = await installFromSource(s, "url", "https://files.example.test/files/good.jar", { ...trusted, fetchImpl: fetchRec.fetchImpl });
-			assert.deepEqual(result, { installed: ["good.jar"], unverified: ["good.jar"] });
+			assert.deepEqual(pick(result), { installed: ["good.jar"], unverified: ["good.jar"] });
 			assert.deepEqual(fs.readFileSync(path.join(mods, "good.jar")), good);
 			assert.deepEqual(fetchRec.seen, ["https://files.example.test/files/good.jar"]);
 		});
@@ -323,7 +360,7 @@ describe("installing from a source", () => {
 		it("installs the file Modrinth names, checked against its sha512", async () => {
 			const { server: s, mods } = freshServer();
 			const result = await installFromSource(s, "modrinth", "fine", ctx);
-			assert.deepEqual(result, { installed: ["Fine.jar"], unverified: [] });
+			assert.deepEqual(pick(result), { installed: ["Fine.jar"], unverified: [] });
 			assert.deepEqual(fs.readFileSync(path.join(mods, "Fine.jar")), good);
 			assert.deepEqual(leftovers(), []);
 		});

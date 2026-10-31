@@ -44,7 +44,8 @@ async function installFile(server, provider, hosts, file, index, ctx, state) {
 	}
 }
 
-async function installOne(server, source, ref, ctx, state, depth) {
+// parentKey is the "source:ref" of the mod that asked for this one, or null for the mod that was asked for.
+async function installOne(server, source, ref, ctx, state, depth, parentKey = null) {
 	const provider = getProvider(source);
 	if (!provider) throw new ModError("Unknown mod source.", "bad_source");
 	// A mod that is already in this install is skipped, so a cycle of dependencies ends.
@@ -57,32 +58,62 @@ async function installOne(server, source, ref, ctx, state, depth) {
 	if (provider.install) {
 		const result = await provider.install(server, ref, ctx);
 		state.installed.push(...result.installed);
+		state.mods.push({ source, ref, name: ref, version: null, side: "both", installed: [...result.installed], dependencyOf: parentKey });
 		return;
 	}
 
 	const resolved = await provider.resolve(ref, ctx);
+	// A mod for players only is for the player's game, not the server. Asked for directly it is refused. As a dependency it is skipped
+	// along with its own dependencies, which were only wanted for it.
+	if (resolved.side === "client") {
+		if (depth === 0) throw new ModError("This mod is for players only, so it isn't installed on the server.", "client_only", 409);
+		state.skipped.push({ source, ref, reason: "client_only" });
+		return;
+	}
+
 	for (const dep of resolved.dependencies ?? []) {
-		await installOne(server, dep.source, dep.ref, ctx, state, depth + 1);
+		await installOne(server, dep.source, dep.ref, ctx, state, depth + 1, key);
 	}
 
 	const files = Array.isArray(resolved.files) ? resolved.files : [];
 	if (files.length > MAX_FILES) throw new ModError("This mod has too many files.", "too_many_files");
 	const hosts = provider.hostsFor ? provider.hostsFor(ref) : provider.hosts;
+	// Dependencies are installed before this mod's own files, so the names from here on are this mod's alone.
+	const startAt = state.installed.length;
 	for (const [index, file] of files.entries()) {
 		await installFile(server, provider, hosts, file, index, ctx, state);
 	}
+	state.mods.push({
+		source,
+		ref,
+		name: resolved.name ?? ref,
+		version: resolved.version ?? null,
+		side: resolved.side ?? "both",
+		installed: state.installed.slice(startAt),
+		dependencyOf: parentKey,
+	});
 }
 
 /**
  * Install a mod from a source.
- * @returns {Promise<{ installed: string[], unverified: string[] }>}
+ * @returns {Promise<{ installed: string[], unverified: string[], mods: object[], skipped: object[] }>}
+ *   mods: one entry per mod installed, dependencies first, with the names it put in the mods folder and the parent it was installed for.
+ *   skipped: dependencies left out (for players only), with the reason.
  */
 export async function installFromSource(server, source, ref, ctx = {}) {
 	const provider = getProvider(source);
 	if (!provider) throw new ModError("Unknown mod source.", "bad_source");
-	if (provider.install) return { ...(await provider.install(server, ref, ctx)), unverified: [] };
+	if (provider.install) {
+		const result = await provider.install(server, ref, ctx);
+		return {
+			...result,
+			unverified: [],
+			mods: [{ source, ref, name: ref, version: null, side: "both", installed: [...result.installed], dependencyOf: null }],
+			skipped: [],
+		};
+	}
 
-	const state = { seen: new Set(), installed: [], unverified: [] };
+	const state = { seen: new Set(), installed: [], unverified: [], mods: [], skipped: [] };
 	try {
 		await installOne(server, source, ref, ctx, state, 0);
 	} catch (err) {
@@ -90,5 +121,5 @@ export async function installFromSource(server, source, ref, ctx = {}) {
 		for (const name of state.installed.reverse()) await removeMod(server, name).catch(() => {});
 		throw err;
 	}
-	return { installed: state.installed, unverified: state.unverified };
+	return { installed: state.installed, unverified: state.unverified, mods: state.mods, skipped: state.skipped };
 }

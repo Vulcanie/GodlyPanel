@@ -1,5 +1,6 @@
 import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
+import crypto from "node:crypto";
 import fs from "node:fs";
 import http from "node:http";
 import os from "node:os";
@@ -98,6 +99,9 @@ describe("mods", () => {
 	let store;
 	let storeRequests;
 	let zips;
+	// A mod a stand-in GitHub release ships. Its digest is in the release listing, so the install is checked and not unverified.
+	const lockBytes = Buffer.from("a mod the panel fetches from a GitHub release");
+	const lockSha256 = crypto.createHash("sha256").update(lockBytes).digest("hex");
 
 	const enc = encodeURIComponent;
 	const upload = (name, fileName, bytes) => api.upload(`/api/server/${enc(name)}/mods/upload`, "mod", fileName, bytes);
@@ -125,7 +129,12 @@ describe("mods", () => {
 				res.setHeader("Content-Type", "application/json");
 				return res.end(JSON.stringify(routes[req.url]));
 			}
-			const map = { "/zip/denikson-BepInExPack_Valheim.zip": zips.framework, "/zip/Someone-Dep.zip": zips.dep, "/zip/Someone-Mod.zip": zips.mod };
+			// The GitHub API and the release's download, on the same stand-in (GHP_GITHUB_API points here).
+			if (req.url === "/repos/acme/lockmod/releases/latest") {
+				res.setHeader("Content-Type", "application/json");
+				return res.end(JSON.stringify({ tag_name: "v1.0.0", draft: false, prerelease: false, assets: [{ name: "lock-mod.jar", browser_download_url: `${url}/dl/lock-mod.jar`, size: lockBytes.length, digest: `sha256:${lockSha256}` }] }));
+			}
+			const map = { "/zip/denikson-BepInExPack_Valheim.zip": zips.framework, "/zip/Someone-Dep.zip": zips.dep, "/zip/Someone-Mod.zip": zips.mod, "/dl/lock-mod.jar": lockBytes };
 			if (map[req.url]) return res.end(map[req.url]);
 			res.statusCode = 404;
 			res.end();
@@ -135,7 +144,8 @@ describe("mods", () => {
 		dirs = {};
 		const free = await freePort();
 		panel = await startInstance({
-			env: { GHP_THUNDERSTORE_API: `http://127.0.0.1:${port}` },
+			// The loopback hook lets the stand-in on this machine answer for GitHub and Thunderstore; every other check still applies.
+			env: { GHP_THUNDERSTORE_API: `http://127.0.0.1:${port}`, GHP_GITHUB_API: `http://127.0.0.1:${port}`, GHP_MODSOURCE_ALLOW_LOOPBACK: "1" },
 			servers: (dir) => {
 				const at = (key) => (dirs[key] = path.join(dir, key));
 				const arkScript = path.join(at("ark-ase"), "Start_Map.bat");
@@ -362,6 +372,87 @@ describe("mods", () => {
 		it("refuses anything that isn't a mod number", async () => {
 			assert.equal((await post("Ark Evolved", "script-id", { id: "1; calc" })).status, 400);
 			assert.equal((await post("Ark Evolved", "script-id", { id: "12" })).status, 400);
+		});
+	});
+
+	describe("the one-box install and the mod lock", () => {
+		const install = (name, input, extra = {}) => post(name, "install", { input, ...extra });
+		const lockOf = async (name) => (await api.get(`/api/server/${enc(name)}/mods/lock`)).json;
+		// No error body may show where the panel keeps its files.
+		const noPanelPaths = (body) => {
+			const text = JSON.stringify(body);
+			assert.equal(text.includes(JSON.stringify(panel.dir).slice(1, -1)), false, text);
+			assert.doesNotMatch(text, /[A-Za-z]:\\\\|\/home\//, text);
+		};
+
+		it("refuses what it can't read, and says which sources the game takes", async () => {
+			const r = await install("Minecraft", "not a link at all!");
+			assert.equal(r.status, 400);
+			assert.equal(r.json.code, "unrecognised");
+			assert.equal(r.json.error, "I don't recognise that link.");
+			assert.ok(Array.isArray(r.json.accepted));
+			assert.ok(r.json.accepted.includes("GitHub releases"), JSON.stringify(r.json.accepted));
+			noPanelPaths(r.json);
+		});
+
+		it("refuses an empty or over-long input before it looks at it", async () => {
+			assert.equal((await install("Minecraft", "   ")).json.code, "bad_input");
+			assert.equal((await install("Minecraft", "x".repeat(2001))).json.code, "bad_input");
+			assert.equal((await post("Minecraft", "install", { input: 42 })).json.code, "bad_input");
+		});
+
+		it("refuses a source the game doesn't take, and names the ones it does", async () => {
+			const r = await install("Minecraft", "1234567890");
+			assert.equal(r.status, 400);
+			assert.equal(r.json.code, "source_not_supported");
+			assert.ok(Array.isArray(r.json.accepted));
+			noPanelPaths(r.json);
+		});
+
+		it("installs from a GitHub release, and records what it put in the folder", async () => {
+			const r = await install("Minecraft", "https://github.com/acme/lockmod");
+			assert.equal(r.status, 200, JSON.stringify(r.json));
+			assert.deepEqual(r.json, { success: true, installed: ["lock-mod.jar"], unverified: [], skipped: [] });
+			assert.ok(fs.existsSync(path.join(dirs.mc, "mods", "lock-mod.jar")));
+
+			const l = await lockOf("Minecraft");
+			assert.equal(l.entries.length, 1);
+			assert.equal(l.entries[0].id, "github:acme/lockmod");
+			assert.deepEqual(l.entries[0].names, ["lock-mod.jar"]);
+			assert.deepEqual(l.entries[0].files, [{ path: "lock-mod.jar", sha256: lockSha256 }]);
+			assert.equal(l.entries[0].version, "v1.0.0");
+			assert.deepEqual(l.drift, { changed: [], missing: [], untracked: [] });
+			assert.deepEqual(l.orphans, []);
+		});
+
+		it("shows a file changed by hand, and one that is gone, as drift", async () => {
+			const jar = path.join(dirs.mc, "mods", "lock-mod.jar");
+			fs.writeFileSync(jar, "edited by hand");
+			assert.deepEqual((await lockOf("Minecraft")).drift.changed, [{ id: "github:acme/lockmod", path: "lock-mod.jar" }]);
+			fs.writeFileSync(path.join(dirs.mc, "mods", "stray.jar"), "not from the panel");
+			assert.deepEqual((await lockOf("Minecraft")).drift.untracked, ["stray.jar"]);
+			fs.rmSync(path.join(dirs.mc, "mods", "stray.jar"));
+			fs.writeFileSync(jar, lockBytes);
+			assert.deepEqual((await lockOf("Minecraft")).drift, { changed: [], missing: [], untracked: [] });
+			fs.rmSync(jar);
+			assert.deepEqual((await lockOf("Minecraft")).drift.missing, [{ id: "github:acme/lockmod", path: "lock-mod.jar" }]);
+			fs.writeFileSync(jar, lockBytes);
+		});
+
+		it("won't install while the server is running", async () => {
+			await api.post("/api/control/Conan%20Mods/start");
+			assert.equal(await until(async () => (await api.get("/api/status")).json["Conan Mods"]?.online === true), true);
+			await until(async () => !(await api.get("/api/operations")).json["Conan Mods"]);
+			const r = await install("Conan Mods", "https://example.com/a.jar");
+			assert.equal(r.status, 409);
+			assert.equal(r.json.code, "server_running");
+			await api.post("/api/control/Conan%20Mods/stop");
+		});
+
+		it("removing a mod takes its record out of the lock", async () => {
+			assert.equal((await post("Minecraft", "remove", { id: "lock-mod.jar" })).status, 200);
+			assert.equal(fs.existsSync(path.join(dirs.mc, "mods", "lock-mod.jar")), false);
+			assert.deepEqual((await lockOf("Minecraft")).entries, []);
 		});
 	});
 

@@ -82,12 +82,70 @@ export function modContextFor(server) {
 	return spec ? contextFromSpec(spec, server) : {};
 }
 
+// A modpack server's variables.txt names its Minecraft version and mod loader. The file is small, so anything much bigger is not one.
+const VARIABLES_MAX_BYTES = 64 * 1024;
+const LOADERS = new Set(["forge", "fabric", "quilt", "neoforge"]);
+const MINECRAFT_VERSION = /^[0-9][0-9A-Za-z._-]{0,31}$/;
+
+// The loader and game version a modpack's variables.txt gives. Anything unexpected is left out, so a bad file gives nothing rather than a guess.
+async function variablesOf(server) {
+	const root = server.workingDir || server.installDir;
+	if (!root) return {};
+	try {
+		const file = path.join(root, "variables.txt");
+		const stat = await fsp.stat(file);
+		if (!stat.isFile() || stat.size > VARIABLES_MAX_BYTES) return {};
+		let version;
+		let loader;
+		for (const line of (await fsp.readFile(file, "utf8")).split(/\r?\n/)) {
+			const eq = line.indexOf("=");
+			if (eq === -1) continue;
+			const key = line.slice(0, eq).trim();
+			const value = line.slice(eq + 1).trim().replace(/^["']|["']$/g, "");
+			if (key === "MINECRAFT_VERSION") version = value;
+			if (key === "MODLOADER") loader = value.toLowerCase();
+		}
+		return {
+			gameVersion: MINECRAFT_VERSION.test(version ?? "") ? version : undefined,
+			loader: LOADERS.has(loader) ? loader : undefined,
+		};
+	} catch {
+		return {};
+	}
+}
+
+/**
+ * What a mod install needs to pick the right file: the loader and game version (from the record, or for a modpack from its
+ * variables.txt when the record lacks them), and the file types the game takes. Never throws.
+ */
+export async function modInstallContext(server) {
+	try {
+		const spec = modConfigFor(server);
+		const context = { ...modContextFor(server), accepts: Array.isArray(spec?.accepts) ? [...spec.accepts] : [] };
+		if (templateOfServer(server)?.id === "minecraft-modpack" && (!context.loader || !context.gameVersion)) {
+			const found = await variablesOf(server);
+			if (!context.loader) context.loader = found.loader;
+			if (!context.gameVersion) context.gameVersion = found.gameVersion;
+		}
+		return context;
+	} catch {
+		return { accepts: [] };
+	}
+}
+
 function modsDirOf(server, spec) {
 	const root = spec.dir.base === "install" ? server.installDir : server.workingDir || server.installDir;
 	if (!root) throw new ModError("This server has no folder recorded, so mods can't be managed.", "no_folder");
 	const dir = path.resolve(root, spec.dir.rel);
 	assertWithinAllowedRoots(dir);
 	return dir;
+}
+
+/** The folder a game's mods are kept in, or null for a game whose mods are numbers in its start script (they have no folder). */
+export function modsFolderOf(server) {
+	const spec = modConfigFor(server);
+	if (!spec || spec.adapter === "script-ids") return null;
+	return modsDirOf(server, spec);
 }
 
 const exists = async (p) => fsp.stat(p).then((s) => s, () => null);

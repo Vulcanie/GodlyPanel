@@ -30,6 +30,8 @@ const { getProvider } = await import("../../src/server/services/modSources/index
 const { installFromSource } = await import("../../src/server/services/modSources/installer.js");
 
 const REFUSAL = { message: "That address isn't one the panel will download from." };
+// The fields an install is judged by. The result also lists the mods and skipped files, which these checks don't look at.
+const pick = ({ installed, unverified }) => ({ installed, unverified });
 const sha256 = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
 const good = Buffer.from("a good jar with class files in it ".repeat(40));
 const ZEROS64 = "0".repeat(64);
@@ -219,13 +221,13 @@ describe("github releases provider", () => {
 	it("installs a file whose digest is right, with no unverified note", async () => {
 		const { server, mods } = freshServer();
 		const result = await installFromSource(server, "github", "acme/mod", {});
-		assert.deepEqual(result, { installed: ["mod-2.0.0.jar"], unverified: [] });
+		assert.deepEqual(pick(result), { installed: ["mod-2.0.0.jar"], unverified: [] });
 		assert.deepEqual(fs.readFileSync(path.join(mods, "mod-2.0.0.jar")), good);
 	});
 
 	it("uses a .sha256 file beside the asset when there is no digest, and refuses a wrong one", async () => {
 		const good1 = freshServer();
-		assert.deepEqual(await installFromSource(good1.server, "github", "acme/sibling", {}), { installed: ["sib.jar"], unverified: [] });
+		assert.deepEqual(pick(await installFromSource(good1.server, "github", "acme/sibling", {})), { installed: ["sib.jar"], unverified: [] });
 		const bad = freshServer();
 		await assert.rejects(() => installFromSource(bad.server, "github", "acme/badsib", {}), /doesn't match the checksum/);
 		assert.deepEqual(listing(bad.mods), []);
@@ -234,7 +236,7 @@ describe("github releases provider", () => {
 	it("ignores a .sha256 file that isn't a checksum, and says the file is unverified", async () => {
 		const { server } = freshServer();
 		const result = await installFromSource(server, "github", "acme/junk", {});
-		assert.deepEqual(result, { installed: ["junk.jar"], unverified: ["junk.jar"] });
+		assert.deepEqual(pick(result), { installed: ["junk.jar"], unverified: ["junk.jar"] });
 	});
 
 	it("sends the token on API calls and never on a download", async () => {
