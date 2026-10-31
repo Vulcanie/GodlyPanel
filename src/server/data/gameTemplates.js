@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { GAME_MODULES } from "./games/index.js";
+import { asaConfigSync } from "./configSync.js";
 
 // Recipes for one-click server creation. Each template knows everything
 // generic per-game creation logic (services/serverCreationService.js) needs:
@@ -219,10 +220,9 @@ export const GAME_TEMPLATES = [
 			rconPassword: p.rconPassword,
 			sessionName: p.sessionName,
 			serverPassword: p.serverPassword,
-			configPaths: {
-				"GameUserSettings.ini": `${p.installDir}\\ShooterGame\\Saved\\Config\\WindowsServer\\GameUserSettings.ini`,
-				"Game.ini": `${p.installDir}\\ShooterGame\\Saved\\Config\\WindowsServer\\Game.ini`,
-			},
+			// Every map shares one folder the game reads its settings from, so each server keeps its own copy and the panel puts
+			// it there when that server starts (see perServerConfig.js).
+			...asaConfigSync(p.installDir, p.instanceSlug),
 			startScriptPath: `${p.installDir}\\${p.startScriptFilename}`,
 			workingDir: `${p.installDir}\\`,
 			steamCmdPath: p.steamCmdExe,

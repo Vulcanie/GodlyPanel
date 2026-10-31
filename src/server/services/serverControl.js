@@ -8,6 +8,7 @@ import { effectiveWindowMode, hideWindows, markHidingStarted } from "./serverWin
 import { launchWindowless, getRecordedPid, forgetPid } from "./windowlessLauncher.js";
 import { getSaveCommand, stopCommandFor } from "./gameCommands.js";
 import { setIntent } from "../data/serverIntent.js";
+import { applyServerConfig, adoptMissingConfig } from "./perServerConfig.js";
 
 const LAUNCH_HIDDEN_SCRIPT = resolveResource("scripts/launch-hidden.ps1");
 
@@ -53,6 +54,16 @@ export function sendTelnetSave(server, timeoutMs = 8000, settleMs = 5000) {
 // the update-and-reboot flow (which starts servers back up once SteamCMD
 // finishes).
 export async function startServer(server) {
+	// A server with settings of its own (the ARK: Survival Ascended maps) gets them put where the game reads them first.
+	const release = await applyServerConfig(server);
+	try {
+		return await launchServer(server);
+	} finally {
+		release();
+	}
+}
+
+async function launchServer(server) {
 	// Recorded first: from here on the server is meant to be running, which is what
 	// tells a later crash apart from a deliberate stop.
 	setIntent(server.name, "running");
@@ -198,6 +209,8 @@ export async function startServer(server) {
 // servers before running SteamCMD).
 export async function stopServer(server) {
 	setIntent(server.name, "stopped");
+	// The game writes its default settings the first time it runs; keep them as this server's own.
+	await adoptMissingConfig(server).catch(() => {});
 	if (server.rconPort && server.rconPassword) {
 		try {
 			await withRcon(

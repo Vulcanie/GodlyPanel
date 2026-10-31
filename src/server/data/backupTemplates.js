@@ -37,6 +37,7 @@ export const BACKUP_TEMPLATES = {
 		paths: [
 			{ base: "option", option: "AltSaveDirectoryName", rel: "ShooterGame/Saved", fallbackRel: "ShooterGame/Saved/SavedArks", label: "This map's saved world" },
 			{ base: "working", rel: "ShooterGame/Saved/Config/WindowsServer", label: "Server settings" },
+			{ base: "working", rel: "GodlyPanelConfigs", label: "Each map's own settings" },
 			{ base: "working", rel: "ClusterStorage", label: "Cluster transfers" },
 		],
 	},
