@@ -6,6 +6,7 @@ import EmptyState from "./ui/EmptyState";
 import PageHeader from "./ui/PageHeader";
 import { getGameInfo } from "../gameCatalog";
 import { useSession } from "../SessionContext";
+import { t, tn, useT } from "../i18n";
 
 const UNTAGGED = "Untagged";
 
@@ -83,6 +84,8 @@ function Gauge({ percent }) {
 
 /** A game's heading above its servers: a strip of its artwork, its name, and how many are up. */
 function GroupHeader({ title, banner, gradient, online, total, players }) {
+	// Re-renders this heading when the language changes, so the t() text below switches with it.
+	useT();
 	return (
 		<Box sx={{ position: "relative", display: "flex", alignItems: "center", gap: 1.5, mb: 1.5, px: 2, height: 52, borderRadius: 3, overflow: "hidden", background: gradient }}>
 			{banner && <Box sx={{ position: "absolute", inset: 0, backgroundImage: `url(${banner})`, backgroundSize: "cover", backgroundPosition: "center 30%" }} />}
@@ -90,13 +93,15 @@ function GroupHeader({ title, banner, gradient, online, total, players }) {
 			<Typography variant="subtitle1" sx={{ position: "relative", color: "#fff", flex: 1, textShadow: "0 1px 6px rgba(0,0,0,.5)" }}>
 				{title}
 			</Typography>
-			<Chip size="small" label={`${online}/${total} online`} color={online > 0 ? "success" : "default"} sx={{ position: "relative", height: 22, ...(online > 0 ? {} : { bgcolor: "rgba(255,255,255,.18)", color: "#fff" }) }} />
-			{players > 0 && <Chip size="small" label={`${players} playing`} sx={{ position: "relative", height: 22, bgcolor: "rgba(255,255,255,.18)", color: "#fff" }} />}
+			<Chip size="small" label={t("dashboard.groupOnline", { online, total })} color={online > 0 ? "success" : "default"} sx={{ position: "relative", height: 22, ...(online > 0 ? {} : { bgcolor: "rgba(255,255,255,.18)", color: "#fff" }) }} />
+			{players > 0 && <Chip size="small" label={t("dashboard.playing", { count: players })} sx={{ position: "relative", height: 22, bgcolor: "rgba(255,255,255,.18)", color: "#fff" }} />}
 		</Box>
 	);
 }
 
 function DashboardPage({ servers, systemStats, serverStats, loading, apiError, userRole, appearance, allowedServers = null, onOpen, onCreateServer, onAction }) {
+	// Re-renders this page when the language changes, so the t() text below switches with it.
+	useT();
 	const [query, setQuery] = React.useState("");
 	const [status, setStatus] = React.useState(() => remembered("status", "all"));
 	const [tagFilter, setTagFilter] = React.useState(() => remembered("tagFilter", []));
@@ -150,12 +155,12 @@ function DashboardPage({ servers, systemStats, serverStats, loading, apiError, u
 	return (
 		<>
 			<PageHeader
-				title="Dashboard"
-				subtitle={total === 0 ? "No servers yet" : `${onlineCount} of ${total} server${total === 1 ? "" : "s"} online · ${playerCount} player${playerCount === 1 ? "" : "s"} connected`}
+				title={t("dashboard.title")}
+				subtitle={total === 0 ? t("dashboard.noServersYet") : tn("dashboard.subtitle", total, { online: onlineCount, players: tn("dashboard.playersConnected", playerCount) })}
 				actions={
 					admin && (
 						<Button variant="contained" startIcon={<AddIcon />} onClick={onCreateServer} data-testid="create-server">
-							Create server
+							{t("dashboard.createServer")}
 						</Button>
 					)
 				}
@@ -163,18 +168,18 @@ function DashboardPage({ servers, systemStats, serverStats, loading, apiError, u
 
 			{apiError && (
 				<Alert severity="error" sx={{ mb: 2 }}>
-					Can't reach the panel: {apiError}
+					{t("dashboard.cantReach", { error: apiError })}
 				</Alert>
 			)}
 
 			{total > 0 && (
 				<Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", lg: "repeat(4, 1fr)" }, gap: 2, mb: 3 }}>
-					<Tile label="Servers online" value={`${onlineCount}/${total}`} sub={total - onlineCount > 0 ? `${total - onlineCount} offline` : "all running"} accent={onlineCount > 0 ? (t) => t.palette.status.online : undefined} />
-					<Tile label="Players connected" value={playerCount} sub="across all servers" />
-					<Tile label="CPU" value={systemStats ? `${systemStats.cpuPercent}%` : "…"} sub="this PC">
+					<Tile label={t("dashboard.serversOnline")} value={`${onlineCount}/${total}`} sub={total - onlineCount > 0 ? t("dashboard.offlineCount", { count: total - onlineCount }) : t("dashboard.allRunning")} accent={onlineCount > 0 ? (t) => t.palette.status.online : undefined} />
+					<Tile label={t("dashboard.playersTile")} value={playerCount} sub={t("dashboard.acrossAll")} />
+					<Tile label={t("common.cpu")} value={systemStats ? `${systemStats.cpuPercent}%` : "…"} sub={t("dashboard.thisPc")}>
 						<Gauge percent={systemStats?.cpuPercent} />
 					</Tile>
-					<Tile label="Memory" value={systemStats?.totalMemMB != null ? `${systemStats.usedMemPercent}%` : "…"} sub={systemStats?.totalMemMB != null ? `${(systemStats.usedMemMB / 1024).toFixed(1)} of ${(systemStats.totalMemMB / 1024).toFixed(1)} GB` : undefined}>
+					<Tile label={t("common.memory")} value={systemStats?.totalMemMB != null ? `${systemStats.usedMemPercent}%` : "…"} sub={systemStats?.totalMemMB != null ? t("dashboard.memoryOf", { used: (systemStats.usedMemMB / 1024).toFixed(1), total: (systemStats.totalMemMB / 1024).toFixed(1) }) : undefined}>
 						<Gauge percent={systemStats?.usedMemPercent} />
 					</Tile>
 				</Box>
@@ -184,12 +189,12 @@ function DashboardPage({ servers, systemStats, serverStats, loading, apiError, u
 				<Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1.5, mb: 2 }}>
 					<TextField
 						size="small"
-						placeholder="Search servers"
+						placeholder={t("dashboard.searchServers")}
 						value={query}
 						onChange={(e) => setQuery(e.target.value)}
 						sx={{ flex: { xs: "1 1 100%", sm: "0 1 280px" } }}
 						slotProps={{
-							htmlInput: { "aria-label": "Search servers" },
+							htmlInput: { "aria-label": t("dashboard.searchServers") },
 							input: { startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment> },
 						}}
 					/>
@@ -202,17 +207,17 @@ function DashboardPage({ servers, systemStats, serverStats, loading, apiError, u
 							setStatus(v);
 							remember("status", v);
 						}}
-						aria-label="Show"
+						aria-label={t("dashboard.show")}
 					>
-						<ToggleButton value="all">All</ToggleButton>
-						<ToggleButton value="online">Online</ToggleButton>
-						<ToggleButton value="offline">Offline</ToggleButton>
+						<ToggleButton value="all">{t("dashboard.all")}</ToggleButton>
+						<ToggleButton value="online">{t("common.online")}</ToggleButton>
+						<ToggleButton value="offline">{t("common.offline")}</ToggleButton>
 					</ToggleButtonGroup>
 					{allTags.length > 0 && (
 						<TextField
 							select
 							size="small"
-							label="Group by"
+							label={t("dashboard.groupBy")}
 							value={groupBy}
 							onChange={(e) => {
 								setGroupBy(e.target.value);
@@ -220,8 +225,8 @@ function DashboardPage({ servers, systemStats, serverStats, loading, apiError, u
 							}}
 							sx={{ minWidth: 130 }}
 						>
-							<MenuItem value="game">Game</MenuItem>
-							<MenuItem value="tag">Tag</MenuItem>
+							<MenuItem value="game">{t("dashboard.groupGame")}</MenuItem>
+							<MenuItem value="tag">{t("dashboard.groupTag")}</MenuItem>
 						</TextField>
 					)}
 					{allTags.map((tag) => (
@@ -235,23 +240,23 @@ function DashboardPage({ servers, systemStats, serverStats, loading, apiError, u
 			) : total === 0 ? (
 				<EmptyState
 					icon={<ServerIcon fontSize="large" />}
-					title={admin ? "Let's make your first server" : "No servers to show"}
+					title={admin ? t("dashboard.firstServer") : t("dashboard.noServersToShow")}
 					action={
 						admin && (
 							<Button variant="contained" size="large" startIcon={<AddIcon />} onClick={onCreateServer}>
-								Create a server
+								{t("dashboard.createAServer")}
 							</Button>
 						)
 					}
 				>
-					{admin ? "Pick a game, choose a name, and the panel downloads and sets it up for you." : "When the owner adds a server it will show up here."}
+					{admin ? t("dashboard.firstServerBody") : t("dashboard.noServersBody")}
 				</EmptyState>
 			) : (
 				<Box sx={{ display: "flex", flexDirection: "column", gap: 3.5 }}>
 					{filtering && (
 						<Typography variant="body2" sx={{ color: "text.secondary" }}>
-							{shown === 0 ? "No servers match." : `Showing ${shown} of ${total} servers.`}
-							{shown === 0 && " Try fewer words or clear the filters."}
+							{shown === 0 ? t("dashboard.noMatch") : t("dashboard.showing", { shown, total })}
+							{shown === 0 && ` ${t("dashboard.noMatchHint")}`}
 						</Typography>
 					)}
 					{groupKeys.map((key) => {
@@ -260,7 +265,7 @@ function DashboardPage({ servers, systemStats, serverStats, loading, apiError, u
 						return (
 							<Box key={`${groupBy}:${key}`} component="section">
 								<GroupHeader
-									title={groupBy === "tag" ? key : info.title}
+									title={groupBy === "tag" ? (key === UNTAGGED ? t("dashboard.untagged") : key) : info.title}
 									banner={groupBy === "tag" ? null : info.banner}
 									gradient={info.gradient}
 									online={list.filter((s) => s.online).length}

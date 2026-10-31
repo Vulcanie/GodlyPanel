@@ -2,6 +2,7 @@ import React from "react";
 import { Alert, Box, Button, CircularProgress, FormControlLabel, MenuItem, Switch, TextField, Typography } from "@mui/material";
 import { Article as LogIcon } from "@mui/icons-material";
 import { api } from "../api/client";
+import { t, tn, useT, formatDate, errorText } from "../i18n";
 import { formatBytes } from "../utils/format";
 import SectionCard from "./ui/SectionCard";
 import TipRow from "./TipRow";
@@ -19,6 +20,8 @@ const toneClass = (line) => {
 
 /** A server's logs: pick one, read the end of it, follow it live, search it. */
 function LogsPanel({ serverName }) {
+	// Re-renders this panel when the language changes, so the t() text below switches with it.
+	useT();
 	const base = `/api/server/${encodeURIComponent(serverName)}/logs`;
 	const [sources, setSources] = React.useState(null);
 	const [sourceId, setSourceId] = React.useState("");
@@ -53,7 +56,7 @@ function LogsPanel({ serverName }) {
 				setSources(all);
 				setSourceId((existing) => (all.some((s) => s.id === existing) ? existing : (all[0]?.id ?? "")));
 			})
-			.catch((e) => alive && setError(e.message));
+			.catch((e) => alive && setError(errorText(e)));
 		return () => {
 			alive = false;
 		};
@@ -72,7 +75,7 @@ function LogsPanel({ serverName }) {
 			setError(null);
 			stick.current = true;
 		} catch (e) {
-			if (current.current === base) setError(e.message);
+			if (current.current === base) setError(errorText(e));
 		} finally {
 			setLoading(false);
 		}
@@ -124,7 +127,7 @@ function LogsPanel({ serverName }) {
 			setSearched({ ...found, lines: found.lines ?? [] });
 			setError(null);
 		} catch (e) {
-			if (current.current === base) setError(e.message);
+			if (current.current === base) setError(errorText(e));
 		} finally {
 			setLoading(false);
 		}
@@ -132,11 +135,7 @@ function LogsPanel({ serverName }) {
 
 	if (!sources) return error ? <Alert severity="error">{error}</Alert> : <CircularProgress size={24} />;
 	if (sources.length === 0) {
-		return (
-			<Alert severity="info">
-				No log files were found for this server. Games write their logs once they have run; some only print to their console. If the server is set to run with no window, the panel keeps what it prints and it appears here.
-			</Alert>
-		);
+		return <Alert severity="info">{t("logs.noFiles")}</Alert>;
 	}
 
 	const shown = searched ? searched.lines : lines;
@@ -150,13 +149,13 @@ function LogsPanel({ serverName }) {
 				</Alert>
 			)}
 			<SectionCard
-				title="Logs"
+				title={t("logs.title")}
 				icon={<LogIcon />}
-				subtitle={selected?.modified ? `Last written ${new Date(selected.modified).toLocaleString()}` : undefined}
+				subtitle={selected?.modified ? t("logs.lastWritten", { when: formatDate(selected.modified) }) : undefined}
 			>
 				<Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, alignItems: "center", mb: 1.5 }}>
 					<TipRow id="server.logs.source" sx={{ flex: "1 1 260px", maxWidth: 420 }}>
-						<TextField select fullWidth size="small" label="Log" value={sourceId} onChange={(e) => setSourceId(e.target.value)}>
+						<TextField select fullWidth size="small" label={t("logs.log")} value={sourceId} onChange={(e) => setSourceId(e.target.value)}>
 							{sources.map((s) => (
 								<MenuItem key={s.id} value={s.id}>
 									{s.name} · {s.label} · {formatBytes(s.size)}
@@ -165,7 +164,7 @@ function LogsPanel({ serverName }) {
 						</TextField>
 					</TipRow>
 					<TipRow id="server.logs.lines">
-						<TextField select size="small" label="Lines" value={count} onChange={(e) => setCount(Number(e.target.value))} sx={{ width: 110 }}>
+						<TextField select size="small" label={t("logs.lines")} value={count} onChange={(e) => setCount(Number(e.target.value))} sx={{ width: 110 }}>
 							{[100, 300, 1000, 2000].map((n) => (
 								<MenuItem key={n} value={n}>
 									{n}
@@ -174,16 +173,16 @@ function LogsPanel({ serverName }) {
 						</TextField>
 					</TipRow>
 					<TipRow id="server.logs.follow">
-						<FormControlLabel control={<Switch checked={follow && !searched} disabled={Boolean(searched)} onChange={(e) => setFollow(e.target.checked)} />} label="Follow live" />
+						<FormControlLabel control={<Switch checked={follow && !searched} disabled={Boolean(searched)} onChange={(e) => setFollow(e.target.checked)} />} label={t("logs.followLive")} />
 					</TipRow>
 					<Button size="small" onClick={reload} disabled={loading}>
-						Refresh
+						{t("common.refresh")}
 					</Button>
 					<Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap", ml: { sm: "auto" } }}>
 						<TipRow id="server.logs.search">
 							<TextField
 								size="small"
-								label="Search this log"
+								label={t("logs.searchThis")}
 								value={query}
 								onChange={(e) => setQuery(e.target.value)}
 								onKeyDown={(e) => e.key === "Enter" && search()}
@@ -191,7 +190,7 @@ function LogsPanel({ serverName }) {
 							/>
 						</TipRow>
 						<Button size="small" variant="outlined" onClick={search} disabled={loading || !query.trim()}>
-							Search
+							{t("common.search")}
 						</Button>
 						{searched && (
 							<Button
@@ -201,7 +200,7 @@ function LogsPanel({ serverName }) {
 									setQuery("");
 								}}
 							>
-								Clear
+								{t("common.clear")}
 							</Button>
 						)}
 					</Box>
@@ -209,8 +208,8 @@ function LogsPanel({ serverName }) {
 
 				{searched && (
 					<Typography variant="caption" sx={{ display: "block", mb: 1, color: "text.secondary" }}>
-						{searched.lines.length} matching line{searched.lines.length === 1 ? "" : "s"}
-						{searched.partial ? ` (searched the last ${formatBytes(searched.searchedBytes)})` : ""}
+						{tn("logs.matches", searched.lines.length)}
+						{searched.partial ? ` ${t("logs.searchedLast", { size: formatBytes(searched.searchedBytes) })}` : ""}
 					</Typography>
 				)}
 
@@ -218,7 +217,7 @@ function LogsPanel({ serverName }) {
 					ref={view}
 					onScroll={onScroll}
 					role="log"
-					aria-label="Log lines"
+					aria-label={t("logs.logLines")}
 					data-testid="log-view"
 					sx={{
 						p: 1.5,
@@ -239,7 +238,7 @@ function LogsPanel({ serverName }) {
 						<CircularProgress size={20} />
 					) : shown.length === 0 ? (
 						<Typography variant="body2" sx={{ color: "text.secondary" }}>
-							{searched ? "Nothing matched." : "This log is empty."}
+							{searched ? t("logs.nothingMatched") : t("logs.empty")}
 						</Typography>
 					) : (
 						shown.map((line, i) => {

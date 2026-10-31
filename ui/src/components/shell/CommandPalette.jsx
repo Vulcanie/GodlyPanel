@@ -18,12 +18,15 @@ import LiveDot from "../ui/LiveDot";
 import { canAnywhere } from "../../permissions";
 import { serverTabs } from "../../serverTabs";
 import { useSession } from "../../SessionContext";
+import { t, useT } from "../../i18n";
 
 /**
  * Ctrl+K: type to jump anywhere. Pages, servers, a server's tabs ("Valheim backups"), and start, stop or restart a server. Every
  * result is something the sidebar and tabs can do too; this just gets there without looking for it.
  */
 function CommandPalette({ open, onClose, servers, allowedServers, role, go, onAction }) {
+	// The labels below are t() text, so the list is rebuilt when the language changes.
+	const { locale } = useT();
 	const [query, setQuery] = React.useState("");
 	const [active, setActive] = React.useState(0);
 	const listRef = React.useRef(null);
@@ -39,14 +42,14 @@ function CommandPalette({ open, onClose, servers, allowedServers, role, go, onAc
 	}, [open]);
 
 	const items = React.useMemo(() => {
-		const out = [{ id: "p:dashboard", group: "Go to", icon: <DashboardIcon fontSize="small" />, label: "Dashboard", words: "home overview servers", run: () => go("dashboard", null) }];
-		if (admin) out.push({ id: "p:create", group: "Go to", icon: <CreateIcon fontSize="small" />, label: "Create a server", words: "new add install", run: () => go("createServer") });
-		if (activityVisible) out.push({ id: "p:activity", group: "Go to", icon: <ActivityIcon fontSize="small" />, label: "Activity", words: "log history audit events", run: () => go("activity") });
+		const out = [{ id: "p:dashboard", group: t("shell.palette.goTo"), icon: <DashboardIcon fontSize="small" />, label: t("common.dashboard"), words: "home overview servers", run: () => go("dashboard", null) }];
+		if (admin) out.push({ id: "p:create", group: t("shell.palette.goTo"), icon: <CreateIcon fontSize="small" />, label: t("common.createAServer"), words: "new add install", run: () => go("createServer") });
+		if (activityVisible) out.push({ id: "p:activity", group: t("shell.palette.goTo"), icon: <ActivityIcon fontSize="small" />, label: t("common.activity"), words: "log history audit events", run: () => go("activity") });
 		if (admin) {
-			out.push({ id: "p:people", group: "Go to", icon: <PeopleIcon fontSize="small" />, label: "People", words: "users accounts moderators", run: () => go("users") });
-			out.push({ id: "p:settings", group: "Go to", icon: <SettingsIcon fontSize="small" />, label: "Settings", words: "configuration backups discord notifications folders", run: () => go("settings") });
+			out.push({ id: "p:people", group: t("shell.palette.goTo"), icon: <PeopleIcon fontSize="small" />, label: t("common.people"), words: "users accounts moderators", run: () => go("users") });
+			out.push({ id: "p:settings", group: t("shell.palette.goTo"), icon: <SettingsIcon fontSize="small" />, label: t("common.settings"), words: "configuration backups discord notifications folders", run: () => go("settings") });
 		}
-		if (can("roles.manage")) out.push({ id: "p:roles", group: "Go to", icon: <RolesIcon fontSize="small" />, label: "Roles", words: "permissions access custom", run: () => go("roles") });
+		if (can("roles.manage")) out.push({ id: "p:roles", group: t("shell.palette.goTo"), icon: <RolesIcon fontSize="small" />, label: t("common.roles"), words: "permissions access custom", run: () => go("roles") });
 		if (operator) {
 			const names = Object.keys(servers)
 				.filter((n) => !allowedServers || allowedServers.includes(n))
@@ -54,23 +57,23 @@ function CommandPalette({ open, onClose, servers, allowedServers, role, go, onAc
 			for (const name of names) {
 				const s = servers[name];
 				const dot = <LiveDot state={s?.online ? "online" : "offline"} size={8} pulse={false} />;
-				out.push({ id: `s:${name}`, group: "Servers", icon: dot, label: name, hint: s?.online ? `${s.playerCount ?? 0} players` : "offline", words: `${s?.type ?? ""} ${s?.sessionName ?? ""}`, run: () => go("config", name) });
+				out.push({ id: `s:${name}`, group: t("common.servers"), icon: dot, label: name, hint: s?.online ? t("shell.palette.players", { count: s.playerCount ?? 0 }) : t("shell.state.offline"), words: `${s?.type ?? ""} ${s?.sessionName ?? ""}`, run: () => go("config", name) });
 				for (const tab of serverTabs(admin, (p) => can(p, name))) {
-					out.push({ id: `t:${name}:${tab.key}`, group: "Server pages", icon: <TabIcon fontSize="small" />, label: `${name}: ${tab.label}`, words: `${tab.words ?? ""} ${s?.type ?? ""}`, run: () => go("config", name, tab.key), rank: 2 });
+					out.push({ id: `t:${name}:${tab.key}`, group: t("shell.palette.serverPages"), icon: <TabIcon fontSize="small" />, label: t("shell.palette.tabLabel", { name, tab: tab.label }), words: `${tab.words ?? ""} ${s?.type ?? ""}`, run: () => go("config", name, tab.key), rank: 2 });
 				}
 				// Start, stop and restart need control of this server, not just a place in the list.
 				if (can("server.control", name)) {
 					if (s?.online) {
-						out.push({ id: `a:stop:${name}`, group: "Actions", icon: <StopIcon fontSize="small" />, label: `Stop ${name}`, words: "shut down", run: () => onAction(name, "stop"), rank: 3 });
-						out.push({ id: `a:restart:${name}`, group: "Actions", icon: <RestartIcon fontSize="small" />, label: `Restart ${name}`, words: "reboot", run: () => onAction(name, "restart"), rank: 3 });
+						out.push({ id: `a:stop:${name}`, group: t("shell.palette.actions"), icon: <StopIcon fontSize="small" />, label: t("shell.palette.stopServer", { name }), words: "shut down", run: () => onAction(name, "stop"), rank: 3 });
+						out.push({ id: `a:restart:${name}`, group: t("shell.palette.actions"), icon: <RestartIcon fontSize="small" />, label: t("shell.palette.restartServer", { name }), words: "reboot", run: () => onAction(name, "restart"), rank: 3 });
 					} else {
-						out.push({ id: `a:start:${name}`, group: "Actions", icon: <StartIcon fontSize="small" />, label: `Start ${name}`, words: "launch run", run: () => onAction(name, "start"), rank: 3 });
+						out.push({ id: `a:start:${name}`, group: t("shell.palette.actions"), icon: <StartIcon fontSize="small" />, label: t("shell.palette.startServer", { name }), words: "launch run", run: () => onAction(name, "start"), rank: 3 });
 					}
 				}
 			}
 		}
 		return out;
-	}, [servers, allowedServers, admin, operator, activityVisible, can, go, onAction]);
+	}, [servers, allowedServers, admin, operator, activityVisible, can, go, onAction, locale]);
 
 	const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
 	const results = React.useMemo(() => {
@@ -110,12 +113,12 @@ function CommandPalette({ open, onClose, servers, allowedServers, role, go, onAc
 			<TextField
 				autoFocus
 				fullWidth
-				placeholder="Jump to a server, page or action…"
+				placeholder={t("shell.palette.placeholder")}
 				value={query}
 				onChange={(e) => setQuery(e.target.value)}
 				onKeyDown={onKeyDown}
 				slotProps={{
-					htmlInput: { "aria-label": "Search the panel", "data-testid": "palette-input" },
+					htmlInput: { "aria-label": t("shell.palette.ariaSearch"), "data-testid": "palette-input" },
 					input: { startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment> },
 				}}
 				sx={{ "& .MuiOutlinedInput-root": { borderRadius: 0, fontSize: 17, py: 0.5 }, "& fieldset": { border: 0, borderBottom: 1, borderColor: "divider" } }}
@@ -123,7 +126,7 @@ function CommandPalette({ open, onClose, servers, allowedServers, role, go, onAc
 			<List ref={listRef} dense sx={{ overflowY: "auto", p: 1 }} data-testid="palette-results">
 				{results.length === 0 && (
 					<Typography variant="body2" sx={{ color: "text.secondary", p: 2 }}>
-						Nothing matches "{query.trim()}".
+						{t("shell.palette.nothing", { query: query.trim() })}
 					</Typography>
 				)}
 				{results.map((item, i) => (
@@ -146,9 +149,9 @@ function CommandPalette({ open, onClose, servers, allowedServers, role, go, onAc
 				))}
 			</List>
 			<Box sx={{ display: "flex", gap: 2, px: 2, py: 1, borderTop: 1, borderColor: "divider", color: "text.secondary", fontSize: 12 }}>
-				<span>↑↓ to move</span>
-				<span>Enter to choose</span>
-				<span>Esc to close</span>
+				<span>{t("shell.palette.hintMove")}</span>
+				<span>{t("shell.palette.hintChoose")}</span>
+				<span>{t("shell.palette.hintClose")}</span>
 			</Box>
 		</Dialog>
 	);

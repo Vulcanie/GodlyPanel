@@ -1,6 +1,7 @@
 import React from "react";
 import { Box, Typography } from "@mui/material";
 import { api } from "../api/client";
+import { t, useT } from "../i18n";
 
 const POLL_MS = 2000;
 // Enough to scroll back through a startup without holding a whole log in the page.
@@ -11,6 +12,8 @@ const MAX_CHARS = 200_000;
  * offset, so each poll transfers only what's new.
  */
 function ServerConsole({ serverName, active }) {
+	// Re-renders this console when the language changes, so the t() text below switches with it.
+	useT();
 	const [text, setText] = React.useState("");
 	const [exists, setExists] = React.useState(null);
 	const offset = React.useRef(undefined);
@@ -79,7 +82,7 @@ function ServerConsole({ serverName, active }) {
 	if (exists === false) {
 		return (
 			<Typography variant="body2" sx={{ color: "text.secondary" }}>
-				No output captured yet.
+				{t("console.noOutput")}
 			</Typography>
 		);
 	}
@@ -90,7 +93,7 @@ function ServerConsole({ serverName, active }) {
 			onScroll={onScroll}
 			component="pre"
 			role="log"
-			aria-label="Console output"
+			aria-label={t("console.output")}
 			data-testid="server-console"
 			sx={{
 				m: 0,
@@ -109,7 +112,7 @@ function ServerConsole({ serverName, active }) {
 				color: "text.primary",
 			}}
 		>
-			{text || "Waiting for output…"}
+			{text || t("console.waiting")}
 		</Box>
 	);
 }

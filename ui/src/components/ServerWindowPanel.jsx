@@ -5,27 +5,28 @@ import { useToast } from "../ToastContext";
 import ServerConsole from "./ServerConsole";
 import InfoTip from "./InfoTip";
 import TipRow from "./TipRow";
+import { t, useT, errorText } from "../i18n";
 
 // What each mode is for is explained by the (i) beside the choice (server.window.mode), not printed under it.
 const MODES = {
-	minimized: { label: "Minimized" },
-	hidden: { label: "Hidden" },
-	windowless: { label: "No window" },
+	minimized: { label: () => t("window.mode.minimized") },
+	hidden: { label: () => t("window.mode.hidden") },
+	windowless: { label: () => t("window.mode.windowless") },
 };
 
 // Minecraft's start chain is already fully hidden, so it has no window to
 // minimize or hide: the real choice is its script, or a direct launch.
 const MINECRAFT_MODES = {
-	hidden: { label: "Standard" },
-	windowless: { label: "No window" },
+	hidden: { label: () => t("window.mode.standard") },
+	windowless: { label: () => t("window.mode.windowless") },
 };
 
 const PRIORITIES = [
-	["", "Normal"],
-	["low", "Low"],
-	["belowNormal", "Below normal"],
-	["aboveNormal", "Above normal"],
-	["high", "High"],
+	["", () => t("window.priority.normal")],
+	["low", () => t("window.priority.low")],
+	["belowNormal", () => t("window.priority.belowNormal")],
+	["aboveNormal", () => t("window.priority.aboveNormal")],
+	["high", () => t("window.priority.high")],
 ];
 
 const BLANK_FORM = { exe: "", args: "", cwd: "", priority: "" };
@@ -39,6 +40,8 @@ const priorityOf = (launch) => (launch?.priority && launch.priority !== "normal"
  * provides, so it draws no frame or heading of its own.
  */
 function ServerWindowPanel({ serverName }) {
+	// Re-renders this panel when the language changes, so the t() text below switches with it.
+	useT();
 	const base = `/api/server/${encodeURIComponent(serverName)}`;
 	const toast = useToast();
 	const [win, setWin] = React.useState(null);
@@ -63,7 +66,7 @@ function ServerWindowPanel({ serverName }) {
 					: BLANK_FORM,
 			);
 		} catch (e) {
-			if (current.current === base) setError(e.message);
+			if (current.current === base) setError(errorText(e));
 		}
 	}, [base]);
 
@@ -83,7 +86,7 @@ function ServerWindowPanel({ serverName }) {
 		try {
 			await work();
 		} catch (e) {
-			setError(e.message);
+			setError(errorText(e));
 			return e;
 		} finally {
 			setBusy(false);
@@ -104,11 +107,11 @@ function ServerWindowPanel({ serverName }) {
 			const data = await api.put(`${base}/window-mode`, { mode });
 			setWin(data);
 			if (data.skipped?.length) {
-				toast(`Skipped from your start script: ${data.skipped.join(", ")}.`, "info");
+				toast(t("window.skippedToast", { list: data.skipped.join(", ") }), "info");
 			} else if (data.appliedNow) {
-				toast("Applied to the running server.");
+				toast(t("window.appliedNow"));
 			} else if (mode !== "default") {
-				toast("Takes effect the next time this server starts.", "info");
+				toast(t("window.nextStart"), "info");
 			}
 		}).then((err) => {
 			// A script that can't be read: let them fill the details in by hand.
@@ -144,13 +147,13 @@ function ServerWindowPanel({ serverName }) {
 			await load();
 			setEditing(false);
 			setCaptureNotes([]);
-			toast("Launch details saved.");
+			toast(t("window.launchSaved"));
 		});
 
 	const windowsNow = (action) =>
 		run(async () => {
 			const res = await api.post(`${base}/windows/${action}`);
-			toast(action === "show" ? `Restored ${res.restored ?? 0} window(s).` : "Hiding this server's windows.", "info");
+			toast(action === "show" ? t("window.restored", { count: res.restored ?? 0 }) : t("window.hiding"), "info");
 		});
 
 	if (!win) {
@@ -162,11 +165,11 @@ function ServerWindowPanel({ serverName }) {
 	}
 
 	const modes = win.hasWindows ? MODES : MINECRAFT_MODES;
-	const defaultLabel = (modes[win.defaultMode] ?? modes.hidden).label.toLowerCase();
+	const defaultLabel = (modes[win.defaultMode] ?? modes.hidden).label().toLowerCase();
 	const selected = win.requested ?? "default";
 	const showsConsole = win.effective === "windowless" || win.hasLog;
 	// A priority stored by something other than this form (for example "realtime") still has to show as itself.
-	const priorities = PRIORITIES.some(([value]) => value === form.priority) ? PRIORITIES : [...PRIORITIES, [form.priority, form.priority]];
+	const priorities = PRIORITIES.some(([value]) => value === form.priority) ? PRIORITIES : [...PRIORITIES, [form.priority, () => form.priority]];
 
 	return (
 		<Box sx={{ p: 2.5, display: "flex", flexDirection: "column", gap: 2 }}>
@@ -177,20 +180,18 @@ function ServerWindowPanel({ serverName }) {
 			)}
 
 			<TipRow id="server.window.mode" sx={{ maxWidth: 460 }}>
-				<TextField select fullWidth size="small" label="Window mode" value={selected} disabled={busy} onChange={(e) => choose(e.target.value)}>
-					<MenuItem value="default">Use the panel default ({defaultLabel})</MenuItem>
+				<TextField select fullWidth size="small" label={t("window.modeLabel")} value={selected} disabled={busy} onChange={(e) => choose(e.target.value)}>
+					<MenuItem value="default">{t("window.useDefault", { mode: defaultLabel })}</MenuItem>
 					{Object.entries(modes).map(([value, mode]) => (
 						<MenuItem key={value} value={value}>
-							{mode.label}
+							{mode.label()}
 						</MenuItem>
 					))}
 				</TextField>
 			</TipRow>
 
 			{win.requested === "windowless" && win.effective !== "windowless" && (
-				<Alert severity="warning">
-					No launch details are saved yet, so this {win.hasWindows ? "runs hidden" : "starts the normal way"} until they are. Fill them in below.
-				</Alert>
+				<Alert severity="warning">{win.hasWindows ? t("window.noLaunchHidden") : t("window.noLaunchNormal")}</Alert>
 			)}
 			{win.launchProblem && <Alert severity="warning">{win.launchProblem}</Alert>}
 
@@ -199,10 +200,10 @@ function ServerWindowPanel({ serverName }) {
 					<TipRow id="server.window.hide">
 						<Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
 							<Button size="small" variant="outlined" disabled={busy} onClick={() => windowsNow("hide")}>
-								Hide windows now
+								{t("window.hideNow")}
 							</Button>
 							<Button size="small" variant="outlined" disabled={busy} onClick={() => windowsNow("show")}>
-								Show windows
+								{t("window.showWindows")}
 							</Button>
 						</Box>
 					</TipRow>
@@ -211,26 +212,22 @@ function ServerWindowPanel({ serverName }) {
 					<Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
 						{win.hasScript && (
 							<Button size="small" disabled={busy} onClick={detect}>
-								Read launch details from the start script
+								{t("window.readScript")}
 							</Button>
 						)}
 						<Button size="small" disabled={busy} onClick={capture}>
-							Copy from the running server
+							{t("window.copyRunning")}
 						</Button>
 						{!editing && (
 							<Button size="small" disabled={busy} onClick={() => setEditing(true)}>
-								{win.launch ? "Edit launch details" : "Enter launch details"}
+								{win.launch ? t("window.editLaunch") : t("window.enterLaunch")}
 							</Button>
 						)}
 					</Box>
 				</TipRow>
 			</Box>
 
-			{detected?.ok && detected.skipped?.length > 0 && (
-				<Alert severity="warning">
-					Reading your start script found {detected.skipped.join(", ")}. "No window" mode skips that — GodlyPanel's own Update button and auto-update cover it.
-				</Alert>
-			)}
+			{detected?.ok && detected.skipped?.length > 0 && <Alert severity="warning">{t("window.skippedNote", { list: detected.skipped.join(", ") })}</Alert>}
 			{captureNotes.map((note) => (
 				<Alert key={note} severity="info">
 					{note}
@@ -240,29 +237,29 @@ function ServerWindowPanel({ serverName }) {
 			{editing && (
 				<Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
 					<TipRow id="server.launch.program">
-						<TextField fullWidth size="small" label="Program" value={form.exe} onChange={(e) => setForm({ ...form, exe: e.target.value })} />
+						<TextField fullWidth size="small" label={t("window.program")} value={form.exe} onChange={(e) => setForm({ ...form, exe: e.target.value })} />
 					</TipRow>
 					<TipRow id="server.launch.arguments">
-						<TextField fullWidth size="small" label="Arguments" value={form.args} onChange={(e) => setForm({ ...form, args: e.target.value })} />
+						<TextField fullWidth size="small" label={t("window.arguments")} value={form.args} onChange={(e) => setForm({ ...form, args: e.target.value })} />
 					</TipRow>
 					<TipRow id="server.launch.folder">
-						<TextField fullWidth size="small" label="Start in folder" value={form.cwd} onChange={(e) => setForm({ ...form, cwd: e.target.value })} />
+						<TextField fullWidth size="small" label={t("window.startFolder")} value={form.cwd} onChange={(e) => setForm({ ...form, cwd: e.target.value })} />
 					</TipRow>
 					<TipRow id="server.launch.priority" sx={{ maxWidth: 260 }}>
-						<TextField select fullWidth size="small" label="Priority" value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })}>
+						<TextField select fullWidth size="small" label={t("window.priorityLabel")} value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })}>
 							{priorities.map(([value, label]) => (
 								<MenuItem key={value} value={value}>
-									{label}
+									{label()}
 								</MenuItem>
 							))}
 						</TextField>
 					</TipRow>
 					<Box sx={{ display: "flex", gap: 1 }}>
 						<Button size="small" variant="contained" disabled={busy || !form.exe} onClick={saveLaunch}>
-							Save launch details
+							{t("window.saveLaunch")}
 						</Button>
 						<Button size="small" disabled={busy} onClick={() => setEditing(false)}>
-							Cancel
+							{t("common.cancel")}
 						</Button>
 					</Box>
 				</Box>
@@ -271,7 +268,7 @@ function ServerWindowPanel({ serverName }) {
 			{showsConsole && (
 				<Box>
 					<Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-						<Typography variant="subtitle2">Console output</Typography>
+						<Typography variant="subtitle2">{t("console.output")}</Typography>
 						<InfoTip id="server.window.console" />
 					</Box>
 					<ServerConsole serverName={serverName} active />

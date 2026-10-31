@@ -5,73 +5,75 @@ import { Search as SearchIcon, Timeline as ActivityIcon } from "@mui/icons-mater
 import CompactEmpty from "./CompactEmpty";
 import { api } from "../api/client";
 import { onLive } from "../liveEvents";
+import { t, useT, formatDate, errorText, getLocale } from "../i18n";
 
 const COLOURS = { info: "default", warn: "warning", error: "error" };
 // The colour of the stripe down the left of each event, as a theme path.
 const STRIPE = { info: "divider", warn: "warning.main", error: "error.main" };
 
+// Each label is a t() call, so the words follow the chosen language.
 const TYPE_LABELS = {
-	"server.crashed": "Crashed",
-	"server.restarted.auto": "Auto-restart",
-	"server.restarted.scheduled": "Scheduled restart",
-	"server.recovered": "Recovered",
-	"server.gave_up": "Gave up",
-	"server.unresponsive": "Not answering",
-	"server.autostarted": "Started with panel",
-	"server.cloned": "Cloned",
-	"backup.completed": "Backup",
-	"backup.failed": "Backup failed",
-	"backup.restored": "Restored",
-	"backup.restart_failed": "Restart failed",
-	"backup.deleted": "Backup deleted",
-	"schedule.ran": "Schedule",
-	"schedule.failed": "Schedule failed",
-	"schedule.skipped": "Schedule skipped",
-	"disk.low": "Disk space",
-	"panel.update_available": "Update available",
-	"panel.updating": "Updating",
-	"panel.updated": "Updated",
-	"panel.update_failed": "Update failed",
-	"mods.installed": "Mods",
-	"mods.removed": "Mods",
-	"preset.saved": "Preset",
-	"preset.applied": "Preset",
-	"admin.action": "Change",
-	"auth.signed_in": "Signed in",
-	"auth.signed_out": "Signed out",
-	"auth.failed": "Sign-in failed",
-	"auth.password_changed": "Password",
-	"community.staff-signin": "Staff sign-in",
-	"backup.copy_failed": "Copy failed",
-	"backup.copied": "Copied",
-	"backup.destination_stale": "Copy overdue",
-	"backup.destination_recovered": "Copies caught up",
-	"player.op_level": "Operator level",
+	"server.crashed": () => t("activity.type.crashed"),
+	"server.restarted.auto": () => t("activity.type.autoRestart"),
+	"server.restarted.scheduled": () => t("activity.type.scheduledRestart"),
+	"server.recovered": () => t("activity.type.recovered"),
+	"server.gave_up": () => t("activity.type.gaveUp"),
+	"server.unresponsive": () => t("activity.type.notAnswering"),
+	"server.autostarted": () => t("activity.type.startedWithPanel"),
+	"server.cloned": () => t("activity.type.cloned"),
+	"backup.completed": () => t("activity.type.backup"),
+	"backup.failed": () => t("activity.type.backupFailed"),
+	"backup.restored": () => t("activity.type.restored"),
+	"backup.restart_failed": () => t("activity.type.restartFailed"),
+	"backup.deleted": () => t("activity.type.backupDeleted"),
+	"schedule.ran": () => t("activity.type.schedule"),
+	"schedule.failed": () => t("activity.type.scheduleFailed"),
+	"schedule.skipped": () => t("activity.type.scheduleSkipped"),
+	"disk.low": () => t("activity.type.diskSpace"),
+	"panel.update_available": () => t("activity.type.updateAvailable"),
+	"panel.updating": () => t("activity.type.updating"),
+	"panel.updated": () => t("activity.type.updated"),
+	"panel.update_failed": () => t("activity.type.updateFailed"),
+	"mods.installed": () => t("activity.type.mods"),
+	"mods.removed": () => t("activity.type.mods"),
+	"preset.saved": () => t("activity.type.preset"),
+	"preset.applied": () => t("activity.type.preset"),
+	"admin.action": () => t("activity.type.change"),
+	"auth.signed_in": () => t("activity.type.signedIn"),
+	"auth.signed_out": () => t("activity.type.signedOut"),
+	"auth.failed": () => t("activity.type.signInFailed"),
+	"auth.password_changed": () => t("activity.type.password"),
+	"community.staff-signin": () => t("activity.type.staffSignIn"),
+	"backup.copy_failed": () => t("activity.type.copyFailed"),
+	"backup.copied": () => t("activity.type.copied"),
+	"backup.destination_stale": () => t("activity.type.copyOverdue"),
+	"backup.destination_recovered": () => t("activity.type.copiesCaughtUp"),
+	"player.op_level": () => t("activity.type.operatorLevel"),
 };
 
-const label = (type) => TYPE_LABELS[type] ?? type;
+const label = (type) => (Object.hasOwn(TYPE_LABELS, type) ? TYPE_LABELS[type]() : type);
 
 // The kinds of event someone looks for, as the start of the event's type.
 const KINDS = [
-	{ id: "servers", label: "Servers", prefixes: ["server."] },
-	{ id: "backups", label: "Backups", prefixes: ["backup."] },
-	{ id: "players", label: "Players", prefixes: ["player."] },
-	{ id: "signins", label: "Sign-ins", prefixes: ["auth.", "community."] },
-	{ id: "changes", label: "Changes", prefixes: ["admin.", "preset.", "mods.", "motd."] },
-	{ id: "schedules", label: "Schedules", prefixes: ["schedule."] },
-	{ id: "panel", label: "Panel", prefixes: ["panel.", "disk."] },
+	{ id: "servers", label: () => t("activity.kind.servers"), prefixes: ["server."] },
+	{ id: "backups", label: () => t("activity.kind.backups"), prefixes: ["backup."] },
+	{ id: "players", label: () => t("activity.kind.players"), prefixes: ["player."] },
+	{ id: "signins", label: () => t("activity.kind.signins"), prefixes: ["auth.", "community."] },
+	{ id: "changes", label: () => t("activity.kind.changes"), prefixes: ["admin.", "preset.", "mods.", "motd."] },
+	{ id: "schedules", label: () => t("activity.kind.schedules"), prefixes: ["schedule."] },
+	{ id: "panel", label: () => t("activity.kind.panel"), prefixes: ["panel.", "disk."] },
 ];
 const LEVELS = [
-	{ id: "error", label: "Errors" },
-	{ id: "warn", label: "Warnings" },
-	{ id: "info", label: "Information" },
+	{ id: "error", label: () => t("activity.level.errors") },
+	{ id: "warn", label: () => t("activity.level.warnings") },
+	{ id: "info", label: () => t("activity.level.information") },
 ];
 const RANGES = [
-	{ id: "", label: "All time", ms: 0 },
-	{ id: "1h", label: "Last hour", ms: 3_600_000 },
-	{ id: "24h", label: "Last 24 hours", ms: 86_400_000 },
-	{ id: "7d", label: "Last 7 days", ms: 7 * 86_400_000 },
-	{ id: "30d", label: "Last 30 days", ms: 30 * 86_400_000 },
+	{ id: "", label: () => t("activity.range.allTime"), ms: 0 },
+	{ id: "1h", label: () => t("activity.range.lastHour"), ms: 3_600_000 },
+	{ id: "24h", label: () => t("activity.range.last24Hours"), ms: 86_400_000 },
+	{ id: "7d", label: () => t("activity.range.last7Days"), ms: 7 * 86_400_000 },
+	{ id: "30d", label: () => t("activity.range.last30Days"), ms: 30 * 86_400_000 },
 ];
 const PAGE = 100;
 
@@ -80,18 +82,18 @@ const toggle = (list, id) => (list.includes(id) ? list.filter((x) => x !== id) :
 // Messages are text, but an event written by an older version might carry something else; never show it as "[object Object]".
 const text = (value) => (typeof value === "string" ? value : value == null ? "" : typeof value === "object" ? String(value.message ?? JSON.stringify(value)) : String(value));
 
-const WHEN = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
 /** "5 minutes ago" for anything recent, the date and time for the rest. */
 function whenText(iso) {
 	const then = Date.parse(iso);
 	if (!Number.isFinite(then)) return "";
 	const seconds = Math.round((then - Date.now()) / 1000);
 	const abs = Math.abs(seconds);
-	if (abs < 45) return "just now";
+	const WHEN = new Intl.RelativeTimeFormat(getLocale(), { numeric: "auto" });
+	if (abs < 45) return t("common.justNow");
 	if (abs < 3600) return WHEN.format(Math.round(seconds / 60), "minute");
 	if (abs < 86400) return WHEN.format(Math.round(seconds / 3600), "hour");
 	if (abs < 7 * 86400) return WHEN.format(Math.round(seconds / 86400), "day");
-	return new Date(then).toLocaleDateString([], { year: "numeric", month: "short", day: "numeric" });
+	return new Date(then).toLocaleDateString(getLocale(), { year: "numeric", month: "short", day: "numeric" });
 }
 
 /**
@@ -99,6 +101,8 @@ function whenText(iso) {
  * kind, level, server and time, and sorted either way; the search covers the whole log, not only what is shown.
  */
 function ActivityPanel({ serverName = null, limit = PAGE }) {
+	// Re-renders this panel when the language changes, so the t() text below switches with it.
+	useT();
 	const [result, setResult] = React.useState(null);
 	const [error, setError] = React.useState(null);
 	const [q, setQ] = React.useState("");
@@ -145,7 +149,7 @@ function ActivityPanel({ serverName = null, limit = PAGE }) {
 				setError(null);
 				setFresh(0);
 			})
-			.catch((e) => alive && setError(e?.message || "The activity could not be loaded."));
+			.catch((e) => alive && setError(errorText(e, t("activity.loadFailed"))));
 		return () => {
 			alive = false;
 		};
@@ -164,11 +168,11 @@ function ActivityPanel({ serverName = null, limit = PAGE }) {
 
 	if (!result) {
 		return error ? (
-			<Alert severity="error" action={<Button color="inherit" size="small" onClick={() => setReloads((n) => n + 1)}>Try again</Button>}>
+			<Alert severity="error" action={<Button color="inherit" size="small" onClick={() => setReloads((n) => n + 1)}>{t("common.tryAgain")}</Button>}>
 				{error}
 			</Alert>
 		) : (
-			<Box aria-busy="true" aria-label="Loading activity">
+			<Box aria-busy="true" aria-label={t("activity.loading")}>
 				<Skeleton variant="rounded" height={40} sx={{ mb: 1.5, borderRadius: "12px" }} />
 				{[0, 1, 2, 3, 4].map((i) => (
 					<Skeleton key={i} variant="rounded" height={46} sx={{ mb: 0.75, borderRadius: "8px" }} />
@@ -189,29 +193,29 @@ function ActivityPanel({ serverName = null, limit = PAGE }) {
 	return (
 		<Box>
 			{error && (
-				<Alert severity="error" sx={{ mb: 1.5 }} action={<Button color="inherit" size="small" onClick={() => setReloads((n) => n + 1)}>Try again</Button>}>
+				<Alert severity="error" sx={{ mb: 1.5 }} action={<Button color="inherit" size="small" onClick={() => setReloads((n) => n + 1)}>{t("common.tryAgain")}</Button>}>
 					{error}
 				</Alert>
 			)}
 			<Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", alignItems: "center", mb: 1 }}>
 				<TextField
 					size="small"
-					placeholder="Search the whole log"
+					placeholder={t("activity.searchPlaceholder")}
 					value={q}
 					onChange={(e) => setQ(e.target.value)}
 					sx={{ flex: "1 1 220px" }}
-					slotProps={{ htmlInput: { "aria-label": "Search the whole log" }, input: { startAdornment: (<InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment>) } }}
+					slotProps={{ htmlInput: { "aria-label": t("activity.searchPlaceholder") }, input: { startAdornment: (<InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment>) } }}
 				/>
-				<Select size="small" value={range} onChange={(e) => setRange(e.target.value)} displayEmpty inputProps={{ "aria-label": "Time range" }}>
+				<Select size="small" value={range} onChange={(e) => setRange(e.target.value)} displayEmpty inputProps={{ "aria-label": t("activity.timeRange") }}>
 					{RANGES.map((r) => (
 						<MenuItem key={r.id} value={r.id}>
-							{r.label}
+							{r.label()}
 						</MenuItem>
 					))}
 				</Select>
 				{!serverName && result.servers.length > 0 && (
-					<Select size="small" value={server} onChange={(e) => setServer(e.target.value)} displayEmpty inputProps={{ "aria-label": "Server" }}>
-						<MenuItem value="">All servers</MenuItem>
+					<Select size="small" value={server} onChange={(e) => setServer(e.target.value)} displayEmpty inputProps={{ "aria-label": t("activity.server") }}>
+						<MenuItem value="">{t("activity.allServers")}</MenuItem>
 						{result.servers.map((s) => (
 							<MenuItem key={s} value={s}>
 								{s}
@@ -219,44 +223,44 @@ function ActivityPanel({ serverName = null, limit = PAGE }) {
 						))}
 					</Select>
 				)}
-				<Select size="small" value={order} onChange={(e) => setOrder(e.target.value)} inputProps={{ "aria-label": "Sort order" }}>
-					<MenuItem value="desc">Newest first</MenuItem>
-					<MenuItem value="asc">Oldest first</MenuItem>
+				<Select size="small" value={order} onChange={(e) => setOrder(e.target.value)} inputProps={{ "aria-label": t("activity.sortOrder") }}>
+					<MenuItem value="desc">{t("activity.newestFirst")}</MenuItem>
+					<MenuItem value="asc">{t("activity.oldestFirst")}</MenuItem>
 				</Select>
 			</Box>
 			<Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap", alignItems: "center", mb: 1.5 }}>
 				{KINDS.map((k) => (
-					<Chip key={k.id} size="small" label={k.label} color={kinds.includes(k.id) ? "primary" : "default"} variant={kinds.includes(k.id) ? "filled" : "outlined"} onClick={() => setKinds((v) => toggle(v, k.id))} />
+					<Chip key={k.id} size="small" label={k.label()} color={kinds.includes(k.id) ? "primary" : "default"} variant={kinds.includes(k.id) ? "filled" : "outlined"} onClick={() => setKinds((v) => toggle(v, k.id))} />
 				))}
 				<Box sx={{ width: 8 }} />
 				{LEVELS.map((l) => (
-					<Chip key={l.id} size="small" label={l.label} color={levels.includes(l.id) ? COLOURS[l.id] === "default" ? "primary" : COLOURS[l.id] : "default"} variant={levels.includes(l.id) ? "filled" : "outlined"} onClick={() => setLevels((v) => toggle(v, l.id))} />
+					<Chip key={l.id} size="small" label={l.label()} color={levels.includes(l.id) ? COLOURS[l.id] === "default" ? "primary" : COLOURS[l.id] : "default"} variant={levels.includes(l.id) ? "filled" : "outlined"} onClick={() => setLevels((v) => toggle(v, l.id))} />
 				))}
 				{filtered && (
 					<Button size="small" onClick={reset}>
-						Clear filters
+						{t("activity.clearFilters")}
 					</Button>
 				)}
 			</Box>
 			<Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 0.75 }}>
-				{result.total === 0 ? "Nothing matches." : `Showing ${result.events.length} of ${result.total}${filtered ? " matching" : ""}.`}
+				{result.total === 0 ? t("activity.nothingMatches") : filtered ? t("activity.showingMatching", { shown: result.events.length, total: result.total }) : t("activity.showing", { shown: result.events.length, total: result.total })}
 				{fresh > 0 && (
 					<>
 						{" "}
 						<Button size="small" onClick={() => setReloads((n) => n + 1)}>
-							{fresh} new, refresh
+							{t("activity.newRefresh", { count: fresh })}
 						</Button>
 					</>
 				)}
 			</Typography>
 
 			{result.total === 0 && !filtered ? (
-				<CompactEmpty icon={<ActivityIcon />} title="Nothing has happened yet">
-					Crashes, restarts, backups, updates, sign-ins, changes and scheduled tasks are listed here.
+				<CompactEmpty icon={<ActivityIcon />} title={t("activity.nothingYet")}>
+					{t("activity.nothingYetBody")}
 				</CompactEmpty>
 			) : result.events.length === 0 ? (
-				<CompactEmpty icon={<SearchIcon />} title="No events match" action={filtered ? <Button onClick={reset}>Clear filters</Button> : undefined}>
-					Try fewer filters, a different word, or a longer time range.
+				<CompactEmpty icon={<SearchIcon />} title={t("activity.noMatch")} action={filtered ? <Button onClick={reset}>{t("activity.clearFilters")}</Button> : undefined}>
+					{t("activity.noMatchBody")}
 				</CompactEmpty>
 			) : (
 				<Box sx={{ border: 1, borderColor: "divider", borderRadius: "12px", overflow: "hidden", bgcolor: "background.paper" }}>
@@ -278,7 +282,7 @@ function ActivityPanel({ serverName = null, limit = PAGE }) {
 								"&::before": { content: '""', position: "absolute", left: 0, top: 0, bottom: 0, width: 3, bgcolor: STRIPE[e.level] ?? "divider" },
 							}}
 						>
-							<Typography variant="caption" title={Number.isFinite(Date.parse(e.t)) ? new Date(e.t).toLocaleString() : undefined} sx={{ color: "text.secondary", minWidth: { sm: 130 }, whiteSpace: "nowrap" }}>
+							<Typography variant="caption" title={Number.isFinite(Date.parse(e.t)) ? formatDate(e.t) : undefined} sx={{ color: "text.secondary", minWidth: { sm: 130 }, whiteSpace: "nowrap" }}>
 								{whenText(e.t)}
 							</Typography>
 							<Chip size="small" variant="outlined" color={COLOURS[e.level] ?? "default"} label={label(e.type)} sx={{ minWidth: 110, bgcolor: (t) => (e.level === "error" || e.level === "warn" ? alpha(t.palette[e.level === "warn" ? "warning" : "error"].main, 0.08) : "transparent") }} />
@@ -293,7 +297,7 @@ function ActivityPanel({ serverName = null, limit = PAGE }) {
 			{result.events.length < result.total && (
 				<Box sx={{ textAlign: "center", mt: 1.5 }}>
 					<Button size="small" variant="outlined" onClick={() => setShown((n) => n + PAGE)}>
-						Show {Math.min(PAGE, result.total - result.events.length)} more
+						{t("activity.showMore", { count: Math.min(PAGE, result.total - result.events.length) })}
 					</Button>
 				</Box>
 			)}

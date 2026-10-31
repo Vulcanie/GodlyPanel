@@ -5,21 +5,23 @@ import { Folder as FolderIcon, Visibility as ShowIcon, VisibilityOff as HideIcon
 import FolderField from "./FolderField";
 import { flatWhenDisabled } from "./cardStyles";
 import AuthShell, { Brand } from "./AuthShell";
-import { formatBytes } from "../utils/format";
 import { api } from "../api/client";
 import { useSession } from "../SessionContext";
+import { t, useT, errorText } from "../i18n";
+import { formatBytes } from "../utils/format";
 
 /** "Step 1 of 2" as two bars that fill with the brand gradient. */
 function Steps({ step, total = 2 }) {
+	useT();
 	return (
-		<Box sx={{ mb: 3 }} role="group" aria-label={`Step ${step} of ${total}`}>
+		<Box sx={{ mb: 3 }} role="group" aria-label={t("setup.step", { step, total })}>
 			<Box sx={{ display: "flex", gap: 0.75, mb: 0.75 }}>
 				{Array.from({ length: total }, (_, i) => (
 					<Box key={i} sx={{ flex: 1, height: 4, borderRadius: "2px", background: (t) => (i < step ? t.custom.gradient : t.palette.divider), transition: "background .3s" }} />
 				))}
 			</Box>
 			<Typography variant="caption" sx={{ color: "text.secondary" }}>
-				Step {step} of {total}
+				{t("setup.step", { step, total })}
 			</Typography>
 		</Box>
 	);
@@ -60,6 +62,7 @@ function Choice({ value, selected, title, children }) {
 // Shown once, on a brand-new install. The server only accepts this from the
 // machine itself, so nobody on the network can claim the admin account first.
 function SetupWizard() {
+	useT();
 	const { completeSetup } = useSession();
 	// Step 1 is where game servers will live; step 2 is the account.
 	const [step, setStep] = React.useState(1);
@@ -92,7 +95,7 @@ function SetupWizard() {
 		try {
 			await completeSetup(username.trim(), password, serversRoot);
 		} catch (e) {
-			setError(e?.message || "Something went wrong. Please try again.");
+			setError(errorText(e, t("common.somethingWrong")));
 			setBusy(false);
 		}
 	};
@@ -104,48 +107,48 @@ function SetupWizard() {
 				<Brand compact />
 				<Steps step={1} />
 				<Typography variant="h5" component="h1" gutterBottom>
-					Welcome to GodlyPanel
+					{t("setup.welcome")}
 				</Typography>
 				<Typography variant="body2" sx={{ color: "text.secondary", mb: 3 }}>
-					First, where should your game servers be stored? Games are large — often tens of gigabytes each — so it's worth a moment's thought. You can change this later in Settings, and choose a different place for any individual server when you create it.
+					{t("setup.storageBody")}
 				</Typography>
 
 				<RadioGroup value={where} onChange={(e) => setWhere(e.target.value)}>
-					<Choice value="default" selected={where === "default"} title="Inside the app folder (recommended to start)">
+					<Choice value="default" selected={where === "default"} title={t("setup.insideApp")}>
 						<Typography variant="caption" sx={{ color: "text.secondary", wordBreak: "break-all", display: "block" }}>
-							{defaults ? `${defaults.resolved} — ${formatBytes(defaults.freeBytes)} free` : "Checking..."}
+							{defaults ? t("setup.freeSpace", { folder: defaults.resolved, size: formatBytes(defaults.freeBytes) }) : t("setup.checking")}
 						</Typography>
 					</Choice>
-					<Choice value="custom" selected={where === "custom"} title="Somewhere else, like a bigger drive" />
+					<Choice value="custom" selected={where === "custom"} title={t("setup.elsewhere")} />
 				</RadioGroup>
 
 				{where === "default" && defaults?.ok === false && (
 					<Alert severity="error" sx={{ mt: 1 }}>
-						{errors[0] ?? "That folder can't be used."} Choose another location.
+						{t("setup.folderError", { error: errors[0] ?? t("setup.folderCantUse") })}
 					</Alert>
 				)}
 				{where === "default" && (
 					<Typography variant="caption" sx={{ display: "flex", gap: 0.75, alignItems: "flex-start", mt: 1, color: "text.secondary" }}>
 						<FolderIcon sx={{ fontSize: 16, mt: "1px" }} />
-						Keeping everything in one folder means you can move or back up the whole app together. It will use whichever drive the app is on.
+						{t("setup.oneFolder")}
 					</Typography>
 				)}
 
 				{where === "custom" && (
 					<Box sx={{ mt: 1 }}>
 						<FolderField
-							label="Server folder"
+							label={t("setup.serverFolder")}
 							value={customPath}
 							onChange={setCustomPath}
 							checkUrl="/api/setup/check-folder"
-							helperText="A full path, like D:\GameServers. It's created if it doesn't exist."
+							helperText={t("setup.serverFolderHelp")}
 							onCheck={(r) => setCustomOk(r.ok)}
 						/>
 					</Box>
 				)}
 
 				<Button fullWidth size="large" variant="contained" sx={{ mt: 3, py: 1.2, ...flatWhenDisabled }} disabled={!folderReady} onClick={() => setStep(2)}>
-					Continue
+					{t("setup.continue")}
 				</Button>
 			</AuthShell>
 		);
@@ -156,10 +159,10 @@ function SetupWizard() {
 			<Brand compact />
 			<Steps step={2} />
 			<Typography variant="h5" component="h1" gutterBottom>
-				Create your account
+				{t("setup.createAccount")}
 			</Typography>
 			<Typography variant="body2" sx={{ color: "text.secondary", mb: 3 }}>
-				Create your administrator account. You'll use this to manage your servers, and you can invite others afterwards.
+				{t("setup.adminBody")}
 			</Typography>
 
 			{error && (
@@ -170,29 +173,29 @@ function SetupWizard() {
 
 			<TextField
 				fullWidth
-				label="Username"
+				label={t("common.username")}
 				autoFocus
 				autoComplete="username"
 				sx={{ mb: 2 }}
 				value={username}
 				onChange={(e) => setUsername(e.target.value)}
-				helperText="3-32 characters. Letters, numbers, dot, underscore or hyphen."
+				helperText={t("setup.usernameHelp")}
 			/>
 			<TextField
 				fullWidth
 				type={reveal ? "text" : "password"}
-				label="Password"
+				label={t("common.password")}
 				autoComplete="new-password"
 				sx={{ mb: 2 }}
 				value={password}
 				onChange={(e) => setPassword(e.target.value)}
 				error={tooShort}
-				helperText={tooShort ? "At least 8 characters." : " "}
+				helperText={tooShort ? t("common.atLeast8") : " "}
 				slotProps={{
 					input: {
 						endAdornment: (
 							<InputAdornment position="end">
-								<IconButton size="small" edge="end" aria-label={reveal ? "Hide what I typed" : "Show what I typed"} onClick={() => setReveal((v) => !v)} onMouseDown={(e) => e.preventDefault()}>
+								<IconButton size="small" edge="end" aria-label={reveal ? t("common.hideTyped") : t("common.showTyped")} onClick={() => setReveal((v) => !v)} onMouseDown={(e) => e.preventDefault()}>
 									{reveal ? <HideIcon fontSize="small" /> : <ShowIcon fontSize="small" />}
 								</IconButton>
 							</InputAdornment>
@@ -203,21 +206,21 @@ function SetupWizard() {
 			<TextField
 				fullWidth
 				type={reveal ? "text" : "password"}
-				label="Confirm password"
+				label={t("setup.confirmPassword")}
 				autoComplete="new-password"
 				sx={{ mb: 2 }}
 				value={confirm}
 				onChange={(e) => setConfirm(e.target.value)}
 				onKeyDown={(e) => e.key === "Enter" && submit()}
 				error={mismatch}
-				helperText={mismatch ? "Passwords don't match." : " "}
+				helperText={mismatch ? t("setup.noMatch") : " "}
 			/>
 
 			<Button fullWidth size="large" variant="contained" disabled={!canSubmit} onClick={submit} sx={{ py: 1.2, ...flatWhenDisabled }}>
-				{busy ? "Creating..." : "Create account"}
+				{busy ? t("setup.creating") : t("setup.createButton")}
 			</Button>
 			<Button fullWidth sx={{ mt: 1 }} disabled={busy} onClick={() => setStep(1)}>
-				Back
+				{t("common.back")}
 			</Button>
 		</AuthShell>
 	);

@@ -1,6 +1,7 @@
 import React from "react";
 import { Box, Typography, useTheme } from "@mui/material";
 import { alpha } from "@mui/material/styles";
+import { t, useT, formatDate, getLocale } from "../i18n";
 
 // Small charts drawn as SVG: no chart library, so nothing to download and nothing to
 // keep up to date. They take plain arrays and size themselves to their box.
@@ -26,8 +27,8 @@ function niceMax(value) {
 
 function timeLabel(t, spanMs) {
 	const d = new Date(t);
-	if (spanMs <= 36 * 3_600_000) return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-	return d.toLocaleDateString([], { month: "short", day: "numeric" });
+	if (spanMs <= 36 * 3_600_000) return d.toLocaleTimeString(getLocale(), { hour: "numeric", minute: "2-digit" });
+	return d.toLocaleDateString(getLocale(), { month: "short", day: "numeric" });
 }
 
 // Smallest and largest of a long list without spreading it into a call (which has a limit).
@@ -39,6 +40,8 @@ const extent = (values) => values.reduce(([lo, hi], v) => [Math.min(lo, v), Math
  */
 export function LineChart({ series, height = 150, unit = "", max = null, title, format = (v) => String(Math.round(v * 10) / 10) }) {
 	const theme = useTheme();
+	// Re-renders the chart when the language changes, so the t() text below switches with it.
+	useT();
 	const gradientId = React.useId().replace(/:/g, "");
 	const ref = React.useRef(null);
 	const [width, setWidth] = React.useState(600);
@@ -119,7 +122,7 @@ export function LineChart({ series, height = 150, unit = "", max = null, title, 
 			{all.length === 0 ? (
 				<Box sx={{ height, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "8px", border: "1px dashed", borderColor: "divider" }}>
 					<Typography variant="caption" sx={{ color: "text.secondary" }}>
-						No readings in this range yet.
+						{t("charts.noReadings")}
 					</Typography>
 				</Box>
 			) : (
@@ -187,7 +190,7 @@ export function LineChart({ series, height = 150, unit = "", max = null, title, 
 					}}
 				>
 					<Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>
-						{new Date(hover.t).toLocaleString()}
+						{formatDate(hover.t)}
 					</Typography>
 					{series.map((s, i) => {
 						const p = (s.points ?? []).find((q) => q.t === hover.t && q.v !== null);
@@ -212,12 +215,23 @@ export function LineChart({ series, height = 150, unit = "", max = null, title, 
 	);
 }
 
-const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+// The day names, each a literal t() call so the words follow the chosen language. Index 0 is Sunday, as in Date.getDay().
+const DAYS = {
+	0: () => t("charts.day.sun"),
+	1: () => t("charts.day.mon"),
+	2: () => t("charts.day.tue"),
+	3: () => t("charts.day.wed"),
+	4: () => t("charts.day.thu"),
+	5: () => t("charts.day.fri"),
+	6: () => t("charts.day.sat"),
+};
 const ORDER = [1, 2, 3, 4, 5, 6, 0]; // Monday first
 
 /** A weekday-by-hour grid: stronger colour means more players. `grid[weekday][hour]` is an average or null. */
 export function HourGrid({ grid }) {
 	const theme = useTheme();
+	// Re-renders the grid when the language changes, so the t() text below switches with it.
+	useT();
 	if (!Array.isArray(grid)) return null;
 	const max = Math.max(0.0001, ...grid.flat().filter((v) => typeof v === "number"));
 	const tint = (v) => alpha(theme.palette.secondary.main, 0.12 + 0.88 * (v / max));
@@ -233,12 +247,12 @@ export function HourGrid({ grid }) {
 				{ORDER.map((d) => (
 					<React.Fragment key={d}>
 						<Typography variant="caption" sx={{ color: "text.secondary", lineHeight: "18px" }}>
-							{DAYS[d]}
+							{DAYS[d]()}
 						</Typography>
 						{(grid[d] ?? []).map((v, h) => (
 							<Box
 								key={h}
-								title={v === null ? `${DAYS[d]} ${h}:00 — no data` : `${DAYS[d]} ${h}:00 — ${v} players on average`}
+								title={v === null ? t("charts.hourNoData", { day: DAYS[d](), hour: h }) : t("charts.hourAverage", { day: DAYS[d](), hour: h, players: v })}
 								sx={{ height: 18, borderRadius: "3px", bgcolor: v === null ? "action.hover" : tint(v) }}
 							/>
 						))}
@@ -246,11 +260,11 @@ export function HourGrid({ grid }) {
 				))}
 			</Box>
 			<Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 1, color: "text.secondary" }}>
-				<Typography variant="caption">Fewer</Typography>
+				<Typography variant="caption">{t("charts.fewer")}</Typography>
 				{[0, 0.33, 0.66, 1].map((f) => (
 					<Box key={f} sx={{ width: 18, height: 10, borderRadius: "3px", bgcolor: tint(f * max) }} />
 				))}
-				<Typography variant="caption">More players</Typography>
+				<Typography variant="caption">{t("charts.morePlayers")}</Typography>
 			</Box>
 		</Box>
 	);

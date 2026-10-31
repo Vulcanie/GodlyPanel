@@ -15,6 +15,7 @@ import ActivityPanel from "./ActivityPanel";
 import AutomationPanel from "./AutomationPanel";
 import { serverTabs, DEFAULT_TAB } from "../serverTabs";
 import { useSession } from "../SessionContext";
+import { t, useT } from "../i18n";
 
 const REMEMBER = "gp.serverTab";
 
@@ -23,6 +24,8 @@ const REMEMBER = "gp.serverTab";
  * Administrators get all of them; anyone else gets the ones their permissions reach on this server.
  */
 function ServerWorkspace({ serverName, serverStatus, serverStats, servers, appearance, userRole, tab, onTab, onBack, onEditBatchFiles, onOpenServer, onAction }) {
+	// Re-renders this page when the language changes, so the tab names (read in serverTabs.js) switch with it.
+	useT();
 	const isAdmin = userRole === "admin";
 	const { can } = useSession();
 	const tabs = React.useMemo(() => serverTabs(isAdmin, (permission) => can(permission, serverName)), [isAdmin, can, serverName]);
@@ -67,7 +70,7 @@ function ServerWorkspace({ serverName, serverStatus, serverStats, servers, appea
 					borderColor: "divider",
 				}}
 			>
-				<Tabs value={active} onChange={(_, v) => choose(v)} variant="scrollable" scrollButtons="auto" aria-label="Server pages">
+				<Tabs value={active} onChange={(_, v) => choose(v)} variant="scrollable" scrollButtons="auto" aria-label={t("server.pages")}>
 					{tabs.map((t) => (
 						<Tab key={t.key} value={t.key} label={t.label} data-testid={`tab-${t.key}`} />
 					))}

@@ -5,12 +5,13 @@ import { diffLines, summarise } from "../utils/lineDiff";
 import { useToast } from "../ToastContext";
 import ConfirmDialog from "./ui/ConfirmDialog";
 import TipRow from "./TipRow";
-
-const when = (iso) => new Date(iso).toLocaleString();
-const kb = (n) => (n < 1024 ? `${n} B` : `${(n / 1024).toFixed(1)} KB`);
+import { t, tn, useT, formatDate, errorText } from "../i18n";
+import { formatBytes } from "../utils/format";
 
 /** Every version of a settings or start-script file the panel wrote: compare them, and put one back. */
 function ConfigHistoryPanel({ serverName, serverStatus }) {
+	// Re-renders this panel when the language changes, so the t() text below switches with it.
+	useT();
 	const base = `/api/server/${encodeURIComponent(serverName)}/history`;
 	const toast = useToast();
 	const [files, setFiles] = React.useState(null);
@@ -41,7 +42,7 @@ function ConfigHistoryPanel({ serverName, serverStatus }) {
 				setFiles(all);
 				setFile(all.find((f) => f.versions > 0)?.key || all[0]?.key || "");
 			})
-			.catch((e) => alive && setError(e.message));
+			.catch((e) => alive && setError(errorText(e)));
 		return () => {
 			alive = false;
 		};
@@ -56,7 +57,7 @@ function ConfigHistoryPanel({ serverName, serverStatus }) {
 			setPicked((p) => (p && list.some((v) => v.id === p.id) ? p : (list[0] ?? null)));
 			setTexts({});
 		} catch (e) {
-			setError(e.message);
+			setError(errorText(e));
 		}
 	}, [base, file]);
 
@@ -68,7 +69,7 @@ function ConfigHistoryPanel({ serverName, serverStatus }) {
 		async (id) => {
 			if (texts[id] !== undefined) return texts[id];
 			const { content } = await api.get(`${base}/${encodeURIComponent(file)}/${id}`);
-			setTexts((t) => ({ ...t, [id]: content }));
+			setTexts((prev) => ({ ...prev, [id]: content }));
 			return content;
 		},
 		[base, file, texts],
@@ -85,7 +86,7 @@ function ConfigHistoryPanel({ serverName, serverStatus }) {
 			const after = await text(picked.id);
 			const before = other ? await text(other.id) : "";
 			if (alive) setPair({ before, after, hasOther: Boolean(other), otherIsPicked: other?.id === picked.id });
-		})().catch((e) => alive && setError(e.message));
+		})().catch((e) => alive && setError(errorText(e)));
 		return () => {
 			alive = false;
 		};
@@ -98,15 +99,15 @@ function ConfigHistoryPanel({ serverName, serverStatus }) {
 		setRestoreOpen(false);
 		try {
 			await api.post(`${base}/${encodeURIComponent(file)}/${v.id}/restore`, {});
-			toast("Restored. The change is in the history too.");
+			toast(t("history.restored"));
 			loadVersions();
 		} catch (e) {
-			setError(e.message);
+			setError(errorText(e));
 		}
 	};
 
 	if (!files) return error ? <Alert severity="error">{error}</Alert> : <CircularProgress size={24} />;
-	if (files.length === 0) return <Alert severity="info">This server has no settings files or start script to keep a history of.</Alert>;
+	if (files.length === 0) return <Alert severity="info">{t("history.noFiles")}</Alert>;
 
 	return (
 		<Box>
@@ -117,26 +118,26 @@ function ConfigHistoryPanel({ serverName, serverStatus }) {
 			)}
 			<Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", alignItems: "center", mb: 2 }}>
 				<TipRow id="server.history.file" sx={{ flex: "1 1 240px", maxWidth: 360 }}>
-					<TextField select fullWidth size="small" label="File" value={file} onChange={(e) => setFile(e.target.value)}>
+					<TextField select fullWidth size="small" label={t("history.fileLabel")} value={file} onChange={(e) => setFile(e.target.value)}>
 						{files.map((f) => (
 							<MenuItem key={f.key} value={f.key}>
-								{f.key} ({f.versions} version{f.versions === 1 ? "" : "s"})
+								{tn("history.fileVersions", f.versions, { file: f.key })}
 							</MenuItem>
 						))}
 					</TextField>
 				</TipRow>
 				<TipRow id="server.history.compare" sx={{ flex: "1 1 200px", maxWidth: 260 }}>
-					<TextField select fullWidth size="small" label="Compare with" value={against} onChange={(e) => setAgainst(e.target.value)}>
-						<MenuItem value="previous">the version before it</MenuItem>
-						<MenuItem value="current">the current version</MenuItem>
+					<TextField select fullWidth size="small" label={t("history.compareWith")} value={against} onChange={(e) => setAgainst(e.target.value)}>
+						<MenuItem value="previous">{t("history.previousVersion")}</MenuItem>
+						<MenuItem value="current">{t("history.currentVersion")}</MenuItem>
 					</TextField>
 				</TipRow>
-				{running && <Chip size="small" color="warning" label="Stop the server to restore a version" />}
+				{running && <Chip size="small" color="warning" label={t("history.stopToRestore")} />}
 			</Box>
 
 			{versions.length === 0 ? (
 				<Typography variant="body2" sx={{ color: "text.secondary" }}>
-					Nothing is recorded for this file yet. The next change made through the panel will be kept here.
+					{t("history.none")}
 				</Typography>
 			) : (
 				<Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", alignItems: "flex-start" }}>
@@ -159,9 +160,9 @@ function ConfigHistoryPanel({ serverName, serverStatus }) {
 									"&:hover": { bgcolor: picked?.id === v.id ? undefined : (t) => t.custom.hover },
 								}}
 							>
-								<Typography variant="body2">{when(v.at)}{i === 0 ? " (current)" : ""}</Typography>
+								<Typography variant="body2">{formatDate(v.at)}{i === 0 ? ` ${t("history.current")}` : ""}</Typography>
 								<Typography variant="caption" sx={{ color: "text.secondary" }}>
-									{v.source} · {kb(v.bytes)}
+									{v.source} · {formatBytes(v.bytes)}
 								</Typography>
 							</Box>
 						))}
@@ -171,11 +172,11 @@ function ConfigHistoryPanel({ serverName, serverStatus }) {
 						{picked && (
 							<Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1, flexWrap: "wrap" }}>
 								<Typography variant="subtitle2" sx={{ flex: 1 }}>
-									{when(picked.at)} · {picked.source}
+									{formatDate(picked.at)} · {picked.source}
 								</Typography>
 								{pair?.hasOther && !pair.otherIsPicked && (
 									<Typography variant="caption" sx={{ color: "text.secondary" }}>
-										<Box component="span" sx={{ color: "success.main" }}>+{counts.added}</Box> <Box component="span" sx={{ color: "error.main" }}>−{counts.removed}</Box> lines
+										<Box component="span" sx={{ color: "success.main" }}>+{counts.added}</Box> <Box component="span" sx={{ color: "error.main" }}>−{counts.removed}</Box> {t("history.lines")}
 									</Typography>
 								)}
 								<TipRow id="server.history.restore">
@@ -188,7 +189,7 @@ function ConfigHistoryPanel({ serverName, serverStatus }) {
 											setRestoreOpen(true);
 										}}
 									>
-										Restore this version
+										{t("history.restoreThis")}
 									</Button>
 								</TipRow>
 							</Box>
@@ -214,7 +215,7 @@ function ConfigHistoryPanel({ serverName, serverStatus }) {
 								<CircularProgress size={18} />
 							) : !pair.hasOther ? (
 								<Typography variant="caption" sx={{ color: "text.secondary" }}>
-									This is the oldest version kept. Its full text:
+									{t("history.oldest")}
 								</Typography>
 							) : null}
 							{pair && (!pair.hasOther
@@ -236,12 +237,12 @@ function ConfigHistoryPanel({ serverName, serverStatus }) {
 
 			<ConfirmDialog
 				open={restoreOpen && Boolean(restoring)}
-				title="Put back this version?"
-				confirmLabel="Restore it"
+				title={t("history.restoreTitle")}
+				confirmLabel={t("history.restoreConfirm")}
 				onConfirm={() => restore(restoring)}
 				onClose={() => setRestoreOpen(false)}
 			>
-				{restoring && `The version from ${when(restoring.at)} replaces the file. The current one stays in the history.`}
+				{restoring && t("history.restoreBody", { when: formatDate(restoring.at) })}
 			</ConfirmDialog>
 		</Box>
 	);

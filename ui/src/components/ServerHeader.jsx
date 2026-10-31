@@ -5,6 +5,7 @@ import LiveDot from "./ui/LiveDot";
 import { useOperation, operationLabel } from "../OperationsContext";
 import { getGameInfo } from "../gameCatalog";
 import { copyToClipboard } from "../utils/clipboard";
+import { t, useT } from "../i18n";
 
 function Pill({ icon, children, onClick, tip }) {
 	const body = (
@@ -24,6 +25,8 @@ function Pill({ icon, children, onClick, tip }) {
  * you are on the page.
  */
 function ServerHeader({ serverName, status, stats, appearance, onAction, canControl, isAdmin }) {
+	// Re-renders this header when the language changes, so the t() text below switches with it.
+	useT();
 	const operation = useOperation(serverName);
 	const online = Boolean(status?.online);
 	const info = React.useMemo(() => getGameInfo(status?.type, appearance), [status?.type, appearance]);
@@ -40,7 +43,7 @@ function ServerHeader({ serverName, status, stats, appearance, onAction, canCont
 					<Box sx={{ display: "flex", alignItems: "center", gap: 1.25, mb: 0.5 }}>
 						<LiveDot state={operation ? "busy" : online ? "online" : "offline"} size={12} />
 						<Typography variant="overline" sx={{ color: "rgba(255,255,255,.78)", letterSpacing: 1.4 }}>
-							{operation ? operationLabel(operation) : online ? "Online" : "Offline"} · {info.title}
+							{operation ? operationLabel(operation) : online ? t("common.online") : t("common.offline")} · {info.title}
 						</Typography>
 					</Box>
 					<Typography variant="h4" component="h1" noWrap sx={{ color: "#fff", textShadow: "0 2px 12px rgba(0,0,0,.5)" }}>
@@ -49,17 +52,17 @@ function ServerHeader({ serverName, status, stats, appearance, onAction, canCont
 					<Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1.5 }}>
 						<Pill icon={<PlayersIcon sx={{ fontSize: 16 }} />}>
 							<strong>{status?.playerCount ?? 0}</strong>
-							{status?.maxplayers ? ` / ${status.maxplayers}` : ""} players
+							{status?.maxplayers ? ` / ${status.maxplayers}` : ""} {t("common.players")}
 						</Pill>
-						{online && status?.ping != null && <Pill icon={<PingIcon sx={{ fontSize: 16 }} />}>{status.ping} ms</Pill>}
-						{stats?.running && <Pill icon={<MemoryIcon sx={{ fontSize: 16 }} />}>{stats.cpuPercent}% CPU · {(stats.ramMB / 1024).toFixed(1)} GB</Pill>}
+						{online && status?.ping != null && <Pill icon={<PingIcon sx={{ fontSize: 16 }} />}>{t("server.pingMs", { ms: status.ping })}</Pill>}
+						{stats?.running && <Pill icon={<MemoryIcon sx={{ fontSize: 16 }} />}>{t("server.cpuRam", { cpu: stats.cpuPercent, ram: (stats.ramMB / 1024).toFixed(1) })}</Pill>}
 						{(status?.session || status?.joinAddress) && (
-							<Pill icon={<AddressIcon sx={{ fontSize: 16 }} />} onClick={() => copy(status.session || status.joinAddress, "Join address")} tip={tip?.startsWith("Join") ? tip : "Click to copy the join address"}>
+							<Pill icon={<AddressIcon sx={{ fontSize: 16 }} />} onClick={() => copy(status.session || status.joinAddress, t("server.joinAddress"))} tip={tip?.startsWith(t("server.joinAddress")) ? tip : t("server.copyJoinTip")}>
 								{status.session || status.joinAddress}
 							</Pill>
 						)}
 						{isAdmin && status?.serverPassword && (
-							<Pill icon={<LockIcon sx={{ fontSize: 16 }} />} onClick={() => copy(status.serverPassword, "Password")} tip={tip?.startsWith("Password") ? tip : "Click to copy the password"}>
+							<Pill icon={<LockIcon sx={{ fontSize: 16 }} />} onClick={() => copy(status.serverPassword, t("common.password"))} tip={tip?.startsWith(t("common.password")) ? tip : t("server.copyPasswordTip")}>
 								{status.serverPassword}
 							</Pill>
 						)}
@@ -72,13 +75,13 @@ function ServerHeader({ serverName, status, stats, appearance, onAction, canCont
 				{canControl && (
 					<Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
 						<Button variant="contained" color="success" startIcon={<StartIcon />} disabled={online || busy} onClick={() => onAction(serverName, "start")} data-testid="header-start">
-							Start
+							{t("common.start")}
 						</Button>
 						<Button variant="contained" color="warning" startIcon={<RestartIcon />} disabled={!online || busy} onClick={() => onAction(serverName, "restart")} data-testid="header-restart">
-							Restart
+							{t("common.restart")}
 						</Button>
 						<Button variant="contained" color="error" startIcon={<StopIcon />} disabled={(!online && operation !== "starting") || (busy && operation !== "starting")} onClick={() => onAction(serverName, "stop")} data-testid="header-stop">
-							Stop
+							{t("common.stop")}
 						</Button>
 					</Box>
 				)}

@@ -3,12 +3,15 @@ import { Box, Button, TextField } from "@mui/material";
 import { Terminal as TerminalIcon } from "@mui/icons-material";
 import { api } from "../api/client";
 import SectionCard from "./ui/SectionCard";
+import { t, useT, errorText } from "../i18n";
 
 /**
  * Send a command to the game's console (RCON) and read the answer. The up and down arrows step through what was sent before,
  * as in any terminal. The black panel is a terminal in both the light and the dark theme.
  */
 function RconConsole({ serverName }) {
+	// Re-renders this panel when the language changes, so the t() text below switches with it.
+	useT();
 	const [command, setCommand] = React.useState("");
 	const [log, setLog] = React.useState([]);
 	const [sending, setSending] = React.useState(false);
@@ -29,9 +32,9 @@ function RconConsole({ serverName }) {
 		cursor.current = -1;
 		try {
 			const data = await api.post(`/api/control/${encodeURIComponent(serverName)}/rcon`, { command: cmd });
-			setLog((prev) => [...prev, { command: cmd, response: data.response ?? data.error ?? "(no response)" }]);
+			setLog((prev) => [...prev, { command: cmd, response: data.response ?? data.error ?? t("console.noResponse") }]);
 		} catch (err) {
-			setLog((prev) => [...prev, { command: cmd, response: err.message || "The command could not be sent.", failed: true }]);
+			setLog((prev) => [...prev, { command: cmd, response: errorText(err, t("console.sendFailed")), failed: true }]);
 		} finally {
 			setSending(false);
 		}
@@ -51,14 +54,14 @@ function RconConsole({ serverName }) {
 	};
 
 	return (
-		<SectionCard title="Console" subtitle="Commands go to the game's own console (RCON)" icon={<TerminalIcon />}>
+		<SectionCard title={t("console.title")} subtitle={t("console.subtitle")} icon={<TerminalIcon />}>
 			<Box
 				ref={screen}
 				data-testid="rcon-screen"
 				sx={{ height: 240, overflowY: "auto", backgroundColor: "#0b0f17", border: 1, borderColor: "divider", borderRadius: 2, p: 1.5, mb: 1.5, fontFamily: (t) => t.custom.mono, fontSize: 13, color: "#cbd5e1" }}
 			>
 				{log.length === 0 ? (
-					<Box sx={{ color: "#64748b" }}>No commands sent yet. Try "help".</Box>
+					<Box sx={{ color: "#64748b" }}>{t("console.rconEmpty")}</Box>
 				) : (
 					log.map((entry, i) => (
 						<Box key={i} sx={{ mb: 1 }}>
@@ -69,9 +72,9 @@ function RconConsole({ serverName }) {
 				)}
 			</Box>
 			<Box sx={{ display: "flex", gap: 1 }}>
-				<TextField size="small" fullWidth placeholder="Enter a command" value={command} onChange={(e) => setCommand(e.target.value)} onKeyDown={onKeyDown} slotProps={{ htmlInput: { "aria-label": "Console command", autoComplete: "off", spellCheck: false } }} />
+				<TextField size="small" fullWidth placeholder={t("console.placeholder")} value={command} onChange={(e) => setCommand(e.target.value)} onKeyDown={onKeyDown} slotProps={{ htmlInput: { "aria-label": t("console.commandAria"), autoComplete: "off", spellCheck: false } }} />
 				<Button variant="contained" onClick={send} disabled={sending || !command.trim()}>
-					Send
+					{t("common.send")}
 				</Button>
 			</Box>
 		</SectionCard>
