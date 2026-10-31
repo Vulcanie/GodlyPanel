@@ -106,6 +106,16 @@ describe("importing a server bundle over the API", () => {
 		assert.equal(relativeImport.status, 400);
 		assert.equal(relativeImport.json.code, "bad_file");
 
+		// A network path would make this PC sign in to another machine, so it is refused for both routes.
+		for (const unc of ["\\\\host\\share\\x.gpserver", "//host/share/x.gpserver"]) {
+			const plan = await api.post("/api/import/plan", { path: unc });
+			assert.equal(plan.status, 400, unc);
+			assert.equal(plan.json.code, "bad_file", unc);
+			const start = await api.post("/api/import", { path: unc, name: NEW });
+			assert.equal(start.status, 400, unc);
+			assert.equal(start.json.code, "bad_file", unc);
+		}
+
 		const noFile = new FormData();
 		noFile.append("notTheField", "hello");
 		const noUpload = await fetch(`${api.base}/api/uploads/bundle`, { method: "POST", headers: { Cookie: api.cookie }, body: noFile });

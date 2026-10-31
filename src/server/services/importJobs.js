@@ -114,7 +114,7 @@ async function run(job, { file, name, ports, parentDir, cleanup }) {
 	job.installing = made?.installing === true;
 	job.warnings = [...(made?.warnings ?? [])];
 	finish(job, "ready");
-	logActivity({ type: "server.bundle_imported", server: job.server, message: `imported server ${job.server} from a bundle` });
+	// No success entry here: importServer writes its own "server.imported" one.
 }
 
 function finish(job, status) {

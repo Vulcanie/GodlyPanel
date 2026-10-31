@@ -384,6 +384,8 @@ async function bundleSource(body) {
 		return { file, source: { uploadId: body.uploadId }, uploadId: body.uploadId };
 	}
 	if (typeof body.path !== "string" || !path.isAbsolute(body.path)) throw new BundleError("Give the full path of a .gpserver file.", "bad_file");
+	// A network address would make this PC sign in to whatever machine the address names, so only local paths are read.
+	if (body.path.startsWith("\\") || body.path.startsWith("//")) throw new BundleError("Give a path on this PC, not a network address.", "bad_file");
 	return { file: body.path, source: { path: body.path }, uploadId: null };
 }
 
@@ -415,6 +417,8 @@ router.post("/import", async (req, res) => {
 		if (typeof body.name !== "string") throw new BundleError("Give the new server a name.", "bad_input");
 		if (body.ports !== undefined && !isPlainObject(body.ports)) throw new BundleError("ports must be an object of port numbers.", "bad_input");
 		const { file, uploadId } = await bundleSource(body);
+		// The hourly sweep goes by the file's age; touching it keeps a bundle that is being imported from being swept mid-way.
+		if (uploadId) await fs.promises.utimes(file, new Date(), new Date()).catch(() => {});
 		const job = startImportJob({
 			file,
 			name: body.name,
