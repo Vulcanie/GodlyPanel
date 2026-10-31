@@ -77,11 +77,22 @@ describe("formatting and languages", () => {
 		expect(await setLocale("__proto__")).toBe("en");
 	});
 
-	it("lists English and the pseudo-locale", () => {
+	it("lists English, the beta languages and the pseudo-locale", () => {
 		expect(LANGUAGES).toEqual([
 			{ code: "en", label: "English" },
+			{ code: "es", label: "Español (beta)" },
+			{ code: "de", label: "Deutsch (beta)" },
 			{ code: "en-XA", label: "Pseudo (test)" },
 		]);
+	});
+
+	it("loads the shipped Spanish and German files, and the _meta note is never shown as a word", async () => {
+		expect(await setLocale("de")).toBe("de");
+		expect(t("common.cancel")).not.toBe("common.cancel");
+		expect(t("_meta")).toBe("_meta");
+		expect(await setLocale("es")).toBe("es");
+		expect(t("_meta")).toBe("_meta");
+		await setLocale("en");
 	});
 });
 

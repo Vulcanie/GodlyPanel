@@ -6,12 +6,16 @@ import React from "react";
 
 export const LANGUAGES = [
 	{ code: "en", label: "English" },
+	{ code: "es", label: "Español (beta)" },
+	{ code: "de", label: "Deutsch (beta)" },
 	{ code: "en-XA", label: "Pseudo (test)" },
 ];
 
 // Each language is its own chunk, fetched only when it is chosen.
 const LOADERS = {
 	en: () => import("../locales/en.json"),
+	es: () => import("../locales/es.json"),
+	de: () => import("../locales/de.json"),
 	"en-XA": () => import("../locales/en-XA.json"),
 };
 

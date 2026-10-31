@@ -61,14 +61,30 @@ describe("checkI18n on a small fixture", () => {
 	});
 
 	it("reports a locale key that en.json lacks", () => {
-		write("es.json", { "a.b": "A {name}", "extra": "x" });
+		write("es.json", { "a.b": "A {name}", "files.one": "{count} a", "files.other": "{count} b", "extra": "x" });
 		const problems = checkI18n({ srcDir, localesDir });
 		assert.deepEqual(problems, ['es.json: "extra" is not in en.json']);
 		fs.rmSync(path.join(localesDir, "es.json"));
 	});
 
+	it("reports a key a locale file is missing", () => {
+		write("es.json", { "a.b": "Un {name}", "files.one": "{count} a" });
+		assert.deepEqual(checkI18n({ srcDir, localesDir }), ['es.json: "files.other" is missing']);
+		fs.rmSync(path.join(localesDir, "es.json"));
+	});
+
+	it("reports a translation that drops or adds a <b> mark", () => {
+		fs.writeFileSync(path.join(localesDir, "en.json"), JSON.stringify({ "a.b": "A <b>{name}</b>" }));
+		write("es.json", { "a.b": "Un {name}" });
+		assert.deepEqual(checkI18n({ srcDir, localesDir }), ['es.json: "a.b" has different <b>/<i>/<code> marks than English']);
+		write("es.json", { "a.b": "Un <b>{name}</b>" });
+		assert.deepEqual(checkI18n({ srcDir, localesDir }), []);
+		fs.rmSync(path.join(localesDir, "es.json"));
+		fs.writeFileSync(path.join(localesDir, "en.json"), JSON.stringify({ "a.b": "A {name}", "files.one": "{count} file", "files.other": "{count} files" }));
+	});
+
 	it("reports a translation whose {placeholders} differ from English", () => {
-		write("es.json", { "a.b": "A {nombre}" });
+		write("es.json", { "a.b": "A {nombre}", "files.one": "{count} a", "files.other": "{count} b" });
 		const problems = checkI18n({ srcDir, localesDir });
 		assert.equal(problems.length, 1);
 		assert.match(problems[0], /"a\.b" has placeholders \{nombre\}, English has \{name\}/);
@@ -76,7 +92,7 @@ describe("checkI18n on a small fixture", () => {
 	});
 
 	it("accepts a translation that keeps the English placeholders", () => {
-		write("es.json", { "a.b": "Un {name}" });
+		write("es.json", { "a.b": "Un {name}", "files.one": "{count} a", "files.other": "{count} b", _meta: { reviewed: false } });
 		assert.deepEqual(checkI18n({ srcDir, localesDir }), []);
 		fs.rmSync(path.join(localesDir, "es.json"));
 	});
@@ -87,6 +103,7 @@ describe("pseudoLocalize", () => {
 		const out = pseudoLocalize("{count} file");
 		assert.ok(out.startsWith("⟦") && out.endsWith("⟧"));
 		assert.ok(out.includes("{count}"));
+		assert.equal(pseudoLocalize("a <i>it</i> and <code>x</code>"), "⟦aa <i>iit</i> aand <code>x</code>⟧");
 		assert.ok(out.length > "{count} file".length + 2);
 	});
 });

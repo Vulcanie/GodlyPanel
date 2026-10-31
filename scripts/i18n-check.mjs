@@ -12,6 +12,8 @@ const defaultLocales = path.join(defaultSrc, "locales");
 
 const PLACEHOLDER = /\{(\w+)\}/g;
 
+const TAGS = /<\/?(?:b|i|code)>/g;
+
 /** Every literal t("key") and tn("key") call under srcDir, skipping tests. A key built at runtime is not a literal and is not checked. */
 function findKeyCalls(srcDir) {
 	const calls = [];
@@ -40,11 +42,17 @@ function placeholdersOf(text) {
 	return [...new Set([...String(text).matchAll(PLACEHOLDER)].map((m) => m[1]))].sort().join(",");
 }
 
+// The <b>, <i> and <code> marks a sentence uses, so a translation that drops or adds one is caught (rich() shows them as bold, italic, code).
+function tagsOf(text) {
+	return [...String(text).matchAll(TAGS)].map((m) => m[0]).sort().join("");
+}
+
 /**
  * Returns a list of problems (empty when all is well):
  * - a t("key") or tn("key") literal in srcDir that en.json does not define (tn needs key.one and key.other)
- * - a locale file with a key en.json lacks
- * - a locale file whose {var} set differs from English for the same key
+ * - a locale file with a key en.json lacks (except "_meta", which carries notes about the file, such as whether a person reviewed it)
+ * - a locale file missing a key English has (a screen would fall back to English words half way through)
+ * - a locale file whose {var} set, or <b>/<i>/<code> marks, differ from English for the same key
  */
 export function checkI18n({ srcDir = defaultSrc, localesDir = defaultLocales } = {}) {
 	const problems = new Set();
@@ -66,11 +74,17 @@ export function checkI18n({ srcDir = defaultSrc, localesDir = defaultLocales } =
 			problems.add(`${name}: not valid JSON (${err.message})`);
 			continue;
 		}
+		for (const key of Object.keys(en)) {
+			if (!Object.hasOwn(words, key)) problems.add(`${name}: "${key}" is missing`);
+		}
 		for (const [key, text] of Object.entries(words)) {
+			if (key === "_meta") continue;
 			if (!Object.hasOwn(en, key)) {
 				problems.add(`${name}: "${key}" is not in en.json`);
 			} else if (placeholdersOf(text) !== placeholdersOf(en[key])) {
 				problems.add(`${name}: "${key}" has placeholders {${placeholdersOf(text)}}, English has {${placeholdersOf(en[key])}}`);
+			} else if (tagsOf(text) !== tagsOf(en[key])) {
+				problems.add(`${name}: "${key}" has different <b>/<i>/<code> marks than English`);
 			}
 		}
 	}
@@ -84,8 +98,8 @@ export function checkI18n({ srcDir = defaultSrc, localesDir = defaultLocales } =
  */
 export function pseudoLocalize(text) {
 	const body = String(text)
-		.split(/(\{\w+\})/)
-		.map((part) => (/^\{\w+\}$/.test(part) ? part : part.replace(/[aeiou]/gi, "$&$&")))
+		.split(/(\{\w+\}|<\/?(?:b|i|code)>)/)
+		.map((part) => (/^(\{\w+\}|<\/?(?:b|i|code)>)$/.test(part) ? part : part.replace(/[aeiou]/gi, "$&$&")))
 		.join("");
 	return `⟦${body}⟧`;
 }
