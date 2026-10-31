@@ -86,6 +86,29 @@ export async function listArchive(file) {
 	return new TextDecoder("windows-1252").decode(stdout).split(/\r?\n/).filter(Boolean);
 }
 
+// One line of bsdtar's verbose listing: the mode, the fields in between (links, owner, group, size), the date, then the name. The
+// name is whatever follows the date, so names with spaces are kept whole.
+const VERBOSE_LINE = /^(\S+) +(.+?) +([A-Z][a-z]{2} +\d{1,2} +(?:\d{1,2}:\d{2}|\d{4})) (.*)$/;
+
+/**
+ * Every entry in an archive with its kind and size: `type` is "file", "dir", or "other" for anything that is neither (a symbolic or
+ * hard link, a device, a pipe). Symlinks and hard links are reported as "other" so a caller can refuse them; their names have the
+ * link text taken off. Throws if the archive can't be read or a line of the listing isn't understood.
+ */
+export async function listArchiveDetailed(file) {
+	const { stdout } = await run(["-tvf", file]);
+	const lines = new TextDecoder("windows-1252").decode(stdout).split(/\r?\n/).filter(Boolean);
+	return lines.map((line) => {
+		const m = VERBOSE_LINE.exec(line);
+		if (!m) throw new Error(`could not read a line of the archive listing: "${line.slice(0, 80)}"`);
+		const [, mode, middle, , rawName] = m;
+		const kind = mode.startsWith("-") ? "file" : mode.startsWith("d") ? "dir" : "other";
+		const size = kind === "other" ? 0 : Number(middle.split(/\s+/).at(-1));
+		const name = kind === "other" ? rawName.replace(/ (?:->|link to) .*$/, "") : rawName;
+		return { name, type: kind, size: Number.isFinite(size) ? size : 0 };
+	});
+}
+
 /**
  * Extracts the named top-level entries (or everything, if none are named) into `destDir`, which must exist. The archive is
  * listed first: if any entry would land outside `destDir`, this throws and extracts nothing.

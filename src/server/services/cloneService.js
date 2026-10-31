@@ -100,7 +100,7 @@ export async function withNeighbours(files) {
 	return [...found];
 }
 
-const randomPassword = () => crypto.randomBytes(12).toString("base64url");
+export const randomPassword = () => crypto.randomBytes(12).toString("base64url");
 
 /** Everything that can be checked before any copying starts. */
 export async function planClone(source, newName, wantedPorts = null) {
