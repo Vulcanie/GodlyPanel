@@ -596,6 +596,9 @@ describe("mods", () => {
 			const b = await post("Minecraft", "install", { input: "https://modrinth.com/mod/mod-b" });
 			assert.equal(b.status, 200, JSON.stringify(b.json));
 			assert.ok(fs.existsSync(path.join(dirs.mc, "mods", "ModB.jar")));
+			// The library is already there, so it is passed over and reported rather than overwritten.
+			assert.deepEqual(b.json.installed, ["ModB.jar"]);
+			assert.deepEqual(b.json.skipped, [{ source: "modrinth", ref: "shared-lib", reason: "already_installed", dependencyOf: "modrinth:mod-b" }]);
 			const { entries } = await api.get(`/api/server/Minecraft/mods/lock`).then((r) => r.json);
 			const shared = entries.find((e) => e.id === "modrinth:shared-lib");
 			assert.deepEqual([...shared.dependencyOf].sort(), ["modrinth:mod-a", "modrinth:mod-b"]);

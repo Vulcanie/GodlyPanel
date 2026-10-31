@@ -163,6 +163,10 @@ describe("installing from a source", () => {
 			["parent-client-dep", { deps: [{ source: "fixture", ref: "client-dep" }], files: [file("ParentOk.jar")] }],
 			["shared-lib", { files: [{ url: `${base}/files/pack.zip`, name: "SharedLib.zip", sha512: sha512(packZip) }] }],
 			["uses-lib", { deps: [{ source: "fixture", ref: "shared-lib" }], files: [] }],
+			// The same, with a plain .jar for the library, which the folder adapter would overwrite rather than refuse.
+			["jar-lib", { files: [file("SharedLib.jar")] }],
+			["uses-jar-lib", { deps: [{ source: "fixture", ref: "jar-lib" }], files: [file("UsesJarLib.jar")] }],
+			["uses-jar-lib-bad", { deps: [{ source: "fixture", ref: "jar-lib" }, { source: "fixture", ref: "roll-bad" }], files: [file("UsesJarLibBad.jar")] }],
 		]);
 		for (let i = 0; i < 26; i += 1) fixtures.set(`fan-dep-${i}`, { files: [file(`Fan${i}.jar`)] });
 		fixtures.set("fan-24", { deps: Array.from({ length: 24 }, (_, i) => ({ source: "fixture", ref: `fan-dep-${i}` })), files: [file("FanRoot24.jar")] });
@@ -397,6 +401,43 @@ describe("installing from a source", () => {
 			await installFromSource(s, "fixture", "shared-lib", {});
 			await assert.rejects(() => installFromSource(s, "fixture", "shared-lib", { skipInstalled: true }), { code: "already_installed" });
 			assert.deepEqual(listing(mods), ["SharedLib"]);
+		});
+
+		describe("a plain file that is already there", () => {
+			const mine = Buffer.from("the library as it already was");
+			const withLibrary = () => {
+				const made = freshServer();
+				fs.mkdirSync(made.mods, { recursive: true });
+				fs.writeFileSync(path.join(made.mods, "SharedLib.jar"), mine);
+				return made;
+			};
+
+			it("with skipInstalled, is left as it was and listed as skipped", async () => {
+				const { server: s, mods } = withLibrary();
+				const result = await installFromSource(s, "fixture", "uses-jar-lib", { skipInstalled: true });
+				assert.deepEqual(result.skipped, [{ source: "fixture", ref: "jar-lib", reason: "already_installed", dependencyOf: "fixture:uses-jar-lib" }]);
+				assert.deepEqual(result.installed, ["UsesJarLib.jar"]);
+				assert.deepEqual(fs.readFileSync(path.join(mods, "SharedLib.jar")), mine);
+			});
+
+			it("with skipInstalled, is still there after a later failure takes the install back", async () => {
+				const { server: s, mods } = withLibrary();
+				await assert.rejects(() => installFromSource(s, "fixture", "uses-jar-lib-bad", { skipInstalled: true }), /doesn't match the checksum/);
+				assert.deepEqual(fs.readFileSync(path.join(mods, "SharedLib.jar")), mine);
+				assert.deepEqual(listing(mods), ["SharedLib.jar"]);
+			});
+
+			it("without the flag, is replaced as before", async () => {
+				const { server: s, mods } = withLibrary();
+				await installFromSource(s, "fixture", "uses-jar-lib", {});
+				assert.deepEqual(fs.readFileSync(path.join(mods, "SharedLib.jar")), good);
+			});
+
+			it("with skipInstalled, is still replaced when it is the mod asked for", async () => {
+				const { server: s, mods } = withLibrary();
+				await installFromSource(s, "fixture", "jar-lib", { skipInstalled: true });
+				assert.deepEqual(fs.readFileSync(path.join(mods, "SharedLib.jar")), good);
+			});
 		});
 
 		it("other errors still roll back when the flag is on", async () => {
