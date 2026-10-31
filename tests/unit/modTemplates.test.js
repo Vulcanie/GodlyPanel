@@ -255,6 +255,15 @@ describe("modSupport", () => {
 		});
 	}
 
+	it("reports a game module's folder block, humanitz here, with its sources", () => {
+		const got = modSupport({ type: "humanitz" });
+		assert.equal(got.supported, true);
+		assert.equal(got.adapter, "folder");
+		assert.equal(got.label, "Mods");
+		assert.deepEqual(got.accepts, [".pak"]);
+		assert.deepEqual(got.sources, ["github", "url"]);
+	});
+
 	it("reports unsupported for a game with no mod block", () => {
 		assert.deepEqual(modSupport({ type: "enshrouded" }), { supported: false });
 	});
