@@ -206,6 +206,18 @@ describe("mods", () => {
 		await new Promise((r) => store.close(r));
 	});
 
+	// Starts the game and waits until it is online and the start is finished. A slow machine can swallow a start that came while the
+	// last process was still going down, so it asks again a few times before giving up.
+	const startConan = async () => {
+		let online = false;
+		for (let attempt = 0; attempt < 3 && !online; attempt += 1) {
+			await api.post("/api/control/Conan%20Mods/start");
+			online = await until(async () => (await api.get("/api/status")).json["Conan Mods"]?.online === true, { timeoutMs: 20_000 });
+		}
+		assert.equal(online, true);
+		await until(async () => !(await api.get("/api/operations")).json["Conan Mods"]);
+	};
+
 	// Waits until the game is really off, so the next test's start is not mistaken for the old process still going down.
 	const stopConan = async () => {
 		await api.post("/api/control/Conan%20Mods/stop");
@@ -327,9 +339,7 @@ describe("mods", () => {
 		});
 
 		it("won't change mods while the server is running", async () => {
-			await api.post("/api/control/Conan%20Mods/start");
-			assert.equal(await until(async () => (await api.get("/api/status")).json["Conan Mods"]?.online === true), true);
-			await until(async () => !(await api.get("/api/operations")).json["Conan Mods"]);
+			await startConan();
 			for (const r of [await upload("Conan Mods", "New.pak", Buffer.from("x")), await post("Conan Mods", "remove", { id: "Other.pak" })]) {
 				assert.equal(r.status, 409);
 				assert.equal(r.json.code, "server_running");
@@ -479,9 +489,7 @@ describe("mods", () => {
 		});
 
 		it("won't install while the server is running", async () => {
-			await api.post("/api/control/Conan%20Mods/start");
-			assert.equal(await until(async () => (await api.get("/api/status")).json["Conan Mods"]?.online === true), true);
-			await until(async () => !(await api.get("/api/operations")).json["Conan Mods"]);
+			await startConan();
 			const r = await install("Conan Mods", "https://example.com/a.jar");
 			assert.equal(r.status, 409);
 			assert.equal(r.json.code, "server_running");
@@ -553,9 +561,7 @@ describe("mods", () => {
 		});
 
 		it("won't update while the game runs, but the check still works", async () => {
-			await api.post("/api/control/Conan%20Mods/start");
-			assert.equal(await until(async () => (await api.get("/api/status")).json["Conan Mods"]?.online === true), true);
-			await until(async () => !(await api.get("/api/operations")).json["Conan Mods"]);
+			await startConan();
 			const r = await post("Conan Mods", "update", { id: "github:acme/lockmod" });
 			assert.equal(r.status, 409);
 			assert.equal(r.json.code, "server_running");

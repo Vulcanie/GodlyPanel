@@ -178,23 +178,27 @@ describe("export jobs", windowsOnly("export jobs make bundles with Windows' real
 	it("expiry removes the temp folder and the job, but a file being downloaded stays until done()", async () => {
 		calls = [];
 		jobs.__setExpiryMsForTests(60);
-		jobs.__setExporterForTests(fakeExporter());
-		const job = await jobs.startExportJob(serverNamed("Expiring"), {});
-		assert.equal(await waitFor(() => jobs.getExportJob(job.id)?.status === "ready"), true);
-		const folder = folderOfLastCall();
-		assert.equal(await waitFor(() => jobs.getExportJob(job.id) === null), true, "the job expires");
-		assert.equal(fs.existsSync(folder), false, "its folder goes with it");
+		try {
+			jobs.__setExporterForTests(fakeExporter());
+			const job = await jobs.startExportJob(serverNamed("Expiring"), {});
+			assert.equal(await waitFor(() => jobs.getExportJob(job.id)?.status === "ready"), true);
+			const folder = folderOfLastCall();
+			assert.equal(await waitFor(() => jobs.getExportJob(job.id) === null), true, "the job expires");
+			// The job is forgotten at once and its folder is removed a moment later.
+			assert.equal(await waitFor(() => !fs.existsSync(folder)), true, "its folder goes with it");
 
-		calls = [];
-		const second = await jobs.startExportJob(serverNamed("Downloading"), {});
-		assert.equal(await waitFor(() => jobs.getExportJob(second.id)?.status === "ready"), true);
-		const kept = folderOfLastCall();
-		const taken = await jobs.takeExportFile(second.id);
-		await new Promise((r) => setTimeout(r, 150));
-		assert.equal(fs.existsSync(kept), true, "still there while it is being sent");
-		await taken.done();
-		assert.equal(fs.existsSync(kept), false);
-		jobs.__setExpiryMsForTests(DEFAULT_EXPIRY_MS);
+			calls = [];
+			const second = await jobs.startExportJob(serverNamed("Downloading"), {});
+			assert.equal(await waitFor(() => jobs.getExportJob(second.id)?.status === "ready"), true);
+			const kept = folderOfLastCall();
+			const taken = await jobs.takeExportFile(second.id);
+			await new Promise((r) => setTimeout(r, 150));
+			assert.equal(fs.existsSync(kept), true, "still there while it is being sent");
+			await taken.done();
+			assert.equal(fs.existsSync(kept), false);
+		} finally {
+			jobs.__setExpiryMsForTests(DEFAULT_EXPIRY_MS);
+		}
 	});
 
 	it("remembers at most 20 jobs, dropping the oldest finished first", async () => {
