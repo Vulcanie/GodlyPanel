@@ -24,6 +24,7 @@ import { initSecrets } from "./config/secretsStore.js";
 import { initCommunityInvite } from "./services/communityInvite.js";
 import { initCommunityView } from "./services/communityView.js";
 import { initServerStore } from "./data/serverStore.js";
+import { migrateSharedConfigs } from "./services/perServerConfig.js";
 import { initAppearanceStore } from "./data/appearanceStore.js";
 import { initServerIntent } from "./data/serverIntent.js";
 import { initServerOptions } from "./data/serverOptions.js";
@@ -52,6 +53,7 @@ export async function loadStores() {
 	await initCommunityInvite();
 	await initCommunityView();
 	await initServerStore();
+	await migrateSharedConfigs();
 	await initAppearanceStore();
 	await initServerIntent();
 	await initServerOptions();
