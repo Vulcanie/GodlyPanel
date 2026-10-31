@@ -140,11 +140,14 @@ function ModsPanel({ serverName, serverStatus }) {
 	const shareOn = share?.enabled === true;
 	const links = packLinks(share, community);
 	const adminLinks = adminPackDownloads(serverName);
+	// The Modrinth pack is offered only for a Minecraft modpack, the one game the panel can make it for.
+	const mrpackOn = share?.mrpack === true;
 	const linkRows =
 		links.state === "ready"
 			? [
 					{ key: "list", label: "Mod list", url: links.links.list },
 					{ key: "zip", label: "Mod pack (zip)", url: links.links.zip },
+					...(mrpackOn ? [{ key: "mrpack", label: "Modrinth pack (.mrpack)", url: links.links.mrpack }] : []),
 					{ key: "manifest", label: "Manifest", url: links.links.manifest },
 				]
 			: [];
@@ -402,6 +405,11 @@ function ModsPanel({ serverName, serverStatus }) {
 					<Button variant="outlined" href={adminLinks.list} download>
 						Download list
 					</Button>
+					{mrpackOn && (
+						<Button variant="outlined" href={adminLinks.mrpack} download>
+							Download Modrinth pack
+						</Button>
+					)}
 				</Box>
 			</Paper>
 

@@ -91,6 +91,8 @@ describe("the mod pack on the community address", () => {
 				fs.mkdirSync(dirs.gone, { recursive: true });
 				fs.writeFileSync(path.join(dirs.mc, "mods", "Cool.jar"), "cool mod bytes");
 				fs.writeFileSync(path.join(dirs.mc, "mods", "Server.jar"), "server only bytes");
+				// A Minecraft server's game version comes from its variables.txt, which the Modrinth pack needs.
+				fs.writeFileSync(path.join(dirs.mc, "variables.txt"), "MINECRAFT_VERSION=1.21.1\nMODLOADER=fabric\n");
 			},
 			servers: () => [
 				serverEntry(dirs.mc, { name: SERVER, type: "minecraft", installDir: dirs.mc, workingDir: dirs.mc, processName: "java-none.exe", rconPassword: RCON }),
@@ -124,6 +126,9 @@ describe("the mod pack on the community address", () => {
 		const status = (await api.get(shareUrl)).json;
 		assert.equal(status.enabled, false);
 		assert.equal(status.path, null);
+		// Only a Minecraft server can make the Modrinth pack, and the admin's panel reads this to show its row.
+		assert.equal(status.mrpack, true);
+		assert.equal((await api.get(`/api/server/${enc("Plain One")}/mods/share`)).json.mrpack, false);
 	});
 
 	let token;
@@ -157,6 +162,17 @@ describe("the mod pack on the community address", () => {
 		assert.match(l.headers["content-type"], /text\/plain/);
 		assert.match(l.text, /Cool\.jar/);
 		assert.equal(l.text.includes("Server.jar"), false);
+	});
+
+	it("the Modrinth pack is a zip with the index, for a Minecraft server, and holds no server-only mod", async () => {
+		const m = await raw("GET", `/api/pack/${token}/mod-pack.mrpack`);
+		assert.equal(m.status, 200);
+		const zip = new AdmZip(m.buffer);
+		assert.deepEqual(zip.getEntries().map((e) => e.entryName).sort(), ["modrinth.index.json", "overrides/mods/Cool.jar"]);
+		const index = JSON.parse(zip.readAsText("modrinth.index.json"));
+		assert.deepEqual(index.dependencies, { minecraft: "1.21.1" });
+		// The index names the pack after the server, as a launcher shows it; the panel's folder and RCON password stay out.
+		for (const secret of [dirs.mc, panel.dir, RCON]) assert.equal(zip.readAsText("modrinth.index.json").includes(secret), false, `index mentions ${secret}`);
 	});
 
 	it("needs no sign-in, and the community host rule still applies", async () => {
@@ -258,6 +274,17 @@ describe("the mod pack on the community address", () => {
 		const deadline = Date.now() + 3000;
 		while (leftovers().length > 0 && Date.now() < deadline) await new Promise((r) => setTimeout(r, 50));
 		assert.deepEqual(leftovers(), []);
+	});
+
+	it("a Modrinth pack link that is wrong, or for a Minecraft server with no known game version, is the same 404", async () => {
+		const wrong = await raw("GET", `/api/pack/${"B".repeat(43)}/mod-pack.mrpack`);
+		assert.equal(wrong.status, 404);
+		assert.equal(wrong.text, NOT_FOUND);
+		// Gone Soon is a Minecraft server with no variables.txt, so the panel can't say which game version to pack for.
+		const on = remember(await api.put(`/api/server/${enc("Gone Soon")}/mods/share`, { enabled: true }));
+		const noVersion = await raw("GET", `/api/pack/${on.json.token}/mod-pack.mrpack`);
+		assert.equal(noVersion.status, 404);
+		assert.equal(noVersion.text, NOT_FOUND);
 	});
 
 	it("removing the server removes its share, so the old link stops working", async () => {

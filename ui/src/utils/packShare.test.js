@@ -31,13 +31,14 @@ describe("packShare", () => {
 			expect(packLinks({ enabled: true, path: PATH }, { enabled: true, publicUrl: "play.example.com" })).toEqual({ state: "no_address" });
 		});
 
-		it("gives the three player links when ready", () => {
+		it("gives the player links when ready, the Modrinth pack among them", () => {
 			expect(packLinks({ enabled: true, path: PATH }, COMMUNITY_ON)).toEqual({
 				state: "ready",
 				links: {
 					manifest: "https://play.example.com/api/pack/abc123/manifest.json",
 					zip: "https://play.example.com/api/pack/abc123/mod-pack.zip",
 					list: "https://play.example.com/api/pack/abc123/mod-list.txt",
+					mrpack: "https://play.example.com/api/pack/abc123/mod-pack.mrpack",
 				},
 			});
 		});
@@ -65,10 +66,11 @@ describe("packShare", () => {
 	});
 
 	describe("adminPackDownloads", () => {
-		it("gives the zip, list and manifest addresses for a plain name", () => {
+		it("gives the zip, list, Modrinth pack and manifest addresses for a plain name", () => {
 			expect(adminPackDownloads("survival")).toEqual({
 				zip: "/api/server/survival/mods/client-pack?format=zip",
 				list: "/api/server/survival/mods/client-pack?format=list",
+				mrpack: "/api/server/survival/mods/client-pack?format=mrpack",
 				manifest: "/api/server/survival/mods/manifest",
 			});
 		});
@@ -77,6 +79,7 @@ describe("packShare", () => {
 			const urls = adminPackDownloads("my server/one");
 			expect(urls.zip).toBe("/api/server/my%20server%2Fone/mods/client-pack?format=zip");
 			expect(urls.list).toBe("/api/server/my%20server%2Fone/mods/client-pack?format=list");
+			expect(urls.mrpack).toBe("/api/server/my%20server%2Fone/mods/client-pack?format=mrpack");
 			expect(urls.manifest).toBe("/api/server/my%20server%2Fone/mods/manifest");
 		});
 

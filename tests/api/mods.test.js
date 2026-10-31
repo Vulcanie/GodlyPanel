@@ -656,7 +656,36 @@ describe("mods", () => {
 			assert.ok((await res.text()).includes("lock-mod.jar  (github:acme/lockmod  v2.0.0)"));
 		});
 
-		it("refuses an unknown format, and a game with no mods folder", async () => {
+		describe("as a Modrinth pack", () => {
+				// A modpack's game version and loader come from its variables.txt, which the Modrinth pack needs.
+				before(() => fs.writeFileSync(path.join(dirs.mc, "variables.txt"), "MINECRAFT_VERSION=1.21.1\nMODLOADER=fabric\n"));
+				after(() => fs.rmSync(path.join(dirs.mc, "variables.txt"), { force: true }));
+
+				it("is a zip with the index, the game version named, and the recorded mod in the overrides", async () => {
+					const res = await packGet("?format=mrpack");
+					assert.equal(res.status, 200, await res.clone().text());
+					assert.equal(res.headers.get("content-disposition"), 'attachment; filename="mod-pack.mrpack"');
+					const zip = new AdmZip(Buffer.from(await res.arrayBuffer()));
+					const names = zip.getEntries().map((e) => e.entryName);
+					assert.ok(names.includes("modrinth.index.json") && names.includes("overrides/mods/lock-mod.jar"), JSON.stringify(names));
+					assert.equal(names.includes("overrides/mods/cool-mod-1.0.jar"), false);
+					const index = JSON.parse(zip.getEntry("modrinth.index.json").getData().toString("utf8"));
+					assert.equal(index.game, "minecraft");
+					assert.deepEqual(index.dependencies, { minecraft: "1.21.1" });
+					noPanelPaths(index);
+				});
+
+				it("refuses a game that isn't Minecraft as unsupported, and a repeated format as bad_format with the new text", async () => {
+					const ark = await api.get("/api/server/Ark%20Evolved/mods/client-pack?format=mrpack");
+					assert.equal(ark.status, 400);
+					assert.equal(ark.json.code, "unsupported");
+					const repeated = await fetch(`${api.base}/api/server/Minecraft/mods/client-pack?format=zip&format=list`, { headers: { Cookie: api.cookie } });
+					assert.equal(repeated.status, 400);
+					assert.deepEqual(await repeated.json(), { error: "format must be zip, list or mrpack.", code: "bad_format" });
+				});
+			});
+
+			it("refuses an unknown format, and a game with no mods folder", async () => {
 			const bad = await api.get("/api/server/Minecraft/mods/client-pack?format=nope");
 			assert.equal(bad.status, 400);
 			assert.equal(bad.json.code, "bad_format");

@@ -3,7 +3,7 @@
 // bad input without throwing, since the data comes from the server and the community view, and either can be missing fields.
 
 const PACK_PREFIX = "/api/pack/";
-const FILES = { manifest: "manifest.json", zip: "mod-pack.zip", list: "mod-list.txt" };
+const FILES = { manifest: "manifest.json", zip: "mod-pack.zip", list: "mod-list.txt", mrpack: "mod-pack.mrpack" };
 
 /**
  * The state of the share link and, when it is ready, the three player addresses.
@@ -26,6 +26,7 @@ export function packLinks(share, community) {
 			manifest: origin + path + FILES.manifest,
 			zip: origin + path + FILES.zip,
 			list: origin + path + FILES.list,
+			mrpack: origin + path + FILES.mrpack,
 		},
 	};
 }
@@ -36,6 +37,7 @@ export function adminPackDownloads(serverName) {
 	return {
 		zip: `${base}/client-pack?format=zip`,
 		list: `${base}/client-pack?format=list`,
+		mrpack: `${base}/client-pack?format=mrpack`,
 		manifest: `${base}/manifest`,
 	};
 }

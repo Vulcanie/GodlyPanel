@@ -26,7 +26,7 @@ import { installFromSource } from "../services/modSources/installer.js";
 import { detectSource, getProvider } from "../services/modSources/index.js";
 import { recordInstalled } from "../services/modRecord.js";
 import { checkUpdates, applyUpdate } from "../services/modUpdates.js";
-import { buildManifest, buildClientPack, defaultFormat } from "../services/clientPack.js";
+import { buildManifest, buildClientPack, defaultFormat, supportsMrpack } from "../services/clientPack.js";
 import { shareStatus, enableShare, rotateShare, disableShare } from "../services/packShare.js";
 import { logActivity } from "../services/activityLog.js";
 import * as modLock from "../services/modLock.js";
@@ -168,11 +168,12 @@ router.get("/server/:serverName/mods/manifest", async (req, res) => {
 	}
 });
 
-// The pack a player takes: a zip, or a plain list for games whose mods are picked by id. The temp folder is removed once the file is sent.
+// The pack a player takes: a zip, a plain list for games whose mods are picked by id, or a Modrinth pack for a Minecraft modpack. The temp
+// folder is removed once the file is sent.
 router.get("/server/:serverName/mods/client-pack", async (req, res) => {
 	const requested = req.query.format;
 	if (requested !== undefined && typeof requested !== "string") {
-		return res.status(400).json({ error: "format must be zip or list.", code: "bad_format" });
+		return res.status(400).json({ error: "format must be zip, list or mrpack.", code: "bad_format" });
 	}
 	try {
 		const pack = await buildClientPack(req.server, { format: requested ?? defaultFormat(req.server) });
@@ -190,9 +191,10 @@ router.get("/server/:serverName/mods/client-pack", async (req, res) => {
 // sent back to the admin here (so the link can be seen again) but is never written to the activity log.
 const shareBody = (s) => ({ enabled: s.enabled, token: s.token, createdAt: s.createdAt, path: s.enabled ? `/api/pack/${s.token}/` : null });
 
+// The admin's panel reads whether this game can make the Modrinth pack, so it can show that row and button only where it works.
 router.get("/server/:serverName/mods/share", async (req, res) => {
 	try {
-		res.json(shareBody(await shareStatus(req.server.name)));
+		res.json({ ...shareBody(await shareStatus(req.server.name)), mrpack: supportsMrpack(req.server) });
 	} catch (err) {
 		fail(res, err, "Reading the pack link");
 	}
