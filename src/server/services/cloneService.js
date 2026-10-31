@@ -35,7 +35,7 @@ const progress = (job, patch) => {
 	broadcastSseEvent({ type: "clone_progress", jobId: job.id, ...job }, (c) => c.role === "admin");
 };
 
-async function dirSize(dir) {
+export async function dirSize(dir) {
 	let total = 0;
 	const entries = await fs.readdir(dir, { withFileTypes: true }).catch(() => []);
 	for (const entry of entries) {
@@ -88,7 +88,7 @@ export function rewriteStrings(value, pairs) {
 const TEXT_FILE = /\.(ini|json|xml|properties|cfg|conf|txt|bat|cmd|ya?ml)$/i;
 
 /** The given files and the small text files in the same folders (not subfolders). */
-async function withNeighbours(files) {
+export async function withNeighbours(files) {
 	const found = new Set(files);
 	for (const dir of new Set(files.map((f) => path.dirname(f)))) {
 		for (const entry of await fs.readdir(dir, { withFileTypes: true }).catch(() => [])) {
