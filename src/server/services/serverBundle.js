@@ -41,7 +41,8 @@ const ROOT_TOKEN = "{{serverRoot}}";
 const SECRET_KEY = /pass(word)?|secret|token|api.?key/i;
 // A string that is a path on some drive, or a network path. Anything that still looks like one after the install folder is
 // rebased is a path outside the server, so it is dropped rather than carried into another PC.
-const MACHINE_PATH = /[A-Za-z]:[\\/]/;
+// A drive letter standing alone (not the tail of a word, as in https://) followed by a single slash, so web addresses are left alone.
+const MACHINE_PATH = /(?:^|[^A-Za-z])[A-Za-z]:[\\/](?![\\/])/;
 const TEXT_LIMIT = 1024 * 1024;
 
 const isMachinePath = (value) => typeof value === "string" && (MACHINE_PATH.test(value) || value.startsWith("\\\\"));

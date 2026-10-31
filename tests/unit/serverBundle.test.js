@@ -182,6 +182,18 @@ describe("exporting a server bundle", () => {
 			assert.ok(manifest.dropped.fields.includes("steamCmdPath"));
 		});
 
+		it("keeps a web address, which is not a path of this PC", async () => {
+			await serverStore.update(NAME, { packUrl: "https://example.com/pack.zip" });
+			try {
+				const { file } = await exportServer(serverStore.get(NAME), { include: "saves", outDir: freshOut() });
+				const manifest = await readManifest(file);
+				assert.equal(manifest.server.packUrl, "https://example.com/pack.zip");
+				assert.ok(!manifest.dropped.fields.includes("packUrl"));
+			} finally {
+				await serverStore.update(NAME, { packUrl: undefined });
+			}
+		});
+
 		it("rebases a backup folder inside the server folder, and drops one outside it", async () => {
 			const { file } = await exportServer(server, { include: "saves", outDir: freshOut() });
 			const manifest = await readManifest(file);
