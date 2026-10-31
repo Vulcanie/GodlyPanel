@@ -10,6 +10,7 @@ import SchedulesPanel from "./SchedulesPanel";
 import LogsPanel from "./LogsPanel";
 import PlayersPanel from "./PlayersPanel";
 import ModsPanel from "./ModsPanel";
+import FilesPanel from "./FilesPanel";
 import ActivityPanel from "./ActivityPanel";
 import AutomationPanel from "./AutomationPanel";
 import { serverTabs, DEFAULT_TAB } from "../serverTabs";
@@ -81,6 +82,7 @@ function ServerWorkspace({ serverName, serverStatus, serverStats, servers, appea
 			{active === "logs" && <LogsPanel serverName={serverName} />}
 			{active === "network" && <ServerNetworkTab serverName={serverName} isAdmin={isAdmin} />}
 			{active === "mods" && <ModsPanel serverName={serverName} serverStatus={serverStatus} />}
+			{active === "files" && <FilesPanel serverName={serverName} isAdmin={isAdmin} can={can} />}
 			{active === "activity" && <ActivityPanel serverName={serverName} />}
 			{active === "automation" && <AutomationPanel serverName={serverName} serverStatus={serverStatus} onCloned={onOpenServer} />}
 			{active === "advanced" && <ServerAdvancedTab serverName={serverName} onEditBatchFiles={onEditBatchFiles} onDeleted={onBack} />}
