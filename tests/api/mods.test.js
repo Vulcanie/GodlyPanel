@@ -102,6 +102,26 @@ describe("mods", () => {
 	// A mod a stand-in GitHub release ships. Its digest is in the release listing, so the install is checked and not unverified.
 	const lockBytes = Buffer.from("a mod the panel fetches from a GitHub release");
 	const lockSha256 = crypto.createHash("sha256").update(lockBytes).digest("hex");
+	// The stand-in's release can be changed between calls, so an update has a newer version to find. `download` false makes its file 404.
+	const release = { tag: "v1.0.0", bytes: lockBytes, sha: lockSha256, download: true };
+	// Two mods that both need one shared library, answered by the stand-in as Modrinth projects.
+	const sharedBytes = Buffer.from("a library two mods need");
+	const modABytes = Buffer.from("mod a");
+	const modBBytes = Buffer.from("mod b");
+	const MODRINTH = {
+		"shared-lib": { title: "Shared Lib", bytes: sharedBytes, file: "SharedLib.jar", deps: [] },
+		"mod-a": { title: "Mod A", bytes: modABytes, file: "ModA.jar", deps: [{ dependency_type: "required", project_id: "shared-lib" }] },
+		"mod-b": { title: "Mod B", bytes: modBBytes, file: "ModB.jar", deps: [{ dependency_type: "required", project_id: "shared-lib" }] },
+	};
+	/** Modrinth's project and version answers for the mods above, with the stand-in's own download addresses. Null for any other path. */
+	function modrinthAnswer(p, base) {
+		const m = /^\/v2\/project\/([a-z-]+)(\/version)?$/.exec(p);
+		const mod = m && MODRINTH[m[1]];
+		if (!mod) return null;
+		if (!m[2]) return { title: mod.title, client_side: "required", server_side: "required" };
+		const sha512 = crypto.createHash("sha512").update(mod.bytes).digest("hex");
+		return [{ version_number: "1.0.0", version_type: "release", date_published: "2026-01-01T00:00:00Z", files: [{ url: `${base}/dl/${mod.file}`, filename: mod.file, size: mod.bytes.length, primary: true, hashes: { sha512 } }], dependencies: mod.deps }];
+	}
 
 	const enc = encodeURIComponent;
 	const upload = (name, fileName, bytes) => api.upload(`/api/server/${enc(name)}/mods/upload`, "mod", fileName, bytes);
@@ -132,9 +152,21 @@ describe("mods", () => {
 			// The GitHub API and the release's download, on the same stand-in (GHP_GITHUB_API points here).
 			if (req.url === "/repos/acme/lockmod/releases/latest") {
 				res.setHeader("Content-Type", "application/json");
-				return res.end(JSON.stringify({ tag_name: "v1.0.0", draft: false, prerelease: false, assets: [{ name: "lock-mod.jar", browser_download_url: `${url}/dl/lock-mod.jar`, size: lockBytes.length, digest: `sha256:${lockSha256}` }] }));
+				return res.end(JSON.stringify({ tag_name: release.tag, draft: false, prerelease: false, assets: [{ name: "lock-mod.jar", browser_download_url: `${url}/dl/lock-mod.jar`, size: release.bytes.length, digest: `sha256:${release.sha}` }] }));
 			}
-			const map = { "/zip/denikson-BepInExPack_Valheim.zip": zips.framework, "/zip/Someone-Dep.zip": zips.dep, "/zip/Someone-Mod.zip": zips.mod, "/dl/lock-mod.jar": lockBytes };
+			if (req.url === "/dl/lock-mod.jar") {
+				if (!release.download) {
+					res.statusCode = 404;
+					return res.end();
+				}
+				return res.end(release.bytes);
+			}
+			const modrinth = modrinthAnswer(req.url.split("?")[0], url);
+			if (modrinth) {
+				res.setHeader("Content-Type", "application/json");
+				return res.end(JSON.stringify(modrinth));
+			}
+			const map = { "/zip/denikson-BepInExPack_Valheim.zip": zips.framework, "/zip/Someone-Dep.zip": zips.dep, "/zip/Someone-Mod.zip": zips.mod, "/dl/SharedLib.jar": sharedBytes, "/dl/ModA.jar": modABytes, "/dl/ModB.jar": modBBytes };
 			if (map[req.url]) return res.end(map[req.url]);
 			res.statusCode = 404;
 			res.end();
@@ -145,7 +177,7 @@ describe("mods", () => {
 		const free = await freePort();
 		panel = await startInstance({
 			// The loopback hook lets the stand-in on this machine answer for GitHub and Thunderstore; every other check still applies.
-			env: { GHP_THUNDERSTORE_API: `http://127.0.0.1:${port}`, GHP_GITHUB_API: `http://127.0.0.1:${port}`, GHP_MODSOURCE_ALLOW_LOOPBACK: "1" },
+			env: { GHP_THUNDERSTORE_API: `http://127.0.0.1:${port}`, GHP_GITHUB_API: `http://127.0.0.1:${port}`, GHP_MODRINTH_API: `http://127.0.0.1:${port}/v2`, GHP_MODSOURCE_ALLOW_LOOPBACK: "1" },
 			servers: (dir) => {
 				const at = (key) => (dirs[key] = path.join(dir, key));
 				const arkScript = path.join(at("ark-ase"), "Start_Map.bat");
@@ -470,6 +502,103 @@ describe("mods", () => {
 			} finally {
 				fs.rmSync(blocker, { force: true, recursive: true });
 			}
+		});
+	});
+
+	describe("updating a mod from its GitHub release", () => {
+		const v2Bytes = Buffer.from("the same mod, version two, from the same release");
+		const v2Sha = crypto.createHash("sha256").update(v2Bytes).digest("hex");
+		const installGh = (name) => post(name, "install", { input: "https://github.com/acme/lockmod" });
+		const lockOf = async (name) => (await api.get(`/api/server/${enc(name)}/mods/lock`)).json;
+		const updatesOf = async (name) => (await api.get(`/api/server/${enc(name)}/mods/updates`)).json;
+		const jar = () => path.join(dirs.mc, "mods", "lock-mod.jar");
+		const noPanelPaths = (body) => {
+			const text = JSON.stringify(body);
+			assert.equal(text.includes(JSON.stringify(panel.dir).slice(1, -1)), false, text);
+			assert.doesNotMatch(text, /[A-Za-z]:\\\\|\/home\//, text);
+		};
+
+		it("installs v1, then finds v2 once the release has it, and changes nothing while it looks", async () => {
+			const r = await installGh("Minecraft");
+			assert.equal(r.status, 200, JSON.stringify(r.json));
+			release.tag = "v2.0.0";
+			release.bytes = v2Bytes;
+			release.sha = v2Sha;
+			const { updates } = await updatesOf("Minecraft");
+			assert.deepEqual(updates, [{ id: "github:acme/lockmod", name: "lock-mod.jar", source: "github", ref: "acme/lockmod", current: "v1.0.0", latest: "v2.0.0", status: "update", dependency: false }]);
+			assert.deepEqual(fs.readFileSync(jar()), lockBytes);
+		});
+
+		it("a download that fails leaves the v1 file and the lock as they were, and shows no panel path", async () => {
+			release.download = false;
+			try {
+				const r = await post("Minecraft", "update", { id: "github:acme/lockmod" });
+				assert.ok(r.status >= 400, JSON.stringify(r.json));
+				noPanelPaths(r.json);
+			} finally {
+				release.download = true;
+			}
+			assert.deepEqual(fs.readFileSync(jar()), lockBytes);
+			const l = await lockOf("Minecraft");
+			assert.equal(l.entries[0].version, "v1.0.0");
+			assert.deepEqual(l.entries[0].files, [{ path: "lock-mod.jar", sha256: lockSha256 }]);
+			assert.deepEqual(l.drift, { changed: [], missing: [], untracked: [] });
+		});
+
+		it("won't update while the game runs, but the check still works", async () => {
+			await api.post("/api/control/Conan%20Mods/start");
+			assert.equal(await until(async () => (await api.get("/api/status")).json["Conan Mods"]?.online === true), true);
+			await until(async () => !(await api.get("/api/operations")).json["Conan Mods"]);
+			const r = await post("Conan Mods", "update", { id: "github:acme/lockmod" });
+			assert.equal(r.status, 409);
+			assert.equal(r.json.code, "server_running");
+			assert.equal((await api.get("/api/server/Conan%20Mods/mods/updates")).status, 200);
+			await api.post("/api/control/Conan%20Mods/stop");
+		});
+
+		it("updates to v2: the file and the lock change, and the check then says current", async () => {
+			const r = await post("Minecraft", "update", { id: "github:acme/lockmod" });
+			assert.equal(r.status, 200, JSON.stringify(r.json));
+			assert.deepEqual(r.json.updated, { id: "github:acme/lockmod", from: "v1.0.0", to: "v2.0.0" });
+			assert.deepEqual(r.json.installed, ["lock-mod.jar"]);
+			assert.deepEqual(fs.readFileSync(jar()), v2Bytes);
+			const l = await lockOf("Minecraft");
+			assert.equal(l.entries.length, 1);
+			assert.equal(l.entries[0].version, "v2.0.0");
+			assert.deepEqual(l.entries[0].files, [{ path: "lock-mod.jar", sha256: v2Sha }]);
+			assert.equal((await updatesOf("Minecraft")).updates[0].status, "current");
+		});
+
+		it("says a mod already on its newest version is up to date, and refuses ids it can't use", async () => {
+			const again = await post("Minecraft", "update", { id: "github:acme/lockmod" });
+			assert.equal(again.status, 409);
+			assert.equal(again.json.code, "up_to_date");
+			const unknown = await post("Minecraft", "update", { id: "github:nobody/nothing" });
+			assert.equal(unknown.status, 404);
+			assert.equal(unknown.json.code, "not_found");
+			assert.equal((await post("Minecraft", "update", {})).json.code, "bad_input");
+			assert.equal((await post("Minecraft", "update", { id: "x".repeat(601) })).json.code, "bad_input");
+		});
+
+		it("is for admins only", async () => {
+			await api.post("/api/users", { username: "modupd", password: "TestUpd!2345", role: "moderator" });
+			const mod = await api.cookieFor({ username: "modupd", password: "TestUpd!2345" });
+			assert.equal((await api.get("/api/server/Minecraft/mods/updates", { cookie: mod })).status, 403);
+			assert.equal((await api.post("/api/server/Minecraft/mods/update", { id: "github:acme/lockmod" }, { cookie: mod })).status, 403);
+		});
+	});
+
+	describe("two mods that need one shared library", () => {
+		it("both install, and the library keeps both mods as its parents in the lock", async () => {
+			const a = await post("Minecraft", "install", { input: "https://modrinth.com/mod/mod-a" });
+			assert.equal(a.status, 200, JSON.stringify(a.json));
+			assert.deepEqual(a.json.installed, ["SharedLib.jar", "ModA.jar"]);
+			const b = await post("Minecraft", "install", { input: "https://modrinth.com/mod/mod-b" });
+			assert.equal(b.status, 200, JSON.stringify(b.json));
+			assert.ok(fs.existsSync(path.join(dirs.mc, "mods", "ModB.jar")));
+			const { entries } = await api.get(`/api/server/Minecraft/mods/lock`).then((r) => r.json);
+			const shared = entries.find((e) => e.id === "modrinth:shared-lib");
+			assert.deepEqual([...shared.dependencyOf].sort(), ["modrinth:mod-a", "modrinth:mod-b"]);
 		});
 	});
 
