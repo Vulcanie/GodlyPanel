@@ -11,6 +11,7 @@ import controlRoutes from "./control.js";
 import updatesRoutes from "./updates.js";
 import modsRoutes from "./mods.js";
 import operationsRoutes from "./operations.js";
+import fileRoutes from "./files.js";
 import roleRoutes from "./roles.js";
 import { requireRole, requireViewer, requireOperator } from "../middleware/auth.js";
 
@@ -41,6 +42,7 @@ export function createPanelRouter() {
 	// needs, so anything they may not do is refused there.
 	router.use("/api", operators, controlRoutes);
 	router.use("/api", operators, operationsRoutes);
+	router.use("/api", operators, fileRoutes);
 	router.use("/api/users", requireRole("admin"), userRoutes);
 	router.use("/api/updates", requireRole("admin"), updatesRoutes);
 	router.use("/api", requireRole("admin"), modsRoutes);
