@@ -30,6 +30,7 @@ describe("the mods blocks game modules declare", () => {
 		["garrysmod", "Add-ons", { base: "working", rel: "garrysmod/addons" }, ["archive"]],
 		["l4d", "Add-ons", { base: "working", rel: "left4dead/addons" }, [".vpk"]],
 		["l4d2", "Add-ons", { base: "working", rel: "left4dead2/addons" }, [".vpk"]],
+		["humanitz", "Mods", { base: "working", rel: "HumanitZServer/Content/Paks/~mods" }, [".pak"]],
 	];
 	for (const [id, label, dir, accepts] of added) {
 		it(`${id} takes its files from ${dir.rel}, with github and url as the sources`, () => {

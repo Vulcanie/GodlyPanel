@@ -109,4 +109,14 @@ export default {
 	logs: [{ kind: "file", base: "working", rel: LOG_REL, label: "Server log" }],
 	// The launch line is written by the panel, so the form does not add to it.
 	launchOptions: false,
+	// The server mounts every .pak under Content/Paks, the ~mods folder included, so a .pak dropped there loads with no setting.
+	// The folder sits inside the HumanitZServer folder the panel already runs from, so the working base is right.
+	mods: {
+		adapter: "folder",
+		label: "Mods",
+		dir: { base: "working", rel: "HumanitZServer/Content/Paks/~mods" },
+		accepts: [".pak"],
+		sources: ["github", "url"],
+		note: "Drop .pak mod files here. Every player needs the same mods. Stop the server and back up its Saved folder before changing mods.",
+	},
 };
