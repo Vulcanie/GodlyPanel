@@ -154,7 +154,8 @@ export async function restore(serverName, mods) {
 	await mutate(serverName, () => mods.map((m) => ({ ...m })));
 }
 
-async function hashFile(file) {
+/** The SHA-256 of a file's bytes, read in chunks so a big mod never has to fit in memory. */
+export async function hashFile(file) {
 	const hash = crypto.createHash("sha256");
 	for await (const chunk of fs.createReadStream(file)) hash.update(chunk);
 	return hash.digest("hex");
