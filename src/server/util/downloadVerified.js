@@ -15,7 +15,9 @@ import { pipeline } from "node:stream/promises";
  * @param {string} options.dest
  * @param {string|null} [options.sha256]       the checksum it must have (lower-case hex); not checked when null
  * @param {string|null} [options.sha1]         a SHA-1 it must have (lower-case hex), for the makers that publish only that (Mojang); not checked when null
+ * @param {string|null} [options.sha512]       a SHA-512 it must have (lower-case hex), the one Modrinth publishes; not checked when null
  * @param {number|null} [options.size]         the size it must have; also stops a download that runs far past it
+ * @param {number|null} [options.maxBytes]     a hard cap on the bytes received, whatever the size says; not capped when null
  * @param {(url: string) => boolean} [options.isTrusted]  asked about the address and again about where a redirect ended up
  * @param {string} [options.checksumSource]    where the checksum came from, for the error message
  * @param {(received: number) => void} [options.onProgress]
@@ -23,7 +25,7 @@ import { pipeline } from "node:stream/promises";
  * @param {typeof fetch} [options.fetchImpl]  stands in for the global fetch (tests)
  * @returns {Promise<{ sha256: string, bytes: number }>}
  */
-export async function downloadVerified({ url, dest, sha256 = null, sha1 = null, size = null, isTrusted = null, checksumSource = "release notes", onProgress = null, timeoutMs = 30 * 60_000, fetchImpl = fetch }) {
+export async function downloadVerified({ url, dest, sha256 = null, sha1 = null, sha512 = null, size = null, maxBytes = null, isTrusted = null, checksumSource = "release notes", onProgress = null, timeoutMs = 30 * 60_000, fetchImpl = fetch }) {
 	const partial = `${dest}.partial`;
 	await fsp.mkdir(path.dirname(dest), { recursive: true });
 	try {
@@ -32,7 +34,9 @@ export async function downloadVerified({ url, dest, sha256 = null, sha1 = null, 
 		if (isTrusted && !isTrusted(res.url || url)) throw new Error("The download was redirected somewhere the panel doesn't trust.");
 		const hash = crypto.createHash("sha256");
 		const hash1 = sha1 ? crypto.createHash("sha1") : null;
-		const limit = size ? size + 1024 * 1024 : Infinity;
+		const hash512 = sha512 ? crypto.createHash("sha512") : null;
+		// The size the maker gave, with some slack, is a limit too. A cap a caller sets is a hard limit on top of it, so the smaller of the two wins.
+		const limit = Math.min(size ? size + 1024 * 1024 : Infinity, maxBytes ?? Infinity);
 		let received = 0;
 		const counter = async function* (source) {
 			for await (const chunk of source) {
@@ -40,6 +44,7 @@ export async function downloadVerified({ url, dest, sha256 = null, sha1 = null, 
 				if (received > limit) throw new Error("The download is larger than it should be, so it was stopped.");
 				hash.update(chunk);
 				hash1?.update(chunk);
+				hash512?.update(chunk);
 				onProgress?.(received);
 				yield chunk;
 			}
@@ -54,6 +59,12 @@ export async function downloadVerified({ url, dest, sha256 = null, sha1 = null, 
 			const digest1 = hash1.digest("hex");
 			if (digest1 !== sha1) {
 				throw new Error(`The download doesn't match the checksum in the ${checksumSource} (got ${digest1.slice(0, 12)}…, expected ${sha1.slice(0, 12)}…), so it was deleted.`);
+			}
+		}
+		if (hash512) {
+			const digest512 = hash512.digest("hex");
+			if (digest512 !== sha512) {
+				throw new Error(`The download doesn't match the checksum in the ${checksumSource} (got ${digest512.slice(0, 12)}…, expected ${sha512.slice(0, 12)}…), so it was deleted.`);
 			}
 		}
 		await fsp.rename(partial, dest);

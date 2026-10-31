@@ -1,3 +1,4 @@
+import AdmZip from "adm-zip";
 import crypto from "node:crypto";
 import { execFile } from "node:child_process";
 import fs from "node:fs";
@@ -28,6 +29,9 @@ export class ModError extends Error {
 }
 
 const MAX_DOWNLOAD_BYTES = 500 * 1024 * 1024;
+// A mod never unpacks to anything like this much, and a zip that claims to is a bomb: a few megabytes that expand to terabytes.
+const MAX_UNPACKED_BYTES = 2 * 1024 ** 3;
+const MAX_ARCHIVE_ENTRIES = 20_000;
 const SAFE_NAME = /^[A-Za-z0-9][A-Za-z0-9 ._()+\-]{0,120}$/;
 
 // A test points this at a stand-in; the app's own settings can't.
@@ -80,8 +84,26 @@ async function moveInto(from, to) {
 	}
 }
 
-/** Unpack an archive into a fresh scratch folder, after checking it can't write elsewhere. */
+const tooLarge = () => new ModError("That archive would unpack to far more than a mod ever does, so it was refused.", "archive_too_large");
+
+// The sizes an archive's own directory declares, read before anything else touches it. This runs first because the listing
+// below decompresses what it reads, which is exactly what a bomb makes expensive. A declared size can be forged, so the check
+// on what was actually extracted (in unpack) is the one that counts.
+function assertDeclaredSizes(zipFile) {
+	let entries;
+	try {
+		entries = new AdmZip(zipFile).getEntries();
+	} catch (err) {
+		throw new ModError(`That file couldn't be opened as a zip: ${err.message}`, "bad_archive");
+	}
+	if (entries.length > MAX_ARCHIVE_ENTRIES) throw tooLarge();
+	const declared = entries.reduce((sum, entry) => sum + (entry.header?.size ?? 0), 0);
+	if (declared > MAX_UNPACKED_BYTES) throw tooLarge();
+}
+
+/** Unpack an archive into a fresh scratch folder, after checking it can't write elsewhere or unpack to far more than a mod does. */
 async function unpack(zipFile) {
+	assertDeclaredSizes(zipFile);
 	let names;
 	try {
 		names = await listZip(zipFile);
@@ -94,8 +116,10 @@ async function unpack(zipFile) {
 	const scratch = await fsp.mkdtemp(path.join(os.tmpdir(), "gp-mod-"));
 	try {
 		await extractZip(zipFile, scratch);
+		if ((await sizeOf(scratch)) > MAX_UNPACKED_BYTES) throw tooLarge();
 	} catch (err) {
 		await fsp.rm(scratch, { recursive: true, force: true });
+		if (err instanceof ModError) throw err;
 		throw new ModError(`That file couldn't be opened as a zip: ${err.message}`, "bad_archive");
 	}
 	return scratch;

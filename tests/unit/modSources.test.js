@@ -92,16 +92,16 @@ describe("provider registry", () => {
 	});
 
 	it("returns null for names that are not registered, including Object prototype names", () => {
-		for (const id of ["constructor", "__proto__", "toString", "modrinth", "", null, 5, undefined]) {
+		for (const id of ["constructor", "__proto__", "toString", "curseforge", "", null, 5, undefined]) {
 			assert.equal(getProvider(id), null, `getProvider(${String(id)})`);
 		}
 	});
 
 	it("lists providers as a copy", () => {
 		const list = listProviders();
-		assert.deepEqual(list.map((p) => p.id), ["workshop", "thunderstore"]);
+		assert.deepEqual(list.map((p) => p.id), ["workshop", "thunderstore", "modrinth", "url"]);
 		list.length = 0;
-		assert.equal(listProviders().length, 2);
+		assert.equal(listProviders().length, 4);
 	});
 
 	it("names every source detectSource may return", () => {
