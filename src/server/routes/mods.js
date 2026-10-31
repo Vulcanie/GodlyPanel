@@ -27,6 +27,8 @@ import { detectSource, getProvider } from "../services/modSources/index.js";
 import { recordInstalled } from "../services/modRecord.js";
 import { checkUpdates, applyUpdate } from "../services/modUpdates.js";
 import { buildManifest, buildClientPack, defaultFormat } from "../services/clientPack.js";
+import { shareStatus, enableShare, rotateShare, disableShare } from "../services/packShare.js";
+import { logActivity } from "../services/activityLog.js";
 import * as modLock from "../services/modLock.js";
 
 const router = express.Router();
@@ -181,6 +183,50 @@ router.get("/server/:serverName/mods/client-pack", async (req, res) => {
 		});
 	} catch (err) {
 		fail(res, err, "Building the mod pack");
+	}
+});
+
+// The mod pack link on the community address. Off until the owner turns it on; turning it off is always allowed. The link's token is
+// sent back to the admin here (so the link can be seen again) but is never written to the activity log.
+const shareBody = (s) => ({ enabled: s.enabled, token: s.token, createdAt: s.createdAt, path: s.enabled ? `/api/pack/${s.token}/` : null });
+
+router.get("/server/:serverName/mods/share", async (req, res) => {
+	try {
+		res.json(shareBody(await shareStatus(req.server.name)));
+	} catch (err) {
+		fail(res, err, "Reading the pack link");
+	}
+});
+
+router.put("/server/:serverName/mods/share", async (req, res) => {
+	const enabled = req.body?.enabled;
+	if (typeof enabled !== "boolean") return res.status(400).json({ error: "enabled must be true or false.", code: "bad_input" });
+	const name = req.server.name;
+	try {
+		const before = await shareStatus(name);
+		if (enabled) {
+			// The same refusal as the manifest gives: a game without a mods folder has no pack to share.
+			if (!modsFolderOf(req.server)) throw new ModError("This game's mods can't be shared.", "unsupported");
+			const status = await enableShare(name);
+			if (!before.enabled) logActivity({ type: "mods.share", server: name, message: `Sharing the mod pack of ${name} was turned on` });
+			return res.json(shareBody(status));
+		}
+		await disableShare(name);
+		if (before.enabled) logActivity({ type: "mods.share", server: name, message: `Sharing the mod pack of ${name} was turned off` });
+		res.json(shareBody(await shareStatus(name)));
+	} catch (err) {
+		fail(res, err, "Changing the pack link");
+	}
+});
+
+router.post("/server/:serverName/mods/share/rotate", async (req, res) => {
+	const name = req.server.name;
+	try {
+		const status = await rotateShare(name);
+		logActivity({ type: "mods.share", server: name, message: `Sharing the mod pack of ${name}: its link was changed` });
+		res.json(shareBody(status));
+	} catch (err) {
+		fail(res, err, "Changing the pack link");
 	}
 });
 

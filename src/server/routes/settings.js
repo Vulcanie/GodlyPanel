@@ -21,6 +21,7 @@ import { applyBotSettings, botState } from "../services/discordBot.js";
 import { lanAddresses } from "../services/firewallCheck.js";
 import { tailscaleStatus } from "../services/tailscale.js";
 import { listDestinations, saveDestination, removeDestination, testDestination, retryReplication, checkDestinations } from "../services/backupDestinations.js";
+import { disableShare } from "../services/packShare.js";
 
 const router = express.Router();
 
@@ -230,6 +231,7 @@ router.get("/servers", (req, res) => {
 router.delete("/servers/:name", async (req, res) => {
 	try {
 		await removeServer(req.params.name);
+		await disableShare(req.params.name).catch((err) => console.error("Removing the pack link failed:", err.message));
 		res.json({ success: true });
 	} catch (e) {
 		res.status(404).json({ error: e.message });

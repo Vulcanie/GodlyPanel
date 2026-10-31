@@ -20,6 +20,7 @@ import { logActivity } from "./activityLog.js";
 import dashboardRoutes from "../routes/dashboard.js";
 import artRoutes from "../routes/art.js";
 import appearanceRoutes from "../routes/appearance.js";
+import { createPackRouter } from "../routes/communityPack.js";
 
 // The community listener: a second, much smaller web server for people outside the house. It is
 // what a Cloudflare tunnel points at, so the panel itself never has to be reachable from the
@@ -225,6 +226,10 @@ export function createCommunityApp({ hostRule, uiDir, staffSignIn = () => false 
 
 	// Live updates for everyone allowed in here. A staff session is only present while staff sign-in is on.
 	app.get("/api/events", requireViewer, (req, res) => addSseClient(req, res, req.user, { ...SSE_GROUP, address: req.communityClientIp }));
+
+	// The mod pack link: open to anyone holding it, signed in or not, so it comes before the staff and guest routes below. It is
+	// only ever mounted here, never on the panel's own port.
+	app.use("/api/pack", createPackRouter());
 
 	// ---- staff: the panel itself -------------------------------------------------------------------------
 	// The panel's own routes with their own role checks, so a moderator is still a moderator here. Whatever

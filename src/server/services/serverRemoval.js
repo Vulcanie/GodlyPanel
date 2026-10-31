@@ -6,6 +6,7 @@ import { all as allServers, remove as removeFromStore } from "../data/serverStor
 import { forgetPid } from "./windowlessLauncher.js";
 import { serverLogPath } from "./windowlessLauncher.js";
 import { forgetAutoUpdateSetting } from "./autoUpdateSettings.js";
+import { disableShare } from "./packShare.js";
 import { forgetIntent } from "../data/serverIntent.js";
 import { forgetOptions } from "../data/serverOptions.js";
 import { broadcastSseEvent } from "./sseHub.js";
@@ -116,6 +117,8 @@ export async function writeMarker(dir, server) {
 async function removeStateFor(server) {
 	await forgetPid(server.name).catch(() => {});
 	await forgetAutoUpdateSetting(server.name).catch(() => {});
+	// A new server with this name must not inherit the old one's pack link.
+	await disableShare(server.name).catch((err) => console.error("Removing the pack link failed:", err.message));
 	forgetIntent(server.name);
 	await forgetOptions(server.name).catch(() => {});
 	for (const file of [serverLogPath(server), `${serverLogPath(server)}.1`]) {
