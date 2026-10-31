@@ -216,14 +216,15 @@ export default {
 	// console.log: everything the console prints, written because the launch line has -condebug (the Facepunch wiki says it goes in the garrysmod folder).
 	logs: [{ kind: "file", base: "working", rel: "garrysmod/console.log", label: "Console log" }],
 	launchOptions: true,
-	// Each addon is a folder with lua/, materials/ and the rest directly inside it, so a zip must hold that folder: a zip whose
-	// files sit at its top level is put in a folder named after the zip, which the game won't read as an addon.
+	// Each addon is a folder under addons/ with lua/, materials/ and the rest directly inside it. A zip holding one folder is put in as
+	// that folder. A zip whose files sit at its top level is put in a folder named after the zip, which works. The trap is a zip whose
+	// only top-level entry is lua/, materials/ or similar: that becomes addons/lua/, which the game reads as an addon called "lua".
 	mods: {
 		adapter: "folder",
 		label: "Add-ons",
 		dir: { base: "working", rel: "garrysmod/addons" },
 		accepts: ["archive"],
 		sources: ["github", "url"],
-		note: "Each addon is a folder (with lua/, materials/ and the rest directly inside it). Upload a .zip that holds that folder.",
+		note: "Each addon is a folder under addons (with lua/, materials/ and the rest directly inside it). Upload a .zip of the addon. If the .zip holds only a lua or materials folder, put it inside a folder of its own first.",
 	},
 };
