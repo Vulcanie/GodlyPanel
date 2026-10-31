@@ -206,6 +206,12 @@ describe("mods", () => {
 		await new Promise((r) => store.close(r));
 	});
 
+	// Waits until the game is really off, so the next test's start is not mistaken for the old process still going down.
+	const stopConan = async () => {
+		await api.post("/api/control/Conan%20Mods/stop");
+		assert.equal(await until(async () => (await api.get("/api/status")).json["Conan Mods"]?.online !== true), true);
+	};
+
 	it("says which games have mod support, and what kind", async () => {
 		assert.equal((await list("Minecraft")).adapter, "folder");
 		assert.equal((await list("Conan Mods")).adapter, "workshop");
@@ -329,7 +335,7 @@ describe("mods", () => {
 				assert.equal(r.json.code, "server_running");
 			}
 			assert.equal((await list("Conan Mods")).mods.length, 1, "it can still be looked at");
-			await api.post("/api/control/Conan%20Mods/stop");
+			await stopConan();
 		});
 	});
 
@@ -479,7 +485,7 @@ describe("mods", () => {
 			const r = await install("Conan Mods", "https://example.com/a.jar");
 			assert.equal(r.status, 409);
 			assert.equal(r.json.code, "server_running");
-			await api.post("/api/control/Conan%20Mods/stop");
+			await stopConan();
 		});
 
 		it("removing a mod takes its record out of the lock", async () => {
@@ -554,7 +560,7 @@ describe("mods", () => {
 			assert.equal(r.status, 409);
 			assert.equal(r.json.code, "server_running");
 			assert.equal((await api.get("/api/server/Conan%20Mods/mods/updates")).status, 200);
-			await api.post("/api/control/Conan%20Mods/stop");
+			await stopConan();
 		});
 
 		it("updates to v2: the file and the lock change, and the check then says current", async () => {

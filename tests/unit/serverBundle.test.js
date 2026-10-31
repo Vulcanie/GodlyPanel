@@ -4,6 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { spawn, execFileSync } from "node:child_process";
+import { windowsOnly } from "../helpers/winEmulation.js";
 
 // Exporting a server as one .gpserver bundle: what goes in, what is left out, that no machine path of this PC or secret is
 // written into the archive, and that a refused or failed export leaves nothing behind.
@@ -79,7 +80,7 @@ function serverRecord(extra = {}) {
 	};
 }
 
-describe("exporting a server bundle", () => {
+describe("exporting a server bundle", windowsOnly("bundles are made and read by Windows' real tar"), () => {
 	let server;
 
 	before(async () => {

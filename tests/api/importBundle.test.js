@@ -5,6 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { startInstance, freePort, sleep } from "../helpers/instance.js";
 import { makeFakeGame, killFakeGames } from "../helpers/fakeGame.js";
+import { windowsOnly } from "../helpers/winEmulation.js";
 
 // Importing a .gpserver bundle from the panel: the file is uploaded and put aside, planned, then imported in the background under a
 // new name. The staged upload goes when the import ends; a file the person gave by path is never removed. Administrators only.
@@ -22,7 +23,7 @@ async function until(check, { timeoutMs = 90_000, everyMs = 300 } = {}) {
 const UUID_NOT_THERE = "00000000-0000-4000-8000-000000000000";
 const enc = encodeURIComponent;
 
-describe("importing a server bundle over the API", () => {
+describe("importing a server bundle over the API", windowsOnly("bundles are made and read by Windows' real tar"), () => {
 	let panel;
 	let api;
 	let dirs;

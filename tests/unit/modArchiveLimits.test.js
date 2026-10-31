@@ -4,6 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import zlib from "node:zlib";
+import { windowsOnly } from "../helpers/winEmulation.js";
 
 // A mod archive is unpacked into the mods folder, so the panel checks what it claims before it writes anything, and what it
 // actually holds after. Each case goes through installUpload, the one place a file lands in a mods folder.
@@ -77,7 +78,7 @@ function zipOnDisk(buffer) {
 	return file;
 }
 
-describe("mod archives are checked before and after they unpack", () => {
+describe("mod archives are checked before and after they unpack", windowsOnly("archives are made and read by Windows' real tar"), () => {
 	const dataDir = () => process.env.GHP_DATA_DIR;
 	// 7 Days to Die takes a zip; its mods folder is "Mods" under the server's working folder.
 	const serverFolder = () => path.join(dataDir(), "servers", "seven");
