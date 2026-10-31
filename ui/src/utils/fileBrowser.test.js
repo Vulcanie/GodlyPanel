@@ -228,9 +228,15 @@ describe("fileBrowser", () => {
 			expect(isLauncherName("start.bat/notes.txt")).toBe(false);
 		});
 
-		it("is false for a name ending in a dot or a space, or with no extension", () => {
-			expect(isLauncherName("start.bat.")).toBe(false);
-			expect(isLauncherName("start.bat ")).toBe(false);
+		it("ignores a trailing dot or space, since Windows drops them", () => {
+			expect(isLauncherName("start.bat.")).toBe(true);
+			expect(isLauncherName("start.bat ")).toBe(true);
+			expect(isLauncherName("start.txt.")).toBe(false);
+		});
+
+		it("counts a bare dotfile such as .bat, and is false with no extension", () => {
+			expect(isLauncherName(".bat")).toBe(true);
+			expect(isLauncherName(".gitignore")).toBe(false);
 			expect(isLauncherName("start")).toBe(false);
 		});
 

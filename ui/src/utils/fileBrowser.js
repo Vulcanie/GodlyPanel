@@ -87,10 +87,11 @@ export function fileActions(options) {
 /** Whether a file name is one of the launcher types above. Only the last part of a path counts, and a name with no extension never does. */
 export function isLauncherName(name) {
 	if (typeof name !== "string") return false;
-	const last = name.split(/[\\/]/).pop();
+	// Windows drops trailing dots and spaces, so "start.bat." is still a batch file; and a bare ".bat" counts too. The server does the
+	// same, so a warning here matches what it would refuse.
+	const last = name.split(/[\\/]/).pop().replace(/[. ]+$/, "");
 	const dot = last.lastIndexOf(".");
-	// A dot at the very start is a hidden name, not an extension. A trailing dot or space leaves no extension, so the name is not a launcher.
-	if (dot <= 0) return false;
+	if (dot < 0) return false;
 	return LAUNCHER_EXTENSIONS.includes(last.slice(dot).toLowerCase());
 }
 
