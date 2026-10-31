@@ -39,6 +39,7 @@ import {
 } from "@mui/icons-material";
 import ModpackUploadField from "./ModpackUploadField";
 import FolderField from "./FolderField";
+import ImportBundleCard from "./ImportBundleCard";
 import PortsToOpen, { findPortClash } from "./PortsToOpen";
 import PageHeader from "./ui/PageHeader";
 import SectionCard from "./ui/SectionCard";
@@ -517,7 +518,10 @@ function CreateServerPage({ onBack, userRole }) {
 			<PageHeader icon={<CreateIcon />} title="Create a New Server" subtitle={subtitle} />
 
 			{!selected ? (
-				<GamePicker templates={templates} loadError={loadError} onRetry={() => setReloads((n) => n + 1)} onPick={pickTemplate} />
+				<>
+					<ImportBundleCard onOpen={(name) => go("config", name)} />
+					<GamePicker templates={templates} loadError={loadError} onRetry={() => setReloads((n) => n + 1)} onPick={pickTemplate} />
+				</>
 			) : job ? (
 				<Box sx={{ maxWidth: 760 }}>
 					<Hero template={selected} />

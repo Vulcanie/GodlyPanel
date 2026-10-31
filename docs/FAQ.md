@@ -22,9 +22,16 @@ In the `data` folder next to the app. Back that folder up to back up your accoun
 are backed up separately, from each server's **Backups** tab.
 
 **Can I move it to another PC?**
-Copy the whole folder, including `data`. Game servers are separate installs and need moving or re-creating, and your
-router forwards need pointing at the new PC. Copy the folder with Explorer rather than a tool that preserves permissions,
-so the `data` folder takes the new account's permissions.
+Yes, one server at a time. On the old PC, open the server's **Advanced** tab, choose **Move to another PC**, pick what to
+include and download the file. On the new PC, choose **Create server**, then **Import a server file** and pick that file.
+**Saves and settings** is the small choice: the world, settings, mods and schedules. The game itself is downloaded again on
+the new PC. **Everything** is the whole server folder, game files included, so it is bigger but the game is not downloaded
+again. Passwords are left out unless you tick **Include passwords**, and new ones are made on the new PC. Only import files
+you trust: a server file contains a start script that runs on the PC that imports it.
+
+To move the whole panel instead, copy the whole folder, including `data`. Game servers are separate installs and need
+moving or re-creating, and your router forwards need pointing at the new PC. Copy the folder with Explorer rather than a
+tool that preserves permissions, so the `data` folder takes the new account's permissions.
 
 **How do I update GodlyPanel?**
 `Settings → Panel updates` tells you when there's a new version. Press **Update now**: it downloads just what changed,
