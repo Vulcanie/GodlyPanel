@@ -4,7 +4,7 @@ import { Restore as RestoreIcon } from "@mui/icons-material";
 import { api } from "../api/client";
 import { useOperation } from "../OperationsContext";
 import { useToast } from "../ToastContext";
-import { t, useT } from "../i18n";
+import { t, useT, formatDate } from "../i18n";
 import ConfirmDialog from "./ui/ConfirmDialog";
 import SectionCard from "./ui/SectionCard";
 import InfoTip from "./InfoTip";
@@ -28,7 +28,7 @@ function UpdateRow({ record }) {
 			)}
 			{!Number.isNaN(when.getTime()) && (
 				<Typography variant="caption" sx={{ color: "text.secondary" }}>
-					{when.toLocaleString()}
+					{formatDate(when)}
 				</Typography>
 			)}
 		</Box>

@@ -1,6 +1,8 @@
 import React from "react";
 import { Alert, Box, Chip, Link, Typography } from "@mui/material";
 import { api } from "../api/client";
+import { t, useT } from "../i18n";
+import { rich } from "../i18n/rich";
 import InfoTip from "./InfoTip";
 import SectionCard from "./ui/SectionCard";
 
@@ -11,6 +13,7 @@ import SectionCard from "./ui/SectionCard";
  * The longer explanation is behind the (i).
  */
 function RemoteAccessCard() {
+	useT();
 	const [info, setInfo] = React.useState(null);
 	React.useEffect(() => {
 		api.get("/api/settings/access").then(setInfo).catch(() => {});
@@ -36,45 +39,48 @@ function RemoteAccessCard() {
 	);
 
 	return (
-		<SectionCard title={<Box component="span" sx={{ display: "inline-flex", alignItems: "center" }}>Opening the panel from another device<InfoTip id="card.remoteAccess" /></Box>}>
+		<SectionCard title={<Box component="span" sx={{ display: "inline-flex", alignItems: "center" }}>{t("remote.title")}<InfoTip id="card.remoteAccess" /></Box>}>
 			{!info.bindAll ? (
 				<Alert severity="warning" sx={{ mb: 2 }}>
-					Only this PC can open the panel right now. Turn on "Allow access from your network" under General, Access, then restart the panel.
+					{t("remote.onlyThisPc")}
 				</Alert>
 			) : (
 				<Box sx={{ mb: 2 }}>
 					<Typography variant="body2" sx={{ fontWeight: 600, mb: 0.75 }}>
-						On this network
+						{t("remote.onThisNetwork")}
 					</Typography>
 					<Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-						{lan.length === 0 && <Typography variant="body2">No network address found on this PC.</Typography>}
+						{lan.length === 0 && <Typography variant="body2">{t("remote.noAddress")}</Typography>}
 						{lan.map((a) => address(a))}
-						{mesh.map((a) => address(a, <Chip size="small" label="mesh VPN" sx={{ height: 20 }} />))}
+						{mesh.map((a) => address(a, <Chip size="small" label={t("remote.meshVpn")} sx={{ height: 20 }} />))}
 					</Box>
 				</Box>
 			)}
 
 			<Typography variant="body2" sx={{ fontWeight: 600, mb: 0.75 }}>
-				Away from home, and for friends
+				{t("remote.awayHeading")}
 			</Typography>
 			{ts && (
 				<Alert severity={!ts.installed ? "info" : ts.running ? "success" : "warning"} sx={{ mb: 1.5 }}>
 					{!ts.installed
-						? "Tailscale isn't installed on this PC yet."
+						? t("remote.tsNotInstalled")
 						: ts.running
-							? `Tailscale is connected on this PC as ${ts.dnsName ?? ts.ips[0]}. Open ${tsUrl} from a device on your Tailscale network.`
+							? t("remote.tsConnected", { name: ts.dnsName ?? ts.ips[0], url: tsUrl })
 							: ts.state === "NeedsLogin"
-								? "Tailscale is installed but needs signing in. Open it from the tray and sign in."
-								: "Tailscale is installed but isn't connected. Open it from the tray and turn it on."}
+								? t("remote.tsNeedsLogin")
+								: t("remote.tsNotConnected")}
 				</Alert>
 			)}
 			<Typography variant="body2" sx={{ color: "text.secondary" }}>
-				Don't forward the panel's port on your router. Use a private mesh network such as{" "}
-				<Link href="https://tailscale.com/download" target="_blank" rel="noreferrer">
-					Tailscale
-				</Link>{" "}
-				instead, then open {tsUrl ? <code>{tsUrl}</code> : <code>http://100.x.y.z:{info.port}/</code>}.{" "}
-				{info.allowCgnat ? "The panel already accepts these addresses." : 'Turn on "Allow mesh VPN addresses" under General, Access first.'}
+				{rich(t("remote.forward"), {
+					link: (
+						<Link href="https://tailscale.com/download" target="_blank" rel="noreferrer">
+							Tailscale
+						</Link>
+					),
+					address: tsUrl ? <code>{tsUrl}</code> : <code>{`http://100.x.y.z:${info.port}/`}</code>,
+					allow: info.allowCgnat ? t("remote.allowOn") : t("remote.allowOff"),
+				})}
 			</Typography>
 		</SectionCard>
 	);

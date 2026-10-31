@@ -26,6 +26,7 @@ import { api } from "../api/client";
 import { onLive } from "../liveEvents";
 import { formatBytes } from "../utils/format";
 import { useToast } from "../ToastContext";
+import { t, useT } from "../i18n";
 import SectionCard from "./ui/SectionCard";
 import ConfirmDialog from "./ui/ConfirmDialog";
 import InfoTip from "./InfoTip";
@@ -33,6 +34,7 @@ import TipRow from "./TipRow";
 
 /** What a server does by itself, and how to reuse its settings: auto-restart, start with the panel, presets, cloning. */
 function AutomationPanel({ serverName, serverStatus, onCloned }) {
+	useT();
 	const base = `/api/server/${encodeURIComponent(serverName)}`;
 	const [options, setOptions] = React.useState(null);
 	const [error, setError] = React.useState(null);
@@ -97,33 +99,33 @@ function AutomationPanel({ serverName, serverStatus, onCloned }) {
 				</Alert>
 			)}
 
-			<SectionCard title="On its own" subtitle="What this server does without you" icon={<AutoIcon />}>
+			<SectionCard title={t("automation.onItsOwn")} subtitle={t("automation.onItsOwnSub")} icon={<AutoIcon />}>
 				<Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
 					<TipRow id="server.auto.crash">
-						<FormControlLabel control={<Switch checked={options.autoRestart} onChange={(e) => set({ autoRestart: e.target.checked })} />} label="Restart it if it crashes" />
+						<FormControlLabel control={<Switch checked={options.autoRestart} onChange={(e) => set({ autoRestart: e.target.checked })} />} label={t("automation.restartCrash")} />
 					</TipRow>
 					{recovery.gaveUp && (
 						<Alert severity="error" sx={{ mb: 1 }}>
-							The panel gave up restarting this server because it keeps going down. Check its log, then start it yourself to try again.
+							{t("automation.gaveUp")}
 						</Alert>
 					)}
 					{recovery.unresponsive && (
 						<Alert severity="warning" sx={{ mb: 1 }}>
-							It is running but has stopped answering.{options.restartWhenUnresponsive ? " It will be restarted if that goes on." : " It was left alone in case it is saving."}
+							{options.restartWhenUnresponsive ? t("automation.unresponsiveRestart") : t("automation.unresponsiveWait")}
 						</Alert>
 					)}
 					<Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
 						<TipRow id="server.auto.hang">
 							<FormControlLabel
 								control={<Switch checked={options.restartWhenUnresponsive} disabled={!options.autoRestart} onChange={(e) => set({ restartWhenUnresponsive: e.target.checked })} />}
-								label="Also restart it if it is running but stops answering"
+								label={t("automation.restartHang")}
 							/>
 						</TipRow>
 						<TipRow id="server.auto.hangMinutes">
 							<TextField
 								size="small"
 								type="number"
-								label="After (minutes)"
+								label={t("automation.afterMinutes")}
 								sx={{ width: 140 }}
 								disabled={!options.autoRestart || !options.restartWhenUnresponsive}
 								value={minutes}
@@ -135,7 +137,7 @@ function AutomationPanel({ serverName, serverStatus, onCloned }) {
 						</TipRow>
 					</Box>
 					<TipRow id="server.auto.start">
-						<FormControlLabel control={<Switch checked={options.autoStart} onChange={(e) => set({ autoStart: e.target.checked })} />} label="Start it when GodlyPanel starts" />
+						<FormControlLabel control={<Switch checked={options.autoStart} onChange={(e) => set({ autoStart: e.target.checked })} />} label={t("automation.startWithPanel")} />
 					</TipRow>
 				</Box>
 			</SectionCard>
@@ -150,6 +152,7 @@ function AutomationPanel({ serverName, serverStatus, onCloned }) {
 
 /** Replace the RCON password everywhere the game and the panel keep it. Shown only where there is one. */
 function RconPasswordCard({ serverName, base, running }) {
+	useT();
 	const toast = useToast();
 	const [plan, setPlan] = React.useState(undefined); // undefined: loading, null: nothing to rotate
 	const [busy, setBusy] = React.useState(false);
@@ -186,7 +189,7 @@ function RconPasswordCard({ serverName, base, running }) {
 			if ((r.remaining ?? []).length > 0) setResult(r);
 			else {
 				setResult(null);
-				toast(`The RCON password is changed for ${(r.servers ?? [serverName]).join(", ")}.`);
+				toast(t("automation.rconToast", { servers: (r.servers ?? [serverName]).join(", ") }));
 			}
 		} catch (e) {
 			setConfirming(false);
@@ -200,15 +203,15 @@ function RconPasswordCard({ serverName, base, running }) {
 		<SectionCard
 			title={
 				<>
-					Change the RCON password
-					<InfoTip id="server.rcon.rotate" />
+					{t("automation.rconTitle")}
+<InfoTip id="server.rcon.rotate" />
 				</>
 			}
 			icon={<KeyIcon />}
 		>
 			{others.length > 0 && (
 				<Typography variant="body2" sx={{ color: "text.secondary", mb: 1.5 }}>
-					{others.join(", ")} share{others.length === 1 ? "s" : ""} files with it, so {others.length === 1 ? "that server changes" : "those servers change"} too.
+					{others.length === 1 ? t("automation.sharesOne", { servers: others.join(", ") }) : t("automation.sharesMany", { servers: others.join(", ") })}
 				</Typography>
 			)}
 			{error && (
@@ -218,19 +221,19 @@ function RconPasswordCard({ serverName, base, running }) {
 			)}
 			{result && (
 				<Alert severity="warning" onClose={() => setResult(null)} sx={{ mb: 1.5 }}>
-					Changed for {(result.servers ?? []).join(", ")}. The old password is still written in {result.remaining.length} other file(s) the panel doesn't manage: {result.remaining.join(", ")}.
+					{t("automation.rconChanged", { servers: (result.servers ?? []).join(", "), count: result.remaining.length, files: result.remaining.join(", ") })}
 				</Alert>
 			)}
 			<Button variant="outlined" disabled={running || busy} onClick={() => setConfirming(true)}>
-				Change the RCON password
-			</Button>
+				{t("automation.rconTitle")}
+</Button>
 			{running && (
 				<Typography variant="caption" sx={{ display: "block", color: "warning.main", mt: 0.5 }}>
-					Stop the server first.
+{t("automation.stopFirstDot")}
 				</Typography>
 			)}
-			<ConfirmDialog open={confirming} title="Change the RCON password?" confirmLabel={busy ? "Changing…" : "Change it"} onConfirm={rotate} onClose={() => !busy && setConfirming(false)}>
-				{files.length} file(s) will be rewritten{others.length > 0 ? ` for ${servers.length} servers` : ""}. Anything else that uses the old password (another tool, a script) will need the new one.
+			<ConfirmDialog open={confirming} title={t("automation.rconConfirmTitle")} confirmLabel={busy ? t("automation.changing") : t("automation.changeIt")} onConfirm={rotate} onClose={() => !busy && setConfirming(false)}>
+				{others.length > 0 ? t("automation.rconBodyServers", { files: files.length, servers: servers.length }) : t("automation.rconBody", { files: files.length })}
 			</ConfirmDialog>
 		</SectionCard>
 	);
@@ -238,6 +241,7 @@ function RconPasswordCard({ serverName, base, running }) {
 
 /** The message players see in the server list or when they join, for the games that have one. */
 function MotdCard({ base, running }) {
+	useT();
 	const toast = useToast();
 	const [info, setInfo] = React.useState(null);
 	const [value, setValue] = React.useState("");
@@ -277,7 +281,7 @@ function MotdCard({ base, running }) {
 			const r = await api.put(`${base}/motd`, { value });
 			setInfo(r);
 			setValue(r.value ?? "");
-			toast("Saved. It is in the settings history, so it can be undone.");
+			toast(t("automation.motdSaved"));
 		} catch (e) {
 			setError(e.message);
 		} finally {
@@ -318,13 +322,13 @@ function MotdCard({ base, running }) {
 						sx={{ flex: "1 1 260px" }}
 					/>
 					<Button variant="outlined" disabled={running || busy || value === (info.value ?? "")} onClick={save}>
-						Save
-					</Button>
-				</Box>
+						{t("common.save")}
+</Button>
+</Box>
 			)}
 			{running && (
 				<Typography variant="caption" sx={{ color: "warning.main", display: "block", mt: 0.5 }}>
-					Stop the server to change it: a running game writes its settings back when it stops.
+					{t("automation.motdStop")}
 				</Typography>
 			)}
 		</SectionCard>
@@ -332,6 +336,7 @@ function MotdCard({ base, running }) {
 }
 
 function PresetsCard({ serverName, base, running, onError }) {
+	useT();
 	const toast = useToast();
 	const [presets, setPresets] = React.useState([]);
 	const [name, setName] = React.useState("");
@@ -361,7 +366,7 @@ function PresetsCard({ serverName, base, running, onError }) {
 		try {
 			const made = await api.post(`${base}/presets`, { name });
 			setName("");
-			toast(`Saved this server's settings as "${made.name}".`);
+			toast(t("automation.presetSaved", { name: made.name }));
 			load();
 		} catch (e) {
 			onError(e.message);
@@ -372,7 +377,7 @@ function PresetsCard({ serverName, base, running, onError }) {
 		setAsking(false);
 		try {
 			const r = await api.post(`${base}/presets/${p.id}/apply`, { keepIdentity });
-			toast(`Applied "${p.name}" (${(r.files ?? []).join(", ")}). Start the server for it to take effect.`);
+			toast(t("automation.presetApplied", { name: p.name, files: (r.files ?? []).join(", ") }));
 		} catch (e) {
 			onError(e.message);
 		}
@@ -382,7 +387,7 @@ function PresetsCard({ serverName, base, running, onError }) {
 		setAsking(false);
 		try {
 			await api.del(`/api/presets/${p.id}`);
-			toast(`Deleted the preset "${p.name}".`);
+			toast(t("automation.presetDeleted", { name: p.name }));
 			load();
 		} catch (e) {
 			onError(e.message);
@@ -390,21 +395,21 @@ function PresetsCard({ serverName, base, running, onError }) {
 	};
 
 	return (
-		<SectionCard title="Setting presets" subtitle="Save this server's settings and reuse them on other servers of the same game" icon={<PresetIcon />}>
+		<SectionCard title={t("automation.presets")} subtitle={t("automation.presetsSub")} icon={<PresetIcon />}>
 			<Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", alignItems: "center", mb: presets.length > 0 ? 2 : 0 }}>
 				<TipRow id="server.preset.name" sx={{ flex: "1 1 260px", maxWidth: 420 }}>
-					<TextField size="small" fullWidth label="Name for these settings" value={name} onChange={(e) => setName(e.target.value)} />
+					<TextField size="small" fullWidth label={t("automation.presetName")} value={name} onChange={(e) => setName(e.target.value)} />
 				</TipRow>
 				<Button variant="outlined" disabled={!name.trim()} onClick={save}>
-					Save this server's settings
-				</Button>
+					{t("automation.savePreset")}
+</Button>
 			</Box>
 			{presets.length > 0 && (
 				<>
 					<TipRow id="server.preset.keepIdentity">
 						<FormControlLabel
 							control={<Checkbox size="small" checked={keepIdentity} onChange={(e) => setKeepIdentity(e.target.checked)} />}
-							label="Keep this server's own name, passwords and ports when applying"
+							label={t("automation.keepIdentity")}
 						/>
 					</TipRow>
 					{presets.map((p) => (
@@ -412,18 +417,18 @@ function PresetsCard({ serverName, base, running, onError }) {
 							<Box sx={{ flex: 1, minWidth: 0 }}>
 								<Typography variant="body2">{p.name}</Typography>
 								<Typography variant="caption" sx={{ color: "text.secondary", wordBreak: "break-word" }}>
-									{p.game} · from {p.fromServer} · {Object.keys(p.files ?? {}).join(", ")}
+									{p.game} · {t("automation.fromServer", { server: p.fromServer })} · {Object.keys(p.files ?? {}).join(", ")}
 								</Typography>
 							</Box>
-							<Tooltip title={running ? "Stop the server first" : "Apply to this server"}>
+							<Tooltip title={running ? t("automation.stopFirst") : t("automation.applyHere")}>
 								<span>
-									<IconButton size="small" aria-label={`Apply ${p.name}`} disabled={running} onClick={() => ask("apply", p)}>
+									<IconButton size="small" aria-label={t("automation.applyAria", { name: p.name })} disabled={running} onClick={() => ask("apply", p)}>
 										<ApplyIcon fontSize="small" />
 									</IconButton>
 								</span>
 							</Tooltip>
-							<Tooltip title="Delete the preset">
-								<IconButton size="small" aria-label={`Delete ${p.name}`} onClick={() => ask("delete", p)}>
+							<Tooltip title={t("automation.deletePreset")}>
+								<IconButton size="small" aria-label={t("automation.deleteAria", { name: p.name })} onClick={() => ask("delete", p)}>
 									<DeleteIcon fontSize="small" />
 								</IconButton>
 							</Tooltip>
@@ -433,21 +438,22 @@ function PresetsCard({ serverName, base, running, onError }) {
 			)}
 			<ConfirmDialog
 				open={asking && Boolean(confirm)}
-				title={confirm?.kind === "delete" ? "Delete this preset?" : `Apply "${confirm?.preset.name}"?`}
-				confirmLabel={confirm?.kind === "delete" ? "Delete it" : "Apply it"}
+				title={confirm?.kind === "delete" ? t("automation.deletePresetTitle") : t("automation.applyTitle", { name: confirm?.preset.name ?? "" })}
+				confirmLabel={confirm?.kind === "delete" ? t("common.deleteIt") : t("automation.applyIt")}
 				color={confirm?.kind === "delete" ? "error" : "warning"}
 				onConfirm={() => (confirm.kind === "delete" ? remove(confirm.preset) : apply(confirm.preset))}
 				onClose={() => setAsking(false)}
 			>
 				{confirm?.kind === "delete"
-					? `The preset "${confirm.preset.name}" is deleted. Servers that already use it are not changed.`
-					: `Apply "${confirm?.preset.name}" to ${serverName}? Its settings files are replaced (a .bak of each is kept).`}
+					? t("automation.deleteBody", { name: confirm.preset.name })
+					: t("automation.applyBody", { name: confirm?.preset.name ?? "", server: serverName })}
 			</ConfirmDialog>
 		</SectionCard>
 	);
 }
 
 function CloneCard({ serverName, base, running, onCloned, onError }) {
+	useT();
 	const [name, setName] = React.useState("");
 	const [sessionName, setSessionName] = React.useState("");
 	const [job, setJob] = React.useState(null);
@@ -487,34 +493,34 @@ function CloneCard({ serverName, base, running, onCloned, onError }) {
 	const copying = job && !["done", "failed"].includes(job.status);
 
 	return (
-		<SectionCard title="Clone this server" subtitle="A full copy, world included" icon={<CloneIcon />}>
+		<SectionCard title={t("automation.clone")} subtitle={t("automation.cloneSub")} icon={<CloneIcon />}>
 			<Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", alignItems: "center" }}>
 				<TipRow id="server.clone.name" sx={{ flex: "1 1 240px", maxWidth: 360 }}>
-					<TextField size="small" fullWidth label="Name for the copy" value={name} onChange={(e) => setName(e.target.value)} disabled={copying} />
+					<TextField size="small" fullWidth label={t("automation.copyName")} value={name} onChange={(e) => setName(e.target.value)} disabled={copying} />
 				</TipRow>
 				<TipRow id="server.clone.session" sx={{ flex: "1 1 240px", maxWidth: 360 }}>
-					<TextField size="small" fullWidth label="Session name (optional)" value={sessionName} onChange={(e) => setSessionName(e.target.value)} disabled={copying} />
+					<TextField size="small" fullWidth label={t("automation.sessionName")} value={sessionName} onChange={(e) => setSessionName(e.target.value)} disabled={copying} />
 				</TipRow>
 				<Button variant="outlined" disabled={copying || !name.trim() || running} onClick={start}>
-					Clone {serverName}
+					{t("automation.cloneButton", { name: serverName })}
 				</Button>
 			</Box>
 			{running && (
 				<Typography variant="caption" sx={{ color: "warning.main", display: "block", mt: 0.5 }}>
-					Stop the server first.
+{t("automation.stopFirstDot")}
 				</Typography>
 			)}
 			{job && (
 				<Box sx={{ mt: 2 }}>
 					{copying && (
 						<>
-							<Typography variant="body2">{job.status === "copying" ? `Copying ${formatBytes(job.bytes)}…` : "Setting up the copy…"}</Typography>
+							<Typography variant="body2">{job.status === "copying" ? t("automation.copyingSize", { size: formatBytes(job.bytes) }) : t("automation.settingUp")}</Typography>
 							<LinearProgress sx={{ mt: 1 }} />
 						</>
 					)}
 					{job.status === "done" && (
-						<Alert severity="success" action={<Button color="inherit" size="small" onClick={() => onCloned?.(job.name)}>Open it</Button>}>
-							{job.name} is ready. Its ports are {Object.values(job.ports ?? {}).join(", ")}; open them on your router to let people join.
+						<Alert severity="success" action={<Button color="inherit" size="small" onClick={() => onCloned?.(job.name)}>{t("automation.openIt")}</Button>}>
+							{t("automation.ready", { name: job.name, ports: Object.values(job.ports ?? {}).join(", ") })}
 						</Alert>
 					)}
 					{job.status === "failed" && <Alert severity="error">{job.error}</Alert>}

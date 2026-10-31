@@ -20,6 +20,7 @@ import {
 import { Add as AddIcon, Delete as DeleteIcon, Edit as EditIcon } from "@mui/icons-material";
 import { api } from "../api/client";
 import { formatBytes } from "../utils/format";
+import { t, useT } from "../i18n";
 import InfoTip from "./InfoTip";
 import TipRow from "./settings/TipRow";
 import SectionCard from "./ui/SectionCard";
@@ -31,12 +32,30 @@ import ConfirmDialog from "./ui/ConfirmDialog";
 // and Amazon S3.
 
 const PRESETS = [
-	{ id: "b2", label: "Backblaze B2", endpoint: "https://s3.us-west-004.backblazeb2.com", region: "us-west-004", help: "Use the endpoint shown on your bucket's page (it includes your region), and an application key with access to that bucket." },
-	{ id: "wasabi", label: "Wasabi", endpoint: "https://s3.wasabisys.com", region: "us-east-1", help: "Other regions use an endpoint like https://s3.eu-central-1.wasabisys.com." },
-	{ id: "r2", label: "Cloudflare R2", endpoint: "https://<account id>.r2.cloudflarestorage.com", region: "auto", help: "Your account id is on the R2 page; create an API token with read and write access." },
-	{ id: "aws", label: "Amazon S3", endpoint: "https://s3.us-east-1.amazonaws.com", region: "us-east-1", help: "Use the region your bucket is in, on both the endpoint and the region box." },
-	{ id: "minio", label: "MinIO / other", endpoint: "http://192.168.1.10:9000", region: "us-east-1", help: "For MinIO on your own network, or any other S3-compatible service." },
+	{ id: "b2", label: "Backblaze B2", endpoint: "https://s3.us-west-004.backblazeb2.com", region: "us-west-004" },
+	{ id: "wasabi", label: "Wasabi", endpoint: "https://s3.wasabisys.com", region: "us-east-1" },
+	{ id: "r2", label: "Cloudflare R2", endpoint: "https://<account id>.r2.cloudflarestorage.com", region: "auto" },
+	{ id: "aws", label: "Amazon S3", endpoint: "https://s3.us-east-1.amazonaws.com", region: "us-east-1" },
+	{ id: "minio", label: "MinIO / other", endpoint: "http://192.168.1.10:9000", region: "us-east-1" },
 ];
+
+// The help text for a service, as translated words. Empty for a service with none.
+function presetHelp(id) {
+	switch (id) {
+		case "b2":
+			return t("destinations.presetB2");
+		case "wasabi":
+			return t("destinations.presetWasabi");
+		case "r2":
+			return t("destinations.presetR2");
+		case "aws":
+			return t("destinations.presetAws");
+		case "minio":
+			return t("destinations.presetMinio");
+		default:
+			return "";
+	}
+}
 
 const blank = () => ({
 	type: "folder",
@@ -77,6 +96,7 @@ function toBody(form) {
 }
 
 function BackupDestinations() {
+	useT();
 	const [list, setList] = React.useState(null);
 	const [editing, setEditing] = React.useState(null);
 	const [removing, setRemoving] = React.useState(null);
@@ -114,10 +134,10 @@ function BackupDestinations() {
 	};
 
 	const retry = async () => {
-		setNotice("Trying again…");
+		setNotice(t("destinations.tryingAgain"));
 		try {
 			const r = await api.post("/api/settings/backup-destinations/retry");
-			setNotice(r.tried === 0 ? "Everything that should be copied already is." : `Tried ${r.tried}, ${r.copied} copied.`);
+			setNotice(r.tried === 0 ? t("destinations.nothingToCopy") : t("destinations.triedCount", { tried: r.tried, copied: r.copied }));
 		} catch (e) {
 			setError(e.message);
 			setNotice(null);
@@ -128,7 +148,7 @@ function BackupDestinations() {
 		<SectionCard
 			title={
 				<Box component="span" sx={{ display: "inline-flex", alignItems: "center" }}>
-					Copies of backups off this PC
+					{t("destinations.title")}
 					<InfoTip id="card.backupDestinations" />
 				</Box>
 			}
@@ -136,12 +156,12 @@ function BackupDestinations() {
 				<>
 					{list?.length > 0 && (
 						<Button size="small" onClick={retry}>
-							Retry failed copies
+							{t("destinations.retry")}
 						</Button>
 					)}
 					<Button size="small" variant="outlined" startIcon={<AddIcon />} onClick={() => setEditing(blank())}>
-						Add a place
-					</Button>
+						{t("destinations.add")}
+</Button>
 				</>
 			}
 		>
@@ -159,7 +179,7 @@ function BackupDestinations() {
 				<CircularProgress size={20} />
 			) : list.length === 0 ? (
 				<Typography variant="body2" sx={{ color: "warning.main" }}>
-					None yet, so backups exist only on this PC.
+					{t("destinations.none")}
 				</Typography>
 			) : (
 				list.map((d, i) => (
@@ -170,18 +190,18 @@ function BackupDestinations() {
 								{d.type === "folder" ? d.folder.path : `${d.s3.bucket} · ${d.s3.endpoint}`}
 							</Typography>
 						</Box>
-						<Chip size="small" variant="outlined" label={d.type === "folder" ? "Folder" : "S3 storage"} />
+						<Chip size="small" variant="outlined" label={d.type === "folder" ? t("destinations.kindFolder") : t("destinations.kindS3")} />
 						<Box sx={{ display: "flex", alignItems: "center" }}>
-							<FormControlLabel sx={{ mr: 0 }} control={<Switch size="small" checked={d.enabled} onChange={() => toggle(d)} />} label={d.enabled ? "On" : "Off"} />
+							<FormControlLabel sx={{ mr: 0 }} control={<Switch size="small" checked={d.enabled} onChange={() => toggle(d)} />} label={d.enabled ? t("common.on") : t("common.off")} />
 							<InfoTip id="dest.enabled" />
 						</Box>
-						<Tooltip title="Edit">
-							<IconButton size="small" aria-label={`Edit ${d.name}`} onClick={() => setEditing(fromSaved(d))}>
+						<Tooltip title={t("common.edit")}>
+							<IconButton size="small" aria-label={t("destinations.editAria", { name: d.name })} onClick={() => setEditing(fromSaved(d))}>
 								<EditIcon fontSize="small" />
 							</IconButton>
 						</Tooltip>
-						<Tooltip title="Remove">
-							<IconButton size="small" aria-label={`Remove ${d.name}`} onClick={() => setRemoving(d)}>
+						<Tooltip title={t("common.remove")}>
+							<IconButton size="small" aria-label={t("destinations.removeAria", { name: d.name })} onClick={() => setRemoving(d)}>
 								<DeleteIcon fontSize="small" />
 							</IconButton>
 						</Tooltip>
@@ -189,14 +209,15 @@ function BackupDestinations() {
 				))
 			)}
 			{editing && <DestinationDialog initial={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load(); }} />}
-			<ConfirmDialog open={Boolean(removing)} title="Stop copying backups here?" confirmLabel="Remove" onClose={() => setRemoving(null)} onConfirm={() => remove(removing)}>
-				Stop copying backups to "{removing?.name}"? Copies already there are left in place.
+			<ConfirmDialog open={Boolean(removing)} title={t("destinations.stopTitle")} confirmLabel={t("common.remove")} onClose={() => setRemoving(null)} onConfirm={() => remove(removing)}>
+				{t("destinations.stopBody", { name: removing?.name ?? "" })}
 			</ConfirmDialog>
 		</SectionCard>
 	);
 }
 
 function DestinationDialog({ initial, onClose, onSaved }) {
+	useT();
 	const [form, setForm] = React.useState(initial);
 	const [busy, setBusy] = React.useState(false);
 	const [error, setError] = React.useState(null);
@@ -241,23 +262,22 @@ function DestinationDialog({ initial, onClose, onSaved }) {
 
 	return (
 		<Dialog open onClose={busy ? undefined : onClose} fullWidth maxWidth="sm">
-			<DialogTitle>{isNew ? "Add a place for backup copies" : `Edit ${initial.name}`}</DialogTitle>
+			<DialogTitle>{isNew ? t("destinations.addTitle") : t("destinations.editTitle", { name: initial.name })}</DialogTitle>
 			<DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: "8px !important" }}>
 				{error && <Alert severity="error">{error}</Alert>}
 				{tested && (
 					<Alert severity="success">
-						Works: {tested.where}
-						{tested.freeBytes != null ? ` · ${formatBytes(tested.freeBytes)} free` : ""}
+						{tested.freeBytes != null ? t("destinations.worksFree", { where: tested.where, free: formatBytes(tested.freeBytes) }) : t("destinations.works", { where: tested.where })}
 					</Alert>
 				)}
 				<TipRow info="dest.name">
-					<TextField fullWidth size="small" label="Name" value={form.name} onChange={(e) => set({ name: e.target.value })} placeholder="e.g. NAS, or Backblaze" />
+					<TextField fullWidth size="small" label={t("common.name")} value={form.name} onChange={(e) => set({ name: e.target.value })} placeholder={t("destinations.namePlaceholder")} />
 				</TipRow>
 				{isNew && (
 					<TipRow info="dest.kind">
-						<TextField select fullWidth size="small" label="Kind" value={form.type} onChange={(e) => set({ type: e.target.value })}>
-							<MenuItem value="folder">A folder: another drive, a network share, or a cloud-sync folder</MenuItem>
-							<MenuItem value="s3">S3-compatible storage: Backblaze B2, Wasabi, R2, MinIO, Amazon S3</MenuItem>
+						<TextField select fullWidth size="small" label={t("destinations.kind")} value={form.type} onChange={(e) => set({ type: e.target.value })}>
+							<MenuItem value="folder">{t("destinations.kindFolderLong")}</MenuItem>
+							<MenuItem value="s3">{t("destinations.kindS3Long")}</MenuItem>
 						</TextField>
 					</TipRow>
 				)}
@@ -265,10 +285,10 @@ function DestinationDialog({ initial, onClose, onSaved }) {
 				{form.type === "folder" ? (
 					<TipRow info="dest.folder">
 						<Box sx={{ display: "flex", gap: 1 }}>
-							<TextField size="small" fullWidth label="Folder" value={form.folder.path} onChange={(e) => set({ folder: { path: e.target.value } })} placeholder="D:\Backups   or   \\nas\share\backups" />
+							<TextField size="small" fullWidth label={t("destinations.folder")} value={form.folder.path} onChange={(e) => set({ folder: { path: e.target.value } })} placeholder="D:\Backups   or   \\nas\share\backups" />
 							{pick && (
-								<Button size="small" onClick={async () => { const c = await pick({ title: "Folder for backup copies", defaultPath: form.folder.path || undefined }); if (c) set({ folder: { path: c } }); }}>
-									Browse
+								<Button size="small" onClick={async () => { const c = await pick({ title: t("destinations.pickTitle"), defaultPath: form.folder.path || undefined }); if (c) set({ folder: { path: c } }); }}>
+									{t("common.browse")}
 								</Button>
 							)}
 						</Box>
@@ -276,39 +296,39 @@ function DestinationDialog({ initial, onClose, onSaved }) {
 				) : (
 					<>
 						<TipRow info="dest.service">
-							<TextField select fullWidth size="small" label="Service (fills in the address)" value={preset} onChange={(e) => { const p = PRESETS.find((x) => x.id === e.target.value); setPreset(e.target.value); if (p) setS3({ endpoint: p.endpoint, region: p.region, pathStyle: true }); }}>
+							<TextField select fullWidth size="small" label={t("destinations.service")} value={preset} onChange={(e) => { const p = PRESETS.find((x) => x.id === e.target.value); setPreset(e.target.value); if (p) setS3({ endpoint: p.endpoint, region: p.region, pathStyle: true }); }}>
 								{PRESETS.map((p) => (
 									<MenuItem key={p.id} value={p.id}>
-										{p.label}
+										{p.id === "minio" ? t("destinations.presetOther") : p.label}
 									</MenuItem>
 								))}
 							</TextField>
 						</TipRow>
 						{/* Specific to the service just picked, so it can't live in the general explanation. */}
-						{presetInfo && <Typography variant="caption" sx={{ color: "text.secondary" }}>{presetInfo.help}</Typography>}
+						{presetInfo && <Typography variant="caption" sx={{ color: "text.secondary" }}>{presetHelp(presetInfo.id)}</Typography>}
 						<TipRow info="dest.s3.endpoint">
-							<TextField fullWidth size="small" label="Endpoint" value={form.s3.endpoint} onChange={(e) => setS3({ endpoint: e.target.value })} />
+							<TextField fullWidth size="small" label={t("destinations.endpoint")} value={form.s3.endpoint} onChange={(e) => setS3({ endpoint: e.target.value })} />
 						</TipRow>
 						<Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
 							<TipRow info="dest.s3.bucket">
-								<TextField size="small" fullWidth label="Bucket" value={form.s3.bucket} onChange={(e) => setS3({ bucket: e.target.value })} />
+								<TextField size="small" fullWidth label={t("destinations.bucket")} value={form.s3.bucket} onChange={(e) => setS3({ bucket: e.target.value })} />
 							</TipRow>
 							<TipRow info="dest.s3.region">
-								<TextField size="small" fullWidth label="Region" value={form.s3.region} onChange={(e) => setS3({ region: e.target.value })} />
+								<TextField size="small" fullWidth label={t("destinations.region")} value={form.s3.region} onChange={(e) => setS3({ region: e.target.value })} />
 							</TipRow>
 						</Box>
 						<TipRow info="dest.s3.prefix">
-							<TextField fullWidth size="small" label="Folder inside the bucket (optional)" value={form.s3.prefix} onChange={(e) => setS3({ prefix: e.target.value })} placeholder="godlypanel" />
+							<TextField fullWidth size="small" label={t("destinations.prefix")} value={form.s3.prefix} onChange={(e) => setS3({ prefix: e.target.value })} placeholder="godlypanel" />
 						</TipRow>
 						<TipRow info="dest.s3.accessKeyId">
-							<TextField fullWidth size="small" label="Access key ID" value={form.s3.accessKeyId} onChange={(e) => setS3({ accessKeyId: e.target.value })} autoComplete="off" />
+							<TextField fullWidth size="small" label={t("destinations.accessKeyId")} value={form.s3.accessKeyId} onChange={(e) => setS3({ accessKeyId: e.target.value })} autoComplete="off" />
 						</TipRow>
 						<TipRow info="dest.s3.secretAccessKey">
 							<TextField
 								fullWidth
 								size="small"
 								type="password"
-								label={initial.hasSecret ? "Secret access key (saved: leave blank to keep it)" : "Secret access key"}
+								label={initial.hasSecret ? t("destinations.secretSaved") : t("destinations.secret")}
 								value={form.s3.secretAccessKey}
 								onChange={(e) => setS3({ secretAccessKey: e.target.value })}
 								autoComplete="new-password"
@@ -319,28 +339,28 @@ function DestinationDialog({ initial, onClose, onSaved }) {
 
 				<Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
 					<TipRow info="dest.keepCount">
-						<TextField size="small" fullWidth type="number" label="Scheduled backups to keep here" placeholder="Same as Backups" value={form.keepCount} onChange={(e) => set({ keepCount: e.target.value })} />
+						<TextField size="small" fullWidth type="number" label={t("destinations.keepCount")} placeholder={t("destinations.sameAsBackups")} value={form.keepCount} onChange={(e) => set({ keepCount: e.target.value })} />
 					</TipRow>
 					<TipRow info="dest.keepDays">
-						<TextField size="small" fullWidth type="number" label="Delete older than (days)" placeholder="Same as Backups" value={form.keepDays} onChange={(e) => set({ keepDays: e.target.value })} />
+						<TextField size="small" fullWidth type="number" label={t("common.deleteOlderDays")} placeholder={t("destinations.sameAsBackups")} value={form.keepDays} onChange={(e) => set({ keepDays: e.target.value })} />
 					</TipRow>
 				</Box>
 				{isNew && (
 					<TipRow info="dest.includeExisting" center>
-						<FormControlLabel sx={{ ml: 0, mr: 0 }} control={<Switch checked={form.includeExisting} onChange={(e) => set({ includeExisting: e.target.checked })} />} label="Also copy the backups that already exist (otherwise only new ones)" />
+						<FormControlLabel sx={{ ml: 0, mr: 0 }} control={<Switch checked={form.includeExisting} onChange={(e) => set({ includeExisting: e.target.checked })} />} label={t("destinations.includeExisting")} />
 					</TipRow>
 				)}
 			</DialogContent>
 			<DialogActions>
 				<Button onClick={onClose} disabled={busy}>
-					Cancel
+					{t("common.cancel")}
 				</Button>
 				<Button onClick={test} disabled={busy}>
-					{busy ? "Checking…" : "Test"}
+					{busy ? t("destinations.checking") : t("destinations.test")}
 				</Button>
 				<Button variant="contained" onClick={save} disabled={busy}>
-					Save
-				</Button>
+					{t("common.save")}
+</Button>
 			</DialogActions>
 		</Dialog>
 	);

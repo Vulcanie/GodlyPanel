@@ -7,11 +7,21 @@ import { useToast } from "../ToastContext";
 import SectionCard from "./ui/SectionCard";
 import InfoTip from "./InfoTip";
 import TipRow from "./TipRow";
+import { t, useT, errorText } from "../i18n";
 
-const STATUS = { ok: ["success", "Done"], warn: ["warning", "Worth doing"], todo: ["error", "Needs doing"], info: ["default", "Note"] };
+// The colour of each checklist status. Its words are in statusText.
+const STATUS = { ok: "success", warn: "warning", todo: "error", info: "default" };
+const statusText = (status) => {
+	if (status === "ok") return t("network.statusDone");
+	if (status === "warn") return t("network.statusWorth");
+	if (status === "todo") return t("network.statusNeeds");
+	if (status === "info") return t("network.statusNote");
+	return undefined;
+};
 
 /** Can people reach this server? The checklist, the addresses to share, and Windows Firewall. */
 function NetworkPanel({ serverName, canChangeFirewall }) {
+	useT();
 	const base = `/api/server/${encodeURIComponent(serverName)}`;
 	const toast = useToast();
 	const [net, setNet] = React.useState(null);
@@ -32,7 +42,7 @@ function NetworkPanel({ serverName, canChangeFirewall }) {
 				setList(c);
 				setError(null);
 			} catch (e) {
-				if (current.current === base) setError(e.message);
+				if (current.current === base) setError(errorText(e));
 			}
 		},
 		[base],
@@ -50,16 +60,16 @@ function NetworkPanel({ serverName, canChangeFirewall }) {
 		setError(null);
 		try {
 			const r = await api.post(`${base}/network/firewall-rule`, { publicNetworks: publicToo });
-			toast(r.changed ? "Windows Firewall now lets those ports in." : (r.message ?? "Nothing to change."), r.changed ? "success" : "info");
+			toast(r.changed ? t("network.nowAllowed") : (r.message ?? t("network.nothingToChange")), r.changed ? "success" : "info");
 			await load(true);
 		} catch (e) {
-			setError(e.message);
+			setError(errorText(e));
 		} finally {
 			setBusy(false);
 		}
 	};
 
-	const copy = (text) => copyToClipboard(text, (result) => toast(result === "Copied!" ? `Copied ${text}` : "Couldn't copy. Select the address and copy it by hand.", result === "Copied!" ? "success" : "error"));
+	const copy = (text) => copyToClipboard(text, (result) => toast(result === "Copied!" ? t("network.copied", { text }) : t("network.copyFailed"), result === "Copied!" ? "success" : "error"));
 
 	if (!net || !list) return error ? <Alert severity="error">{error}</Alert> : <CircularProgress size={24} />;
 	const fw = net.firewall ?? { ports: [], readable: false };
@@ -76,14 +86,14 @@ function NetworkPanel({ serverName, canChangeFirewall }) {
 			)}
 			{busy && (
 				<Alert severity="info" sx={{ mb: 2 }}>
-					Windows will ask for permission on this PC. Approve it there.
+					{t("network.windowsAsk")}
 				</Alert>
 			)}
 
 			<SectionCard
 				title={
 					<>
-						Checklist
+						{t("network.checklist")}
 						<InfoTip id="server.network.checklist" />
 					</>
 				}
@@ -91,7 +101,7 @@ function NetworkPanel({ serverName, canChangeFirewall }) {
 			>
 				{(list.items ?? []).map((i) => (
 					<Box key={i.id} sx={{ display: "flex", gap: 1.5, alignItems: "flex-start", py: 0.6 }}>
-						<Chip size="small" color={STATUS[i.status]?.[0]} variant={i.status === "ok" ? "filled" : "outlined"} label={STATUS[i.status]?.[1] ?? i.status} sx={{ minWidth: 92 }} />
+						<Chip size="small" color={STATUS[i.status]} variant={i.status === "ok" ? "filled" : "outlined"} label={statusText(i.status) ?? i.status} sx={{ minWidth: 92 }} />
 						<Box sx={{ minWidth: 0 }}>
 							<Typography variant="body2">{i.title}</Typography>
 							{i.detail && (
@@ -107,7 +117,7 @@ function NetworkPanel({ serverName, canChangeFirewall }) {
 			<SectionCard
 				title={
 					<>
-						Joining from the same network
+						{t("network.joining")}
 						<InfoTip id="server.network.join" />
 					</>
 				}
@@ -115,7 +125,7 @@ function NetworkPanel({ serverName, canChangeFirewall }) {
 			>
 				{lan.length === 0 ? (
 					<Typography variant="body2" sx={{ color: "text.secondary" }}>
-						This PC has no network address right now.
+						{t("network.noAddress")}
 					</Typography>
 				) : (
 					lan.map((a) => (
@@ -126,8 +136,8 @@ function NetworkPanel({ serverName, canChangeFirewall }) {
 							<Typography component="span" variant="caption" sx={{ color: "text.secondary" }}>
 								({a.name})
 							</Typography>
-							<Tooltip title="Copy this address">
-								<IconButton size="small" aria-label={`Copy ${a.join}`} onClick={() => copy(a.join)}>
+							<Tooltip title={t("network.copyTip")}>
+								<IconButton size="small" aria-label={t("network.copyAria", { address: a.join })} onClick={() => copy(a.join)}>
 									<CopyIcon sx={{ fontSize: 16 }} />
 								</IconButton>
 							</Tooltip>
@@ -139,14 +149,14 @@ function NetworkPanel({ serverName, canChangeFirewall }) {
 			<SectionCard
 				title={
 					<>
-						Ports players need
+						{t("network.portsPlayers")}
 						<InfoTip id="server.network.firewall" />
 					</>
 				}
 				icon={<RouterIcon />}
 				actions={
 					<Button size="small" onClick={() => load(true)}>
-						Check again
+						{t("network.checkAgain")}
 					</Button>
 				}
 			>
@@ -164,9 +174,9 @@ function NetworkPanel({ serverName, canChangeFirewall }) {
 					<Table size="small">
 						<TableHead>
 							<TableRow>
-								<TableCell>Port</TableCell>
-								<TableCell>Used for</TableCell>
-								<TableCell>Windows Firewall</TableCell>
+								<TableCell>{t("network.colPort")}</TableCell>
+								<TableCell>{t("network.colUsed")}</TableCell>
+								<TableCell>{t("network.colFirewall")}</TableCell>
 							</TableRow>
 						</TableHead>
 						<TableBody>
@@ -176,7 +186,7 @@ function NetworkPanel({ serverName, canChangeFirewall }) {
 										{p.port}/{p.protocol}
 									</TableCell>
 									<TableCell>{p.label}</TableCell>
-									<TableCell>{p.open === null ? "Unknown" : p.open ? <Chip size="small" color="success" label={`Allowed${p.networks ? ` (${p.networks})` : ""}`} /> : <Chip size="small" color="warning" label="No rule" />}</TableCell>
+									<TableCell>{p.open === null ? t("network.unknown") : p.open ? <Chip size="small" color="success" label={p.networks ? t("network.allowedOn", { networks: p.networks }) : t("network.allowed")} /> : <Chip size="small" color="warning" label={t("network.noRule")} />}</TableCell>
 								</TableRow>
 							))}
 						</TableBody>
@@ -185,10 +195,10 @@ function NetworkPanel({ serverName, canChangeFirewall }) {
 				{fw.readable && missing.length > 0 && canChangeFirewall && (
 					<Box sx={{ mt: 2, display: "flex", gap: 2, alignItems: "center", flexWrap: "wrap" }}>
 						<Button variant="contained" disabled={busy} onClick={open}>
-							Allow these ports in Windows Firewall
+							{t("network.allowPorts")}
 						</Button>
 						<TipRow id="server.network.publicToo">
-							<FormControlLabel control={<Checkbox checked={publicToo} onChange={(e) => setPublicToo(e.target.checked)} />} label="Also on public networks (less safe)" />
+							<FormControlLabel control={<Checkbox checked={publicToo} onChange={(e) => setPublicToo(e.target.checked)} />} label={t("network.publicToo")} />
 						</TipRow>
 					</Box>
 				)}

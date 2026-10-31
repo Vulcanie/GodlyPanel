@@ -30,42 +30,56 @@ import {
 import { api } from "../api/client";
 import { onLive } from "../liveEvents";
 import { formatBytes } from "../utils/format";
-import { t, tn, useT, formatBytes as formatBytesText } from "../i18n";
+import { t, tn, useT, formatDate } from "../i18n";
 import { ratioText, formatLabel, formatName, levelName, recompressTargets, settingsBody, limitGBFromBytes, friendlyError } from "./backupSizes";
 import { useOperation, operationLabel } from "../OperationsContext";
 import { useToast } from "../ToastContext";
-import OffsiteCopies, { CopyChips } from "./OffsiteCopies";
+import OffsiteCopies, { CopyChips, kindLabel } from "./OffsiteCopies";
 import SectionCard from "./ui/SectionCard";
 import ConfirmDialog from "./ui/ConfirmDialog";
 import TipRow from "./TipRow";
 import InfoTip from "./InfoTip";
 
-const PHASES = {
-	checking: "Checking there is room…",
-	stopping: "Stopping the server…",
-	saving: "Saving the world…",
-	copying: "Copying files…",
-	verifying: "Checking the backup reads back…",
-	starting: "Starting the server again…",
-	"safety-backup": "Backing up what will be replaced…",
-	restoring: "Restoring files…",
-};
+// Each label is a literal t() call, so the translation check can see every key.
+function phaseLabel(phase) {
+	switch (phase) {
+		case "checking":
+			return t("backups.phase.checking");
+		case "stopping":
+			return t("backups.phase.stopping");
+		case "saving":
+			return t("backups.phase.saving");
+		case "copying":
+			return t("backups.phase.copying");
+		case "verifying":
+			return t("backups.phase.verifying");
+		case "starting":
+			return t("backups.phase.starting");
+		case "safety-backup":
+			return t("backups.phase.safetyBackup");
+		case "restoring":
+			return t("backups.phase.restoring");
+		default:
+			return phase;
+	}
+}
 
-const KIND_LABELS = {
-	manual: "Manual",
-	scheduled: "Scheduled",
-	"pre-restore": "Before a restore",
-	"pre-update": "Before an update",
-	unknown: "Unknown",
-};
+function modeLabel(mode) {
+	switch (mode) {
+		case "auto":
+			return t("backups.mode.auto");
+		case "stop":
+			return t("backups.mode.stop");
+		case "live":
+			return t("backups.mode.live");
+		default:
+			return mode;
+	}
+}
 
-const MODE_LABELS = {
-	auto: "Automatic (recommended)",
-	stop: "Stop the server for the copy",
-	live: "Copy while it runs",
-};
+const MODE_VALUES = ["auto", "stop", "live"];
 
-const when = (iso) => new Date(iso).toLocaleString();
+const when = (iso) => formatDate(iso);
 const native = () => (typeof window !== "undefined" ? window.godlyPanel : undefined);
 
 
@@ -143,7 +157,7 @@ function BackupsPanel({ serverName, serverStatus, canManage }) {
 		setError(null);
 		try {
 			await api.post(`${base}/backups`, mode === "default" ? {} : { mode });
-			toast("Backup started. It is listed below when it finishes.", "info");
+			toast(t("backups.started"), "info");
 		} catch (e) {
 			setError(e.message);
 		}
@@ -158,7 +172,7 @@ function BackupsPanel({ serverName, serverStatus, canManage }) {
 		setDeleteOpen(false);
 		try {
 			await api.del(`${base}/backups/${encodeURIComponent(b.id)}`);
-			toast("Backup deleted.");
+			toast(t("backups.deleted"));
 			load();
 		} catch (e) {
 			setError(e.message);
@@ -186,8 +200,8 @@ function BackupsPanel({ serverName, serverStatus, canManage }) {
 	const missing = specs.filter((s) => !s.exists);
 	// Only offered when there is something to rewrite. An older server that does not report its effective format gets no button.
 	const recompressIds = data.effectiveFormat && data.effectiveLevel ? recompressTargets(backups, data.effectiveFormat, data.effectiveLevel) : [];
-	const savedText = data.savedBytes > 0 ? t("backups.saved", { size: formatBytesText(data.savedBytes) }) : null;
-	const budgetText = data.maxTotalBytes ? t("backups.budget", { used: formatBytesText(data.totalBytes ?? 0), limit: formatBytesText(data.maxTotalBytes) }) : null;
+	const savedText = data.savedBytes > 0 ? t("backups.saved", { size: formatBytes(data.savedBytes) }) : null;
+const budgetText = data.maxTotalBytes ? t("backups.budget", { used: formatBytes(data.totalBytes ?? 0), limit: formatBytes(data.maxTotalBytes) }) : null;
 
 	return (
 		<Box>
@@ -200,28 +214,28 @@ function BackupsPanel({ serverName, serverStatus, canManage }) {
 			<SectionCard
 				title={
 					<>
-						What is backed up
-						<InfoTip id="server.backup.paths" />
+						{t("backups.whatIsBackedUp")}
+								<InfoTip id="server.backup.paths" />
 					</>
 				}
 				icon={<FolderIcon />}
 				actions={
 					canManage && (
 						<Button startIcon={<SettingsIcon />} variant="outlined" size="small" onClick={() => setShowSettings(true)}>
-							Choose folders & rules
+							{t("backups.chooseFolders")}
 						</Button>
 					)
 				}
 			>
 				{data.needsSetup ? (
 					<Typography variant="body2" sx={{ color: "warning.main" }}>
-						Nothing is set up for this game yet.{canManage ? " Choose the folders that hold its world and settings." : " Ask an administrator to choose the folders."}
+						{canManage ? t("backups.setupNeeded") : t("backups.setupNeededAsk")}
 					</Typography>
 				) : (
 					<Box>
 						{specs.map((s) => (
 							<Typography key={s.path} variant="body2" sx={{ color: s.exists ? "text.secondary" : "warning.main", wordBreak: "break-all" }}>
-								{s.exists ? "" : "(not there yet) "}
+								{s.exists ? "" : t("backups.notThereYet") + " "}
 								{s.label ? `${s.label}: ` : ""}
 								{s.path}
 							</Typography>
@@ -230,40 +244,39 @@ function BackupsPanel({ serverName, serverStatus, canManage }) {
 				)}
 				{missing.length > 0 && !data.needsSetup && (
 					<Typography variant="caption" sx={{ color: "text.secondary" }}>
-						Folders that don't exist yet are skipped.
+						{t("backups.missingSkipped")}
 					</Typography>
 				)}
 			</SectionCard>
 
-			<SectionCard title="Take a backup" icon={<HistoryIcon />}>
+			<SectionCard title={t("backups.takeBackup")} icon={<HistoryIcon />}>
 				<Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, alignItems: "center" }}>
 					<Button variant="contained" startIcon={<AddIcon />} disabled={busy || data.needsSetup} onClick={backUp}>
-						{operation === "backing up" ? "Backing up…" : "Back up now"}
+						{operation === "backing up" ? t("backups.backingUp") : t("backups.backUpNow")}
 					</Button>
 					<TipRow id="server.backup.mode" sx={{ flex: "1 1 260px", maxWidth: 420 }}>
-						<TextField select fullWidth size="small" label="While it's running" value={mode} onChange={(e) => setMode(e.target.value)}>
-							<MenuItem value="default">{`Use the server's setting (${MODE_LABELS[data.mode] ?? data.mode})`}</MenuItem>
-							<MenuItem value="stop">Stop it for the copy, then start it again</MenuItem>
-							<MenuItem value="live">Keep it running (may be inconsistent)</MenuItem>
+						<TextField select fullWidth size="small" label={t("common.whileRunning")} value={mode} onChange={(e) => setMode(e.target.value)}>
+							<MenuItem value="default">{t("backups.modeDefault", { mode: modeLabel(data.mode) })}</MenuItem>
+							<MenuItem value="stop">{t("backups.modeStopThenStart")}</MenuItem>
+							<MenuItem value="live">{t("backups.modeLiveRisky")}</MenuItem>
 						</TextField>
 					</TipRow>
 					{(phase || (busy && operation !== "backing up")) && (
-						<Chip size="small" color="info" label={phase ? PHASES[phase] ?? phase : operationLabel(operation)} icon={<CircularProgress size={12} />} />
+						<Chip size="small" color="info" label={phase ? phaseLabel(phase) : operationLabel(operation)} icon={<CircularProgress size={12} />} />
 					)}
 				</Box>
 				{data.effectiveMode === "stop" && running && (
 					<Typography variant="caption" sx={{ display: "block", mt: 1, color: "warning.main" }}>
-						This game can't be saved on command, so a backup stops the server for a minute and starts it again.
+						{t("backups.stopsForBackup")}
 					</Typography>
 				)}
 				<Typography variant="caption" sx={{ display: "block", mt: 1, color: "text.secondary", wordBreak: "break-all" }}>
-					Stored in {data.directory}
-					{data.freeBytes != null ? ` · ${formatBytes(data.freeBytes)} free on that drive` : ""}
+					{data.freeBytes != null ? t("backups.storedInFree", { directory: data.directory, free: formatBytes(data.freeBytes) }) : t("backups.storedIn", { directory: data.directory })}
 				</Typography>
 			</SectionCard>
 
 			<SectionCard
-				title={`Backups (${backups.length})${data.totalBytes ? ` · ${formatBytes(data.totalBytes)}` : ""}`}
+				title={data.totalBytes ? t("backups.titleWithSize", { count: backups.length, size: formatBytes(data.totalBytes) }) : t("backups.title", { count: backups.length })}
 				subtitle={[savedText, budgetText].filter(Boolean).join(" · ") || undefined}
 				contentSx={{ p: 0 }}
 				actions={
@@ -275,7 +288,7 @@ function BackupsPanel({ serverName, serverStatus, canManage }) {
 						)}
 						{native()?.openFolder && (
 							<Button size="small" startIcon={<FolderOpenIcon />} onClick={() => native().openFolder(data.directory)}>
-								Open folder
+								{t("backups.openFolder")}
 							</Button>
 						)}
 					</>
@@ -283,7 +296,7 @@ function BackupsPanel({ serverName, serverStatus, canManage }) {
 			>
 				{backups.length === 0 ? (
 					<Typography variant="body2" sx={{ p: 2.5, color: "text.secondary" }}>
-						No backups yet.
+						{t("backups.none")}
 					</Typography>
 				) : (
 					backups.map((b, i) => (
@@ -295,21 +308,21 @@ function BackupsPanel({ serverName, serverStatus, canManage }) {
 										{formatBytes(b.sizeBytes)}
 										{ratioText(b) ? ` · ${ratioText(b)}` : ""}
 										{b.reason ? ` · ${b.reason}` : ""}
-										{b.consistent === false ? " · copied while running" : ""}
+										{b.consistent === false ? ` · ${t("backups.copiedWhileRunning")}` : ""}
 									</Typography>
 									{formatLabel(b) && <Chip size="small" variant="outlined" label={formatLabel(b)} />}
 								</Box>
 							</Box>
 							<CopyChips copies={data.replication?.[b.id]} />
-							<Chip size="small" label={KIND_LABELS[b.kind] ?? b.kind} color={b.kind === "manual" ? "primary" : "default"} variant={b.kind === "manual" ? "filled" : "outlined"} />
+							<Chip size="small" label={kindLabel(b.kind)} color={b.kind === "manual" ? "primary" : "default"} variant={b.kind === "manual" ? "filled" : "outlined"} />
 							{canManage && (
 								<>
 									<Button size="small" variant="outlined" color="warning" startIcon={<RestoreIcon />} disabled={busy} onClick={() => setRestoreTarget(b)}>
-										{running ? "Restart and use this backup" : "Use this backup"}
+										{running ? t("backups.restartAndUse") : t("backups.useThis")}
 									</Button>
-									<Tooltip title="Delete this backup">
+									<Tooltip title={t("backups.deleteThis")}>
 										<span>
-											<IconButton size="small" aria-label="Delete this backup" disabled={busy} onClick={() => askDelete(b)}>
+											<IconButton size="small" aria-label={t("backups.deleteThis")} disabled={busy} onClick={() => askDelete(b)}>
 												<DeleteIcon fontSize="small" />
 											</IconButton>
 										</span>
@@ -325,13 +338,13 @@ function BackupsPanel({ serverName, serverStatus, canManage }) {
 
 			<ConfirmDialog
 				open={deleteOpen && Boolean(deleteTarget)}
-				title="Delete this backup?"
-				confirmLabel="Delete it"
+				title={t("backups.deleteTitle")}
+				confirmLabel={t("common.deleteIt")}
 				color="error"
 				onConfirm={() => remove(deleteTarget)}
 				onClose={() => setDeleteOpen(false)}
 			>
-				{deleteTarget && `The backup from ${when(deleteTarget.createdAt)} is deleted. This can't be undone.`}
+				{deleteTarget && t("backups.deleteBody", { date: when(deleteTarget.createdAt) })}
 			</ConfirmDialog>
 
 			<ConfirmDialog
@@ -355,7 +368,7 @@ function BackupsPanel({ serverName, serverStatus, canManage }) {
 					sharedFolders={specs.filter((s) => s.shared).map((s) => s.path)}
 					onClose={() => setRestoreTarget(null)}
 					onError={setError}
-					onStarted={(restart) => toast(restart ? "Restoring. The server is being stopped, the backup put back, and the server started again; this page says when it is done." : "Restoring. This page says when it is done.", "info")}
+					onStarted={(restart) => toast(restart ? t("backups.restoringRestart") : t("backups.restoringDone"), "info")}
 				/>
 			)}
 			{showSettings && <BackupSettingsDialog base={base} data={data} onClose={() => setShowSettings(false)} onSaved={(next) => setData(next)} />}
@@ -364,6 +377,7 @@ function BackupsPanel({ serverName, serverStatus, canManage }) {
 }
 
 function RestoreDialog({ serverName, base, backup, running, players = 0, sharedFolders = [], onClose, onError, onStarted }) {
+	useT();
 	const [confirmName, setConfirmName] = React.useState("");
 	const [allowShared, setAllowShared] = React.useState(false);
 	const [safety, setSafety] = React.useState(true);
@@ -390,25 +404,24 @@ function RestoreDialog({ serverName, base, backup, running, players = 0, sharedF
 
 	return (
 		<Dialog open onClose={busy ? undefined : onClose} fullWidth maxWidth="sm">
-			<DialogTitle>{running ? `Restart ${serverName} and use this backup?` : `Use this backup for ${serverName}?`}</DialogTitle>
+			<DialogTitle>{running ? t("backups.restartUseTitle", { name: serverName }) : t("backups.useForTitle", { name: serverName })}</DialogTitle>
 			<DialogContent>
 				<Alert severity="warning" sx={{ mb: 2 }}>
-					<strong>This erases everything newer than this backup.</strong> The server goes back to how it was on <strong>{when(backup.createdAt)}</strong>: anything done in the game since then (
-					{labels.length > 0 ? labels.join(", ").toLowerCase() : "the world and settings"}) is replaced.
+					<strong>{t("backups.erases")}</strong> {t("backups.goesBack", { date: when(backup.createdAt), changes: labels.length > 0 ? labels.join(", ").toLowerCase() : t("backups.theWorldAndSettings") })}
 				</Alert>
 				<DialogContentText sx={{ mb: 1 }}>
-					{running ? "The panel will stop the server, put this backup back, and start it again." : "The server is stopped. The panel will put this backup back."}
-					{running && players > 0 ? ` ${players} player${players === 1 ? " is" : "s are"} on it now and will be disconnected.` : ""}
+					{running ? t("backups.willStopRestart") : t("backups.willPutBack")}
+					{running && players > 0 ? ` ${tn("backups.playersOn", players)}` : ""}
 				</DialogContentText>
 				{backup.consistent === false && (
 					<Alert severity="info" sx={{ mb: 1 }}>
-						This backup was copied while the game was running, so it may be a few seconds behind and, rarely, not load. If it doesn't, use an older one.
+						{t("backups.copiedRunningWarn")}
 					</Alert>
 				)}
 				{!running && (
 					<Box>
 						<TipRow id="server.backup.restore.start">
-							<FormControlLabel control={<Checkbox checked={startAfter} onChange={(e) => setStartAfter(e.target.checked)} />} label="Start the server afterwards" />
+							<FormControlLabel control={<Checkbox checked={startAfter} onChange={(e) => setStartAfter(e.target.checked)} />} label={t("backups.startAfter")} />
 						</TipRow>
 					</Box>
 				)}
@@ -416,30 +429,30 @@ function RestoreDialog({ serverName, base, backup, running, players = 0, sharedF
 					<TipRow id="server.backup.restore.safety">
 						<FormControlLabel
 							control={<Checkbox checked={safety} onChange={(e) => setSafety(e.target.checked)} />}
-							label="Keep a safety backup of what's there now, so this can be undone (recommended)"
+							label={t("backups.keepSafety")}
 						/>
 					</TipRow>
 				</Box>
 				{sharedFolders.length > 0 && (
 					<Alert severity="warning" sx={{ mt: 2 }}>
-						This server keeps its world in a folder every such server on this PC shares ({sharedFolders.join(", ")}). Restoring replaces <strong>their</strong> worlds too.
+						{t("backups.sharedFolder", { folders: sharedFolders.join(", ") })}
 						<Box>
 							<TipRow id="server.backup.restore.shared">
-								<FormControlLabel control={<Checkbox checked={allowShared} onChange={(e) => setAllowShared(e.target.checked)} />} label="I understand, restore over the shared folder" />
+								<FormControlLabel control={<Checkbox checked={allowShared} onChange={(e) => setAllowShared(e.target.checked)} />} label={t("backups.understandShared")} />
 							</TipRow>
 						</Box>
 					</Alert>
 				)}
 				{needsName && (
-					<TextField fullWidth size="small" sx={{ mt: 2 }} label={`Without a safety backup, type ${serverName} to confirm`} value={confirmName} onChange={(e) => setConfirmName(e.target.value)} />
+					<TextField fullWidth size="small" sx={{ mt: 2 }} label={t("backups.typeToConfirm", { name: serverName })} value={confirmName} onChange={(e) => setConfirmName(e.target.value)} />
 				)}
 			</DialogContent>
 			<DialogActions>
 				<Button onClick={onClose} disabled={busy}>
-					Cancel
-				</Button>
-				<Button color="warning" variant="contained" disabled={busy || (needsName && confirmName !== serverName) || (sharedFolders.length > 0 && !allowShared)} onClick={go}>
-					{running ? "Restart and use this backup" : restart ? "Use it and start the server" : "Use this backup"}
+					{t("common.cancel")}
+					</Button>
+					<Button color="warning" variant="contained" disabled={busy || (needsName && confirmName !== serverName) || (sharedFolders.length > 0 && !allowShared)} onClick={go}>
+					{running ? t("backups.restartAndUse") : restart ? t("backups.useAndStart") : t("backups.useThis")}
 				</Button>
 			</DialogActions>
 		</Dialog>
@@ -467,7 +480,7 @@ function BackupSettingsDialog({ base, data, onClose, onSaved }) {
 	const [busy, setBusy] = React.useState(false);
 
 	const browse = async (index) => {
-		const chosen = await native()?.pickFolder?.({ title: "Choose a folder to back up", defaultPath: rows[index]?.path });
+		const chosen = await native()?.pickFolder?.({ title: t("backups.pickTitle"), defaultPath: rows[index]?.path });
 		if (chosen) setRows((r) => r.map((row, i) => (i === index ? { ...row, path: chosen } : row)));
 	};
 
@@ -498,7 +511,7 @@ function BackupSettingsDialog({ base, data, onClose, onSaved }) {
 
 	return (
 		<Dialog open onClose={busy ? undefined : onClose} fullWidth maxWidth="md">
-			<DialogTitle>Backup folders & rules</DialogTitle>
+			<DialogTitle>{t("backups.settingsTitle")}</DialogTitle>
 			<DialogContent>
 				{error && (
 					<Alert severity="error" sx={{ mb: 2 }}>
@@ -507,11 +520,11 @@ function BackupSettingsDialog({ base, data, onClose, onSaved }) {
 				)}
 				{data.source !== "none" || custom ? (
 					<TipRow id="server.backup.paths">
-						<FormControlLabel control={<Checkbox checked={useDefault} onChange={(e) => setUseDefault(e.target.checked)} />} label="Use this game's usual save folders" />
+						<FormControlLabel control={<Checkbox checked={useDefault} onChange={(e) => setUseDefault(e.target.checked)} />} label={t("backups.useUsual")} />
 					</TipRow>
 				) : (
 					<Typography variant="body2" sx={{ mb: 1, color: "text.secondary" }}>
-						The panel doesn't know where this game keeps its saves, so choose the folders.
+						{t("backups.unknownSaves")}
 						<InfoTip id="server.backup.paths" />
 					</Typography>
 				)}
@@ -520,39 +533,39 @@ function BackupSettingsDialog({ base, data, onClose, onSaved }) {
 					<Box sx={{ mt: 1 }}>
 						{rows.map((row, i) => (
 							<Box key={i} sx={{ display: "flex", gap: 1, mb: 1, flexWrap: "wrap", alignItems: "center" }}>
-								<TextField size="small" label="Folder or file" value={row.path} onChange={(e) => setRows((r) => r.map((x, j) => (j === i ? { ...x, path: e.target.value } : x)))} sx={{ flex: "3 1 220px" }} />
-								<TextField size="small" label="Label (optional)" value={row.label} onChange={(e) => setRows((r) => r.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))} sx={{ flex: "1 1 140px" }} />
+								<TextField size="small" label={t("backups.folderOrFile")} value={row.path} onChange={(e) => setRows((r) => r.map((x, j) => (j === i ? { ...x, path: e.target.value } : x)))} sx={{ flex: "3 1 220px" }} />
+								<TextField size="small" label={t("backups.labelOptional")} value={row.label} onChange={(e) => setRows((r) => r.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))} sx={{ flex: "1 1 140px" }} />
 								{native()?.pickFolder && (
 									<Button size="small" onClick={() => browse(i)}>
-										Browse
+										{t("common.browse")}
 									</Button>
 								)}
-								<IconButton size="small" aria-label="Remove this folder" onClick={() => setRows((r) => r.filter((_, j) => j !== i))}>
+								<IconButton size="small" aria-label={t("backups.removeFolder")} onClick={() => setRows((r) => r.filter((_, j) => j !== i))}>
 									<DeleteIcon fontSize="small" />
 								</IconButton>
 							</Box>
 						))}
 						<Button size="small" startIcon={<AddIcon />} onClick={() => setRows((r) => [...r, { path: "", label: "" }])}>
-							Add a folder
+							{t("backups.addFolder")}
 						</Button>
 					</Box>
 				)}
 
 				<Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mt: 3 }}>
 					<TipRow id="server.backup.mode" sx={{ flex: "1 1 260px", maxWidth: 360 }}>
-						<TextField select fullWidth size="small" label="While the server is running" value={mode} onChange={(e) => setMode(e.target.value)}>
-							{Object.entries(MODE_LABELS).map(([value, label]) => (
+						<TextField select fullWidth size="small" label={t("backups.whileServerRunning")} value={mode} onChange={(e) => setMode(e.target.value)}>
+							{MODE_VALUES.map((value) => (
 								<MenuItem key={value} value={value}>
-									{label}
+									{modeLabel(value)}
 								</MenuItem>
 							))}
 						</TextField>
 					</TipRow>
 					<TipRow id="server.backup.keepCount" sx={{ flex: "1 1 200px", maxWidth: 260 }}>
-						<TextField fullWidth size="small" type="number" label="Scheduled backups to keep" value={keepCount} placeholder="panel default" onChange={(e) => setKeepCount(e.target.value)} />
+						<TextField fullWidth size="small" type="number" label={t("backups.keepCountLabel")} value={keepCount} placeholder={t("backups.panelDefault")} onChange={(e) => setKeepCount(e.target.value)} />
 					</TipRow>
 					<TipRow id="server.backup.keepDays" sx={{ flex: "1 1 200px", maxWidth: 260 }}>
-						<TextField fullWidth size="small" type="number" label="Delete older than (days)" value={keepDays} placeholder="panel default" onChange={(e) => setKeepDays(e.target.value)} />
+						<TextField fullWidth size="small" type="number" label={t("common.deleteOlderDays")} value={keepDays} placeholder={t("backups.panelDefault")} onChange={(e) => setKeepDays(e.target.value)} />
 					</TipRow>
 				</Box>
 				<Box sx={{ mt: 3 }}>
@@ -599,12 +612,12 @@ function BackupSettingsDialog({ base, data, onClose, onSaved }) {
 			</DialogContent>
 			<DialogActions>
 				<Button onClick={onClose} disabled={busy}>
-					Cancel
-				</Button>
-				<Button variant="contained" onClick={save} disabled={busy}>
-					Save
-				</Button>
-			</DialogActions>
+					{t("common.cancel")}
+					</Button>
+					<Button variant="contained" onClick={save} disabled={busy}>
+					{t("common.save")}
+					</Button>
+				</DialogActions>
 		</Dialog>
 	);
 }

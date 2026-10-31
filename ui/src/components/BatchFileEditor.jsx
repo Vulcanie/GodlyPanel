@@ -7,6 +7,7 @@ import EmptyState from "./ui/EmptyState";
 import { flatWhenDisabled } from "./cardStyles";
 import { useToast } from "../ToastContext";
 import { api } from "../api/client";
+import { t, tn, useT, formatNumber, errorText } from "../i18n";
 
 // Both the text area and the line numbers beside it use these, so every number sits level with its line.
 const LINE_HEIGHT = 22;
@@ -17,6 +18,7 @@ const PAD = 12;
  * LF only, so the original line ending is remembered and put back on save (a script with bare LF can misbehave in cmd.exe).
  */
 export default function BatchFileEditor({ serverName, onBack }) {
+	useT();
 	const toast = useToast();
 	const [content, setContent] = React.useState("");
 	const [original, setOriginal] = React.useState("");
@@ -50,7 +52,7 @@ export default function BatchFileEditor({ serverName, onBack }) {
 					} catch {
 						// Not JSON: the general line will do.
 					}
-					throw new Error(reason || "Failed to load the launch script.");
+					throw new Error(reason || t("batch.loadFailed"));
 				}
 				return res.text();
 			})
@@ -63,7 +65,7 @@ export default function BatchFileEditor({ serverName, onBack }) {
 			})
 			.catch((err) => {
 				if (!alive) return;
-				setError(err.message);
+				setError(errorText(err));
 				setLoadFailed(true);
 				setContent("");
 				setOriginal("");
@@ -83,10 +85,10 @@ export default function BatchFileEditor({ serverName, onBack }) {
 		try {
 			await api.post(`/api/batch-files/by-server/${encodeURIComponent(serverName)}`, { content: content.replace(/\n/g, eol.current) });
 			setOriginal(content);
-			toast("Launch script saved. It takes effect the next time the server starts.");
+			toast(t("batch.savedToast"));
 		} catch (err) {
-			setError(err.message);
-			toast(err.message, "error");
+			setError(errorText(err));
+			toast(errorText(err), "error");
 		} finally {
 			setSaving(false);
 		}
@@ -136,8 +138,8 @@ export default function BatchFileEditor({ serverName, onBack }) {
 
 	if (!serverName) {
 		return (
-			<EmptyState icon={<ScriptIcon />} title="No server selected" action={<Button variant="outlined" onClick={onBack}>Back to Dashboard</Button>}>
-				Open a server first, then choose its launch script.
+			<EmptyState icon={<ScriptIcon />} title={t("batch.noServer")} action={<Button variant="outlined" onClick={onBack}>{t("common.backToDashboard")}</Button>}>
+				{t("batch.noServerBody")}
 			</EmptyState>
 		);
 	}
@@ -146,15 +148,15 @@ export default function BatchFileEditor({ serverName, onBack }) {
 		<Box>
 			<Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap", mb: 2 }}>
 				<Button size="small" startIcon={<ArrowBackIcon />} onClick={goBack}>
-					Back to Config
+					{t("batch.backToConfig")}
 				</Button>
 				<Typography variant="h5" component="h1" sx={{ flex: { xs: "1 1 100%", sm: 1 }, minWidth: 0, overflowWrap: "anywhere", order: { xs: 2, sm: 0 } }}>
-					Editing Batch File for: {serverName}
+					{t("batch.editingFor", { name: serverName })}
 				</Typography>
 			</Box>
 
 			<Alert severity="warning" sx={{ mb: 2 }}>
-				This is the raw start script the panel runs to launch the server. A typo here can stop it from starting, and your changes take effect the next time it starts. Most settings are safer to change on the server's Settings tab.
+				{t("batch.warning")}
 			</Alert>
 
 			{error && (
@@ -180,19 +182,19 @@ export default function BatchFileEditor({ serverName, onBack }) {
 					<Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap", px: 1.5, py: 1, borderBottom: 1, borderColor: "divider", bgcolor: (t) => t.custom.hover }}>
 						<ScriptIcon fontSize="small" sx={{ color: "text.secondary" }} />
 						<Typography variant="body2" sx={{ fontFamily: (t) => t.custom.mono, fontWeight: 600 }}>
-							Start script
+							{t("server.startScript")}
 						</Typography>
-						{dirty ? <Chip size="small" color="warning" label="Unsaved changes" /> : <Chip size="small" variant="outlined" label="Saved" />}
+						{dirty ? <Chip size="small" color="warning" label={t("batch.unsaved")} /> : <Chip size="small" variant="outlined" label={t("batch.savedChip")} />}
 						<Box sx={{ flex: 1 }} />
 						{dirty && (
 							<Button size="small" startIcon={<RevertIcon />} onClick={() => setContent(original)} disabled={saving}>
-								Revert
+								{t("batch.revert")}
 							</Button>
 						)}
 						<Tooltip title="Ctrl+S">
 							<span>
 								<Button size="small" variant="contained" startIcon={<SaveIcon />} onClick={save} disabled={!dirty || saving} sx={flatWhenDisabled}>
-									{saving ? "Saving..." : "Save Changes"}
+									{saving ? t("batch.saving") : t("batch.saveChanges")}
 								</Button>
 							</span>
 						</Tooltip>
@@ -236,7 +238,7 @@ export default function BatchFileEditor({ serverName, onBack }) {
 							autoCapitalize="off"
 							autoCorrect="off"
 							wrap="off"
-							aria-label={`Start script for ${serverName}`}
+							aria-label={t("batch.ariaFor", { name: serverName })}
 							sx={{
 								flex: 1,
 								minWidth: 0,
@@ -261,11 +263,11 @@ export default function BatchFileEditor({ serverName, onBack }) {
 
 					<Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", px: 1.5, py: 0.75, borderTop: 1, borderColor: "divider", bgcolor: (t) => t.custom.hover, color: "text.secondary" }}>
 						<Typography variant="caption" sx={{ fontFamily: (t) => t.custom.mono }}>
-							{lines.toLocaleString()} {lines === 1 ? "line" : "lines"} · {content.length.toLocaleString()} characters
+							{t("batch.stats", { lines: tn("batch.lines", lines, { count: formatNumber(lines) }), chars: formatNumber(content.length) })}
 						</Typography>
 						<Box sx={{ flex: 1 }} />
 						<Typography variant="caption" sx={{ fontFamily: (t) => t.custom.mono }}>
-							Ln {caret.line}, Col {caret.col}
+							{t("batch.caret", { line: caret.line, col: caret.col })}
 						</Typography>
 					</Box>
 				</Box>
@@ -273,15 +275,15 @@ export default function BatchFileEditor({ serverName, onBack }) {
 
 			<ConfirmDialog
 				open={leaving}
-				title="Leave without saving?"
-				confirmLabel="Leave and discard"
+				title={t("batch.leaveTitle")}
+				confirmLabel={t("batch.leaveConfirm")}
 				onClose={() => setLeaving(false)}
 				onConfirm={() => {
 					setLeaving(false);
 					onBack();
 				}}
 			>
-				You have changes to the launch script that are not saved. They will be lost.
+				{t("batch.leaveBody")}
 			</ConfirmDialog>
 		</Box>
 	);

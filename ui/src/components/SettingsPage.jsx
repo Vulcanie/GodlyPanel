@@ -49,47 +49,57 @@ import EmptyState from "./ui/EmptyState";
 import { useToast } from "../ToastContext";
 import { findHelp } from "../help/helpIndex";
 import { formatBytes } from "../utils/format";
+import { t, tn, useT, errorText } from "../i18n";
 
 // The form is generated from the schema the server sends, so it can't drift out of step with what's actually
 // honoured: adding a setting on the server makes it appear here with its own label, limits and restart behaviour.
 // Every setting's explanation is the (i) beside it (src/help/panelHelp.js), never text printed under the box.
 
-/** The groups on the left. Each lists its sections one under the other, so nothing is folded away. */
-const CATEGORIES = [
-	{ id: "general", label: "General", hint: "Access, startup, updates", icon: <GeneralIcon fontSize="small" /> },
-	{ id: "servers", label: "Servers", hint: "Folders, ports, recovery, storage", icon: <ServersIcon fontSize="small" /> },
-	{ id: "backups", label: "Backups", hint: "How many to keep, and off-site copies", icon: <BackupIcon fontSize="small" /> },
-	{ id: "notifications", label: "Notifications & Discord", hint: "Alerts, email, Discord", icon: <NotificationsIcon fontSize="small" /> },
-	{ id: "community", label: "Community & remote access", hint: "Other devices, friends, guests", icon: <CommunityIcon fontSize="small" /> },
-	{ id: "appearance", label: "Appearance", hint: "Artwork for your servers", icon: <AppearanceIcon fontSize="small" /> },
-];
+/** The groups on the left, in the order they are shown. Each lists its sections one under the other, so nothing is folded away. */
+const CATEGORY_IDS = ["general", "servers", "backups", "notifications", "community", "appearance"];
+
+/** The groups with their words in the panel's language. Built when the page renders, so a language change shows at once. */
+function categories() {
+	return [
+		{ id: "general", label: t("settings.category.general"), hint: t("settings.category.generalHint"), icon: <GeneralIcon fontSize="small" /> },
+		{ id: "servers", label: t("settings.category.servers"), hint: t("settings.category.serversHint"), icon: <ServersIcon fontSize="small" /> },
+		{ id: "backups", label: t("settings.category.backups"), hint: t("settings.category.backupsHint"), icon: <BackupIcon fontSize="small" /> },
+		{ id: "notifications", label: t("settings.category.notifications"), hint: t("settings.category.notificationsHint"), icon: <NotificationsIcon fontSize="small" /> },
+		{ id: "community", label: t("settings.category.community"), hint: t("settings.category.communityHint"), icon: <CommunityIcon fontSize="small" /> },
+		{ id: "appearance", label: t("common.appearance"), hint: t("settings.category.appearanceHint"), icon: <AppearanceIcon fontSize="small" /> },
+	];
+}
 
 const CATEGORY_KEY = "gp.settingsCategory";
 
 const readCategory = () => {
 	try {
 		const saved = localStorage.getItem(CATEGORY_KEY);
-		return CATEGORIES.some((c) => c.id === saved) ? saved : CATEGORIES[0].id;
+		return CATEGORY_IDS.includes(saved) ? saved : CATEGORY_IDS[0];
 	} catch {
-		return CATEGORIES[0].id;
+		return CATEGORY_IDS[0];
 	}
 };
 
 // Keys, tokens and webhook addresses. They are stored apart from the rest of the settings (so a settings file is safe to
 // share), and each one sits in the section of the feature it belongs to.
-const SECRET_LABELS = {
-	discordWebhookUrl: "Discord status webhook",
-	discordBotToken: "Discord bot token",
-	discordUpdateWebhookUrl: "Discord update webhook",
-	curseForgeApiKey: "CurseForge API key",
-	fixedRconPassword: "Fixed RCON password",
-	alertWebhookUrl: "Alert webhook (Discord, Slack, ...)",
-	auditWebhookUrl: "Audit webhook (every sign-in and change, for a private Discord channel)",
-	smtpPassword: "Mail account password",
-};
-const secretField = (key) => ({ key, label: SECRET_LABELS[key] });
+function secretLabel(key) {
+	const labels = {
+		discordWebhookUrl: t("settings.secret.discordWebhookUrl"),
+		discordBotToken: t("settings.secret.discordBotToken"),
+		discordUpdateWebhookUrl: t("settings.secret.discordUpdateWebhookUrl"),
+		curseForgeApiKey: t("settings.secret.curseForgeApiKey"),
+		fixedRconPassword: t("settings.secret.fixedRconPassword"),
+		alertWebhookUrl: t("settings.secret.alertWebhookUrl"),
+		auditWebhookUrl: t("settings.secret.auditWebhookUrl"),
+		smtpPassword: t("settings.secret.smtpPassword"),
+	};
+	return labels[key];
+}
+const secretField = (key) => ({ key, label: secretLabel(key) });
 
-// Words people might search for that a section's name doesn't contain.
+// Words people might search for that a section's name doesn't contain. These are matched against what is typed, so they stay
+// in English with the rest of the search index.
 const WORDS = {
 	access: "web port address lan network access listen computer allow vpn tailscale cidr host name dns public ip",
 	startup: "windows boot login tray autostart delay hidden",
@@ -124,32 +134,32 @@ const WORDS = {
 function buildSectionDefs({ data, storage, installingSteam, installSteamCmd, rescan }) {
 	return [
 		{
-			id: "access", category: "general", title: "Access", hint: "The panel's port, and who can reach it", words: WORDS.access,
+			id: "access", category: "general", title: t("settings.sec.access.title"), hint: t("settings.sec.access.hint"), words: WORDS.access,
 			prefixes: ["http.", "network."],
 		},
 		{
-			id: "startup", category: "general", title: "Starting with Windows", hint: "Starting the panel and your servers when you sign in", words: WORDS.startup,
+			id: "startup", category: "general", title: t("settings.sec.startup.title"), hint: t("settings.sec.startup.hint"), words: WORDS.startup,
 			prefixes: ["startup."],
 		},
 		{
-			id: "updates", category: "general", title: "Panel updates", hint: "Your version, and checking for new ones", words: WORDS.updates,
-			prefixes: ["updates."], cardTitle: "Update checks",
+			id: "updates", category: "general", title: t("settings.sec.updates.title"), hint: t("settings.sec.updates.hint"), words: WORDS.updates,
+			prefixes: ["updates."], cardTitle: t("settings.cardTitle.updates"),
 			lead: () => <PanelUpdateCard />,
 		},
 		{
-			id: "steamcmd", category: "general", title: "SteamCMD", hint: data.steamCmdInstalled ? "Installed" : "Not installed yet", words: WORDS.steamcmd,
+			id: "steamcmd", category: "general", title: "SteamCMD", hint: data.steamCmdInstalled ? t("common.installed") : t("settings.sec.steamcmd.notYet"), words: WORDS.steamcmd,
 			card: () => (
 				<SectionCard
 					title={<TitleWithTip text="SteamCMD" info="card.steamcmd" />}
-					actions={<Chip size="small" color={data.steamCmdInstalled ? "success" : "warning"} label={data.steamCmdInstalled ? "Installed" : "Not installed"} />}
+					actions={<Chip size="small" color={data.steamCmdInstalled ? "success" : "warning"} label={data.steamCmdInstalled ? t("common.installed") : t("common.notInstalled")} />}
 				>
 					<Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
 						<Typography variant="body2" sx={{ color: "text.secondary", flex: "1 1 260px", minWidth: 0, overflowWrap: "anywhere" }}>
-							{data.steamCmdInstalled ? `Using ${data.resolved.paths.steamCmdPath}` : "Not installed yet. Download it from Valve once, or point the SteamCMD location (Servers, Folders) at a copy you already have."}
+							{data.steamCmdInstalled ? t("settings.steamcmdUsing", { path: data.resolved.paths.steamCmdPath }) : t("settings.steamcmdNotYet")}
 						</Typography>
 						{!data.steamCmdInstalled && (
 							<Button size="small" variant="outlined" disabled={installingSteam} onClick={installSteamCmd}>
-								{installingSteam ? "Downloading — about a minute..." : "Download SteamCMD"}
+								{installingSteam ? t("settings.downloading") : t("settings.downloadSteamCmd")}
 							</Button>
 						)}
 					</Box>
@@ -158,51 +168,51 @@ function buildSectionDefs({ data, storage, installingSteam, installSteamCmd, res
 		},
 
 		{
-			id: "folders", category: "servers", title: "Folders", hint: "Where servers, SteamCMD and tools live, and where each server is now", words: WORDS.folders,
+			id: "folders", category: "servers", title: t("settings.sec.folders.title"), hint: t("settings.sec.folders.hint"), words: WORDS.folders,
 			prefixes: ["paths."],
 			extra: () => <ServerLocations />,
 		},
 		{
-			id: "new-servers", category: "servers", title: "New servers", hint: "Defaults for servers you create from now on", words: WORDS.newServers,
+			id: "new-servers", category: "servers", title: t("settings.sec.newServers.title"), hint: t("settings.sec.newServers.hint"), words: WORDS.newServers,
 			prefixes: ["servers."], secrets: ["fixedRconPassword", "curseForgeApiKey"],
 		},
 		{
-			id: "ports", category: "servers", title: "Ports for new servers", hint: "How new servers get their ports", words: WORDS.ports,
+			id: "ports", category: "servers", title: t("settings.sec.ports.title"), hint: t("settings.sec.ports.hint"), words: WORDS.ports,
 			prefixes: ["portAllocation."],
 			extra: () => <ServerPortListButton />,
 		},
 		{
-			id: "recovery", category: "servers", title: "Crash recovery", hint: "When a crashed server is restarted", words: WORDS.recovery,
+			id: "recovery", category: "servers", title: t("settings.sec.recovery.title"), hint: t("settings.sec.recovery.hint"), words: WORDS.recovery,
 			prefixes: ["recovery."],
 		},
 		{
-			id: "polling", category: "servers", title: "Refresh rates", hint: "How often the panel checks things", words: WORDS.polling,
+			id: "polling", category: "servers", title: t("settings.sec.polling.title"), hint: t("settings.sec.polling.hint"), words: WORDS.polling,
 			prefixes: ["polling."],
 		},
 		{
-			id: "metrics", category: "servers", title: "Charts and history", hint: "The history behind each server's charts", words: WORDS.metrics,
+			id: "metrics", category: "servers", title: t("settings.sec.metrics.title"), hint: t("settings.sec.metrics.hint"), words: WORDS.metrics,
 			prefixes: ["metrics."],
 		},
 		{
-			id: "storage", category: "servers", title: "Storage", hint: "How much disk your servers use, and a limit", words: WORDS.storage,
-			prefixes: ["storage."], cardTitle: "Storage limit",
+			id: "storage", category: "servers", title: t("settings.sec.storage.title"), hint: t("settings.sec.storage.hint"), words: WORDS.storage,
+			prefixes: ["storage."], cardTitle: t("settings.cardTitle.storage"),
 			lead: storage
 				? () => (
 						<SectionCard
-							title={<TitleWithTip text="Storage use" info="card.storage" />}
+							title={<TitleWithTip text={t("settings.storageUse")} info="card.storage" />}
 							actions={
 								<>
-									{storage.stale && <Chip size="small" label="Recalculating" />}
+									{storage.stale && <Chip size="small" label={t("settings.recalculating")} />}
 									<Button size="small" onClick={rescan}>
-										Recalculate
+										{t("settings.recalculate")}
 									</Button>
 								</>
 							}
 						>
 							<Typography variant="body2" sx={{ color: "text.secondary" }}>
-								{formatBytes(storage.totals.bytes)} across {storage.roots.length} folder{storage.roots.length === 1 ? "" : "s"}
-								{storage.quotaBytes > 0 && ` of a ${formatBytes(storage.quotaBytes)} limit`}
-								{storage.volumes?.[0] && ` · ${formatBytes(storage.volumes[0].freeBytes)} free on ${storage.volumes[0].root}`}
+								{formatBytes(storage.totals.bytes)} {tn("settings.acrossFolders", storage.roots.length)}
+								{storage.quotaBytes > 0 && ` ${t("settings.ofLimit", { size: formatBytes(storage.quotaBytes) })}`}
+								{storage.volumes?.[0] && ` ${t("settings.freeOn", { size: formatBytes(storage.volumes[0].freeBytes), root: storage.volumes[0].root })}`}
 							</Typography>
 							{storage.quotaBytes > 0 && <LinearProgress variant="determinate" value={Math.min(100, (storage.usedRatio ?? 0) * 100)} sx={{ mt: 1.5, height: 6 }} />}
 						</SectionCard>
@@ -211,50 +221,50 @@ function buildSectionDefs({ data, storage, installingSteam, installSteamCmd, res
 		},
 
 		{
-			id: "backups", category: "backups", title: "Backups", hint: "Where backups go and how many are kept", words: WORDS.backups,
+			id: "backups", category: "backups", title: t("settings.sec.backups.title"), hint: t("settings.sec.backups.hint"), words: WORDS.backups,
 			prefixes: ["backups."],
 		},
 		{
-			id: "destinations", category: "backups", title: "Copies of backups off this PC", hint: "Another drive, a share or cloud storage", words: WORDS.destinations,
+			id: "destinations", category: "backups", title: t("settings.sec.destinations.title"), hint: t("settings.sec.destinations.hint"), words: WORDS.destinations,
 			card: () => <BackupDestinations />,
 		},
 
 		{
-			id: "alerts", category: "notifications", title: "Alerts", hint: "Windows and webhook alerts, and which events", words: WORDS.alerts,
+			id: "alerts", category: "notifications", title: t("settings.sec.alerts.title"), hint: t("settings.sec.alerts.hint"), words: WORDS.alerts,
 			prefixes: ["notifications."], except: ["notifications.email."], secrets: ["alertWebhookUrl", "auditWebhookUrl"],
 		},
 		{
-			id: "email", category: "notifications", title: "Email", hint: "Alerts by email", words: WORDS.email,
+			id: "email", category: "notifications", title: t("settings.sec.email.title"), hint: t("settings.sec.email.hint"), words: WORDS.email,
 			prefixes: ["notifications.email."], secrets: ["smtpPassword"],
 		},
 		{
-			id: "discord", category: "notifications", title: "Discord", hint: "Status posts and the admin role", words: WORDS.discord,
+			id: "discord", category: "notifications", title: t("settings.sec.discord.title"), hint: t("settings.sec.discord.hint"), words: WORDS.discord,
 			prefixes: ["discord."], secrets: ["discordWebhookUrl", "discordBotToken", "discordUpdateWebhookUrl"],
 		},
 		{
-			id: "discord-bot", category: "notifications", title: "Discord bot", hint: "Slash commands in your Discord server", words: WORDS.discordBot,
+			id: "discord-bot", category: "notifications", title: t("discord.botTitle"), hint: t("settings.sec.discordBot.hint"), words: WORDS.discordBot,
 			card: () => <DiscordBotCard applicationId={data.resolved.discord.botApplicationId} refreshKey={data} />,
 		},
 
 		{
-			id: "remote", category: "community", title: "Opening the panel from another device", hint: "Addresses, Tailscale and other VPNs", words: WORDS.remote,
+			id: "remote", category: "community", title: t("remote.title"), hint: t("settings.sec.remote.hint"), words: WORDS.remote,
 			card: () => <RemoteAccessCard />,
 		},
 		{
-			id: "community-view", category: "community", title: "Community view (a public address)", hint: "A public page for friends, through a tunnel", words: WORDS.communityView,
+			id: "community-view", category: "community", title: t("community.view.title"), hint: t("settings.sec.communityView.hint"), words: WORDS.communityView,
 			card: () => <CommunityViewCard />,
 		},
 		{
-			id: "community-access", category: "community", title: "Community access", hint: "The code friends use to join", words: WORDS.communityAccess,
+			id: "community-access", category: "community", title: t("community.access.title"), hint: t("settings.sec.communityAccess.hint"), words: WORDS.communityAccess,
 			card: () => <CommunityAccessCard />,
 		},
 
 		{
-			id: "language", category: "appearance", title: "Language", hint: "The language the panel is shown in", words: WORDS.language,
+			id: "language", category: "appearance", title: t("common.language"), hint: t("settings.sec.language.hint"), words: WORDS.language,
 			card: () => <LanguagePicker />,
 		},
 		{
-			id: "appearance", category: "appearance", title: "Appearance", hint: "Artwork, colours and images for your servers", words: WORDS.appearance,
+			id: "appearance", category: "appearance", title: t("common.appearance"), hint: t("settings.sec.appearance.hint"), words: WORDS.appearance,
 			card: () => <AppearanceSettings />,
 		},
 	];
@@ -272,11 +282,12 @@ function TitleWithTip({ text, info }) {
 
 /** The button under Ports for new servers that opens the list of which server uses which port. */
 function ServerPortListButton() {
+	useT();
 	const [open, setOpen] = React.useState(false);
 	return (
 		<Box sx={{ mt: 2, display: "flex", alignItems: "center", gap: 0.5 }}>
 			<Button size="small" variant="outlined" onClick={() => setOpen(true)}>
-				Show server port list
+				{t("settings.showPortList")}
 			</Button>
 			<InfoTip id="card.portList" />
 			<PortListDialog open={open} onClose={() => setOpen(false)} />
@@ -311,14 +322,20 @@ function mergeDeep(target, source) {
 }
 
 // A choice is a drop-down. The words are the setting's values spelt out, so nobody has to guess what "windowless" means.
-const CHOICE_LABELS = {
-	"storage.enforce": { off: "Off: ignore the limit", warn: "Warn: show it on the dashboard", block: "Block: also refuse new installs" },
-	"servers.defaultRconPasswordMode": { generate: "Generate: a random password for each server", fixed: "Fixed: the same password for every server" },
-	"servers.defaultWindowMode": { minimized: "Minimized", hidden: "Hidden", windowless: "No window" },
-};
+function choiceLabel(path, value) {
+	const labels = {
+		"storage.enforce": { off: t("settings.choice.storageOff"), warn: t("settings.choice.storageWarn"), block: t("settings.choice.storageBlock") },
+		"servers.defaultRconPasswordMode": { generate: t("settings.choice.rconGenerate"), fixed: t("settings.choice.rconFixed") },
+		"servers.defaultWindowMode": { minimized: t("settings.choice.minimized"), hidden: t("settings.choice.hidden"), windowless: t("settings.choice.noWindow") },
+	};
+	return Object.hasOwn(labels, path) && Object.hasOwn(labels[path], value) ? labels[path][value] : undefined;
+}
 
 function SettingsPage() {
+	// Re-renders the page when the language changes, so the t() text below switches with it.
+	useT();
 	const toast = useToast();
+	const CATEGORIES = categories();
 	const [data, setData] = React.useState(null);
 	const [storage, setStorage] = React.useState(null);
 	const [edits, setEdits] = React.useState({});
@@ -340,7 +357,7 @@ function SettingsPage() {
 			setData(settings);
 			setStorage(storageState);
 		} catch (e) {
-			setError(e.message);
+			setError(errorText(e));
 		}
 	}, []);
 
@@ -401,9 +418,9 @@ function SettingsPage() {
 			setSecretEdits({});
 			await load();
 			if (issues) setNotice(issues);
-			else toast("Settings saved.");
+			else toast(t("settings.saved"));
 		} catch (e) {
-			setError(e.message);
+			setError(errorText(e));
 		} finally {
 			setBusy(false);
 		}
@@ -414,10 +431,10 @@ function SettingsPage() {
 		setError(null);
 		try {
 			await api.post("/api/settings/steamcmd/install");
-			toast("SteamCMD is installed and ready.");
+			toast(t("settings.steamcmdReady"));
 			await load();
 		} catch (e) {
-			setError(e.message);
+			setError(errorText(e));
 		} finally {
 			setInstallingSteam(false);
 		}
@@ -426,9 +443,9 @@ function SettingsPage() {
 	const rescan = async () => {
 		try {
 			await api.post("/api/settings/storage/rescan");
-			toast("Recalculating storage in the background — this can take a few minutes.", "info");
+			toast(t("settings.rescanToast"), "info");
 		} catch (e) {
-			setError(e.message);
+			setError(errorText(e));
 		}
 	};
 
@@ -453,7 +470,7 @@ function SettingsPage() {
 	// A setting the server knows about that no section above claims still appears, so it can never be unreachable.
 	const loose = data.fields.filter((spec) => !claimed.has(spec.path));
 	if (loose.length > 0) {
-		sections.push({ id: "more", category: "general", title: "More settings", hint: "Other settings", words: WORDS.more, specs: loose, secretFields: [] });
+		sections.push({ id: "more", category: "general", title: t("settings.sec.more.title"), hint: t("settings.sec.more.hint"), words: WORDS.more, specs: loose, secretFields: [] });
 	}
 
 	// What each searchable thing in a section is called, so a search can match the setting's name or its explanation.
@@ -495,17 +512,17 @@ function SettingsPage() {
 	return (
 		<Box sx={{ pb: 2 }}>
 			<PageHeader
-				title="Settings"
-				subtitle={`Stored in ${data.paths.configFile}`}
+				title={t("common.settings")}
+				subtitle={t("settings.storedIn", { path: data.paths.configFile })}
 				icon={<SettingsIcon />}
 				actions={
 					<TextField
 						size="small"
-						placeholder="Search settings"
+						placeholder={t("settings.search")}
 						value={query}
 						onChange={(e) => setQuery(e.target.value)}
 						sx={{ width: { xs: "100%", sm: 320 } }}
-						inputProps={{ "aria-label": "Search settings" }}
+						inputProps={{ "aria-label": t("settings.search") }}
 						InputProps={{
 							startAdornment: (
 								<InputAdornment position="start">
@@ -513,7 +530,7 @@ function SettingsPage() {
 								</InputAdornment>
 							),
 							endAdornment: query ? (
-								<IconButton size="small" aria-label="Clear search" onClick={() => setQuery("")}>
+								<IconButton size="small" aria-label={t("settings.clearSearch")} onClick={() => setQuery("")}>
 									<ClearIcon fontSize="small" />
 								</IconButton>
 							) : null,
@@ -535,7 +552,7 @@ function SettingsPage() {
 			)}
 			{restartNeeded.length > 0 && (
 				<Alert severity="warning" sx={{ mb: 2 }}>
-					Saved. {restartNeeded.join(", ")} only takes effect after a restart — use Restart API in the tray menu.
+					{t("settings.restartNeeded", { names: restartNeeded.join(", ") })}
 				</Alert>
 			)}
 
@@ -552,19 +569,19 @@ function SettingsPage() {
 				<Box sx={{ minWidth: 0 }}>
 					{searching && shown.length > 0 && (
 						<Typography variant="body2" sx={{ color: "text.secondary", mb: 1.5 }}>
-							{shown.length} of {sections.length} sections match "{query.trim()}", from every group.
+							{t("settings.matchCount", { shown: shown.length, total: sections.length, query: query.trim() })}
 						</Typography>
 					)}
 					{searching && shown.length === 0 && (
 						<EmptyState
-							title={`Nothing matches "${query.trim()}"`}
+							title={t("settings.nothingMatches", { query: query.trim() })}
 							action={
 								<Button size="small" onClick={() => setQuery("")}>
-									Clear search
+									{t("settings.clearSearch")}
 								</Button>
 							}
 						>
-							Try one word, or part of one, such as "back" or "port".
+							{t("settings.tryWord")}
 						</EmptyState>
 					)}
 
@@ -576,7 +593,7 @@ function SettingsPage() {
 								<>
 									{section.lead?.()}
 									{items.length > 0 || section.extra ? (
-										<SectionCard title={section.cardTitle ?? section.title} subtitle={searching ? `${categoryLabel(section.category)} · ${section.hint}` : section.hint}>
+										<SectionCard title={section.cardTitle ?? section.title} subtitle={searching ? t("settings.searchSubtitle", { group: categoryLabel(section.category), hint: section.hint }) : section.hint}>
 											<SectionFields
 												items={items}
 												data={data}
@@ -616,7 +633,7 @@ function SettingsPage() {
 				}}
 			>
 				<Button variant="contained" disabled={!dirty || busy} onClick={save}>
-					{busy ? "Saving..." : "Save changes"}
+					{busy ? t("settings.saving") : t("settings.saveChanges")}
 				</Button>
 				<Button
 					variant="outlined"
@@ -626,12 +643,14 @@ function SettingsPage() {
 						setSecretEdits({});
 					}}
 				>
-					Discard
+					{t("common.discard")}
 				</Button>
 				<Typography variant="body2" sx={{ color: dirty ? "warning.main" : "text.secondary", flex: 1, minWidth: 180 }}>
 					{dirty
-						? `You have unsaved changes (${unsavedCount})${searching ? ", including some that the search is hiding" : ""}.`
-						: "Nothing to save. Changes are kept until you press Save."}
+						? searching
+							? t("settings.unsavedHiding", { count: unsavedCount })
+							: t("settings.unsavedCount", { count: unsavedCount })
+						: t("settings.nothingToSave")}
 				</Typography>
 			</Paper>
 		</Box>
@@ -640,11 +659,12 @@ function SettingsPage() {
 
 /** The groups: a column on the left of a wide page, a strip you can swipe along the top of a narrow one. */
 function CategoryList({ categories, active, onPick, unsaved, matches }) {
+	useT();
 	return (
 		<Paper
 			variant="outlined"
 			component="nav"
-			aria-label="Settings groups"
+			aria-label={t("settings.groups")}
 			role="tablist"
 			sx={{
 				display: "flex",
@@ -699,7 +719,7 @@ function CategoryList({ categories, active, onPick, unsaved, matches }) {
 						{count > 0 && (
 							<Box
 								component="span"
-								title={`${count} unsaved change${count === 1 ? "" : "s"}`}
+								title={tn("settings.unsaved", count)}
 								sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "warning.main", flexShrink: 0 }}
 							/>
 						)}
@@ -712,6 +732,7 @@ function CategoryList({ categories, active, onPick, unsaved, matches }) {
 
 /** The boxes in one section: the schema's settings, then the keys that belong with them. */
 function SectionFields({ items, data, current, setField, secretEdits, setSecretEdits }) {
+	useT();
 	const specs = items.filter((i) => i.kind === "field");
 	const secrets = items.filter((i) => i.kind === "secret");
 	return (
@@ -728,7 +749,7 @@ function SectionFields({ items, data, current, setField, secretEdits, setSecretE
 				<>
 					{specs.length > 0 && <Divider sx={{ my: 2.5 }} />}
 					<Typography variant="overline" sx={{ color: "text.secondary", display: "block", mb: 1.5, lineHeight: 1.5 }}>
-						Keys and webhooks
+						{t("settings.keysAndWebhooks")}
 					</Typography>
 					<Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 2.25 }}>
 						{secrets.map(({ item: field }) => (
@@ -739,7 +760,7 @@ function SectionFields({ items, data, current, setField, secretEdits, setSecretE
 									type="password"
 									autoComplete="new-password"
 									label={field.label}
-									placeholder={data.secrets[field.key] ? "•••••••• (set)" : "Not set"}
+									placeholder={data.secrets[field.key] ? t("settings.secretSet") : t("settings.notSet")}
 									value={secretEdits[field.key] ?? ""}
 									onChange={(e) => setSecretEdits((prev) => ({ ...prev, [field.key]: e.target.value }))}
 								/>
@@ -756,6 +777,7 @@ function SectionFields({ items, data, current, setField, secretEdits, setSecretE
 const LONG_LABEL = 34;
 
 function Field({ spec, value, onChange, events }) {
+	useT();
 	const wide = spec.label.length > LONG_LABEL || spec.type === "stringArray" || spec.type === "intArray" || spec.path === "network.publicAddress";
 	const span = wide ? { gridColumn: "1 / -1" } : undefined;
 
@@ -801,7 +823,7 @@ function Field({ spec, value, onChange, events }) {
 				<TextField select fullWidth size="small" label={spec.label} value={value ?? ""} onChange={(e) => onChange(e.target.value)}>
 					{spec.values.map((v) => (
 						<MenuItem key={v} value={v}>
-							{CHOICE_LABELS[spec.path]?.[v] ?? v}
+							{choiceLabel(spec.path, v) ?? v}
 						</MenuItem>
 					))}
 				</TextField>
@@ -816,7 +838,7 @@ function Field({ spec, value, onChange, events }) {
 					fullWidth
 					size="small"
 					label={spec.label}
-					placeholder="Separate with commas"
+					placeholder={t("settings.separateCommas")}
 					value={Array.isArray(value) ? value.join(", ") : ""}
 					onChange={(e) => {
 						const parts = e.target.value

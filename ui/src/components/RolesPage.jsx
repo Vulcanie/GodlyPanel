@@ -5,6 +5,7 @@ import { api } from "../api/client";
 import { useSession } from "../SessionContext";
 import { useToast } from "../ToastContext";
 import { applyPreset, canGrant, groupedPermissions, normalizePatterns, permissionLabel, SCOPE_MODES, scopeChanged, scopeProblem, scopeSummary, togglePermission } from "../roleEditor";
+import { t, tn, useT, errorText } from "../i18n";
 import PageHeader from "./ui/PageHeader";
 import SectionCard from "./ui/SectionCard";
 import ConfirmDialog from "./ui/ConfirmDialog";
@@ -15,6 +16,8 @@ const NAME_MAX = 40;
 /** Makes and edits custom roles. What a role may do is the list of permissions; the server checks every change again. */
 function RolesPage({ onBack }) {
 	const toast = useToast();
+	// Re-renders this page when the language changes, so the t() text below switches with it.
+	useT();
 	const { user, isAdmin } = useSession();
 	const [data, setData] = React.useState(null); // { roles, permissions, groups, commandPresets }
 	const [error, setError] = React.useState(null);
@@ -32,7 +35,7 @@ function RolesPage({ onBack }) {
 				commandPresets: Array.isArray(res?.commandPresets) ? res.commandPresets : [],
 			});
 		} catch (e) {
-			setError(e.message);
+			setError(errorText(e));
 		}
 	}, []);
 
@@ -43,10 +46,10 @@ function RolesPage({ onBack }) {
 	const remove = async (role) => {
 		try {
 			await api.del(`/api/roles/${role.id}`);
-			toast(`Deleted ${role.name}.`);
+			toast(t("roles.deleted", { name: role.name }));
 			await load();
 		} catch (e) {
-			setError(e.message);
+			setError(errorText(e));
 		}
 	};
 
@@ -55,10 +58,10 @@ function RolesPage({ onBack }) {
 	return (
 		<Box sx={{ mt: 2 }}>
 			<Button startIcon={<ArrowBackIcon />} onClick={onBack} sx={{ mb: 2 }}>
-				Back to Dashboard
+				{t("common.backToDashboard")}
 			</Button>
 
-			<PageHeader title="Roles" subtitle="Choose what each role may do" icon={<RolesIcon />} />
+			<PageHeader title={t("common.roles")} subtitle={t("roles.subtitle")} icon={<RolesIcon />} />
 
 			{error && (
 				<Alert severity="error" onClose={() => setError(null)} sx={{ mb: 2 }}>
@@ -70,11 +73,11 @@ function RolesPage({ onBack }) {
 				!error && <CircularProgress sx={{ display: "block", mx: "auto", mt: 4 }} />
 			) : (
 				<SectionCard
-					title={`Roles (${roles.length})`}
+					title={t("roles.listTitle", { count: roles.length })}
 					contentSx={{ p: 0 }}
 					actions={
 						<Button variant="contained" startIcon={<AddIcon />} onClick={() => setDialog({ role: null })}>
-							New role
+							{t("roles.new")}
 						</Button>
 					}
 				>
@@ -82,17 +85,17 @@ function RolesPage({ onBack }) {
 						const isAdminRole = role.id === "admin";
 						const count = Number(role.users) || 0;
 						const deleteBlocked = Boolean(role.locked) || count > 0;
-						const deleteTip = role.locked ? "Built-in roles can't be deleted." : count > 0 ? "Move the people holding it to another role first." : "Delete";
+						const deleteTip = role.locked ? t("roles.builtInNoDelete") : count > 0 ? t("roles.moveFirst") : t("common.delete");
 						return (
 							<Box key={role.id} sx={{ px: 2.5, py: 1.5, borderTop: index === 0 ? 0 : 1, borderColor: "divider" }}>
 								<Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 1.5 }}>
 									<Typography sx={{ flex: "1 1 140px", minWidth: 0, wordBreak: "break-word", fontWeight: 600 }}>{role.name}</Typography>
-									{role.locked && <Chip size="small" variant="outlined" label="Built in" />}
-									<Chip size="small" variant="outlined" label={`${count} ${count === 1 ? "person" : "people"}`} />
+									{role.locked && <Chip size="small" variant="outlined" label={t("roles.builtIn")} />}
+									<Chip size="small" variant="outlined" label={tn("roles.people", count)} />
 									<Chip
 										size="small"
 										variant="outlined"
-										label={isAdminRole ? "Everything" : `${role.permissions?.length ?? 0} ${role.permissions?.length === 1 ? "permission" : "permissions"}`}
+										label={isAdminRole ? t("roles.everything") : tn("roles.permissionCount", role.permissions?.length ?? 0)}
 									/>
 									{/* Only a role that can use the console has a console scope worth showing. The admin always shows one, since it can use the console. */}
 									{(isAdminRole || (Array.isArray(role.permissions) && role.permissions.includes("server.console"))) && (
@@ -100,8 +103,8 @@ function RolesPage({ onBack }) {
 									)}
 									<Box sx={{ display: "flex", alignItems: "center" }}>
 										{!role.locked && (
-											<Tooltip title="Edit">
-												<IconButton size="small" aria-label={`Edit ${role.name}`} onClick={() => setDialog({ role })}>
+											<Tooltip title={t("common.edit")}>
+												<IconButton size="small" aria-label={t("roles.editName", { name: role.name })} onClick={() => setDialog({ role })}>
 													<EditIcon fontSize="small" />
 												</IconButton>
 											</Tooltip>
@@ -110,7 +113,7 @@ function RolesPage({ onBack }) {
 											<span>
 												<IconButton
 													size="small"
-													aria-label={`Delete ${role.name}`}
+													aria-label={t("roles.deleteName", { name: role.name })}
 													disabled={deleteBlocked}
 													onClick={() => {
 														setDeleting(role);
@@ -139,8 +142,8 @@ function RolesPage({ onBack }) {
 
 			<ConfirmDialog
 				open={deleteOpen && Boolean(deleting)}
-				title={`Delete ${deleting?.name}?`}
-				confirmLabel="Delete"
+				title={t("roles.deleteTitle", { name: deleting?.name })}
+				confirmLabel={t("common.delete")}
 				color="error"
 				onConfirm={() => {
 					setDeleteOpen(false);
@@ -148,7 +151,7 @@ function RolesPage({ onBack }) {
 				}}
 				onClose={() => setDeleteOpen(false)}
 			>
-				Anyone who had this role keeps nothing from it. This can't be undone.
+				{t("roles.deleteBody")}
 			</ConfirmDialog>
 
 			{dialog && (
@@ -174,6 +177,7 @@ function RolesPage({ onBack }) {
 
 /** A new role, or the name and permissions of one that exists. Server errors show here, so the person can fix them and try again. */
 function RoleDialog({ role, permissions, groups, commandPresets, actorPermissions, isAdmin, onClose, onSaved }) {
+	useT();
 	const editing = Boolean(role);
 	const [name, setName] = React.useState(role?.name ?? "");
 	const [selected, setSelected] = React.useState(() => (Array.isArray(role?.permissions) ? [...role.permissions] : []));
@@ -210,20 +214,20 @@ function RoleDialog({ role, permissions, groups, commandPresets, actorPermission
 			if (isAdmin && consoleOn && scopeChanged(initialScope, currentScope)) body.commandScope = currentScope;
 			if (editing) await api.put(`/api/roles/${role.id}`, body);
 			else await api.post("/api/roles", body);
-			await onSaved(editing ? `Saved ${trimmed}.` : `Created ${trimmed}.`);
+			await onSaved(editing ? t("roles.saved", { name: trimmed }) : t("roles.created", { name: trimmed }));
 		} catch (e) {
-			setError(e.message);
+			setError(errorText(e));
 			setSaving(false);
 		}
 	};
 
 	return (
 		<Dialog open onClose={onClose} fullWidth maxWidth="sm">
-			<DialogTitle>{editing ? `Edit ${role.name}` : "New role"}</DialogTitle>
+			<DialogTitle>{editing ? t("roles.editName", { name: role.name }) : t("roles.new")}</DialogTitle>
 			<DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2.5, pt: "16px !important" }}>
 				{error && <Alert severity="error">{error}</Alert>}
 				<TextField
-					label="Name"
+					label={t("common.name")}
 					size="small"
 					fullWidth
 					autoComplete="off"
@@ -233,7 +237,7 @@ function RoleDialog({ role, permissions, groups, commandPresets, actorPermission
 				/>
 				{sections.length === 0 && (
 					<Typography variant="body2" sx={{ color: "text.secondary" }}>
-						There are no permissions to choose from.
+						{t("roles.noPermissions")}
 					</Typography>
 				)}
 				{sections.map((section) => (
@@ -256,7 +260,7 @@ function RoleDialog({ role, permissions, groups, commandPresets, actorPermission
 												<Typography variant="body2">{permissionLabel(p)}</Typography>
 												{!grantable && (
 													<Typography variant="caption" sx={{ color: "text.secondary" }}>
-														You don't have this yourself
+														{t("roles.notYours")}
 													</Typography>
 												)}
 											</Box>
@@ -270,11 +274,11 @@ function RoleDialog({ role, permissions, groups, commandPresets, actorPermission
 				{consoleOn && (
 					<Box>
 						<Typography variant="subtitle2" sx={{ color: "text.secondary", mb: 0.5 }}>
-							Console commands
+							{t("roles.consoleCommands")}
 						</Typography>
 						{!isAdmin && (
 							<Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1 }}>
-								Only an administrator can change this.
+								{t("roles.adminOnly")}
 							</Typography>
 						)}
 						<RadioGroup value={scopeMode} onChange={(e) => setScopeMode(e.target.value)}>
@@ -298,7 +302,7 @@ function RoleDialog({ role, permissions, groups, commandPresets, actorPermission
 						)}
 						{scopeMode !== "all" && (
 							<TextField
-								label="Commands, one per line"
+								label={t("roles.commandsLabel")}
 								size="small"
 								fullWidth
 								multiline
@@ -308,7 +312,7 @@ function RoleDialog({ role, permissions, groups, commandPresets, actorPermission
 								value={scopeText}
 								onChange={(e) => setScopeText(e.target.value)}
 								error={Boolean(scopeError)}
-								helperText={scopeError ? scopeError : "Use * for any ending, e.g. kick*. Only the first word of what is typed is checked."}
+								helperText={scopeError ? scopeError : t("roles.commandsHelp")}
 								sx={{ mt: 1.5 }}
 							/>
 						)}
@@ -316,9 +320,9 @@ function RoleDialog({ role, permissions, groups, commandPresets, actorPermission
 				)}
 			</DialogContent>
 			<DialogActions>
-				<Button onClick={onClose}>Cancel</Button>
+				<Button onClick={onClose}>{t("common.cancel")}</Button>
 				<Button variant="contained" disabled={!canSave} onClick={save}>
-					Save
+					{t("common.save")}
 				</Button>
 			</DialogActions>
 		</Dialog>

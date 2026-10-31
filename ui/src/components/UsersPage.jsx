@@ -30,6 +30,7 @@ import {
 import { api } from "../api/client";
 import { useToast } from "../ToastContext";
 import { canBeLimited, roleNameOf, roleOptions, serverRoleRows, serverRolesFromRows } from "../roleEditor";
+import { t, tn, useT, errorText } from "../i18n";
 import PageHeader from "./ui/PageHeader";
 import SectionCard from "./ui/SectionCard";
 import ConfirmDialog from "./ui/ConfirmDialog";
@@ -45,6 +46,8 @@ const customCount = (u) => (u.serverRoles && typeof u.serverRoles === "object" ?
 // without handing them control of anything.
 function UsersPage({ onBack, currentUser }) {
 	const toast = useToast();
+	// Re-renders this page when the language changes, so the t() text below switches with it.
+	useT();
 	const [users, setUsers] = React.useState(null);
 	const [error, setError] = React.useState(null);
 	const [busy, setBusy] = React.useState(false);
@@ -69,7 +72,7 @@ function UsersPage({ onBack, currentUser }) {
 			const list = await api.get("/api/users");
 			setUsers(Array.isArray(list) ? list : []);
 		} catch (e) {
-			setError(e.message);
+			setError(errorText(e));
 		}
 	}, []);
 
@@ -95,7 +98,7 @@ function UsersPage({ onBack, currentUser }) {
 			await load();
 			return true;
 		} catch (e) {
-			setError(e.message);
+			setError(errorText(e));
 			return false;
 		} finally {
 			setBusy(false);
@@ -106,7 +109,7 @@ function UsersPage({ onBack, currentUser }) {
 		const name = username.trim();
 		const ok = await run(async () => {
 			await api.post("/api/users", { username: name, password, role, ...(canBeLimited(role) ? { servers } : {}) });
-		}, `Added ${name}.`);
+		}, t("users.added", { name }));
 		if (!ok) return;
 		setUsername("");
 		setPassword("");
@@ -120,10 +123,10 @@ function UsersPage({ onBack, currentUser }) {
 	return (
 		<Box sx={{ mt: 2 }}>
 			<Button startIcon={<ArrowBackIcon />} onClick={onBack} sx={{ mb: 2 }}>
-				Back to Dashboard
+				{t("common.backToDashboard")}
 			</Button>
 
-			<PageHeader title="People" subtitle="Who can sign in to this panel, and what each person may do" icon={<PeopleIcon />} />
+			<PageHeader title={t("users.title")} subtitle={t("users.subtitle")} icon={<PeopleIcon />} />
 
 			{error && (
 				<Alert severity="error" onClose={() => setError(null)} sx={{ mb: 2 }}>
@@ -131,26 +134,26 @@ function UsersPage({ onBack, currentUser }) {
 				</Alert>
 			)}
 
-			<SectionCard title="Add someone" icon={<AddPersonIcon />}>
+			<SectionCard title={t("users.addSomeone")} icon={<AddPersonIcon />}>
 				<Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, alignItems: "flex-start" }}>
 					<TipRow id="users.username" sx={{ flex: "1 1 180px", maxWidth: 260 }}>
-						<TextField label="Username" size="small" fullWidth autoComplete="off" value={username} onChange={(e) => setUsername(e.target.value)} />
+						<TextField label={t("common.username")} size="small" fullWidth autoComplete="off" value={username} onChange={(e) => setUsername(e.target.value)} />
 					</TipRow>
 					<TipRow id="users.password" sx={{ flex: "1 1 180px", maxWidth: 260 }}>
 						<TextField
-							label="Password"
+							label={t("common.password")}
 							size="small"
 							type="password"
 							fullWidth
 							autoComplete="new-password"
 							error={passwordTooShort}
-							helperText={passwordTooShort ? "At least 8 characters." : undefined}
+							helperText={passwordTooShort ? t("common.atLeast8") : undefined}
 							value={password}
 							onChange={(e) => setPassword(e.target.value)}
 						/>
 					</TipRow>
 					<TipRow id="users.role" sx={{ flex: "1 1 160px", maxWidth: 240 }}>
-						<TextField select label="Access" size="small" fullWidth value={role} onChange={(e) => setRole(e.target.value)}>
+						<TextField select label={t("common.access")} size="small" fullWidth value={role} onChange={(e) => setRole(e.target.value)}>
 							{options.map(({ id, name }) => (
 								<MenuItem key={id} value={id}>
 									{name}
@@ -160,7 +163,7 @@ function UsersPage({ onBack, currentUser }) {
 					</TipRow>
 					{canBeLimited(role) && <ServerPicker names={serverNames} value={servers} onChange={setServers} />}
 					<Button variant="contained" disabled={!canCreate} onClick={create}>
-						Add
+						{t("common.add")}
 					</Button>
 				</Box>
 			</SectionCard>
@@ -168,7 +171,7 @@ function UsersPage({ onBack, currentUser }) {
 			{!users ? (
 				<CircularProgress sx={{ display: "block", mx: "auto", mt: 4 }} />
 			) : (
-				<SectionCard title={`People (${users.length})`} contentSx={{ p: 0 }}>
+				<SectionCard title={t("users.count", { count: users.length })} contentSx={{ p: 0 }}>
 					{users.map((u, index) => {
 						const isSelf = u.id === currentUser?.id;
 						return (
@@ -190,7 +193,7 @@ function UsersPage({ onBack, currentUser }) {
 									{u.username}
 									{isSelf && (
 										<Typography component="span" variant="caption" sx={{ ml: 1, color: "text.secondary" }}>
-											(you)
+											{t("users.you")}
 										</Typography>
 									)}
 								</Typography>
@@ -200,37 +203,40 @@ function UsersPage({ onBack, currentUser }) {
 									color={u.role === "admin" ? "primary" : u.role === "moderator" ? "secondary" : "default"}
 								/>
 								{canBeLimited(u.role) && (
-									<Chip size="small" variant="outlined" label={Array.isArray(u.servers) ? `${u.servers.length} server${u.servers.length === 1 ? "" : "s"}` : "All servers"} />
+									<Chip size="small" variant="outlined" label={Array.isArray(u.servers) ? tn("users.serverCount", u.servers.length) : t("users.allServers")} />
 								)}
-								{customCount(u) > 0 && (
-									<Chip size="small" variant="outlined" label={`Custom on ${customCount(u)} server${customCount(u) === 1 ? "" : "s"}`} />
-								)}
-								{u.disabled && <Chip size="small" label="Suspended" color="warning" />}
+								{customCount(u) > 0 && <Chip size="small" variant="outlined" label={tn("users.customOn", customCount(u))} />}
+								{u.disabled && <Chip size="small" label={t("users.suspended")} color="warning" />}
 								<Box sx={{ display: "flex", alignItems: "center" }}>
-									<Tooltip title="Change access">
+									<Tooltip title={t("users.changeAccess")}>
 										<span>
-											<IconButton size="small" aria-label="Change access" disabled={busy || isSelf} onClick={() => setEditing(u)}>
+											<IconButton size="small" aria-label={t("users.changeAccess")} disabled={busy || isSelf} onClick={() => setEditing(u)}>
 												<EditIcon fontSize="small" />
 											</IconButton>
 										</span>
 									</Tooltip>
-									<Tooltip title={u.disabled ? "Restore access" : "Suspend access"}>
+									<Tooltip title={u.disabled ? t("users.restoreAccess") : t("users.suspendAccess")}>
 										<span>
 											<IconButton
 												size="small"
-												aria-label={u.disabled ? "Restore access" : "Suspend access"}
+												aria-label={u.disabled ? t("users.restoreAccess") : t("users.suspendAccess")}
 												disabled={busy || isSelf}
-												onClick={() => run(() => api.put(`/api/users/${u.id}/disabled`, { disabled: !u.disabled }), u.disabled ? `${u.username} can sign in again.` : `${u.username} is suspended and signed out.`)}
+												onClick={() =>
+													run(
+														() => api.put(`/api/users/${u.id}/disabled`, { disabled: !u.disabled }),
+														u.disabled ? t("users.canSignInAgain", { name: u.username }) : t("users.suspendedSignedOut", { name: u.username }),
+													)
+												}
 											>
 												{u.disabled ? <CheckCircleIcon fontSize="small" /> : <BlockIcon fontSize="small" />}
 											</IconButton>
 										</span>
 									</Tooltip>
-									<Tooltip title="Sign out everywhere">
+									<Tooltip title={t("users.signOutEverywhere")}>
 										<span>
 											<IconButton
 												size="small"
-												aria-label="Sign out everywhere"
+												aria-label={t("users.signOutEverywhere")}
 												disabled={busy || isSelf}
 												onClick={() => {
 													setSigningOut(u);
@@ -241,11 +247,11 @@ function UsersPage({ onBack, currentUser }) {
 											</IconButton>
 										</span>
 									</Tooltip>
-									<Tooltip title="Remove">
+									<Tooltip title={t("common.remove")}>
 										<span>
 											<IconButton
 												size="small"
-												aria-label="Remove"
+												aria-label={t("common.remove")}
 												disabled={busy || isSelf}
 												onClick={() => {
 													setRemoving(u);
@@ -265,28 +271,28 @@ function UsersPage({ onBack, currentUser }) {
 
 			<ConfirmDialog
 				open={removeOpen && Boolean(removing)}
-				title={`Remove ${removing?.username}?`}
-				confirmLabel="Remove"
+				title={t("users.removeTitle", { name: removing?.username })}
+				confirmLabel={t("common.remove")}
 				color="error"
 				onConfirm={() => {
 					setRemoveOpen(false);
-					run(() => api.del(`/api/users/${removing.id}`), `Removed ${removing.username}.`);
+					run(() => api.del(`/api/users/${removing.id}`), t("users.removed", { name: removing.username }));
 				}}
 				onClose={() => setRemoveOpen(false)}
 			>
-				They can no longer sign in, and are signed out now. This can't be undone; you would have to add them again.
+				{t("users.removeBody")}
 			</ConfirmDialog>
 			<ConfirmDialog
 				open={signOutOpen && Boolean(signingOut)}
-				title={`Sign ${signingOut?.username} out everywhere?`}
-				confirmLabel="Sign out"
+				title={t("users.signOutTitle", { name: signingOut?.username })}
+				confirmLabel={t("common.signOut")}
 				onConfirm={() => {
 					setSignOutOpen(false);
-					run(() => api.del(`/api/users/${signingOut.id}/sessions`), `${signingOut.username} is signed out everywhere.`);
+					run(() => api.del(`/api/users/${signingOut.id}/sessions`), t("users.signedOutEverywhere", { name: signingOut.username }));
 				}}
 				onClose={() => setSignOutOpen(false)}
 			>
-				Every browser they are signed in on is signed out. They can sign in again with their password.
+				{t("users.signOutBody")}
 			</ConfirmDialog>
 
 			{editing && (
@@ -303,7 +309,7 @@ function UsersPage({ onBack, currentUser }) {
 							if (next.role !== editing.role) await api.put(`/api/users/${editing.id}/role`, { role: next.role });
 							if (canBeLimited(next.role)) await api.put(`/api/users/${editing.id}/servers`, { servers: next.servers });
 							if (next.serverRoles !== undefined) await api.put(`/api/users/${editing.id}/server-roles`, { serverRoles: next.serverRoles });
-						}, `Saved changes for ${editing.username}.`);
+						}, t("users.savedFor", { name: editing.username }));
 						if (ok) setEditing(null);
 					}}
 				/>
@@ -314,11 +320,12 @@ function UsersPage({ onBack, currentUser }) {
 
 /** "Every server", or a chosen few. */
 function ServerPicker({ names, value, onChange }) {
+	useT();
 	const all = value === null;
 	return (
 		<Box sx={{ minWidth: 220 }}>
 			<TipRow id="users.servers">
-				<FormControlLabel control={<Checkbox size="small" checked={all} onChange={(e) => onChange(e.target.checked ? null : [])} />} label="Every server" />
+				<FormControlLabel control={<Checkbox size="small" checked={all} onChange={(e) => onChange(e.target.checked ? null : [])} />} label={t("users.everyServer")} />
 			</TipRow>
 			{!all && (
 				<Box sx={{ display: "flex", flexDirection: "column", maxHeight: 160, overflow: "auto" }}>
@@ -332,6 +339,7 @@ function ServerPicker({ names, value, onChange }) {
 }
 
 function AccessDialog({ user, serverNames, options, error, onClose, onSave }) {
+	useT();
 	const [role, setRole] = React.useState(user.role);
 	const [servers, setServers] = React.useState(Array.isArray(user.servers) ? user.servers : null);
 	// Kept as one map and the rows are rebuilt from it, so a server list that loads late still gets its rows.
@@ -349,11 +357,11 @@ function AccessDialog({ user, serverNames, options, error, onClose, onSave }) {
 
 	return (
 		<Dialog open onClose={onClose} fullWidth maxWidth="xs">
-			<DialogTitle>{user.username}: access and password</DialogTitle>
+			<DialogTitle>{t("users.accessTitle", { name: user.username })}</DialogTitle>
 			<DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: "16px !important" }}>
 				{error && <Alert severity="error">{error}</Alert>}
 				<TipRow id="users.role">
-					<TextField select fullWidth size="small" label="Access" value={role} onChange={(e) => setRole(e.target.value)}>
+					<TextField select fullWidth size="small" label={t("common.access")} value={role} onChange={(e) => setRole(e.target.value)}>
 						{options.map(({ id, name }) => (
 							<MenuItem key={id} value={id}>
 								{name}
@@ -364,9 +372,9 @@ function AccessDialog({ user, serverNames, options, error, onClose, onSave }) {
 				{canBeLimited(role) && <ServerPicker names={serverNames} value={servers} onChange={setServers} />}
 				{role !== "admin" && serverNames.length > 0 && (
 					<Box>
-						<Typography variant="subtitle2">Different access on some servers</Typography>
+						<Typography variant="subtitle2">{t("users.differentAccess")}</Typography>
 						<Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1 }}>
-							On a server left at "Same as their access", the access above applies.
+							{t("users.sameAsRole")}
 						</Typography>
 						<Box sx={{ display: "flex", flexDirection: "column", gap: 1, maxHeight: 220, overflow: "auto" }}>
 							{rows.map(({ server, role: value }) => (
@@ -378,9 +386,9 @@ function AccessDialog({ user, serverNames, options, error, onClose, onSave }) {
 										value={value}
 										onChange={(e) => setRowRole(server, e.target.value)}
 										sx={{ flex: "0 1 180px", minWidth: 140 }}
-										inputProps={{ "aria-label": `Access on ${server}` }}
+										inputProps={{ "aria-label": t("users.accessOn", { server }) }}
 									>
-										<MenuItem value="">Same as their access</MenuItem>
+										<MenuItem value="">{t("users.sameAsAccess")}</MenuItem>
 										{rowOptions.map(({ id, name }) => (
 											<MenuItem key={id} value={id}>
 												{name}
@@ -399,23 +407,23 @@ function AccessDialog({ user, serverNames, options, error, onClose, onSave }) {
 						fullWidth
 						size="small"
 						type="password"
-						label="Set a new password (optional)"
+						label={t("users.newPassword")}
 						autoComplete="new-password"
 						value={password}
 						onChange={(e) => setPassword(e.target.value)}
-						helperText={tooShort ? "At least 8 characters." : undefined}
+						helperText={tooShort ? t("common.atLeast8") : undefined}
 						error={tooShort}
 					/>
 				</TipRow>
 			</DialogContent>
 			<DialogActions>
-				<Button onClick={onClose}>Cancel</Button>
+				<Button onClick={onClose}>{t("common.cancel")}</Button>
 				<Button
 					variant="contained"
 					disabled={tooShort}
 					onClick={() => onSave({ role, servers, password, serverRoles: role !== "admin" && serverRolesChanged ? nextServerRoles : undefined })}
 				>
-					Save
+					{t("common.save")}
 				</Button>
 			</DialogActions>
 		</Dialog>

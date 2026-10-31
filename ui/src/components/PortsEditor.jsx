@@ -8,12 +8,15 @@ import PortListDialog from "./PortListDialog";
 import SectionCard from "./ui/SectionCard";
 import InfoTip from "./InfoTip";
 import TipRow from "./TipRow";
+import { t, useT, errorText } from "../i18n";
 
-const LABELS = {
-	port: "Game port",
-	queryPort: "Query port",
-	rconPort: "RCON port",
-	telnetPort: "Telnet port",
+// What each port is called on its field. Anything else is shown by its key.
+const labelFor = (key) => {
+	if (key === "port") return t("ports.label.game");
+	if (key === "queryPort") return t("ports.label.query");
+	if (key === "rconPort") return t("ports.label.rcon");
+	if (key === "telnetPort") return t("ports.label.telnet");
+	return key;
 };
 
 // Each port has its own (i), since what a port is for is not obvious from its name.
@@ -31,6 +34,7 @@ const TIPS = {
  * than after a server that won't start.
  */
 function PortsEditor({ serverName }) {
+	useT();
 	const base = `/api/server/${encodeURIComponent(serverName)}`;
 	const toast = useToast();
 	const [info, setInfo] = React.useState(null);
@@ -53,7 +57,7 @@ function PortsEditor({ serverName }) {
 			setValues(Object.fromEntries(Object.entries(data.current ?? {}).map(([k, v]) => [k, String(v)])));
 			setCheck(null);
 		} catch (e) {
-			if (current.current === base) setError(e.message);
+			if (current.current === base) setError(errorText(e));
 		}
 	}, [base]);
 
@@ -101,13 +105,13 @@ function PortsEditor({ serverName }) {
 		setSavedWarnings([]);
 		try {
 			const result = await api.put(`${base}/ports`, { ports: proposed });
-			toast(`Ports saved.${result.filesChanged?.length > 0 ? ` Updated ${result.filesChanged.length} file(s), with a .bak of each.` : ""}`);
+			toast(result.filesChanged?.length > 0 ? t("ports.savedFiles", { count: result.filesChanged.length }) : t("ports.saved"));
 			setSavedWarnings(result.warnings ?? []);
 			setInfo(result);
 			setValues(Object.fromEntries(Object.entries(result.current).map(([k, v]) => [k, String(v)])));
 			setCheck(null);
 		} catch (e) {
-			setError(e.message);
+			setError(errorText(e));
 		} finally {
 			setBusy(false);
 		}
@@ -125,7 +129,7 @@ function PortsEditor({ serverName }) {
 		<SectionCard
 			title={
 				<>
-					Ports
+					{t("ports.title")}
 					<InfoTip id="server.ports" />
 				</>
 			}
@@ -134,13 +138,12 @@ function PortsEditor({ serverName }) {
 			<Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
 				{info.running && (
 					<Alert severity="warning">
-						This server is running. Stop it before changing its ports — a running game keeps the ports it started with.
+						{t("ports.running")}
 					</Alert>
 				)}
 				{!info.canEditFiles && (
 					<Alert severity="info">
-						This server was imported, so changing a port here updates only what GodlyPanel checks. Its own start
-						script and settings aren't rewritten; change the port there too.
+						{t("ports.imported")}
 					</Alert>
 				)}
 				{error && <Alert severity="error" onClose={() => setError(null)}>{error}</Alert>}
@@ -151,12 +154,12 @@ function PortsEditor({ serverName }) {
 							<TextField
 								size="small"
 								type="number"
-								label={LABELS[key] ?? key}
+								label={labelFor(key)}
 								disabled={info.running || busy}
 								value={values[key] ?? ""}
 								onChange={(e) => setValues({ ...values, [key]: e.target.value })}
 								sx={{ width: 190, maxWidth: "100%" }}
-								error={blocked && (check.errors ?? []).some((m) => m.toLowerCase().includes((LABELS[key] ?? key).toLowerCase()) || m.includes(String(proposed[key])))}
+								error={blocked && (check.errors ?? []).some((m) => m.toLowerCase().includes(labelFor(key).toLowerCase()) || m.includes(String(proposed[key])))}
 							/>
 						</TipRow>
 					))}
@@ -183,13 +186,13 @@ function PortsEditor({ serverName }) {
 
 				<Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
 					<Button variant="contained" size="small" disabled={!changed || blocked || busy || info.running} onClick={save}>
-						{busy ? "Saving..." : "Save ports"}
+						{busy ? t("ports.saving") : t("ports.save")}
 					</Button>
 					<Button size="small" onClick={() => setShowList(true)}>
-						Show server port list
+						{t("ports.showList")}
 					</Button>
 					<Button size="small" disabled={!changed || busy} onClick={() => setValues(Object.fromEntries(Object.entries(info.current).map(([k, v]) => [k, String(v)])))}>
-						Reset
+						{t("ports.reset")}
 					</Button>
 				</Box>
 			</Box>
