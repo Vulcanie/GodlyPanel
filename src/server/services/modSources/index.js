@@ -99,9 +99,11 @@ function fromUrl(url, text) {
 
 	if (host === "github.com") {
 		const m = GITHUB_PATH.exec(path);
-		if (!m) return null;
-		const repo = `${m[1]}/${m[2]}`;
-		return { source: "github", ref: m[3] ? `${repo}@${m[3]}` : repo };
+		if (m) {
+			const repo = `${m[1]}/${m[2]}`;
+			return { source: "github", ref: m[3] ? `${repo}@${m[3]}` : repo };
+		}
+		// A pasted release asset (.../releases/download/v1/x.jar) is a direct file, so it falls through to the rule below.
 	}
 
 	// Any other https address is a direct file, but only when the path names a file

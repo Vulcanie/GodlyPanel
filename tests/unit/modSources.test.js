@@ -25,6 +25,7 @@ describe("detectSource", () => {
 		["https://github.com/owner/repo/releases", { source: "github", ref: "owner/repo" }],
 		["https://github.com/owner/repo/releases/latest", { source: "github", ref: "owner/repo" }],
 		["https://github.com/owner/repo/releases/tag/v1.2.3", { source: "github", ref: "owner/repo@v1.2.3" }],
+		["https://github.com/owner/repo/releases/download/v1/mod.jar", { source: "url", ref: "https://github.com/owner/repo/releases/download/v1/mod.jar" }],
 		["https://example.com/files/Mod.zip", { source: "url", ref: "https://example.com/files/Mod.zip" }],
 		["https://example.com/files/Mod.JAR?token=abc#x", { source: "url", ref: "https://example.com/files/Mod.JAR?token=abc#x" }],
 		["https://example.com/a.dll", { source: "url", ref: "https://example.com/a.dll" }],
