@@ -26,6 +26,7 @@ import { installFromSource } from "../services/modSources/installer.js";
 import { detectSource, getProvider } from "../services/modSources/index.js";
 import { recordInstalled } from "../services/modRecord.js";
 import { checkUpdates, applyUpdate } from "../services/modUpdates.js";
+import { buildManifest, buildClientPack, defaultFormat } from "../services/clientPack.js";
 import * as modLock from "../services/modLock.js";
 
 const router = express.Router();
@@ -153,6 +154,33 @@ router.get("/server/:serverName/mods/updates", async (req, res) => {
 		res.json({ updates: await checkUpdates(req.server) });
 	} catch (err) {
 		fail(res, err, "Checking for updates");
+	}
+});
+
+// What a player's client should have, from the lock. Read-only, so it works while the game runs.
+router.get("/server/:serverName/mods/manifest", async (req, res) => {
+	try {
+		res.json(await buildManifest(req.server));
+	} catch (err) {
+		fail(res, err, "Reading the mod manifest");
+	}
+});
+
+// The pack a player takes: a zip, or a plain list for games whose mods are picked by id. The temp folder is removed once the file is sent.
+router.get("/server/:serverName/mods/client-pack", async (req, res) => {
+	const requested = req.query.format;
+	if (requested !== undefined && typeof requested !== "string") {
+		return res.status(400).json({ error: "format must be zip or list.", code: "bad_format" });
+	}
+	try {
+		const pack = await buildClientPack(req.server, { format: requested ?? defaultFormat(req.server) });
+		res.download(pack.file, pack.name, (err) => {
+			pack.cleanup();
+			// The file is fixed-name and the error may carry a temp path, so a failed send says only that it failed.
+			if (err && !res.headersSent) res.status(500).json({ error: "Sending the mod pack failed." });
+		});
+	} catch (err) {
+		fail(res, err, "Building the mod pack");
 	}
 });
 

@@ -6,6 +6,7 @@ import http from "node:http";
 import os from "node:os";
 import path from "node:path";
 import zlib from "node:zlib";
+import AdmZip from "adm-zip";
 import { startInstance, freePort, sleep, serverEntry } from "../helpers/instance.js";
 import { makeFakeGame, killFakeGames } from "../helpers/fakeGame.js";
 import { createZip } from "../../src/server/util/tarZip.js";
@@ -610,5 +611,59 @@ describe("mods", () => {
 		const mod = await api.cookieFor({ username: "modm", password: "TestMod!2345" });
 		assert.equal((await api.get("/api/server/Minecraft/mods", { cookie: mod })).status, 403);
 		assert.equal((await api.post("/api/server/Minecraft/mods/remove", { id: "x" }, { cookie: mod })).status, 403);
+	});
+
+	describe("the mod pack for a player", () => {
+		const noPanelPaths = (body) => {
+			const text = JSON.stringify(body);
+			assert.equal(text.includes(JSON.stringify(panel.dir).slice(1, -1)), false, text);
+			assert.doesNotMatch(text, /[A-Za-z]:\\\\|\/home\//, text);
+		};
+		// The pack route answers with a file, not JSON, so it is fetched directly with the admin's cookie.
+		const packGet = (query) => fetch(`${api.base}/api/server/Minecraft/mods/client-pack${query}`, { headers: { Cookie: api.cookie } });
+
+		it("the manifest lists the recorded mods but not a file the panel never recorded, and is for admins only", async () => {
+			const r = await api.get("/api/server/Minecraft/mods/manifest");
+			assert.equal(r.status, 200, JSON.stringify(r.json));
+			const names = r.json.mods.map((m) => m.name);
+			assert.ok(names.includes("lock-mod.jar"), JSON.stringify(names));
+			assert.equal(names.includes("cool-mod-1.0.jar"), false);
+			noPanelPaths(r.json);
+			await api.post("/api/users", { username: "packmod", password: "TestPack!2345", role: "moderator" });
+			const mod = await api.cookieFor({ username: "packmod", password: "TestPack!2345" });
+			assert.equal((await api.get("/api/server/Minecraft/mods/manifest", { cookie: mod })).status, 403);
+			assert.equal((await api.get("/api/server/Minecraft/mods/client-pack?format=zip", { cookie: mod })).status, 403);
+		});
+
+		it("the zip pack holds the manifest, the README and the recorded mods, with the hash the manifest gives", async () => {
+			const res = await packGet("?format=zip");
+			assert.equal(res.status, 200);
+			assert.match(res.headers.get("content-type"), /zip/);
+			assert.equal(res.headers.get("content-disposition"), 'attachment; filename="mod-pack.zip"');
+			const zip = new AdmZip(Buffer.from(await res.arrayBuffer()));
+			const names = zip.getEntries().map((e) => e.entryName);
+			assert.ok(names.includes("manifest.json") && names.includes("README.txt") && names.includes("mods/lock-mod.jar"), JSON.stringify(names));
+			assert.equal(names.includes("mods/cool-mod-1.0.jar"), false);
+			const manifest = JSON.parse(zip.getEntry("manifest.json").getData().toString("utf8"));
+			const bytes = zip.getEntry("mods/lock-mod.jar").getData();
+			assert.equal(manifest.mods.find((m) => m.name === "lock-mod.jar").files[0].sha256, crypto.createHash("sha256").update(bytes).digest("hex"));
+		});
+
+		it("the list pack is plain text, one line per mod", async () => {
+			const res = await packGet("?format=list");
+			assert.equal(res.status, 200);
+			assert.equal(res.headers.get("content-disposition"), 'attachment; filename="mod-list.txt"');
+			assert.ok((await res.text()).includes("lock-mod.jar  (github:acme/lockmod  v2.0.0)"));
+		});
+
+		it("refuses an unknown format, and a game with no mods folder", async () => {
+			const bad = await api.get("/api/server/Minecraft/mods/client-pack?format=nope");
+			assert.equal(bad.status, 400);
+			assert.equal(bad.json.code, "bad_format");
+			const none = await api.get("/api/server/Ark%20Evolved/mods/client-pack");
+			assert.equal(none.status, 400);
+			assert.equal(none.json.code, "unsupported");
+			noPanelPaths(none.json);
+		});
 	});
 });
