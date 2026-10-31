@@ -165,14 +165,19 @@ try {
 	step("a folder for off-PC backup copies can be added", dest.status === 201, JSON.stringify(dest.json).slice(0, 160));
 	const tested = await call("POST", "/api/settings/backup-destinations/test", { id: dest.json.id });
 	step("and tested", tested.json.ok === true, JSON.stringify(tested.json).slice(0, 160));
+	// The theme choice lives in the user menu at the foot of the sidebar.
+	await page.getByTestId("user-menu").click();
 	await page.getByRole("button", { name: "Appearance" }).click();
 	await page.getByRole("menuitem", { name: "Light" }).click();
+	await page.keyboard.press("Escape");
 	await page.waitForTimeout(500);
 	const lightBg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
 	step("the interface switches to the light theme", /243, 245, 247/.test(lightBg), lightBg);
 	await page.screenshot({ path: path.join(OUT, "2b-dashboard-light.png") });
+	await page.getByTestId("user-menu").click();
 	await page.getByRole("button", { name: "Appearance" }).click();
 	await page.getByRole("menuitem", { name: "Dark" }).click();
+	await page.keyboard.press("Escape");
 	// Resizing a packaged window from the test isn't supported everywhere; the phone-width layout is
 	// checked in tests/ui/appearance.mjs, so a failure to resize only skips this check.
 	try {
