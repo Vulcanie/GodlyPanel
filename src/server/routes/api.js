@@ -19,6 +19,9 @@ import { forgetMetrics } from "../services/metrics.js";
 import { listVersions, readVersion } from "../services/configHistory.js";
 import { MotdError, readMotd, writeMotd } from "../services/motdService.js";
 import { CloneError, startClone, getCloneJob } from "../services/cloneService.js";
+import { BundleError } from "../services/serverBundle.js";
+import { startExportJob, getExportJob, takeExportFile, isExportJobId } from "../services/exportJobs.js";
+import { BusyError } from "../services/serverOps.js";
 import { RotationError, describeRotation, rotateRconPassword } from "../services/rconRotation.js";
 import { PresetError, listPresets, savePreset, deletePreset, applyPreset } from "../services/presetService.js";
 import { extractModpackZip, cleanupUpload } from "../services/modpackService.js";
@@ -307,6 +310,39 @@ router.post("/server/:serverName/rcon-password/rotate", async (req, res) => {
 router.get("/clone-jobs/:id", (req, res) => {
 	const job = getCloneJob(req.params.id);
 	job ? res.json(job) : res.status(404).json({ error: "No such job." });
+});
+
+// Exports a stopped server as one .gpserver file. Returns at once; the export runs in the background and the file waits
+// to be downloaded once (see exportJobs.js). Administrators only: the whole server and its passwords (if asked) go in the file.
+router.post("/server/:serverName/export", async (req, res) => {
+	// An omitted value takes the default; a value of the wrong type (null included) is refused, not coerced.
+	const include = req.body?.include === undefined ? "saves" : req.body.include;
+	const secrets = req.body?.secrets === undefined ? false : req.body.secrets;
+	try {
+		const job = await startExportJob(req.server, { include, secrets });
+		res.status(202).json(job);
+	} catch (err) {
+		if (err instanceof BundleError || err instanceof BusyError) return res.status(err.status).json({ error: err.message, code: err.code });
+		console.error(`Exporting ${req.server.name} failed:`, err);
+		res.status(500).json({ error: err.message });
+	}
+});
+
+router.get("/export-jobs/:id", (req, res) => {
+	const job = isExportJobId(req.params.id) ? getExportJob(req.params.id) : null;
+	job ? res.json(job) : res.status(404).json({ error: "No such job." });
+});
+
+// The finished file, once. The job and its temp folder go when the download has been sent (or has failed).
+router.get("/export-jobs/:id/download", async (req, res) => {
+	const taken = isExportJobId(req.params.id) ? await takeExportFile(req.params.id) : null;
+	if (!taken) return res.status(404).json({ error: "No export is ready to download, or it was already downloaded." });
+	res.setHeader("Content-Type", "application/octet-stream");
+	res.download(taken.file, taken.name, (err) => {
+		taken.done();
+		// The error text may carry the temp path, so the person only hears that sending failed.
+		if (err && !res.headersSent) res.status(500).json({ error: "Sending the export failed." });
+	});
 });
 
 router.get("/presets", (req, res) => {
