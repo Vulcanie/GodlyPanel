@@ -276,7 +276,8 @@ function ModsPanel({ serverName, serverStatus }) {
 					</Box>
 					{updates && pendingUpdates(updates).length === 0 && (
 						<Typography variant="body2" sx={{ mt: 1, color: "text.secondary" }}>
-							Everything is up to date.
+							{/* Only "current" rows mean up to date; a row that needs a hand check or failed must not be read as fine. */}
+							{updates.every((row) => row.status === "current") ? "Everything is up to date." : "Nothing can be updated here."}
 						</Typography>
 					)}
 					{updates?.map((row) => (
