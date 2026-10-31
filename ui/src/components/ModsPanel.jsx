@@ -1,9 +1,11 @@
 import React from "react";
-import { Alert, Box, Button, Chip, CircularProgress, Divider, IconButton, Paper, Switch, TextField, Tooltip, Typography } from "@mui/material";
+import { Alert, Box, Button, Chip, CircularProgress, Divider, FormControlLabel, IconButton, Paper, Switch, TextField, Tooltip, Typography } from "@mui/material";
 import { Delete as DeleteIcon, UploadFile as UploadIcon } from "@mui/icons-material";
 import { api } from "../api/client";
+import { copyToClipboard } from "../utils/clipboard";
 import { formatBytes } from "../utils/format";
 import { canUseAddress, describeInstall, driftNotices, lockEntryForMod, pendingUpdates, updateLabel } from "../utils/modSource";
+import { adminPackDownloads, packLinks } from "../utils/packShare";
 import { useOperation, operationLabel } from "../OperationsContext";
 import InfoTip from "./InfoTip";
 import ConfirmDialog from "./ui/ConfirmDialog";
@@ -26,6 +28,11 @@ function ModsPanel({ serverName, serverStatus }) {
 	const [lock, setLock] = React.useState(null);
 	const [updates, setUpdates] = React.useState(null);
 	const [checking, setChecking] = React.useState(false);
+	// The share link (off, or on with its three addresses) and the community view's public address, which players need to reach it.
+	const [share, setShare] = React.useState(null);
+	const [community, setCommunity] = React.useState(null);
+	const [rotating, setRotating] = React.useState(false);
+	const [copied, setCopied] = React.useState("");
 	const operation = useOperation(serverName);
 	const fileInput = React.useRef(null);
 
@@ -52,6 +59,32 @@ function ModsPanel({ serverName, serverStatus }) {
 	React.useEffect(() => {
 		load();
 	}, [load]);
+
+	const loadShare = React.useCallback(async () => {
+		try {
+			setShare(await api.get(`${base}/share`));
+		} catch (e) {
+			setShare(null);
+			setError(e.message);
+		}
+	}, [base]);
+
+	const loadCommunity = React.useCallback(async () => {
+		// A missing community view is not an error here: players just have no address to reach, and the section says so.
+		try {
+			setCommunity(await api.get("/api/community"));
+		} catch {
+			setCommunity(null);
+		}
+	}, []);
+
+	// Read once the game's data is in, so the share section has what it needs. It is not read again on every change to the mods.
+	const supported = Boolean(data?.supported);
+	React.useEffect(() => {
+		if (!supported) return;
+		loadShare();
+		loadCommunity();
+	}, [supported, loadShare, loadCommunity]);
 
 	const checkForUpdates = async () => {
 		setChecking(true);
@@ -103,6 +136,33 @@ function ModsPanel({ serverName, serverStatus }) {
 	// The version the panel recorded for a row, if it installed that mod. A row it did not install shows no version.
 	const installedVersion = (name) => lockEntryForMod(name, lock?.entries)?.version;
 	const updateOne = (row) => run(() => api.post(`${base}/update`, { id: row.id }), `Updated ${row.name}.`).then(checkForUpdates);
+
+	const shareOn = share?.enabled === true;
+	const links = packLinks(share, community);
+	const adminLinks = adminPackDownloads(serverName);
+	const linkRows =
+		links.state === "ready"
+			? [
+					{ key: "list", label: "Mod list", url: links.links.list },
+					{ key: "zip", label: "Mod pack (zip)", url: links.links.zip },
+					{ key: "manifest", label: "Manifest", url: links.links.manifest },
+				]
+			: [];
+
+	// Turning the link on or off changes what players can reach, so the share state is read again straight after.
+	const setSharing = (enabled) => run(() => api.put(`${base}/share`, { enabled }), enabled ? "Sharing is on." : "Sharing is off.").then(loadShare);
+	const makeNewLink = () => {
+		setRotating(false);
+		run(() => api.post(`${base}/share/rotate`), "Made a new link.").then(loadShare);
+	};
+	// Not navigator.clipboard: the panel is usually opened over plain http, where the browser switches that off.
+	const copyLink = (what, text) =>
+		copyToClipboard(text, (result) => {
+			if (result === "Copied!") {
+				setCopied(what);
+				setTimeout(() => setCopied(""), 2000);
+			} else setError("Couldn't copy to the clipboard. Select the text and copy it yourself.");
+		});
 
 	const add = () => {
 		const value = text.trim();
@@ -297,6 +357,64 @@ function ModsPanel({ serverName, serverStatus }) {
 					))}
 				</Paper>
 			)}
+
+			<Paper sx={{ p: 2, mt: 2 }}>
+				<Typography variant="subtitle1">Share with players</Typography>
+				<Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5, mb: 1.5 }}>
+					Players can download the mods this server runs from a link, without an account. Anyone with the link can download them, so only share it with your players.
+				</Typography>
+				<Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
+					<FormControlLabel
+						sx={{ ml: 0, mr: 0 }}
+						control={<Switch checked={shareOn} disabled={busy || !share} onChange={(e) => setSharing(e.target.checked)} />}
+						label="Share a link"
+					/>
+					{shareOn && (
+						<Button variant="outlined" color="warning" disabled={busy} onClick={() => setRotating(true)}>
+							Make a new link
+						</Button>
+					)}
+				</Box>
+				{links.state === "no_address" && (
+					<Alert severity="info" sx={{ mt: 1.5 }}>
+						Turn on the community view in Settings to get an address players can reach.
+					</Alert>
+				)}
+				{linkRows.map((row) => (
+					<Box key={row.key} sx={{ display: "flex", alignItems: "center", gap: 1.5, pt: 1, mt: 1, borderTop: (t) => `1px solid ${t.palette.divider}` }}>
+						<Typography variant="body2" sx={{ minWidth: 120 }}>
+							{row.label}
+						</Typography>
+						<TextField size="small" fullWidth value={row.url} InputProps={{ readOnly: true }} inputProps={{ "aria-label": row.label }} />
+						<Button size="small" onClick={() => copyLink(row.key, row.url)}>
+							{copied === row.key ? "Copied!" : "Copy"}
+						</Button>
+					</Box>
+				))}
+				<Divider sx={{ my: 2 }} />
+				<Typography variant="caption" sx={{ display: "block", mb: 1, color: "text.secondary" }}>
+					Your own copies of the server's mods
+				</Typography>
+				<Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5 }}>
+					<Button variant="outlined" href={adminLinks.zip} download>
+						Download pack (zip)
+					</Button>
+					<Button variant="outlined" href={adminLinks.list} download>
+						Download list
+					</Button>
+				</Box>
+			</Paper>
+
+			<ConfirmDialog
+				open={rotating}
+				title="Make a new link?"
+				confirmLabel="Make a new link"
+				color="warning"
+				onClose={() => setRotating(false)}
+				onConfirm={makeNewLink}
+			>
+				The old link stops working. Players who have it will need the new one.
+			</ConfirmDialog>
 
 			<ConfirmDialog
 				open={Boolean(removing)}
