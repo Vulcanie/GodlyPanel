@@ -172,7 +172,7 @@ try {
 	await page.keyboard.press("Escape");
 	await page.waitForTimeout(500);
 	const lightBg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-	step("the interface switches to the light theme", (lightBg.match(/d+/g) ?? []).slice(0, 3).every((n) => Number(n) > 230), lightBg);
+	step("the interface switches to the light theme", (lightBg.match(/\d+/g) ?? []).slice(0, 3).length === 3 && lightBg.match(/\d+/g).slice(0, 3).every((n) => Number(n) > 230), lightBg);
 	await page.screenshot({ path: path.join(OUT, "2b-dashboard-light.png") });
 	await page.getByTestId("user-menu").click();
 	await page.getByRole("button", { name: "Appearance" }).click();
