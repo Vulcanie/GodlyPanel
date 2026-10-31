@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
-import { t, tn, setLocale, registerLocale, formatBytes, formatDate, LANGUAGES } from "../i18n/index.js";
+import { t, tn, setLocale, registerLocale, formatBytes, formatDate, errorText, LANGUAGES } from "../i18n/index.js";
 
 // The panel's words come from locale files, and a missing or broken word must never blank the screen: the English text is the fallback,
 // and a key nothing defines shows the key itself.
@@ -82,5 +82,27 @@ describe("formatting and languages", () => {
 			{ code: "en", label: "English" },
 			{ code: "en-XA", label: "Pseudo (test)" },
 		]);
+	});
+});
+
+describe("errorText()", () => {
+	beforeAll(async () => {
+		await setLocale("en");
+	});
+
+	it("uses the panel's words for a code it knows", () => {
+		expect(errorText({ code: "name_taken", message: "raw" })).toBe("A server with that name already exists. Pick another name.");
+	});
+
+	it("falls back to the server's message for an unknown code", () => {
+		expect(errorText({ code: "weird_thing", message: "Server said no." })).toBe("Server said no.");
+	});
+
+	it("uses the fallback for garbage and never throws", () => {
+		for (const bad of [null, undefined, 5, "x", {}, { code: 7 }, { code: "a.b", message: "" }]) {
+			expect(() => errorText(bad, "Failed.")).not.toThrow();
+		}
+		expect(errorText(null, "Failed.")).toBe("Failed.");
+		expect(errorText({ code: "toString" }, "Failed.")).toBe("Failed.");
 	});
 });
