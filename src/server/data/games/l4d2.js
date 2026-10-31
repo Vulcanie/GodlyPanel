@@ -327,4 +327,14 @@ export default {
 		{ kind: "dir", base: "working", rel: "left4dead2/logs", label: "Game log" },
 	],
 	launchOptions: true,
+	// The game loads every .vpk in its addons folder, so a file dropped there is an add-on. The Workshop items the form
+	// downloads land in the same folder; this block only adds the plain folder, with no Workshop.
+	mods: {
+		adapter: "folder",
+		label: "Add-ons",
+		dir: { base: "working", rel: "left4dead2/addons" },
+		accepts: [".vpk"],
+		sources: ["github", "url"],
+		note: "Drop .vpk add-on files here. Every player needs the same add-ons. Restart the server after a change.",
+	},
 };

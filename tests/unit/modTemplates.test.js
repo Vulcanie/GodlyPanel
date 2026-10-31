@@ -23,6 +23,28 @@ describe("MOD_TEMPLATES", () => {
 	});
 });
 
+describe("the mods blocks game modules declare", () => {
+	// Each folder is one the game reads with no extra step, as the research vault documents it (docs/research/games/<id>/04-mods.md).
+	// The base is the one each module's backup block uses for the same folder, so the folder is the one the server runs from.
+	const added = [
+		["garrysmod", "Add-ons", { base: "working", rel: "garrysmod/addons" }, ["archive"]],
+		["l4d", "Add-ons", { base: "working", rel: "left4dead/addons" }, [".vpk"]],
+		["l4d2", "Add-ons", { base: "working", rel: "left4dead2/addons" }, [".vpk"]],
+	];
+	for (const [id, label, dir, accepts] of added) {
+		it(`${id} takes its files from ${dir.rel}, with github and url as the sources`, () => {
+			const block = MOD_TEMPLATES[id];
+			assert.ok(block, `${id} is not in MOD_TEMPLATES`);
+			assert.equal(block.adapter, "folder");
+			assert.equal(block.label, label);
+			assert.deepEqual(block.dir, dir);
+			assert.deepEqual(block.accepts, accepts);
+			assert.deepEqual(block.sources, ["github", "url"]);
+		});
+	}
+
+});
+
 describe("validateModBlock", () => {
 	it("accepts a valid fixture with every optional field", () => {
 		const block = {

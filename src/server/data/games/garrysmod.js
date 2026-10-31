@@ -216,4 +216,14 @@ export default {
 	// console.log: everything the console prints, written because the launch line has -condebug (the Facepunch wiki says it goes in the garrysmod folder).
 	logs: [{ kind: "file", base: "working", rel: "garrysmod/console.log", label: "Console log" }],
 	launchOptions: true,
+	// Each addon is a folder with lua/, materials/ and the rest directly inside it, so a zip must hold that folder: a zip whose
+	// files sit at its top level is put in a folder named after the zip, which the game won't read as an addon.
+	mods: {
+		adapter: "folder",
+		label: "Add-ons",
+		dir: { base: "working", rel: "garrysmod/addons" },
+		accepts: ["archive"],
+		sources: ["github", "url"],
+		note: "Each addon is a folder (with lua/, materials/ and the rest directly inside it). Upload a .zip that holds that folder.",
+	},
 };
