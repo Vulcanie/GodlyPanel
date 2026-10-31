@@ -3,6 +3,8 @@ import { workshopProvider } from "./workshop.js";
 import { thunderstoreProvider } from "./thunderstore.js";
 import { modrinthProvider } from "./modrinth.js";
 import { urlProvider } from "./url.js";
+import { curseforgeProvider } from "./curseforge.js";
+import { githubProvider } from "./github.js";
 
 // Mod sources: one registry of places a mod can come from, and detectSource, which
 // works out which one a pasted address or name belongs to. detectSource only reads
@@ -39,6 +41,8 @@ registerProvider(thunderstoreProvider);
 registerProvider(modrinthProvider);
 // url.js imports this file for detectSource, so this registration has to come after the imports above, and index.js has to be the entry point.
 registerProvider(urlProvider);
+registerProvider(curseforgeProvider);
+registerProvider(githubProvider);
 
 // Longer than this is not a mod address, and reading it further is wasted work.
 const MAX_INPUT = 2048;
