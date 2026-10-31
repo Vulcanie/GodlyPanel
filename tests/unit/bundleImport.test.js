@@ -550,6 +550,24 @@ describe("importing a server bundle", () => {
 			await refuses(bundleFile([{ name: BUNDLE_MANIFEST, data: JSON.stringify(manifest) }, { name: "saves/world.sav", data: "x" }]), "unsafe_bundle", { name: "Hostile Fourteen" });
 		});
 
+		it("a record path on a network share written with forward slashes", async () => {
+			const manifest = await good();
+			manifest.server.configPath = "//evil/share/ServerSettings.ini";
+			await refuses(bundleFile([{ name: BUNDLE_MANIFEST, data: JSON.stringify(manifest) }, { name: "saves/world.sav", data: "x" }]), "unsafe_bundle", { name: "Hostile Net" });
+		});
+
+		it("a backup folder with no drive letter is not carried, and the import still works", async () => {
+			const manifest = await good();
+			manifest.options.backup.paths = [{ path: "\\Users\\someone\\Documents", label: "Docs" }, { path: "{{serverRoot}}\\saves", label: "Saves" }];
+			const parent = freshParent();
+			const file = bundleFile([{ name: BUNDLE_MANIFEST, data: JSON.stringify(manifest) }, { name: "saves/world.sav", data: "x" }]);
+			const result = await importServer(file, { name: "Hostile Backup", parentDir: parent }, quiet);
+			const paths = getOptions("Hostile Backup").backup.paths.map((p) => p.path);
+			assert.equal(paths.length, 1);
+			assert.ok(paths[0].startsWith(path.join(parent, slugify("Hostile Backup"))));
+			assert.ok(result.warnings.some((w) => w.includes("backup folder")));
+		});
+
 		it("a token that was never filled in", async () => {
 			const manifest = await good();
 			manifest.server.configPath = "{{oops}}/ServerSettings.ini";
