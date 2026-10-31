@@ -50,7 +50,7 @@ const upload = multer({
 });
 
 function fail(res, err, what) {
-	if (err instanceof ModError) return res.status(err.status).json({ error: err.message, code: err.code });
+	if (err instanceof ModError) return res.status(err.status).json({ error: err.message, code: err.code, ...(err.details !== undefined ? { details: err.details } : {}) });
 	if (err.code === "path_not_allowed") return res.status(400).json({ error: err.message, code: err.code });
 	if (err.status) return res.status(err.status).json({ error: err.message, code: err.code });
 	console.error(`${what} failed:`, err);

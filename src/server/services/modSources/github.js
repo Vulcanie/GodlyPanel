@@ -138,7 +138,9 @@ async function checksumOf(asset, release, ctx) {
 function chooseAsset(release, ctx) {
 	const found = matchingAssets(release, ctx);
 	if (found.length === 0) throw new ModError("This release has no file this game can use.", "no_matching_asset", 404);
-	if (found.length > 1) throw new ModError("This release has several files that fit. Choose one.", "choose_asset", 409);
+	if (found.length > 1) {
+		throw new ModError("This release has several files that fit. Choose one.", "choose_asset", 409, { assets: found.slice(0, 25).map((a) => a.name) });
+	}
 	return found[0];
 }
 

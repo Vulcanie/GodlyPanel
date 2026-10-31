@@ -21,10 +21,12 @@ import { logActivity } from "./activityLog.js";
 // callers require the server to be stopped first.
 
 export class ModError extends Error {
-	constructor(message, code = "mod_error", status = 400) {
+	// details is plain data the caller may show, sent back with the error (e.g. the files to choose between).
+	constructor(message, code = "mod_error", status = 400, details = undefined) {
 		super(message);
 		this.code = code;
 		this.status = status;
+		if (details !== undefined) this.details = details;
 	}
 }
 

@@ -181,6 +181,7 @@ describe("github releases provider", () => {
 		const err = await failure(provider().resolve("acme/two", {}));
 		assert.equal(err.code, "choose_asset");
 		assert.equal(err.status, 409);
+		assert.deepEqual(err.details, { assets: ["two-1.jar", "two-2.jar"] });
 		const picked = await provider().resolve("acme/two", { assetName: "two-2.jar" });
 		assert.deepEqual(picked.files.map((f) => f.name), ["two-2.jar"]);
 		const missing = await failure(provider().resolve("acme/two", { assetName: "nope.jar" }));
