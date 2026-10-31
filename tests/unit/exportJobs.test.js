@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { windowsOnly } from "../helpers/winEmulation.js";
 
 // Export jobs: an export runs in the background, its file waits in a temp folder until it is downloaded once, and the folder goes
 // after download, on failure, or when the job expires. The real exporter is replaced by a stand-in that writes a small file, so
@@ -50,7 +51,7 @@ function fakeExporter({ fail = null, gate = null } = {}) {
 
 const folderOfLastCall = () => calls.at(-1).options.outDir;
 
-describe("export jobs", () => {
+describe("export jobs", windowsOnly("export jobs make bundles with Windows' real tar"), () => {
 	before(() => {
 		mock.method(console, "error", () => {});
 	});

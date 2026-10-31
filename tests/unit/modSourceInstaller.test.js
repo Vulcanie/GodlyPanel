@@ -5,6 +5,7 @@ import fs from "node:fs";
 import http from "node:http";
 import os from "node:os";
 import path from "node:path";
+import { windowsOnly } from "../helpers/winEmulation.js";
 
 // Installing a mod from a source: its dependencies first, each file downloaded through the guard and checked against its
 // checksum, then handed to installUpload. Every failure leaves nothing behind in the mods folder or the temp folder. The
@@ -59,7 +60,7 @@ function recordingFetch(map = (u) => u) {
 	return { seen, fetchImpl };
 }
 
-describe("installing from a source", () => {
+describe("installing from a source", windowsOnly("the test packs a zip with Windows' real tar"), () => {
 	let server;
 	let base;
 	let requests;

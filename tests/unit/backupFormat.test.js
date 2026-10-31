@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { windowsOnly } from "../helpers/winEmulation.js";
 
 // Backups in more than one archive format. A server's folder can hold .zip, .tar.zst and .tar.xz backups side by side,
 // and listing, keeping, deleting and copying off the machine all treat them as the same kind of backup.
@@ -38,7 +39,7 @@ async function makeBackup(folder, id, { format, kind = "scheduled", createdAt })
 	return archive;
 }
 
-describe("backups in more than one format", () => {
+describe("backups in more than one format", windowsOnly("zstd and xz backups need Windows' real tar"), () => {
 	const server = { name: "Format Test" };
 	const folder = () => serverBackupDir(server);
 	const reset = () => {
