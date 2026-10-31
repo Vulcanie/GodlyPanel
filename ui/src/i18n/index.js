@@ -151,3 +151,14 @@ export function useT() {
 	const ctx = React.useContext(I18nContext);
 	return ctx ?? { t, tn, locale: current, setLocale };
 }
+
+/** Text for a failed request: the translated `errors.<code>` when the server sent a code the panel has words for, else the server's own English message. */
+export function errorText(err, fallback = "") {
+	const code = err && typeof err === "object" ? err.code : undefined;
+	if (typeof code === "string" && /^\w+$/.test(code)) {
+		const word = wordFor(current, `errors.${code}`) ?? wordFor("en", `errors.${code}`);
+		if (typeof word === "string") return fill(word, err.details && typeof err.details === "object" ? err.details : undefined);
+	}
+	const message = err && typeof err === "object" ? err.message : undefined;
+	return typeof message === "string" && message ? message : fallback;
+}
