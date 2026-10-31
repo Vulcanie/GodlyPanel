@@ -11,6 +11,7 @@ const ALL = [
 	{ key: "logs", label: "Logs", words: "log output errors search", permission: "server.logs" },
 	{ key: "network", label: "Network", words: "ports firewall address join ip forward open", permission: "server.control" },
 	{ key: "mods", label: "Mods", words: "mods workshop thunderstore modpack plugins", admin: true },
+	{ key: "files", label: "Files", words: "files folder upload download edit config text zip trash", permission: "files.view" },
 	{ key: "activity", label: "Activity", words: "events history audit who did", permission: "activity.view" },
 	{ key: "automation", label: "Automation", words: "crash restart hang auto start presets clone motd rcon password message of the day", admin: true },
 	{ key: "advanced", label: "Advanced", words: "window hidden minimized launch program priority folder location delete remove batch script", admin: true },
