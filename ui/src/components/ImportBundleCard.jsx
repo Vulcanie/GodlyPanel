@@ -48,8 +48,12 @@ function ImportBundleCard({ onOpen }) {
 			try {
 				const fresh = await api.get(`/api/import-jobs/${jobId}`);
 				setJob((j) => (j?.id === jobId ? { ...j, ...fresh } : j));
-			} catch {
-				// Try again next beat.
+			} catch (e) {
+				// The panel forgets a job it restarted in the middle of; without this the bar would run forever.
+				if (e?.status === 404) {
+					setJob((j) => (j?.id === jobId ? { ...j, status: "failed", code: "import_failed", error: "The panel lost track of this import (it may have restarted). Check the server list before trying again." } : j));
+				}
+				// Any other failure: try again next beat.
 			}
 		};
 		const off = onLive("import_progress", (e) => setJob((j) => mergeImportEvent(j, e)));
