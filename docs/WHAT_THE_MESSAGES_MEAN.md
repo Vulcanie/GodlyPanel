@@ -10,7 +10,9 @@ If a message isn't here, or the explanation doesn't help, please
 **Jump to:** [Signing in](#signing-in) · [A page that says "private"](#pages-that-say-no) ·
 [Passwords and accounts](#passwords-and-accounts) · [Starting and stopping](#starting-stopping-and-consoles) ·
 [Backups and restores](#backups-and-restores) · [Settings and ports](#settings-and-ports) ·
-[Community view](#community-view-and-tunnels) · [Mods](#mods) · [Updates](#panel-updates) ·
+[Community view](#community-view-and-tunnels) · [Mods](#mods) · [Files](#files) ·
+[Roles and console commands](#roles-and-console-commands) · [Game updates](#game-updates) ·
+[Moving a server](#moving-a-server-export-and-import) · [Panel updates](#panel-updates) ·
 [The data folder](#the-data-folder)
 
 ---
@@ -226,6 +228,105 @@ Modpacks from CurseForge need a free key. Create one at console.curseforge.com a
 
 **manifest.json not found at the root of the zip — is this a CurseForge modpack export?**
 Upload the pack's **server** export (the zip with `manifest.json` at its top), not a folder or the client download.
+
+**I don't recognise that link.**
+The pasted text isn't a mod page, a release or a file address the panel knows how to read. Paste the mod's own page address, or a direct file link.
+
+**This address isn't one of the known mod sites. Only install from an address you trust.**
+The panel installs without asking only from places it knows. Tick **I trust this address** if you do trust it. An address that leads to a private
+network address, or one with a username and password in it, is never fetched.
+
+**That address isn't one of the ones the panel will download from.**
+The address (or a redirect from it) was refused by the download guard: it isn't https, names a port other than the usual one, or points inside a private network.
+
+**This mod is for players only, so it isn't installed on the server.** / **This mod pulls in too many other mods.** / **This mod has too many files.**
+The panel installs a mod, its required dependencies and its files up to a limit. A client-only mod belongs on the players' side.
+
+**The mod couldn't be installed / updated. The panel's log has the details.**
+The download, its checksum, or a dependency failed. Whatever that attempt had installed was taken back out, and for an update the old mod was put back.
+
+**This game's mods can't be added from an address.** / **This game's mods can't be shared.** / **… can't be packed as a Modrinth pack.**
+The game's mods are managed another way (Workshop numbers, Thunderstore, the start script) or the panel doesn't manage them. A Modrinth pack also needs the game version to be known.
+
+---
+
+## Files
+
+**You don't have permission to see this server's files.**
+Your role lacks "Browse files". Editing needs "Edit files", and deleting or using the trash needs "Delete files".
+
+**Only an administrator can save that kind of file.** / **Only an administrator can unpack a zip.**
+Scripts and programs (`.bat`, `.cmd`, `.ps1`, `.exe`, `.dll`, `.js` and similar) run on the PC, and a zip can hold them, so only an administrator may save, upload or unpack them.
+
+**That path is outside this server's folder.**
+The panel never leaves the server's folder, and treats a link or junction that points elsewhere, `..`, a drive letter or a reserved Windows name as outside.
+
+**That file isn't text, so it can't be opened or changed here.** / **The panel keeps that item for itself, so it can't be changed here.**
+Download a binary file instead of editing it. The panel's own files for the server (its settings file, the trash, `.bak` copies) are read-only here.
+
+**Something is already there with that name.** / **The folder it would go in doesn't exist.**
+Renaming, moving and unpacking never overwrite. Rename or remove what's there, or create the folder first.
+
+**The zip holds a path that isn't allowed.** / **That isn't a zip file this panel can open.**
+Unpacking refuses any entry that would land outside the folder. Nothing was extracted.
+
+---
+
+## Roles and console commands
+
+**You can't give a role permissions you don't have yourself.**
+You can edit roles only up to what you hold. Only an administrator can hand out more, or change a role's console command limits.
+
+**Move the people holding it to another role first.** / **Built-in roles can't be deleted.**
+A role in use can't be deleted. Change those people to another role on the **People** page, then delete it.
+
+**Your role isn't allowed to run that command.**
+The role's console limit (an allow-list or a deny-list) doesn't permit the first word of the command. Ask an administrator, or see
+[Limiting the console commands](ACCOUNTS_AND_ROLES.md#limiting-the-console-commands).
+
+**That command can't be sent here: one command at a time, no chaining.**
+A role with console limits can't send a line with a second command attached (a line break, `;`, `|` or `&&`). Send the commands separately.
+
+---
+
+## Game updates
+
+**There is no update to roll back for this server.** / **That update has already been rolled back.**
+**Roll back saves** works on the newest update only, once.
+
+**The panel did not back this server up before that update, so there is nothing to roll back to.**
+That update ran without a backup. Turn on **Back up this server before every game update** for next time.
+
+**The panel is still waiting to see if the server comes back after the update. Try again in a moment.**
+Rolling back would race the check. Wait for the card to say **Came back online** or **Did not come back**.
+
+**Stop the server first. Rolling back replaces files the game is using.**
+Stop it and wait for **Stopping…** to finish.
+
+**The backup before the update failed. Update without a backup?**
+The panel stopped the server, tried to back it up, and couldn't (often disk space). Say no and fix the cause, or yes to go ahead without the safety net.
+
+---
+
+## Moving a server: export and import
+
+**That is not a GodlyPanel server file.** / **This file has no manifest, so it isn't a GodlyPanel bundle.** / **The bundle's manifest isn't valid.**
+The chosen file isn't a `.gpserver` made by GodlyPanel, or is damaged.
+
+**That file was refused because it is not safe to open.** / **The bundle holds a link or special file, so it was refused.** / **The bundle holds a file name that isn't safe, so it was refused.**
+The panel checks every name in a bundle before extracting anything. This one holds something that could write outside the new folder, so nothing was imported.
+
+**That file was made by a newer GodlyPanel. Update this one first.**
+Update the PC you are importing on (`Settings → Panel updates`).
+
+**A server with that name already exists. Pick another name.** / **There is not enough free space for this server.**
+Rename the import, or free some space, then try again.
+
+**The uploaded file is gone. Choose it again.** / **The panel lost track of this import (it may have restarted).**
+The temporary upload was swept or the panel restarted. Choose the file again; check the server list first, in case the import actually finished.
+
+**Stop the server first, so its files are copied in one piece.** / **This game's servers share one install, so only a server in a folder of its own can be exported.**
+Export needs a stopped server of the panel's own making, in a folder of its own. See [Moving a server](MANAGING_SERVERS.md#moving-a-server-to-another-pc).
 
 ---
 

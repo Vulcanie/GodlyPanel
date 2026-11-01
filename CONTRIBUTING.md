@@ -9,9 +9,12 @@ so a few notes keep things smooth.
   version, and the last lines of `data\logs\api.log` (it's safe to share: keys and
   webhooks are stored elsewhere).
 - **A game that doesn't work.** Say which game, how you start it by hand, and what
-  the panel did. The panel's per-game knowledge lives in
-  `src/server/data/gameTemplates.js`, and is written from real installs, so a
-  working command line is the most useful thing you can send.
+  the panel did. Only the first 17 of the 93 games have been through a full real-install run
+  ([Game support](docs/GAME_SUPPORT.md)), so reports on the others are especially useful. A
+  working command line, the last lines of the game's log and its ports are the most useful
+  things you can send.
+- **A translation fix.** Spanish and German are beta. See [Translating GodlyPanel](docs/TRANSLATING.md).
+- **Adding a game.** See [Adding a game](#adding-a-game) below.
 - **Testing on a machine that isn't the maintainer's.** Every release so far has been
   tried on one PC. Reports from a different Windows setup, especially a clean one,
   are valuable.
@@ -30,11 +33,40 @@ npm run dev        # builds the interface and opens the app against ./data
 `npm run dev:ui` runs the interface alone with hot reload; point it at a running
 panel (see the note in the README under Development).
 
+## Adding a game
+
+Each game is data, not code: a game gets backups, mods, the file manager, moving to another PC and the rest by filling in what is
+special about it.
+
+1. **Research it first, with sources.** `docs/research/games/CONVENTIONS.md` is the brief, and `IMPLEMENT.md`, `EXTRACT.md` and
+   `VERIFY.md` are the steps. The rule is that a setting, default, dropdown value or launch argument goes in only if a source is cited for
+   it; anything unconfirmed is left unexplained rather than guessed.
+2. **Server side:** `src/server/data/games/<id>.js` default-exports `{ template, backup, logs, launchOptions, mods }` (what the file at
+   the top of `src/server/data/games/index.js` describes). Register it in that file's `GAME_MODULES`. A game that needs an account the panel
+   can't offer is built but left unregistered, with a one-line comment saying why.
+3. **Interface side:** `ui/src/catalog/games/<type>.js` holds the game's settings, launch arguments and wording (what the (i) icons show).
+4. **Tests:** `tests/unit/game-<id>.test.js`, in the style of the existing ones.
+5. **Run it for real if you can:** `node tests/real/conformance.mjs --game <id>` installs it into a throwaway folder and runs the full
+   lifecycle (see the safety notes at the top of that file). Add what you find to the game's `06-verification.md` and to
+   [Game support](docs/GAME_SUPPORT.md).
+6. **Regenerate the guides** (`npm run build:guides`): the game's settings and launch arguments appear in
+   [Game settings](docs/GAME_SETTINGS.md) and [Launch arguments](docs/LAUNCH_ARGUMENTS.md) from the interface catalog.
+
+## Documentation
+
+The guides in `docs/` are plain Markdown, except four that are **generated** from the interface's help text and must not be edited by hand:
+`PANEL_SETTINGS.md`, `SERVER_OPTIONS.md`, `GAME_SETTINGS.md` and `LAUNCH_ARGUMENTS.md`. Edit the text in `ui/src/help` (or the game's catalog in
+`ui/src/catalog`) and run `npm run build:guides`; `npm run check:guides` (also run by `npm --prefix ui test`) fails when what is committed is out of
+date. `node scripts/check-doc-links.mjs` checks that every link and heading anchor in the README, SECURITY.md, CONTRIBUTING.md and `docs/` resolves
+(`npm test` runs it too). When you add a feature a person can see, add it to the README, the matching guide, and (if a message is new)
+[What the messages mean](docs/WHAT_THE_MESSAGES_MEAN.md).
+
 ## Tests
 
 ```powershell
 npm test                  # unit + API tests, about 3-4 minutes (4 files at a time, to leave the machine usable)
 npm --prefix ui test      # the interface's own unit tests (vitest), a few seconds
+node scripts/i18n-check.mjs  # every translation against English (npm test runs it too)
 node tests/ui/sections.mjs  # one browser test (see below); needs a built interface and a Chromium
 npm run test:desktop      # real processes and windows, about 2 minutes
 ```

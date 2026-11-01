@@ -22,6 +22,7 @@ assumes:
   script, so the panel doesn't pretend otherwise);
 - **moderators** are trusted to run servers (start, stop, update, back up, read logs, use the console,
   kick and ban) but not to see passwords, change settings or delete anything;
+- people with a **custom role** are trusted with exactly the permissions the role lists and no more (see below);
 - **guests** (called Viewers in the interface) are not trusted, and can only see server status;
 - the network is not hostile.
 
@@ -48,6 +49,60 @@ Against that model it does the following:
   private folder outside the data folder, so copying or backing up `data` doesn't copy it.
 
 ### The newer surfaces
+
+- **Custom roles and console limits.** A role is a list of permissions from a fixed catalog, kept in `roles.json`, with the three
+  built-in roles locked in code (and `admin` always meaning everything). Every route checks the permission on the server, and
+  the per-server role of the signed-in person (`serverRoles`) is the one used, never one the request names. An `admin` entry is never
+  accepted as a per-server role, so no one can be made an administrator of a single server. The permissions that matter most are not in
+  the catalog at all, so no role can hold them: reading passwords and config files, changing a server's settings, restoring or
+  deleting a backup, deleting or cloning a server, installing mods, creating servers, managing people and changing the panel's
+  settings are administrator-only. A person with `roles.manage` can only grant what they hold themselves, can't change a role's
+  console limits, and can't assign a role to anyone (assigning is administrator-only). A role in use can't be deleted. Permissions are looked up on every request, so a change to a role applies at once,
+  and giving a person a different role ends their sessions. A role's console limit ("allow" or "deny" a list of first words, with `*` wildcards) is applied by one
+  function before anything reaches a game's console; with a limit set, a command with line breaks, other control characters, `;`, `|` or `&&`,
+  or an odd leading `/`, is refused outright, and a missing user or unknown role is refused. The matcher walks the strings itself, with no
+  regular expression built from a pattern, so no pattern can make it slow. A deny-list can only name commands someone thought of, so an
+  allow-list is the stronger choice.
+- **The file manager.** Every path the browser sends goes through one resolver that joins it onto the server's own folder only after
+  it passes strict rules: no `..`, drive letters, alternate data streams, reserved device names, over-long names, or a link/junction
+  anywhere along the path (each part is checked with `lstat`), and a server whose folder holds the panel's own data can't be
+  browsed. The panel's own files (the trash, its settings file, `.bak` copies) can be read but not changed. Reading and saving are
+  limited to text up to 2 MB; uploads to 100 MB. Only an administrator may save, upload or rename to a launcher or program type
+  (`.bat`, `.cmd`, `.ps1`, `.exe`, `.dll`, `.js` and similar, with trailing dots and spaces ignored as Windows does) or unpack a zip.
+  Unpacking refuses any entry that would escape the folder and replaces nothing. Deleting moves to a per-server trash that can be
+  restored. Failures report only the panel's own plain message, never an absolute path.
+- **Mod downloads.** Every mod address, and every redirect it follows, goes through one guard: https only, no embedded username or
+  password, the default port, a host the provider named (or one the person chose to trust), and a name that resolves only to public
+  addresses, so a mod link can't be used to reach something inside your network. Each file is checked against its source's
+  checksum, a dependency tree and file count are capped, a mod's archive is checked for entries that escape the folder, and a failed
+  install takes back what that call installed. Mod updates stage the old files outside the game's folders and put them back if the
+  new install fails. The panel's record of what it installed (`modlocks`) lives in its own data folder, named by a hash of the server's
+  name, never beside the game's files.
+- **The player mod pack.** The pack link on the community address carries a secret token, can be turned off or replaced, and every
+  failure answers with the same plain 404 so a link can't be used to find out which servers exist or share. It is limited per visitor, builds at most a
+  couple of zips at once, and ships only recorded, unchanged files for mods meant for players (a CurseForge mod is named, never copied).
+  It is mounted on the community listener only, never on the panel's own port, and no sign-in is involved, so **anyone holding the
+  link can download the pack**.
+- **Exporting and importing a server.** A `.gpserver` file never holds a path from the exporting PC (paths are tokens the importer
+  fills in) and, unless asked, no passwords. The export is of a stopped server only, and the file can be downloaded once. An imported
+  file is treated as hostile: it must be a readable archive; every name in it is checked before anything is extracted (no links, special files or
+  escaping paths); the manifest is size-limited and validated, and one made by a newer panel is refused; the server is rebuilt in a new folder
+  the import creates itself; settings that point outside it are refused; and any failure removes everything the import made without touching a
+  folder that was already there. What the panel can't judge is the start script inside, which will run on the importing PC: only import files
+  you trust. An uploaded bundle is held under a random id (never a path) and old ones are swept.
+- **Safer game updates.** A backup of the save folders can be taken between stopping a server and updating it (and the update is not run if it
+  fails); the panel then watches for the server to report online, and records the outcome. A roll-back restores the saves from that backup (never the
+  game's files), with its own safety backup, only for the newest update, once, and only on a stopped server.
+- **Downloads other than from Steam.** A game installed from its maker's website or GitHub (Minecraft, Terraria, tModLoader) is fetched only after
+  the person agrees in a dialog that shows the address, size and checksum; only over https from a fixed list of hosts (a redirect off the list is
+  refused), within a size limit, and installed only if the published SHA-1/SHA-256 matches (tModLoader requires GitHub to publish one); the
+  archive's names are checked before unpacking. Terraria's XNA Framework files come from a fixed Microsoft address with a fixed size and checksum
+  and a valid Authenticode signature, and are unpacked (an administrative image), never installed.
+- **Smaller backups.** Backups can be written as zip, `.tar.zst` or `.tar.xz` through Windows' own `tar.exe` (never another `tar` found on the
+  `PATH`), with fixed option strings built from three level names, so a setting can't inject an argument. Every backup is read back before it is
+  kept, an older backup is replaced only after its rewrite verifies, and old zips keep working unchanged.
+- **Translations.** The interface's words are plain data (`ui/src/locales/*.json`) checked in CI for matching placeholders and the only markup
+  the panel renders (`<b>`, `<i>`, `<code>`), so a translation can't add a script or a link.
 
 - **Off-machine backups.** The secret key of an S3-compatible destination is kept in
   `secrets.json`, never in `config.json` or in anything the interface can read back (it only

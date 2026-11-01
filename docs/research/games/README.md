@@ -1,6 +1,6 @@
 # New games: research and status
 
-> Browse this folder as a vault starting at [INDEX.md](INDEX.md); every game has a `00-overview.md`.
+> **Note (November 2026):** this folder keeps the dossiers of the first batches of games only (Abiotic Factor, Arma Reforger, Barotrauma, Don't Starve Together, Garry's Mod, Icarus, Left 4 Dead 2, Necesse, SCUM, Soulmask, Space Engineers, Squad, StarRupture, Terraria, Unturned, VEIN); the later batches' dossiers, and the `INDEX.md` and `candidates-batch*.md` files some lines below mention, are not in the repository. The status tables are a record as of the dates they carry. For where each of the 93 games stands now, see [Game support](../../GAME_SUPPORT.md).
 
 How each game was added: for every game, separate research passes (server basics, config files, launch arguments, mods) each wrote a
 sourced dossier (`01-basics.md` to `04-mods.md` in the game's folder here), then a build pass turned it into a server module

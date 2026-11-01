@@ -9,6 +9,20 @@ separate programs. Quitting the panel does stop its scheduled jobs and its crash
 **Does it work on Linux or Mac?**
 No. GodlyPanel is for Windows 10 and 11 (64-bit), and manages the Windows versions of game servers.
 
+**Which games does it support?**
+93 have a creation template; see [Game support](GAME_SUPPORT.md) for the list and for how well each was checked. The first 17 were
+tested end to end against real installs; the rest less so. Anything else with a start script can still be added and
+managed, just without a template.
+
+**Is it free? Is it finished?**
+It's free (MIT licence) and it's an alpha: it runs a real community's servers, but expect rough edges, and back up your `data`
+folder before updating. It was built with an AI assistant; the [README](../README.md) is upfront about that.
+
+**Can I use it in my own language?**
+English, Spanish and German (the last two are beta). It follows your browser's language, or you can choose one in
+`Settings → Appearance → Language`. Game names, game settings and some help pages are still English. See
+[Translating GodlyPanel](TRANSLATING.md) to help with another.
+
 **Can I run more than one server of the same game?**
 Yes. Each gets its own folder (or, for games that share one install, its own start script), its own ports and its own
 settings. The panel checks the ports don't clash.
@@ -22,7 +36,7 @@ In the `data` folder next to the app. Back that folder up to back up your accoun
 are backed up separately, from each server's **Backups** tab.
 
 **Can I move it to another PC?**
-Yes, one server at a time. On the old PC, open the server's **Advanced** tab, choose **Move to another PC**, pick what to
+Yes, one server at a time. Only a server the panel created, in a folder of its own, can be exported; several ARK maps that share one install can't be. On the old PC, open the server's **Advanced** tab, choose **Move to another PC**, pick what to
 include and download the file. On the new PC, choose **Create server**, then **Import a server file** and pick that file.
 **Saves and settings** is the small choice: the world, settings, mods and schedules. The game itself is downloaded again on
 the new PC. **Everything** is the whole server folder, game files included, so it is bigger but the game is not downloaded

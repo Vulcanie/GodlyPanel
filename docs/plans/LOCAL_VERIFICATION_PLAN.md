@@ -1,5 +1,7 @@
 # Local verification plan (Windows PC, real games)
 
+> **Historical planning document.** It records what was planned at the time and may not match the app as it is now. For what the app does today, see the [README](../../README.md) and the guides in [docs/](../README.md); for what is next, the README's Roadmap.
+
 This is the checklist for a session that runs **on a Windows PC with the games installed**. Everything here was written and
 tested in a Linux sandbox with no games, no Windows and no internet: the code paths are covered by tests, but facts about
 real games (which setting names exist, what values they take, what an argument does) and real Windows behaviour could only be

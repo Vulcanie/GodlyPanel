@@ -41,17 +41,26 @@ purpose, so nobody else on your network can claim the panel before you do.
 ## 3. Create your first server
 
 1. On the dashboard choose **Create Server**.
-2. Pick a game. Each one shows the ports it needs, filled in for you.
-3. Give it a name and, if the game asks, a session name and a join password.
-4. Choose **Create**. The panel downloads the game with SteamCMD, which it fetches for you
-   the first time (it asks first). This is the slow part, and you can watch the progress.
+2. Pick a game. There are 93 to choose from; type in the search box to find one. Each shows the ports it
+   needs, filled in for you. (The first 17 are the best proven; see [Game support](GAME_SUPPORT.md).)
+3. Give it a name and, if the game asks, a session name and a join password. Some games ask for one thing
+   more, such as a token from the game's maker; the form says what and where to get it.
+4. Choose **Create**. The panel downloads the game, which is the slow part, and you can watch the
+   progress. Most games come through SteamCMD, which the panel fetches for you the first time. Minecraft, Terraria
+   and tModLoader come from their makers' own sites or GitHub instead. Either way **the panel asks first**,
+   telling you what it will download, from where and how big it is, and checks the file against the maker's
+   published checksum where there is one.
 5. When it finishes, the server appears on the dashboard. Press **Start**.
 
 The tile shows **Starting…** and then **Online** once the game answers. Some games take a
 couple of minutes to load a world.
 
+> **Coming from another PC?** If the server was made by GodlyPanel there, export it from its **Advanced**
+> tab (**Move to another PC**), then on this PC choose **Create server → Import a server file**. See
+> [Managing servers](MANAGING_SERVERS.md#moving-a-server-to-another-pc).
+>
 > **Already have servers set up by hand?** The panel can look after them without touching
-> their files, but there is no import button in the interface yet; it is done through the
+> their files, but there is no import button in the interface for these yet; it is done through the
 > panel's settings API. If you need that, ask in an [issue](https://github.com/Vulcanie/GodlyPanel/issues).
 > Servers the panel *creates* have the most features (cloning, safe port changes, deleting
 > with their files).
@@ -82,6 +91,11 @@ Before anything else goes wrong:
 3. Switch on **Restart it if it crashes** (the server's **Automation** tab).
 4. Optionally keep copies off this PC too, under **Copies off this PC** on the **Backups**
    tab: another drive, a network share, a cloud-sync folder or S3-compatible storage.
+5. Consider **Back up this server before every game update** (the **Game updates** card on a server's page, or
+   `Settings → Backups` for all servers), so a bad update can be undone for your saves.
+
+The dashboard also shows a short **setup checklist** of things worth doing (a backup, a schedule, firewall ports). Open
+it to see what's left, or choose **Don't show again**.
 
 ## 6. Day to day
 
@@ -91,6 +105,11 @@ Before anything else goes wrong:
   GodlyPanel when I sign in to Windows*.
 - It tells you when something needs attention (a crash, a failed backup, low disk space)
   through Windows notifications, and Discord or email if you set those up in `Settings`.
+- Press **Ctrl+K** anywhere to jump to a server, one of its tabs or a page, or to start, stop or restart a server.
+- The panel is in English, Spanish and German (the last two are beta). It follows your browser's language;
+  to choose, go to `Settings → Appearance → Language`. Light and dark themes are there too, and in your menu.
+- Need to look at or change a file in a server's folder (a config, a mods folder)? The **Files** tab does it without leaving
+  the panel.
 
 ## Where your data is
 
