@@ -106,7 +106,19 @@ function isMatchForProcessName(server, proc) {
 	return procBaseName.toLowerCase() === baseName.toLowerCase();
 }
 
+// A Java process listening on one of the server's own ports is that server, whatever its command line says. (The
+// loader version in the command line can differ from the one in variables.txt, e.g. after a pack update.)
+function isMatchForListeningPort(server, proc) {
+	if (!/^java/i.test(proc.Name) || !Array.isArray(proc.ListeningPorts)) return false;
+	const ports = [server.port, server.rconPort].map(Number).filter((n) => Number.isInteger(n) && n > 0);
+	return ports.some((port) => proc.ListeningPorts.includes(port));
+}
+
 export function findMatches(server, processes) {
+	if (server.type?.startsWith("minecraft")) {
+		const byPort = processes.filter((p) => isMatchForListeningPort(server, p));
+		if (byPort.length > 0) return byPort;
+	}
 	if (server.type === "minecraft") {
 		return processes.filter((p) => isMatchForMinecraft(server, p));
 	}
