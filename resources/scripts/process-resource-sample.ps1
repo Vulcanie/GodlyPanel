@@ -35,6 +35,17 @@ $sample2 = Get-CimInstance Win32_PerfFormattedData_PerfProc_Process |
 $cmdLines = Get-CimInstance Win32_Process | Select-Object ProcessId, CommandLine
 $logicalCores = (Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors
 
+# TCP ports each process is listening on. A game server's own ports are the one thing that always tells identical
+# java processes apart (a Minecraft server's version string in its command line can disagree with its files).
+$portsByPid = @{}
+try {
+	foreach ($c in (Get-NetTCPConnection -State Listen -ErrorAction Stop)) {
+		$key = [int]$c.OwningProcess
+		if (-not $portsByPid.ContainsKey($key)) { $portsByPid[$key] = @() }
+		$portsByPid[$key] += [int]$c.LocalPort
+	}
+} catch { }
+
 $sample1ByPid = @{}
 foreach ($p in $sample1) { $sample1ByPid[[int]$p.IDProcess] = $p.PercentProcessorTime }
 
@@ -55,6 +66,7 @@ $results = foreach ($p in $sample2) {
 		CpuPercent  = [math]::Round($rawCpu / $logicalCores, 1)
 		RamMB       = [math]::Round($p.WorkingSet / 1MB, 1)
 		CommandLine = $cmdLineByPid[$procId]
+		ListeningPorts = @($portsByPid[$procId] | Select-Object -Unique)
 	}
 }
 
