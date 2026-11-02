@@ -1,5 +1,7 @@
 # Power Features Implementation Plan
 
+> **Historical planning document.** It records what was planned at the time and may not match the app as it is now. For what the app does today, see the [README](../../README.md) and the guides in [docs/](../README.md); for what is next, the README's Roadmap.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Add smaller backups, safe game updates, custom roles with command scope, multi-source mod install with player modpack sync, a file manager, server move between PCs, and UI localization, all driven by per-game data rather than per-game code.

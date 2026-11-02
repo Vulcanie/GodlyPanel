@@ -1,5 +1,7 @@
 # Plan: the next fifteen features
 
+> **Historical planning document.** It records what was planned at the time and may not match the app as it is now. For what the app does today, see the [README](../../README.md) and the guides in [docs/](../README.md); for what is next, the README's Roadmap.
+
 Written 2026-09-30 after 0.1.0-alpha.3. The order below is the order of work; each
 phase ends with its tests passing and a commit. Nothing is called done until it has
 been exercised the way a person would use it, against real games where a game is

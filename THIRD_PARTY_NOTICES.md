@@ -62,19 +62,30 @@ The exact set and versions are in `package-lock.json` and `ui/package-lock.json`
   first time it is needed and cached on your own computer. It is not part of this
   repository or the release zip. You can replace any of it with your own image or
   a plain colour in Settings.
-- **Windows' own `tar.exe`** writes and reads backup zips. It is part of Windows 10 and 11.
+- **Windows' own `tar.exe`** writes and reads backups (`.zip`, `.tar.zst` and `.tar.xz`) and server files. It is part of Windows 10 and 11.
 - **Thunderstore packages** (Valheim mods) are downloaded from
   [thunderstore.io](https://thunderstore.io) when you ask for them, including
   BepInEx. They are other people's software under their own licences.
-- **Steam Workshop items** (Conan Exiles mods) are downloaded by SteamCMD when you ask.
+- **Steam Workshop items** (Conan Exiles and other games' mods) are downloaded by SteamCMD when you ask.
+- **Mods from other places** are downloaded when you paste a link: from [Modrinth](https://modrinth.com) (`api.modrinth.com`,
+  `cdn.modrinth.com`), from GitHub releases, or from a direct address you provide. They are other people's software under their
+  own licences, and the panel does not redistribute them. The pack the panel can share with your players is made from the
+  mods on *your* server; a CurseForge mod is named in it, never copied.
+- **Game servers that don't come from Steam** are downloaded from their makers when you agree: the Minecraft server from
+  Mojang (`piston-data.mojang.com`, `piston-meta.mojang.com`, `launchermeta.mojang.com`), the Terraria server from
+  [terraria.org](https://terraria.org), tModLoader from its GitHub release, and, for Terraria only, Microsoft's XNA Framework
+  redistributable from `download.microsoft.com`, unpacked (never installed) after its Microsoft signature is checked.
+- **cloudflared** (Cloudflare's tunnel program) is downloaded from Cloudflare's GitHub release when you set up the community view.
+  It is Cloudflare's software under its own licence.
 - **Release information** is read from GitHub's public releases list to tell you when a
   new version exists (no account or identifying information is sent).
-- **Minecraft mods** are downloaded from CurseForge using an API key that you
+- **Minecraft modpack mods** are downloaded from CurseForge using an API key that you
   supply, under CurseForge's terms.
 
 ## Trademarks
 
 Minecraft, ARK, Conan Exiles, Valheim, Enshrouded, RuneScape: Dragonwilds,
-Windrose, Subsistence, 7 Days to Die, Palworld, Steam, CurseForge, Discord, and any
-other names used here are trademarks of their respective owners and are used only
+Windrose, Subsistence, 7 Days to Die, Palworld, Terraria, Steam, CurseForge, Modrinth, Discord, and every
+other game, company and product named in this project (the full list of games is in
+[README](README.md#supported-games)) are trademarks of their respective owners and are used only
 to say which software GodlyPanel can manage.

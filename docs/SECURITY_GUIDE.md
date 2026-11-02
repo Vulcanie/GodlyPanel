@@ -27,7 +27,12 @@ Most of this page is about the three things you might choose to turn on.
 - [ ] **Few administrators.** Most helpers need *Moderator*, not *Administrator*. An administrator can
       make a server run any program, which in effect means using your PC.
 - [ ] **Suspend or delete accounts people don't use any more** (`People`).
-- [ ] **Look at `Sessions` now and then**, and end any sign-in you don't recognise.
+- [ ] **Look at *Where I'm signed in* now and then** (your menu), and end any sign-in you don't recognise.
+- [ ] **Give each person the least they need.** A [custom role](ACCOUNTS_AND_ROLES.md#custom-roles) can be exactly "restart and read logs".
+      For a helper who may use the console, limit it with an **allow-list** of commands rather than a deny-list. Give someone a
+      role on only the servers they help with (`People`, then the pencil).
+- [ ] **The Files permissions are real power.** "Edit files" lets a person change a server's settings and mods folder.
+      Scripts and programs can only be saved by an administrator, but a changed config can still break a server.
 - [ ] After someone leaves your community, change the **community code** (`People → Community access`).
 
 ### Ports and the router
@@ -61,6 +66,19 @@ RCON is the remote console. With its password, anyone who can reach the port can
 - [ ] You haven't clicked **Allow access** for programs you don't recognise. Windows adds firewall
       rules when you do, and they stay. Look through *Windows Security → Firewall & network
       protection → Allow an app through firewall* now and then and remove ones you don't need.
+
+### Things you download or import
+
+The panel fetches game servers, mods and its own updates, and can open a server file from another PC. Each is checked, but the choice
+of *what* to fetch is yours.
+
+- [ ] **Install mods only from places you trust.** The panel checks each file against its source's checksum and refuses addresses that
+      lead into a private network, but a mod is still a program that runs inside your game. Tick **I trust this address** only for a site you know.
+- [ ] **Only import a `.gpserver` file from someone you trust.** It contains a start script that will run on your PC. The panel refuses
+      files that try to write outside the new server's folder, but it can't tell whether the script itself is harmless.
+- [ ] **Say yes to a download only after reading what it is.** For games that aren't fetched through SteamCMD (Minecraft, Terraria,
+      tModLoader), the panel shows the address, size and checksum before downloading and refuses anything that doesn't match.
+- [ ] **Export without passwords** unless you need them to travel (the default). A bundle with passwords is as sensitive as `servers.json`.
 
 ### Updating GodlyPanel
 
@@ -117,6 +135,14 @@ Viewers can't read passwords or settings. Anyone with the **community code** can
 - change it if it has been shared more widely than you meant;
 - remember that a join password for a game server is something a Viewer *can't* see, so share those
   only with people you intend to play with.
+
+### Sharing your mods with players
+
+**Share with players** (a server's Mods tab) gives out a link on your community address. Anyone who has the link can download the
+mods the server runs, **without an account**: the link is the password. So share it only with your players, use **Make a new link**
+if it spreads further than you meant (the old one stops working at once), and switch sharing off when you don't need it. The link
+gives only the mods meant for players. It can't reach settings, passwords, saves or anything else, and every failure looks the same from outside, so the link
+can't be used to find out which servers exist. It does show people which mods you run.
 
 ### Forwarding the panel's port
 

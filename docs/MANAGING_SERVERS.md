@@ -4,11 +4,13 @@ Open a server from the dashboard (click its card) or from the **Servers** list i
 **Ctrl+K** anywhere to jump to any server, any of its tabs, or to start, stop or restart one without looking for it.
 **Start**, **Restart** and **Stop** are at the top of every server page.
 
-Its tabs are along the top: **Overview** (the controls, the console where the game has one, and CPU, memory and
-player charts), **Settings** (administrators: the game's settings with an explanation for each, its launch
-options, and a version history of every save), **Players**, **Backups**, **Schedules**, **Logs**, **Network**
-(ports and the firewall), **Mods**, **Activity**, **Automation** and **Advanced** (the server's window, its start
-script, and removing it). Moderators see the ones they're allowed to use.
+Its tabs are along the top: **Overview** (the controls, the console where the game has one, game updates, and
+CPU, memory and player charts), **Settings** (administrators: the game's settings with an explanation for each, its
+launch options, and a version history of every save), **Players**, **Backups**, **Schedules**, **Logs**, **Network**
+(ports and the firewall), **Mods**, **Files** (browse and edit the server's folder), **Activity**, **Automation**
+and **Advanced** (the server's window, its start script, moving it to another PC, and removing it). People see the
+ones their [role](ACCOUNTS_AND_ROLES.md) allows: a moderator sees Overview, Players, Backups, Schedules, Logs,
+Network and Activity, and an administrator sees all of them.
 
 Every setting in the panel's own Settings and in these tabs has a small **(i)** beside it: hover it for what the
 setting does and a link to the part of the guides that explains how to use it. The settings inside a game
@@ -47,16 +49,27 @@ running.
 
 Open the **Backups** tab.
 
-- **Back up now** makes a backup straight away. The panel zips the game's save folders (or
-  folders you chose under **What is backed up**), then reads the zip back to check it is
+- **Back up now** makes a backup straight away. The panel archives the game's save folders (or
+  folders you chose under **What is backed up**), then reads the archive back to check it is
   good. If it can't be read back, it is thrown away and you're told.
+- **Format and compression.** Backups are `.zip` by default, which opens anywhere. Under `Settings → Backups`
+  (*Backup file format* and *How hard to compress backups*), or per server on the Backups tab (**Format**
+  and **Compression**), you can choose `.tar.zst` (zstd) or `.tar.xz`, which are smaller but are opened by this panel
+  and by modern tools such as Windows' own `tar`, and a level: fast, balanced or max. A change applies to new backups;
+  existing ones are never altered, and restoring works for all three. **Recompress older backups** rewrites the existing
+  ones in the format you picked (each is checked before the old file is removed, and it needs free space about as large
+  as your biggest backup).
 - Games that can't be saved while running are **stopped for the copy and started again**, so
   the backup is consistent. For games that can save on command, the panel saves first and
   copies while the game keeps running.
-- **How many to keep** is under `Settings → Backups`: *Scheduled backups to keep* (default 10),
-  *Delete scheduled backups older than (days)* (default: never), and *Refuse backups below this
-  much free space (GB)* (default 2) so a backup can't fill your drive. Backups you take by hand
-  are never deleted automatically.
+- **How many to keep** is under `Settings → Backups`, and each server can override it on its Backups tab:
+  *Scheduled backups to keep* (default 10), *Delete scheduled backups older than (days)* (default: never), and *Refuse
+  backups below this much free space (GB)* (default 2) so a backup can't fill your drive. Instead of "the newest N", you
+  can **keep a spread**: one backup a day for so many days, one a week for so many weeks, and one a month for so many
+  months (any of the three above 0 turns this on and replaces the count and age settings). Backups you take by hand are
+  never deleted automatically unless you set *Manual backups to keep*.
+- **Skip a scheduled backup when nothing has changed** saves space and wear on a server that sits idle. A backup you ask
+  for by hand is always made.
 - **Going back to a backup.** Beside each backup is a button: **Restart and use this backup** while
   the server is running, **Use this backup** while it is stopped. One click, then one confirmation, and the
   panel does the rest: it stops the server (the same clean stop as the Stop button), takes a **safety backup of
@@ -93,7 +106,7 @@ lists the exact folders for your server, and **Choose folders & rules** changes 
 
 | Game | In the backup | While it runs |
 |---|---|---|
-| ARK: Survival Ascended | This map's own save folder (named in its launch line), the server settings, the cluster's transfer folder | Told to save, then copied |
+| ARK: Survival Ascended | This map's own save folder (named in its launch line), the server settings, this map's own settings files, the cluster's transfer folder | Told to save, then copied |
 | ARK: Survival Evolved | The `Saved` folder (worlds and settings) | Told to save, then copied |
 | Conan Exiles | `ConanSandbox/Saved` | Stopped for the copy |
 | Valheim | The worlds folder (shared by all Valheim servers on the PC unless the start script sets `-savedir`) | Stopped for the copy |
@@ -116,6 +129,31 @@ lists the exact folders for your server, and **Choose folders & rules** changes 
 copies, and starts it again (a minute or so). Backups taken while a game is running without that (you chose
 "Keep it running") are marked **copied while running**; they usually load fine, but are the first suspects if
 one doesn't.
+
+The table above is the first seventeen games. The other 76 have their save folders and settings files listed in the same
+place, at the top of the Backups tab (**What is backed up**). Many Source-engine games have no world to save, so their backup
+is only their settings and ban lists. A few games (BATTALION: Legacy, SCP: Secret Laboratory, Hurtworld and HYPERCHARGE:
+Unboxed) have no folder list yet: use **Choose folders & rules** to name the folders you care about.
+
+## Updating a game
+
+On a server's **Overview** tab, the **Game updates** card shows whether Steam has a newer version and has the **Update**
+button. An update stops the server, downloads the new files with SteamCMD and starts the server again; a game that
+shares one install with other servers (several ARK maps) updates them together. Anyone whose role has the "Update the game" permission can run it.
+
+- **Back up this server before every game update** (on the same card, and for all servers under `Settings → Backups`). The
+  panel stops the server, backs up its save folders, and only then updates. If that backup fails it asks whether to update
+  without one; if you say no, nothing changes.
+- **After the update the panel waits for the server to come back online.** It waits for as long as `Settings → More settings`, *Wait for a server
+  to come back after an update*, says (default 10 minutes). The card then says **Came back online** or **Did not come back**, and
+  you get a notification if it didn't.
+- **Roll back saves.** If an update goes wrong, **Roll back saves** puts the save files back from the backup taken just before
+  it. The server has to be stopped (the card says so), a safety backup of what is there now is taken first, and you can choose
+  to start the server again afterwards. **The game's own files are not rolled back**, only the saves, so this fixes "the new
+  version damaged my world" but not "the new version doesn't run". It only exists when a backup was taken before that update.
+- **Recent updates** lists what ran, from which version to which, and how it ended.
+- **Auto-update** (on the Automation tab) updates a server by itself when Steam has a new version, with a countdown in the
+  game first ("updating in 15, 10, 5 minutes"). It needs *Check Steam for game updates* in `Settings → Refresh rates`.
 
 ## Schedules
 
@@ -199,7 +237,8 @@ keeps the ports it started with. For which ports to open on your router, see
 - **Logs** follows the game's log live, and you can search it. Passwords are masked for everyone but
   administrators.
 - The **console** (on **Overview**, when the game has RCON or Telnet) sends a command to
-  the game and shows its reply.
+  the game and shows its reply. A [custom role](ACCOUNTS_AND_ROLES.md#limiting-the-console-commands) can be limited to
+  some commands, and the console says so when a command is refused.
 - **Players** shows who is on and who has been. For the games that support it you can **kick**,
   **ban**, and edit whitelist and admin lists. Every one of these is recorded in **Activity**.
   On Minecraft, **operators have levels** (1 can build in the spawn area; 2 can use cheats like `/gamemode` and `/tp`;
@@ -224,11 +263,91 @@ you to **stop the server first** before it will save a settings change.
 
 ## Mods
 
-The **Mods** tab (administrators) manages mods for the games that have them: folders of mods
-(Minecraft, 7 Days to Die, Palworld), Steam Workshop items for Conan Exiles, Thunderstore packages
-for Valheim, and mod numbers in ARK's start script. Minecraft modpacks need a free CurseForge key
-(`Settings → CurseForge API key`) and the pack's **server** export. A game reads its mods when it
-starts, so stop the server before changing them.
+The **Mods** tab (administrators) manages the mods of a game. A game reads its mods when it starts, so **stop the server
+before changing them**; the tab says so.
+
+**Folder-based games** (Minecraft modpack servers, 7 Days to Die, Palworld, Garry's Mod, Left 4 Dead and Left 4 Dead 2, HumanitZ):
+
+- **Paste a link or a name** into *Mod address or name* and choose **Install**. The panel works out where it is from and
+  fetches it: Modrinth and CurseForge (Minecraft), GitHub releases, or a direct link to a file. Anything the mod needs
+  (its required dependencies) is installed with it, each file is checked against the maker's checksum, and if any part
+  fails everything that call installed is taken back out. If a release has several files that could be meant, it lists
+  them and asks you to pick. A link from a site the panel doesn't know shows *This address isn't one of the known mod
+  sites*; tick **I trust this address** only for a place you trust. The panel never fetches from a private-network address.
+- **Or add a file** you have downloaded yourself.
+- **Installed** lists what is there. A mod can be **turned off** (kept on disk, but not loaded) and on again, or **removed**.
+  Mods that are only for players (a client-side mod) aren't installed on the server.
+- The panel remembers what it installed, where from, and a checksum of each file, in a record kept in its own data folder
+  (`data\modlocks`), not in the game's folders. That record is how it can tell you that a file **was changed or is missing**,
+  and which files in the mods folder it did not put there.
+- **Check for updates** asks each source what is newest (nothing is downloaded), and **Update** on a mod replaces it with
+  the new version. If the update fails, the old mod is put back as it was. A mod added by a direct link, or a Steam Workshop
+  item, can't be checked from here (Workshop items update through SteamCMD).
+
+**Other games:**
+
+- **Conan Exiles:** Steam Workshop item numbers; the panel keeps `modlist.txt`. Some items need a signed-in Steam account and
+  can't be fetched this way.
+- **Valheim:** Thunderstore packages (`Owner-Name`); BepInEx is added automatically with the first mod.
+- **ARK (both):** mod numbers in the start script.
+- **Minecraft modpacks:** the server export of a CurseForge pack, and the free CurseForge key
+  (`Settings → CurseForge API key`) the panel needs to download its mods.
+- **Games with no mods support in the panel** say so on the tab. Mods can still be added by hand with the **Files** tab.
+
+### Sharing the mods with your players
+
+For games where players need the same mods as the server (Minecraft and the folder-based games above), the Mods tab has
+**Share with players**. Turn it on and it gives you a link on your [community address](REMOTE_ACCESS.md) (turn the community
+view on in Settings first). Anyone with the link can download, **without an account**: a zip of the mods, a manifest, a plain list of
+what to install, or, for Minecraft, a Modrinth pack (`.mrpack`) that launchers such as Prism open directly. Only mods meant for
+players are included; server-only mods never leave the server. A mod that has changed or gone missing since the panel
+installed it is left out and named. A CurseForge mod is listed by name rather than copied, because CurseForge's terms don't let
+the panel hand the file on. **Make a new link** if the link gets out; the old one stops working at once.
+
+Settings that belong to a mod show up in the server's Settings with no explanation, because they depend on the mod; the mod's
+own page says what they do.
+
+## Files
+
+The **Files** tab shows the contents of the server's folder, and lets you work on them without leaving the panel (or opening
+Explorer on the PC). You need the "Browse files" permission to look, "Edit files" to change things, and "Delete files" to
+delete or use the trash; moderators don't have these unless an administrator gives them a [custom role](ACCOUNTS_AND_ROLES.md#custom-roles) that does.
+
+- **Open** a folder or a text file, **Edit** a text file and save (the previous version is kept next to it as `.bak`). A file
+  that isn't text, or is bigger than 2 MB, can be downloaded but not edited here.
+- **Upload** a file (up to 100 MB), make a **New folder**, **Rename**, and **Download** a file, or a whole folder as a zip.
+- **Unpack here** extracts a zip into the folder. Nothing is overwritten: if any file in the zip already exists, nothing is
+  unpacked. A zip with a path that would escape the folder is refused.
+- **Delete** moves an item to the **Trash** (a hidden folder inside the server's folder, so it uses disk space), from which it can be
+  **restored** to where it came from. Nothing is removed for good until you choose **Empty trash**.
+- **Only an administrator can save, upload or rename a file that can run** (`.bat`, `.cmd`, `.ps1`, `.exe`, `.dll`, `.js`
+  and similar), and only an administrator can unpack a zip, because a script in a server's folder runs on the PC.
+- Some things are shown but never changed here: the panel's own settings file for the server, its trash, and any `.bak` file.
+- It cannot leave the server's folder: a link or junction that points outside it is refused, and so is a path with `..`, a
+  drive letter, an alternate data stream or a reserved Windows name. A server whose folder is the panel's own data
+  folder can't be browsed.
+
+## Moving a server to another PC
+
+Open the server's **Advanced** tab and find **Move to another PC**. (Administrators only, and only for a server the panel created, in a folder of its own: servers that share one install, such as several ARK maps, and servers you added by hand can't be exported.)
+
+1. **Stop the server.** The card won't export a running one.
+2. Choose what to include. **Saves and settings** is the small choice: the world, the settings, mods and schedules. The
+   game itself is downloaded again on the new PC. **Everything** is the whole server folder, game files included: bigger, but
+   no download on the new PC. (A game that can't be downloaded again, such as Minecraft or Terraria, needs **Everything**.)
+3. Leave **Include passwords** unticked unless you want them to travel; new ones are made on the new PC.
+4. Choose **Export**. When it's ready, **Download** the file (`.gpserver`). It can be downloaded once, and the temporary
+   copy on this PC is removed afterwards. Nothing about this server changes.
+5. On the new PC (running GodlyPanel), choose **Create server → Import a server file**, pick the file (or type its full path
+   on that PC), choose **Check file**, set the new server's name and ports (the panel picks free ones), and choose **Import server**.
+   If the export held only saves and settings, SteamCMD is used to fetch the game afterwards (the panel tells you if SteamCMD isn't
+   installed yet).
+
+**Only import a file you trust.** A server file contains a start script, which will run on the PC that imports it. The panel treats
+the file as hostile while it reads it: it refuses names that would write outside the new folder, links, and files made by a newer
+GodlyPanel than the one importing; and if anything fails part-way, everything it made is removed and no existing folder is touched.
+A server file never holds a path from the old PC; the new paths are filled in on import. A backup folder outside the server's own folder is
+not carried.
 
 ## Deleting a server
 

@@ -1,5 +1,7 @@
 # Compression sanity results (Task 1.1)
 
+> **Historical planning document.** It records what was planned at the time and may not match the app as it is now. For what the app does today, see the [README](../../README.md) and the guides in [docs/](../README.md); for what is next, the README's Roadmap.
+
 Produced by `scripts/measure-compression.mjs` on this machine (bsdtar 3.8.9, libarchive 3.8.9, Windows tar.exe).
 
 **These are not game saves.** There are no real game saves on this machine, so these numbers only show that the script works and roughly how the formats compare on two kinds of input. They are not a basis for choosing a default format.

@@ -62,6 +62,10 @@ from this PC to Cloudflare, so nothing is opened on your router).
   3. *Your own address, with a token:* in the Cloudflare dashboard (Zero Trust → Networks → Tunnels)
      create a tunnel, add a *Public Hostname* with service `HTTP` and URL `localhost:<the port shown>`,
      and paste the tunnel's token and the address in the dialog.
+- **Mod downloads for your players.** With the community view on, a server's **Mods → Share with players** gives out a
+  link on this address that lets your players download the mods the server runs (a zip, a list, or a Modrinth pack),
+  without an account. Whoever has the link can download, so treat it as a password; see
+  [Sharing your mods with players](SECURITY_GUIDE.md#sharing-your-mods-with-players).
 - **Turn it off** with one button. It starts again by itself when the panel starts, if it was on.
 - The panel refuses any request that carries Cloudflare's headers, so a tunnel pointed at the panel itself
   (rather than at the community view) can't reach it.

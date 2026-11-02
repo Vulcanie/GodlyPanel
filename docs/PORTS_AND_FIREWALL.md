@@ -44,8 +44,15 @@ for that game, with a column that says **Allowed** or **No rule** for each. Most
 - **Windrose** needs **no port opened** in its default mode: players join with the server's *invite code*
   through the game's own relay. (If you turn on direct connection in its settings, open the port you choose there.)
 
-The list is built from checking each game against a real install ([game support](GAME_SUPPORT.md)),
-so trust it over a guide for a different server tool.
+- **Source-engine games** (Counter-Strike, Team Fortress 2, Left 4 Dead, Garry's Mod and the many like them) use **UDP** on the
+  game port (27015 by default; the panel picks a free one) and some also take **TCP** on it for the console, which stays private.
+  A few also bind a second UDP port by themselves (for example 27005, or 27020 for SourceTV); the Network tab lists the ones the panel knows about.
+- **HYPERCHARGE: Unboxed** needs **no port opened**: players join with an invite code through PlayFab, whatever ports it is given.
+- **Day of Dragons** answers only on its query port; **ATLAS** opens only its query port until its seamless-grid setup is done.
+
+The list is built from checking each game against a real install ([game support](GAME_SUPPORT.md)); for the games that have only been
+checked in part, it is the panel's best knowledge, so test it (the Network tab's checks, then a friend trying to join) before you
+rely on it. Trust it over a guide for a different server tool.
 
 When you create a server, the form tells you which ports to open before you finish.
 
